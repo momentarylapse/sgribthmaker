@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=SgribthMaker Text Editor
+Name[de]=SgribthMaker Text-Editor
+Comment=Edits Kaba Scripts
+Comment[de]=Editor für Kaba Scripte
+Categories=Utility;TextEditor;
+TryExec=/usr/bin/sgribthmaker
+Exec=/usr/bin/sgribthmaker
+Icon=/usr/share/sgribthmaker/Data/icon.ico
+MimeType=text/plain;text/michisoft-kaba
+

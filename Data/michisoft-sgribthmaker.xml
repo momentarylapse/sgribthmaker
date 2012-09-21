@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="text/michisoft-kaba">
+         <comment xml:lang="de">Kaba Script</comment>
+         <desktop:can-edit-with>michisoft-sgribthmaker.desktop</desktop:can-edit-with>
+         <glob pattern="*.kaba"/>
+  </mime-type>
+</mime-info>
