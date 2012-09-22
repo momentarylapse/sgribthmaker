@@ -881,7 +881,7 @@ void CompileAndRun(bool verbose)
 		HuiErrorBox(MainWin,_("Fehler"), compile_script->ErrorMsgExt[0] + "\n" + compile_script->ErrorMsgExt[1]);
 		MoveCursorTo(compile_script->ErrorLine, compile_script->ErrorColumn);
 	}else{
-		
+
 		void *x = NULL;
 		//compile_script->SetVariable("this", &x);
 
@@ -890,7 +890,7 @@ void CompileAndRun(bool verbose)
 
 		int msg_size0 = msg_get_buffer_size();
 
-		
+
 		float dt_execute = 0;
 		if (compile_script->pre_script->FlagCompileOS)
 			HuiErrorBox(MainWin, _("Fehler"), _("Script nicht ausf&uhrbar. (#os)"));
@@ -1127,11 +1127,11 @@ void populate_popup(GtkTextView *text_view, GtkMenu *menu, gpointer user_data)
 		gtk_widget_set_sensitive(m, false);
 		gtk_widget_show(m);
 	}
-	foreachb(ScriptFunction, f){
-		m = gtk_menu_item_new_with_label(f->name.c_str());
+	foreachb(sScriptFunction &f, ScriptFunction){
+		m = gtk_menu_item_new_with_label(f.name.c_str());
 		gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), m);
 		gtk_widget_show(m);
-		g_signal_connect(G_OBJECT(m), "activate", G_CALLBACK(CallbackJumpLine), (void*)(long)f->line);
+		g_signal_connect(G_OBJECT(m), "activate", G_CALLBACK(CallbackJumpLine), (void*)(long)f.line);
 	}
 	msg_db_l(1);
 }
