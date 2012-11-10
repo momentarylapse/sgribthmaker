@@ -2,7 +2,7 @@
 #include "../file/file.h"
 
 
-string ImageVersion = "0.2.1.1";
+string ImageVersion = "0.2.2.0";
 
 void Image::__init__()
 {
