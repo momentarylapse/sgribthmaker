@@ -362,6 +362,7 @@ void CHuiWindow::AddEdit(const string &title,int x,int y,int width,int height,co
 {
 	GetPartStrings(id, title);
 	GtkWidget *text = gtk_entry_new();
+	gtk_entry_set_width_chars(GTK_ENTRY(text), 3);
 	gtk_entry_set_text(GTK_ENTRY(text), sys_str(PartString[0]));
 	gtk_entry_set_activates_default(GTK_ENTRY(text), true);
 	g_signal_connect(G_OBJECT(text), "changed", G_CALLBACK(&OnGtkEditChange), this);
@@ -1142,6 +1143,14 @@ void HuiDrawingContext::DrawRect(float x, float y, float w, float h)
 	if (!cr)
 		return;
 	cairo_rectangle(cr, x, y, w, h);
+	cairo_fill(cr);
+}
+
+void HuiDrawingContext::DrawRect(const rect &r)
+{
+	if (!cr)
+		return;
+	cairo_rectangle(cr, r.x1, r.y1, r.width(), r.height());
 	cairo_fill(cr);
 }
 
