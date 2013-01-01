@@ -15,7 +15,7 @@ string Filename = "";
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.3.18.0";
+string AppVersion = "0.3.19.0";
 
 #define ALLOW_LOGGING			true
 //#define ALLOW_LOGGING			false
@@ -153,29 +153,29 @@ inline void MarkWord(int line, int start, int end, int type, char *p0, char *p)
 				type = InWordSpecial;
 			}else{
 				bool found = false;
-				for (int i=0;i<PreType.num;i++)
-					if (temp == PreType[i]->Name){
+				for (int i=0;i<Script::PreTypes.num;i++)
+					if (temp == Script::PreTypes[i]->name){
 						type = InWordType;
 						found = true;
 						break;
 					}
 				if (!found)
-				for (int i=0;i<PreExternalVar.num;i++)
-					if (temp == PreExternalVar[i].Name){
+				for (int i=0;i<Script::PreExternalVars.num;i++)
+					if (temp == Script::PreExternalVars[i].name){
 						type = InWordGameVariable;
 						found = true;
 						break;
 					}
 				if (!found)
-				for (int i=0;i<PreConstant.num;i++)
-					if (temp == PreConstant[i].Name){
+				for (int i=0;i<Script::PreConstants.num;i++)
+					if (temp == Script::PreConstants[i].name){
 						type = InWordGameVariable;
 						found = true;
 						break;
 					}
 				if (!found)
-				for (int i=0;i<PreCommand.num;i++)
-					if (temp == PreCommand[i].Name){
+				for (int i=0;i<Script::PreCommands.num;i++)
+					if (temp == Script::PreCommands[i].name){
 						type = InWordCompilerFunction;
 						found = true;
 						break;
@@ -830,9 +830,9 @@ void Compile()
 
 	HuiGetTime(CompileTimer);
 
-	ScriptCompileSilently = true;
+	Script::CompileSilently = true;
 	msg_write(Filename);
-	CScript *compile_script = LoadScript(Filename, true, true);
+	Script::Script *compile_script = Script::Load(Filename, true, true);
 
 	float dt = HuiGetTime(CompileTimer);
 
@@ -845,7 +845,7 @@ void Compile()
 		SetMessage(format(_("Script ist fehler-frei &ubersetzbar!        (in %s)"), get_time_str(dt).c_str()));
 
 	//RemoveScript(compile_script);
-	DeleteAllScripts(true, true);
+	Script::DeleteAllScripts(true, true);
 
 	msg_db_m("set verbose...",1);
 	msg_set_verbose(ALLOW_LOGGING);
@@ -873,8 +873,8 @@ void CompileAndRun(bool verbose)
 
 	// compile
 	HuiGetTime(CompileTimer);
-	ScriptCompileSilently = true;
-	CScript *compile_script = LoadScript(Filename);
+	Script::CompileSilently = true;
+	Script::Script *compile_script = Script::Load(Filename);
 	float dt_compile = HuiGetTime(CompileTimer);
 
 	if (compile_script->Error){
@@ -926,7 +926,7 @@ void CompileAndRun(bool verbose)
 	
 
 	//RemoveScript(compile_script);
-	DeleteAllScripts(true, true);
+	Script::DeleteAllScripts(true, true);
 
 	msg_set_verbose(ALLOW_LOGGING);
 
@@ -1353,7 +1353,7 @@ int hui_main(Array<string> arg)
 	MainWin->SetMaximized(maximized);
 	MainWin->Update();
 
-	ScriptInit();
+	Script::Init();
 
 	New();
 
