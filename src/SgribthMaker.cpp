@@ -15,7 +15,7 @@ string Filename = "";
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.3.19.0";
+string AppVersion = "0.3.19.1";
 
 #define ALLOW_LOGGING			true
 //#define ALLOW_LOGGING			false
