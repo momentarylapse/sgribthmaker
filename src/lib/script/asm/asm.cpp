@@ -95,7 +95,7 @@ Array<Register> Registers;
 Array<Register*> RegisterByID;
 int RegRoot[NUM_REGISTERS];
 
-inline void add_reg(const string &name, int id, int group, int size, int root)
+inline void add_reg(const string &name, int id, int group, int size, int root = -1)
 {
 	Register r;
 	r.name = name;
@@ -103,11 +103,11 @@ inline void add_reg(const string &name, int id, int group, int size, int root)
 	r.group = group;
 	r.size = size;
 	Registers.add(r);
-	RegRoot[id] = root;
+	RegRoot[id] = (root < 0) ? id : root;
 }
 
 // rw1/2: 
-sInstructionName InstructionName[NumInstructionNames+1]={
+InstructionName InstructionNames[NumInstructionNames + 1] = {
 	{inst_add,		"add",		3, 1},
 	{inst_add_b,	"add.b",	3, 1},
 	{inst_adc,		"adc",		3, 1},
@@ -414,6 +414,7 @@ struct InstructionParamFuzzy{
 	}
 };
 
+// an instruction/opcode the cpu offers
 struct sInstruction{
 	int inst;
 	int code, code_size, cap;
@@ -572,7 +573,8 @@ bool _get_inst_param_(int param, InstructionParamFuzzy &ip)
 void add_inst(int inst, int code, int code_size, int cap, int param1, int param2)
 {
 	sInstruction i;
-	memset(&i, 0, sizeof(sInstruction));
+	memset(&i.param1, 0, sizeof(i.param1));
+	memset(&i.param2, 0, sizeof(i.param2));
 	i.inst = inst;
 	i.code = code;
 	i.code_size = code_size;
@@ -581,10 +583,10 @@ void add_inst(int inst, int code, int code_size, int cap, int param1, int param2
 	bool m2 = _get_inst_param_(param2, i.param2);
 	i.has_modrm  = m1 || m2 || (cap >= 0);
 	
-	i.name = InstructionName[NumInstructionNames].name;
+	i.name = InstructionNames[NumInstructionNames].name;
 	for (int j=0;j<NumInstructionNames;j++)
-		if (inst == InstructionName[j].inst)
-			i.name = InstructionName[j].name;
+		if (inst == InstructionNames[j].inst)
+			i.name = InstructionNames[j].name;
 	Instruction.add(i);
 }
 
@@ -648,45 +650,45 @@ void Init()
 	add_reg("bh",	RegBh,	RegGroupGeneral,	Size8,	RegEbx);
 	add_reg("bl",	RegBl,	RegGroupGeneral,	Size8,	RegEbx);
 
-	add_reg("esp",	RegEsp,	RegGroupGeneral,	Size32,	100);
-	add_reg("sp",	RegSp,	RegGroupGeneral,	Size16,	100);
-	add_reg("esi",	RegEsi,	RegGroupGeneral,	Size32,	101);
-	add_reg("si",	RegSi,	RegGroupGeneral,	Size16,	101);
-	add_reg("edi",	RegEdi,	RegGroupGeneral,	Size32,	102);
-	add_reg("di",	RegDi,	RegGroupGeneral,	Size16,	102);
-	add_reg("ebp",	RegEbp,	RegGroupGeneral,	Size32,	103);
-	add_reg("bp",	RegBp,	RegGroupGeneral,	Size16,	103);
+	add_reg("esp",	RegEsp,	RegGroupGeneral,	Size32);
+	add_reg("sp",	RegSp,	RegGroupGeneral,	Size16);
+	add_reg("esi",	RegEsi,	RegGroupGeneral,	Size32);
+	add_reg("si",	RegSi,	RegGroupGeneral,	Size16);
+	add_reg("edi",	RegEdi,	RegGroupGeneral,	Size32);
+	add_reg("di",	RegDi,	RegGroupGeneral,	Size16);
+	add_reg("ebp",	RegEbp,	RegGroupGeneral,	Size32);
+	add_reg("bp",	RegBp,	RegGroupGeneral,	Size16);
 
-	add_reg("cs",	RegCs,	RegGroupSegment,	Size16,	200);
-	add_reg("ss",	RegSs,	RegGroupSegment,	Size16,	201);
-	add_reg("ds",	RegDs,	RegGroupSegment,	Size16,	202);
-	add_reg("es",	RegEs,	RegGroupSegment,	Size16,	203);
-	add_reg("fs",	RegFs,	RegGroupSegment,	Size16,	204);
-	add_reg("gs",	RegGs,	RegGroupSegment,	Size16,	205);
+	add_reg("cs",	RegCs,	RegGroupSegment,	Size16);
+	add_reg("ss",	RegSs,	RegGroupSegment,	Size16);
+	add_reg("ds",	RegDs,	RegGroupSegment,	Size16);
+	add_reg("es",	RegEs,	RegGroupSegment,	Size16);
+	add_reg("fs",	RegFs,	RegGroupSegment,	Size16);
+	add_reg("gs",	RegGs,	RegGroupSegment,	Size16);
 
-	add_reg("cr0",	RegCr0,	RegGroupControl,	Size32,	300);
-	add_reg("cr1",	RegCr1,	RegGroupControl,	Size32,	301);
-	add_reg("cr2",	RegCr2,	RegGroupControl,	Size32,	302);
-	add_reg("cr3",	RegCr3,	RegGroupControl,	Size32,	303);
+	add_reg("cr0",	RegCr0,	RegGroupControl,	Size32);
+	add_reg("cr1",	RegCr1,	RegGroupControl,	Size32);
+	add_reg("cr2",	RegCr2,	RegGroupControl,	Size32);
+	add_reg("cr3",	RegCr3,	RegGroupControl,	Size32);
 
-	add_reg("st0",	RegSt0,	-1,	Size32,	400); // ??? 32
-	add_reg("st1",	RegSt1,	-1,	Size32,	401);
-	add_reg("st2",	RegSt2,	-1,	Size32,	402);
-	add_reg("st3",	RegSt3,	-1,	Size32,	403);
-	add_reg("st4",	RegSt4,	-1,	Size32,	404);
-	add_reg("st5",	RegSt5,	-1,	Size32,	405);
-	add_reg("st6",	RegSt6,	-1,	Size32,	406);
-	add_reg("st7",	RegSt7,	-1,	Size32,	407);
+	add_reg("st0",	RegSt0,	-1,	Size32); // ??? 32
+	add_reg("st1",	RegSt1,	-1,	Size32);
+	add_reg("st2",	RegSt2,	-1,	Size32);
+	add_reg("st3",	RegSt3,	-1,	Size32);
+	add_reg("st4",	RegSt4,	-1,	Size32);
+	add_reg("st5",	RegSt5,	-1,	Size32);
+	add_reg("st6",	RegSt6,	-1,	Size32);
+	add_reg("st7",	RegSt7,	-1,	Size32);
 
 
 	add_reg("rax",	RegRax,	RegGroupGeneral,	Size64,	RegEax);
 	add_reg("rdx",	RegRdx,	RegGroupGeneral,	Size64,	RegEdx);
 	add_reg("rcx",	RegRcx,	RegGroupGeneral,	Size64,	RegEcx);
 	add_reg("rbx",	RegRbx,	RegGroupGeneral,	Size64,	RegEdx);
-	add_reg("rsp",	RegRsp,	RegGroupGeneral,	Size64,	100);
-	add_reg("rbp",	RegRbp,	RegGroupGeneral,	Size64,	101);
-	add_reg("rdi",	RegRdi,	RegGroupGeneral,	Size64,	102);
-	add_reg("rdx",	RegRdx,	RegGroupGeneral,	Size64,	103);
+	add_reg("rsp",	RegRsp,	RegGroupGeneral,	Size64);
+	add_reg("rbp",	RegRbp,	RegGroupGeneral,	Size64);
+	add_reg("rdi",	RegRdi,	RegGroupGeneral,	Size64);
+	add_reg("rdx",	RegRdx,	RegGroupGeneral,	Size64);
 
 	// create easy to access array
 	RegisterByID.clear();
@@ -2148,7 +2150,7 @@ void OpcodeAddImmideate(char *oc, int &ocs, InstructionParamFuzzy &ip, Instructi
 		insert_val(oc, ocs, p.value >> 32, 2); // bits 33-47
 }
 
-bool AddInstructionLowLevel(char *oc, int &ocs, int inst, InstructionParam &wp1, InstructionParam &wp2, int offset, int insert_at);
+bool AddInstructionLowLevel(char *oc, int &ocs, int inst, InstructionParam &wp1, InstructionParam &wp2);
 
 
 // convert human readable asm code into opcode
@@ -2177,7 +2179,7 @@ const char *Assemble(const char *code)
 	if (CurrentMetaInfo)
 		mode16 = CurrentMetaInfo->Mode16;
 	EndOfCode = false;
-	while(true){
+	while((unsigned)pos < strlen(code) - 2){
 		resize_buffer(CodeLength + 128);
 		if (Error){
 			msg_db_l(1+ASM_DB_LEVEL);
@@ -2232,7 +2234,6 @@ const char *Assemble(const char *code)
 		}
 
 	// special stuff
-		bool done = false;
 		if (cmd == "bits_16"){
 			so("16 bit Modus!");
 			mode16 = true;
@@ -2245,7 +2246,7 @@ const char *Assemble(const char *code)
 				b.Bits = 16;
 				CurrentMetaInfo->bit_change.add(b);
 			}
-			done=true;
+			continue;
 		}else if (cmd == "bits_32"){
 			so("32 bit Modus!");
 			mode16 = false;
@@ -2258,7 +2259,7 @@ const char *Assemble(const char *code)
 				b.Bits = 32;
 				CurrentMetaInfo->bit_change.add(b);
 			}
-			done=true;
+			continue;
 		}else if (cmd == "db"){
 			so("Daten:   1 byte");
 			if (CurrentMetaInfo){
@@ -2268,7 +2269,7 @@ const char *Assemble(const char *code)
 				CurrentMetaInfo->data.add(d);
 			}
 			buffer[CodeLength++]=(char)(long)p1.value;
-			done=true;
+			continue;
 		}else if (cmd == "dw"){
 			so("Daten:   2 byte");
 			if (CurrentMetaInfo){
@@ -2278,7 +2279,7 @@ const char *Assemble(const char *code)
 				CurrentMetaInfo->data.add(d);
 			}
 			*(short*)&buffer[CodeLength]=(short)(long)p1.value;	CodeLength+=2;
-			done=true;
+			continue;
 		}else if (cmd == "dd"){
 			so("Daten:   4 byte");
 			if (CurrentMetaInfo){
@@ -2288,7 +2289,7 @@ const char *Assemble(const char *code)
 				CurrentMetaInfo->data.add(d);
 			}
 			*(int*)&buffer[CodeLength]=(long)p1.value;	CodeLength+=4;
-			done=true;
+			continue;
 		}else if ((cmd == "ds") || (cmd == "dz")){
 			so("Daten:   String");
 			char *s = (char*)p1.value;
@@ -2303,11 +2304,11 @@ const char *Assemble(const char *code)
 			}
 			memcpy(&buffer[CodeLength], s, l);
 			CodeLength += l;
-			done=true;
+			continue;
 		}else if (cmd == "org"){
 			if (CurrentMetaInfo)
 				CurrentMetaInfo->CodeOrigin = (long)p1.value;
-			done=true;
+			continue;
 		}else if (cmd[cmd.num - 1] == ':'){
 			so("Label");
 			if (CurrentMetaInfo){
@@ -2354,32 +2355,26 @@ const char *Assemble(const char *code)
 						i--;
 					}
 			}
-			done=true;
-		}
-		if (done){
-			if ((unsigned)pos >= strlen(code) - 2)
-				break;
-			else
-				continue;
+			continue;
 		}
 
 	// compile command
 		int inst = -1;
 		for (int i=0;i<NumInstructionNames;i++)
-			if (InstructionName[i].name == cmd)
-				inst = InstructionName[i].inst;
+			if (InstructionNames[i].name == cmd)
+				inst = InstructionNames[i].inst;
 		if (inst < 0){
 			SetError("unknown instruction:  " + cmd);
-			CodeLength=-1;
+			CodeLength = -1;
 			msg_db_l(1+ASM_DB_LEVEL);
 			return "";
 		}
-		// praefix
+		// prefix
 		if (small_param != mode16)
 			buffer[CodeLength ++] = 0x66;
 
 		// command
-		if (!AddInstructionLowLevel(buffer, CodeLength, inst, p1, p2, 0, 0)){
+		if (!AddInstructionLowLevel(buffer, CodeLength, inst, p1, p2)){
 			SetError("instruction is not compatible with its parameters (a):  " + cmd + " " + param1 + " " + param2);
 			CodeLength=-1;
 			msg_db_l(1+ASM_DB_LEVEL);
@@ -2615,7 +2610,7 @@ void OpcodeAddInstruction(char *oc, int &ocs, sInstruction *inst, InstructionPar
 	msg_db_l(1+ASM_DB_LEVEL);
 }
 
-bool AddInstructionLowLevel(char *oc, int &ocs, int inst, InstructionParam &wp1, InstructionParam &wp2, int offset, int insert_at)
+bool AddInstructionLowLevel(char *oc, int &ocs, int inst, InstructionParam &wp1, InstructionParam &wp2)
 {
 	msg_db_r("AsmAddInstructionLow", 1+ASM_DB_LEVEL);
 
@@ -2710,7 +2705,7 @@ void param2str(string &str, int type, void *param)
 	}
 }
 
-bool AddInstruction(char *oc, int &ocs, int inst, int param1_type, void *param1, int param2_type, void *param2, int offset, int insert_at)
+bool AddInstruction(char *oc, int &ocs, int inst, int param1_type, void *param1, int param2_type, void *param2)
 {
 	msg_db_r("AsmAddInstruction", 1+ASM_DB_LEVEL);
 	/*if (!Instruction)
@@ -2727,15 +2722,15 @@ bool AddInstruction(char *oc, int &ocs, int inst, int param1_type, void *param1,
 	InstructionParam wp2 = _make_param_(param2_type, (long)param2);
 
 	OCParam = ocs;
-	bool ok = AddInstructionLowLevel(oc, ocs, inst, wp1, wp2, offset, insert_at);
+	bool ok = AddInstructionLowLevel(oc, ocs, inst, wp1, wp2);
 	if (!ok){
 		bool found = false;
 		for (int i=0;i<NumInstructionNames;i++)
-			if (InstructionName[i].inst == inst){
+			if (InstructionNames[i].inst == inst){
 				string ps1, ps2;
 				param2str(ps1, param1_type, param1);
 				param2str(ps2, param2_type, param2);
-				SetError("command not compatible with its parameters\n" + InstructionName[i].name + " " + ps1 + " " + ps2);
+				SetError("command not compatible with its parameters\n" + InstructionNames[i].name + " " + ps1 + " " + ps2);
 				found = true;
 			}
 		if (!found)

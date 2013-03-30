@@ -225,8 +225,8 @@ void cmd_out(int n, sSerialCommand &c)
 		t = "???";
 		bool found = false;
 		for (int i=0;i<Asm::NumInstructionNames;i++)
-			if (c.inst == Asm::InstructionName[i].inst)
-				t = format("%3d:  %s", n, Asm::InstructionName[i].name.c_str());
+			if (c.inst == Asm::InstructionNames[i].inst)
+				t = format("%3d:  %s", n, Asm::InstructionNames[i].name.c_str());
 		param_out(t, c.p1);
 		param_out(t, c.p2);
 		so(t);

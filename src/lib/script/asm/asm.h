@@ -282,12 +282,12 @@ struct MetaInfo
 };
 
 
-struct sInstructionName{
+struct InstructionName{
 	int inst;
 	string name;
 	int rw1, rw2; // parameter is read(1), modified(2) or both (3)
 };
-extern sInstructionName InstructionName[];
+extern InstructionName InstructionNames[];
 
 void Init();
 const char *Assemble(const char *code);
@@ -295,7 +295,7 @@ const char *Disassemble(void *code, int length = -1, bool allow_comments = true)
 extern bool Error;
 extern int ErrorLine;
 
-bool AddInstruction(char *oc, int &ocs, int inst, int param1_type = PKNone, void *param1 = NULL, int param2_type = PKNone, void *param2 = NULL, int offset = 0, int insert_at = -1);
+bool AddInstruction(char *oc, int &ocs, int inst, int param1_type = PKNone, void *param1 = NULL, int param2_type = PKNone, void *param2 = NULL);
 void SetInstructionSet(int set);
 bool ImmediateAllowed(int inst);
 extern int CodeLength, OCParam;
@@ -304,11 +304,11 @@ extern MetaInfo *CurrentMetaInfo;
 inline void GetInstructionParamFlags(int inst, bool &p1_read, bool &p1_write, bool &p2_read, bool &p2_write)
 {
 	for (int i=0;i<NumInstructionNames;i++)
-		if (InstructionName[i].inst == inst){
-			p1_read = ((InstructionName[i].rw1 & 1) > 0);
-			p1_write = ((InstructionName[i].rw1 & 2) > 0);
-			p2_read = ((InstructionName[i].rw2 & 1) > 0);
-			p2_write = ((InstructionName[i].rw2 & 2) > 0);
+		if (InstructionNames[i].inst == inst){
+			p1_read = ((InstructionNames[i].rw1 & 1) > 0);
+			p1_write = ((InstructionNames[i].rw1 & 2) > 0);
+			p2_read = ((InstructionNames[i].rw2 & 1) > 0);
+			p2_write = ((InstructionNames[i].rw2 & 2) > 0);
 		}
 }
 
@@ -317,8 +317,8 @@ inline bool GetInstructionAllowConst(int inst)
 	if ((inst == inst_div) || (inst == inst_idiv))
 		return false;
 	for (int i=0;i<NumInstructionNames;i++)
-		if (InstructionName[i].inst == inst)
-			return (InstructionName[i].name[0] != 'f');
+		if (InstructionNames[i].inst == inst)
+			return (InstructionNames[i].name[0] != 'f');
 	return true;
 }
 
@@ -327,8 +327,8 @@ inline bool GetInstructionAllowGenReg(int inst)
 	if (inst == inst_lea)
 		return false;
 	for (int i=0;i<NumInstructionNames;i++)
-		if (InstructionName[i].inst == inst)
-			return (InstructionName[i].name[0] != 'f');
+		if (InstructionNames[i].inst == inst)
+			return (InstructionNames[i].name[0] != 'f');
 	return true;
 }
 
