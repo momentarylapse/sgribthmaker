@@ -1,4 +1,9 @@
+#if !defined(ASM_H__INCLUDED_)
+#define ASM_H__INCLUDED_
 
+
+namespace Asm
+{
 
 // instruction sets
 enum{
@@ -14,7 +19,9 @@ enum{
 	RegAl, RegCl, RegDl, RegBl, RegAh, RegCh, RegDh, RegBh, // 1 byte
 	RegCs, RegDs, RegSs, RegEs, RegFs, RegGs, // segment
 	RegCr0, RegCr1, RegCr2, RegCr3,
-	RegSt0, RegSt1, RegSt2, RegSt3, RegSt4, RegSt5, RegSt6, RegSt7
+	RegSt0, RegSt1, RegSt2, RegSt3, RegSt4, RegSt5, RegSt6, RegSt7,
+	RegRax, RegRcx, RegRdx, RegRbx, RegRsp, RegRsi, RegRdi, RegRbp, // 8 byte
+	NUM_REGISTERS
 };
 
 extern int RegRoot[];
@@ -224,19 +231,19 @@ enum{
 	NumInstructionNames
 };
 
-struct sAsmGlobalVar
+struct GlobalVar
 {
 	string Name;
 	void *Pos; // points into the memory of a script
 };
 
-struct sAsmLabel
+struct Label
 {
 	string Name;
 	int Pos; // relative to CodeOrigin (Opcode[0])
 };
 
-struct sAsmWantedLabel
+struct WantedLabel
 {
 	string Name;
 	int Pos; // position to fill into     relative to CodeOrigin (Opcode[0])
@@ -245,19 +252,19 @@ struct sAsmWantedLabel
 	int ParamNo; // -> 0:param1 / 1:param2
 };
 
-struct sAsmData
+struct AsmData
 {
 	int Size; // number of bytes
 	int Pos; // relative to CodeOrigin (Opcode[0])
 };
 
-struct sAsmBitChange
+struct BitChange
 {
 	int Pos; // relative to CodeOrigin (Opcode[0])
 	int Bits;
 };
 
-struct sAsmMetaInfo
+struct MetaInfo
 {
 	long CurrentOpcodePos; // current position in the opcode buffer (including script)
 	int PreInsertionLength; // size of script opcode preceding the asm block
@@ -266,32 +273,33 @@ struct sAsmMetaInfo
 	bool Mode16;
 	int LineOffset; // number of script lines preceding asm block (to give correct error messages)
 
-	Array<sAsmLabel> Label;
-	Array<sAsmWantedLabel> WantedLabel;
+	Array<Label> label;
+	Array<WantedLabel> wanted_label;
 
-	Array<sAsmData> Data;
-	Array<sAsmBitChange> BitChange;
-	Array<sAsmGlobalVar> GlobalVar;
+	Array<AsmData> data;
+	Array<BitChange> bit_change;
+	Array<GlobalVar> global_var;
 };
 
 
 struct sInstructionName{
 	int inst;
-	const char *name;
+	string name;
 	int rw1, rw2; // parameter is read(1), modified(2) or both (3)
 };
 extern sInstructionName InstructionName[];
 
-void AsmInit();
-const char *Opcode2Asm(void *code, int length = -1, bool allow_comments = true);
-const char *Asm2Opcode(const char *code);
-extern bool AsmError;
-extern int AsmErrorLine;
-bool AsmAddInstruction(char *oc, int &ocs, int inst, int param1_type, void *param1, int param2_type, void *param2, int offset = 0, int insert_at = -1);
+void Init();
+const char *Assemble(const char *code);
+const char *Disassemble(void *code, int length = -1, bool allow_comments = true);
+extern bool Error;
+extern int ErrorLine;
+
+bool AddInstruction(char *oc, int &ocs, int inst, int param1_type = PKNone, void *param1 = NULL, int param2_type = PKNone, void *param2 = NULL, int offset = 0, int insert_at = -1);
 void SetInstructionSet(int set);
-bool AsmImmediateAllowed(int inst);
-extern int AsmCodeLength, AsmOCParam;
-extern sAsmMetaInfo *CurrentAsmMetaInfo;
+bool ImmediateAllowed(int inst);
+extern int CodeLength, OCParam;
+extern MetaInfo *CurrentMetaInfo;
 
 inline void GetInstructionParamFlags(int inst, bool &p1_read, bool &p1_write, bool &p2_read, bool &p2_write)
 {
@@ -324,3 +332,6 @@ inline bool GetInstructionAllowGenReg(int inst)
 	return true;
 }
 
+};
+
+#endif

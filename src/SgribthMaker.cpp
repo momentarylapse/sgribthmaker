@@ -2,7 +2,6 @@
 #include "lib/hui/hui.h"
 #include "lib/nix/nix.h"
 #include "lib/file/file.h"
-#include "lib/x/x.h"
 #include "lib/script/script.h"
 #include <gtk/gtk.h>
 #include "lib/algebra/algebra.h"
