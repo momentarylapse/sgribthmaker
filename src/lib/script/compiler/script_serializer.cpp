@@ -4,11 +4,8 @@
 
 namespace Script{
 
-//#define _insert_asm_
-
 #define allow_simplification
 #define allow_registers
-#define _insert_asm_
 
 extern void script_db_out(const string &str);
 extern void script_db_out(int i);
@@ -1443,21 +1440,6 @@ void Script::SerializeBlock(SerializerData *d, Block *block, int level)
 	msg_db_l(4);
 }
 
-void _fake_array_init_(DynamicArray *a, int item_size)
-{
-//	msg_write("f init");
-	a->init(item_size);
-	/*a->num = 0;
-	a->item_size = item_size;
-	a->data = NULL;*/
-}
-
-void _fake_array_clear_(DynamicArray *a)
-{
-//	msg_write("f clear");
-	a->clear();
-}
-
 Array<sSerialCommandParam> InsertedConstructorFunc;
 Array<sSerialCommandParam> InsertedConstructorTemp;
 
@@ -2606,178 +2588,6 @@ inline void get_param(int inst, sSerialCommandParam &p, int &param_type, void *&
 		cur_script->DoErrorInternal("get_param: unexpected param..." + Kind2Str(p.kind));
 }
 
-#if 0
-Array<int> InstructionPos;
-
-void ProcessJumpTargets(SerializerData *d, char *Opcode, int &OpcodeSize)
-{
-	msg_db_r("ProcessJumpTargets", 3);
-	foreachi(sSerialCommand &c, d->cmd, i){
-		if (c.inst < inst_marker)
-			if (c.p1.kind == KindMarker){
-				so("adjust jump");
-				int marker = (long)c.p1.p;
-				so(marker);
-				int pos_after_jump_inst = InstructionPos[i + 1];
-				int target_pos = -1;
-				for (int j=0;j<d->cmd.num;j++)
-					if (d->cmd[j].inst == inst_marker)
-						if (d->cmd[j].p1.kind == marker){
-							target_pos = InstructionPos[j];
-							break;
-						}
-				if (target_pos >= 0){
-					*(int*)&Opcode[pos_after_jump_inst - 4] = (target_pos - pos_after_jump_inst);
-					c.p1.p = (char*)(target_pos - pos_after_jump_inst);
-					c.p1.kind = KindConstant;
-					c.p1.type = TypePointer;
-				}else{
-					cur_script->DoErrorInternal("asm error: jump marker not found");
-					_return_(3,);
-				}
-			}
-	}
-	msg_db_l(3);
-}
-
-inline void assemble_cmd(char *Opcode, int &OpcodeSize, sSerialCommand &c)
-{
-	// translate parameters
-	int param1_type, param2_type;
-	void *param1, *param2;
-	get_param(c.inst, c.p1, param1_type, param1);
-	if (cur_script->Error)	return;
-	get_param(c.inst, c.p2, param2_type, param2);
-	if (cur_script->Error)	return;
-	
-	// assemble instruction
-	Asm::AddInstruction(Opcode, OpcodeSize, c.inst, param1_type, param1, param2_type, param2);
-	if (Asm::Error)
-		cur_script->DoErrorInternal("asm error");
-	//printf("%s", Opcode2Asm(oc, ocs));
-}
-
-void ShrinkOpcode(SerializerData *d, char *oc, int &ocs, int c, int diff)
-{
-	msg_db_r("ShrinkOpcode", 3);
-
-	// shift opcode
-	for (int i=InstructionPos[c+1];i<ocs;i++)
-		oc[i - diff] = oc[i];
-	ocs -= diff;
-
-	// InstructionPos after c
-	for (int i=c+1;i<d->cmd.num+1;i++)
-		InstructionPos[i] -= diff;
-
-	// calls after c
-	for (int i=c+1;i<d->cmd.num;i++)
-		if (d->cmd[i].inst == Asm::inst_call)
-			if (d->cmd[i].p1.p){ // we need to keep 0x0000...
-				so("call");
-				*(int*)&d->cmd[i].p1.p -= diff;
-				*(int*)&oc[InstructionPos[i + 1] - 4] += diff;
-			}
-
-	// jumps over c
-	for (int i=0;i<d->cmd.num;i++)
-			if ((d->cmd[i].inst == Asm::inst_jmp) || (d->cmd[i].inst == Asm::inst_jz) || (d->cmd[i].inst == Asm::inst_jnz) || (d->cmd[i].inst == Asm::inst_jmp_b) || (d->cmd[i].inst == Asm::inst_jz_b) || (d->cmd[i].inst == Asm::inst_jnz_b)){
-				so("jump");
-				int s = d->cmd[i].p1.type->size;
-				so(*(int*)&d->cmd[i].p1.p);
-				if (i < c)
-					if ((long)d->cmd[i].p1.p > InstructionPos[c] - InstructionPos[i + 1]){
-						so("jump over forward");
-						*(int*)&d->cmd[i].p1.p -= diff;
-						if (s == 1)
-							*(char*)&oc[InstructionPos[i + 1] - 1] -= diff;
-						else
-							*(int*)&oc[InstructionPos[i + 1] - 4] -= diff;
-					}
-				if (i >= c)
-					if (-(long)d->cmd[i].p1.p > InstructionPos[i + 1] - InstructionPos[c]){
-						so("jump over backward");
-						*(int*)&d->cmd[i].p1.p += diff;
-						if (s == 1)
-							*(char*)&oc[InstructionPos[i + 1] - 1] += diff;
-						else
-							*(int*)&oc[InstructionPos[i + 1] - 4] += diff;
-					}
-				so(*(int*)&d->cmd[i].p1.p);
-			}
-	
-	msg_db_l(3);
-}
-
-void ShrinkJumps(SerializerData *d, char *Opcode, int &OpcodeSize)
-{
-	msg_db_r("ShrinkJumps", 3);
-	for (int i=0;i<d->cmd.num;i++){
-		if ((d->cmd[i].inst == Asm::inst_jmp) || (d->cmd[i].inst == Asm::inst_jz) || (d->cmd[i].inst == Asm::inst_jnz))
-			if ((d->cmd[i].p1.kind == KindConstant) && ((long)d->cmd[i].p1.p < 127) && ((long)d->cmd[i].p1.p > -127)){
-				so("jump shrinkable");
-
-				// shrink the command
-				if (d->cmd[i].inst == Asm::inst_jmp)
-					d->cmd[i].inst = Asm::inst_jmp_b;
-				else if (d->cmd[i].inst == Asm::inst_jz)
-					d->cmd[i].inst = Asm::inst_jz_b;
-				else if (d->cmd[i].inst == Asm::inst_jnz)
-					d->cmd[i].inst = Asm::inst_jnz_b;
-				d->cmd[i].p1.type = TypeChar;
-
-				// assemble the smaller command
-				char oc[16];
-				int ocs = 0;
-				assemble_cmd(oc, ocs, d->cmd[i]);
-				if (cur_script->Error)
-					_return_(3,);
-				//msg_write(Asm::Disassemble(oc, ocs));
-
-				int diff = InstructionPos[i + 1] - InstructionPos[i] - ocs;
-				so(diff);
-
-				// really smaller?    (should be unneccessary...)
-				if (diff < 0)
-					continue;
-
-				// insert
-				for (int j=0;j<ocs;j++)
-					Opcode[InstructionPos[i] + j] = oc[j];
-
-				// correct all other commands...
-				ShrinkOpcode(d, Opcode, OpcodeSize, i, diff);
-				//break;
-			}
-	}
-	msg_db_l(3);
-}
-
-void CompileAsmBlock(char *Opcode, int &OpcodeSize)
-{
-	msg_db_r("CompileAsmBlock", 4);
-	//msg_write(".------------------------------- asm");
-	PreScript *ps = cur_script->pre_script;
-	CreateAsmMetaInfo(ps);
-	ps->AsmMetaInfo->CurrentOpcodePos = OpcodeSize;
-	ps->AsmMetaInfo->PreInsertionLength = OpcodeSize;
-	ps->AsmMetaInfo->LineOffset = ps->AsmBlocks[0].line;
-	Asm::CurrentMetaInfo = ps->AsmMetaInfo;
-	if (Asm::Assemble(ps->AsmBlocks[0].block, Opcode, OpcodeSize)){
-		//msg_write(Asm::CodeLength);
-		//msg_write(d2h(pac, Asm::CodeLength, false));
-		//msg_write(Opcode2Asm(pac, Asm::CodeLength));
-	}else{
-		cur_script->DoError("assembler: " + Asm::ErrorMessage, Asm::ErrorLine);
-		_return_(4,);
-	}
-	delete[](ps->AsmBlocks[0].block);
-	ps->AsmBlocks.erase(0);
-	msg_db_l(4);
-}
-
-#endif
-
 
 void assemble_cmd(Asm::InstructionWithParamsList *list, sSerialCommand &c)
 {
@@ -2820,12 +2630,10 @@ void AddAsmBlock(Asm::InstructionWithParamsList *list)
 void SerializerData::Compile(char *Opcode, int &OpcodeSize)
 {
 	msg_db_r("Serializer.Compile", 2);
-	//InstructionPos.resize(cmd.num + 1);
 
 	Asm::InstructionWithParamsList *list = new Asm::InstructionWithParamsList(0);
 
 	for (int i=0;i<cmd.num;i++){
-		//InstructionPos[i] = OpcodeSize;
 
 		if (cmd[i].inst == inst_marker){
 			//msg_write("marker _kaba_" + i2s(cmd[i].p1.kind));
@@ -2850,15 +2658,8 @@ void SerializerData::Compile(char *Opcode, int &OpcodeSize)
 		if (cur_script->Error)
 			_return_(2,);
 	}
-//	InstructionPos[cmd.num] = OpcodeSize;
-
-//	ProcessJumpTargets(this, Opcode, OpcodeSize);
 
 	//msg_write(Opcode2Asm(Opcode, OpcodeSize));
-
-#ifdef allow_simplification
-//	ShrinkJumps(this, Opcode, OpcodeSize);
-#endif
 
 	if (!Asm::Error)
 		list->Optimize(Opcode, OpcodeSize);
@@ -2871,10 +2672,6 @@ void SerializerData::Compile(char *Opcode, int &OpcodeSize)
 	delete(list);
 
 
-	/*if (!Error)
-		if (pre_script->AsmMetaInfo)
-			if (pre_script->AsmMetaInfo->wanted_label.num > 0)
-				_do_error_(format("unknown name in assembler code:  \"%s\"", pre_script->AsmMetaInfo->wanted_label[0].Name.c_str()), 2,);*/
 	msg_db_l(2);
 }
 
