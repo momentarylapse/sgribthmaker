@@ -2791,9 +2791,9 @@ void CompileSerialized(SerializerData *d, char *Opcode, int &OpcodeSize)
 		}
 
 		// make calls relative...
-		if (d->cmd[i].inst == Asm::inst_call)
+		/*if (d->cmd[i].inst == Asm::inst_call)
 			if (d->cmd[i].p1.p) // we need to keep 0x0000...
-				d->cmd[i].p1.p = (char*)(  (long)d->cmd[i].p1.p - (long)&Opcode[OpcodeSize] - 5 );
+				d->cmd[i].p1.p = (char*)(  (long)d->cmd[i].p1.p - (long)&Opcode[OpcodeSize] - 5 );*/
 
 		// push 8 bit -> push 32 bit
 		if (d->cmd[i].inst == Asm::inst_push)
@@ -2826,12 +2826,14 @@ void CompileSerialized(SerializerData *d, char *Opcode, int &OpcodeSize)
 
 void Script::CompileFunction(Function *f, char *Opcode, int &OpcodeSize)
 {
+	msg_db_r("Compile Function", 2);
 	cur_func = f;
 	SerializerData d;
 	if (!Error)
 		SerializeFunction(&d, f);
 	if (!Error)
 		CompileSerialized(&d, Opcode, OpcodeSize);
+	msg_db_l(2);
 }
 
 };

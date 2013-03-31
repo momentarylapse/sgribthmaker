@@ -290,11 +290,12 @@ struct InstructionWithParams;
 struct InstructionWithParamsList : public Array<InstructionWithParams>
 {
 	InstructionWithParamsList(int line_offset);
+	~InstructionWithParamsList();
 
 	void add_easy(int inst, int param1_type = PKNone, void *param1 = NULL, int param2_type = PKNone, void *param2 = NULL);
 	int add_label(const string &name, bool declaring);
 
-	void Assemble(void *opcode);
+	void Assemble(void *oc, int &ocs);
 	bool AddInstruction(char *oc, int &ocs, int n);
 
 	Array<Label> label;

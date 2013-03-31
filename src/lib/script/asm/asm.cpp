@@ -371,6 +371,9 @@ InstructionWithParamsList::InstructionWithParamsList(int line_no)
 	current_line = line_no;
 }
 
+InstructionWithParamsList::~InstructionWithParamsList()
+{}
+
 void InstructionWithParamsList::add_easy(int inst, int param1_type, void *param1, int param2_type, void *param2)
 {
 	InstructionWithParams i;
@@ -2215,27 +2218,32 @@ void OpcodeAddImmideate(char *oc, int &ocs, InstructionParamFuzzy &ip, Instructi
 		if (p.disp == DispMode8)	size = 1;
 		if (p.disp == DispMode16)	size = 2;
 		if (p.disp == DispMode32)	size = 4;
-	}
+	}else
+		return;
 
+	long long value = p.value;
+	bool rel = ((inst.name[0] == 'j') && (inst.param1._type_ != ParamTImmediateDouble)) || (inst.name == "call") || (inst.name.find("loop") >= 0);
 	if (p.is_label){
 		WantedLabel w;
 		w.Pos = ocs;// + CurrentMetaInfo->PreInsertionLength;
 		w.Size = size;
-		w.LabelNo = p.value;
+		w.LabelNo = value;
 		w.Name = list.label[p.value].Name;
-		w.Relative = ((inst.name[0] == 'j') && (inst.param1._type_ != ParamTImmediateDouble)) || (inst.name == "call") || (inst.name.find("loop") >= 0);
+		w.Relative = rel;
 		list.wanted_label.add(w);
 		so("add wanted label");
+	}else if (rel){
+		value -= (long)oc + ocs + size; // TODO ...first byte of next opcode
 	}
 
-	append_val(oc, ocs, p.value, size);
+	append_val(oc, ocs, value, size);
 
 
 	if (p.type == ParamTImmediateDouble)
 		append_val(oc, ocs, p.value >> 32, 2); // bits 33-47
 }
 
-void LinkLabels(char *oc, InstructionWithParamsList &list)
+void LinkWantedLabels(void *oc, InstructionWithParamsList &list)
 {
 	foreachib(WantedLabel &w, list.wanted_label, i){
 		Label &l = list.label[w.LabelNo];
@@ -2247,7 +2255,7 @@ void LinkLabels(char *oc, InstructionWithParamsList &list)
 		if (w.Relative)
 			value -= (long)oc + w.Pos + w.Size; // TODO first byte after command
 
-		insert_val(oc, w.Pos, value, w.Size);
+		insert_val((char*)oc, w.Pos, value, w.Size);
 
 
 		list.wanted_label.erase(i);
@@ -2454,28 +2462,8 @@ const char *Assemble(const char *code)
 	}
 
 
-	// compile command
-	for (int i=0;i<list.num+1;i++){
-		// defining a label?
-		for (int j=0;j<list.label.num;j++)
-			if (i == list.label[j].InstPos){
-				so("defining found: " + list.label[j].Name);
-				list.label[j].Value = (long)buffer + CodeLength;
-			}
-		if (i >= list.num)
-			break;
-
-		// opcode
-		if (!list.AddInstruction(buffer, CodeLength, i)){
-			SetError("instruction is not compatible with its parameters (a):  ");// + cmd + " " + param1 + " " + param2);
-			CodeLength=-1;
-			msg_db_l(1+ASM_DB_LEVEL);
-			return "";
-		}
-	}
-
-
-	LinkLabels(buffer, list);
+	// compile commands
+	list.Assemble(buffer, CodeLength);
 
 
 	msg_db_l(1+ASM_DB_LEVEL);
@@ -2572,6 +2560,11 @@ InstructionParam _make_param_(int type, long long param)
 		i.type = ParamTImmediate;
 		i.size = Size32;
 		i.value = param;
+	}else if (type == PKLabel){
+		i.type = ParamTImmediate;
+		i.size = Size32;
+		i.value = param;
+		i.is_label = true;
 	}else if (type == PKDerefConstant){
 		i.type = ParamTImmediate;
 		i.deref = true;
@@ -2691,7 +2684,7 @@ bool InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)
 {
 	msg_db_r("AsmAddInstructionLow", 1+ASM_DB_LEVEL);
 
-	int ocs0 = ocs;
+	//int ocs0 = ocs;
 	InstructionWithParams &iwp = (*this)[n];
 
 	// test if any instruction matches our wishes
@@ -2724,6 +2717,30 @@ bool InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)
 	
 	msg_db_l(1+ASM_DB_LEVEL);
 	return (ninst >= 0);
+}
+
+void InstructionWithParamsList::Assemble(void *oc, int &ocs)
+{
+	for (int i=0;i<num+1;i++){
+		// defining a label?
+		for (int j=0;j<label.num;j++)
+			if (i == label[j].InstPos){
+				so("defining found: " + label[j].Name);
+				label[j].Value = (long)oc + ocs;
+			}
+		if (i >= num)
+			break;
+
+		// opcode
+		if (!AddInstruction((char*)oc, ocs, i)){
+			SetError("instruction is not compatible with its parameters (a):  ");// + cmd + " " + param1 + " " + param2);
+			CodeLength = -1;
+			msg_db_l(1+ASM_DB_LEVEL);
+			return;
+		}
+	}
+
+	LinkWantedLabels(oc, *this);
 }
 
 // only used for error messages
