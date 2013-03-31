@@ -297,6 +297,8 @@ struct InstructionWithParamsList : public Array<InstructionWithParams>
 	int add_label(const string &name, bool declaring);
 
 	void AppendFromSource(const char *code);
+	void ShrinkJumps(void *oc, int ocs);
+	void Optimize(void *oc, int ocs);
 	void Compile(void *oc, int &ocs);
 	void LinkWantedLabels(void *oc);
 	bool AddInstruction(char *oc, int &ocs, int n);
@@ -308,8 +310,8 @@ struct InstructionWithParamsList : public Array<InstructionWithParams>
 };
 
 void Init();
-const char *Assemble(const char *code);
-const char *Disassemble(void *code, int length = -1, bool allow_comments = true);
+bool Assemble(const char *code, char *oc, int &ocs);
+string Disassemble(void *code, int length = -1, bool allow_comments = true);
 extern bool Error;
 extern int ErrorLine;
 extern string ErrorMessage;
@@ -317,7 +319,7 @@ extern string ErrorMessage;
 bool AddInstruction(char *oc, int &ocs, int inst, int param1_type = PKNone, void *param1 = NULL, int param2_type = PKNone, void *param2 = NULL);
 void SetInstructionSet(int set);
 bool ImmediateAllowed(int inst);
-extern int CodeLength, OCParam;
+extern int OCParam;
 extern MetaInfo *CurrentMetaInfo;
 
 void GetInstructionParamFlags(int inst, bool &p1_read, bool &p1_write, bool &p2_read, bool &p2_write);

@@ -2755,16 +2755,10 @@ void CompileAsmBlock(char *Opcode, int &OpcodeSize)
 	ps->AsmMetaInfo->PreInsertionLength = OpcodeSize;
 	ps->AsmMetaInfo->LineOffset = ps->AsmBlocks[0].line;
 	Asm::CurrentMetaInfo = ps->AsmMetaInfo;
-	const char *pac = Asm::Assemble(ps->AsmBlocks[0].block);
-	if (!Asm::Error){
+	if (Asm::Assemble(ps->AsmBlocks[0].block, Opcode, OpcodeSize)){
 		//msg_write(Asm::CodeLength);
 		//msg_write(d2h(pac, Asm::CodeLength, false));
 		//msg_write(Opcode2Asm(pac, Asm::CodeLength));
-#ifdef _insert_asm_
-		for (int i=0;i<Asm::CodeLength;i++)
-			Opcode[OpcodeSize + i] = pac[i];
-		OpcodeSize += Asm::CodeLength;
-#endif
 	}else{
 		cur_script->DoError("assembler: " + Asm::ErrorMessage, Asm::ErrorLine);
 		_return_(4,);

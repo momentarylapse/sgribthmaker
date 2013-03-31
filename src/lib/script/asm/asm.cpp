@@ -7,7 +7,6 @@ namespace Asm
 {
 
 
-int CodeLength;
 int OCParam;
 bool Error;
 string ErrorMessage;
@@ -59,13 +58,13 @@ static void so(int i)
 
 
 
-string bufstr;
+/*string bufstr;
 char *buffer;
 inline void resize_buffer(int size)
 {
 	bufstr.resize(size);
 	buffer = &bufstr[0];
-}
+}*/
 
 enum{
 	Size8,
@@ -363,6 +362,7 @@ struct InstructionWithParams{
 	int inst;
 	InstructionParam p1, p2;
 	int line;
+	int size;
 };
 
 
@@ -1466,7 +1466,7 @@ inline void ReadParamData(char *&cur, InstructionParam &p)
 }
 
 // convert some opcode into (human readable) assembler language
-const char *Disassemble(void *_code_,int length,bool allow_comments)
+string Disassemble(void *_code_,int length,bool allow_comments)
 {
 	msg_db_r("Disassemble", 1+ASM_DB_LEVEL);
 	/*if (!Instruction)
@@ -1478,7 +1478,7 @@ const char *Disassemble(void *_code_,int length,bool allow_comments)
 
 	string param;
 	char *opcode;
-	bufstr.clear();
+	string bufstr;
 	char *end=code+length;
 	char *orig=code;
 	if (length<0)	end=code+65536;
@@ -1886,7 +1886,7 @@ const char *Disassemble(void *_code_,int length,bool allow_comments)
 			break;
 	}
 	msg_db_l(1+ASM_DB_LEVEL);
-	return (char*)bufstr.c_str();
+	return bufstr;
 }
 
 // skip unimportant code (whitespace/comments)
@@ -2173,17 +2173,15 @@ void GetParam(InstructionParam &p, const string &param, InstructionWithParamsLis
 }
 
 // complete size of command??
-int CalcCommandSize(sInstruction *i, InstructionParamFuzzy &ip1, InstructionParamFuzzy &ip2, InstructionParam &p1, InstructionParam &p2)
+int AppraiseCommandSize(InstructionWithParams &i)
 {
 	msg_db_r("CalcCommandSize", 1+ASM_DB_LEVEL);
-	int size = i->code_size;
-	if (i->has_modrm)
-		size ++;
+	int size = 4; // 1 prefix + 2 opcode + 1 modrm
 	
-	if ((p1.type == ParamTImmediate) && (!p1.deref))
-		size += absolute_size(ip1.size);
-	if ((p2.type == ParamTImmediate) && (!p2.deref))
-		size += absolute_size(ip2.size);
+	if ((i.p1.type == ParamTImmediate) && (!i.p1.deref)) // TODO why !deref?!?!?
+		size += absolute_size(i.p1.size);
+	if ((i.p2.type == ParamTImmediate) && (!i.p2.deref))
+		size += absolute_size(i.p2.size);
 	msg_db_l(1+ASM_DB_LEVEL);
 	return size;
 }
@@ -2272,8 +2270,6 @@ void InstructionWithParamsList::AppendFromSource(const char *code)
 	
 	Error = false;
 
-	
-	CodeLength = 0; // beginning of block -> current char
 	if (CurrentMetaInfo){
 		CurrentMetaInfo->PreInsertionLength = CurrentMetaInfo->CurrentOpcodePos; // position of the block withing (overall) opcode
 	}else{
@@ -2294,7 +2290,6 @@ void InstructionWithParamsList::AppendFromSource(const char *code)
 		mode16 = CurrentMetaInfo->Mode16;
 	EndOfCode = false;
 	while((unsigned)pos < strlen(code) - 2){
-		resize_buffer(CodeLength + 128);
 		if (Error){
 			msg_db_l(1+ASM_DB_LEVEL);
 			return;
@@ -2305,10 +2300,12 @@ void InstructionWithParamsList::AppendFromSource(const char *code)
 		//msg_write("..");
 		small_param = mode16;
 		small_addr = mode16;
+#if 0
 		if (CurrentMetaInfo){
 			CurrentMetaInfo->CurrentOpcodePos = CurrentMetaInfo->PreInsertionLength + CodeLength;
 			//msg_write(CurrentMetaInfo->CurrentOpcodePos);
 		}
+#endif
 
 
 	// interpret asm code (1 line)
@@ -2342,7 +2339,6 @@ void InstructionWithParamsList::AppendFromSource(const char *code)
 		GetParam(p1, param1, *this, 0);
 		GetParam(p2, param2, *this, 1);
 		if ((p1.type == ParamTInvalid) || (p2.type == ParamTInvalid)){
-			CodeLength=-1;
 			msg_db_l(1+ASM_DB_LEVEL);
 			return;
 		}
@@ -2374,6 +2370,7 @@ void InstructionWithParamsList::AppendFromSource(const char *code)
 				CurrentMetaInfo->bit_change.add(b);
 			}
 			continue;
+#if 0
 		}else if (cmd == "db"){
 			so("Daten:   1 byte");
 			if (CurrentMetaInfo){
@@ -2419,6 +2416,7 @@ void InstructionWithParamsList::AppendFromSource(const char *code)
 			memcpy(&buffer[CodeLength], s, l);
 			CodeLength += l;
 			continue;
+#endif
 		}else if (cmd == "org"){
 			if (CurrentMetaInfo)
 				CurrentMetaInfo->CodeOrigin = (long)p1.value;
@@ -2439,14 +2437,15 @@ void InstructionWithParamsList::AppendFromSource(const char *code)
 				inst = InstructionNames[i].inst;
 		if (inst < 0){
 			SetError("unknown instruction:  " + cmd);
-			CodeLength = -1;
 			msg_db_l(1+ASM_DB_LEVEL);
 			return;
 		}
 		// prefix
 		if (small_param != mode16){
-			buffer[CodeLength ++] = 0x66;
-			msg_error("small param....");
+			//buffer[CodeLength ++] = 0x66;
+			SetError("prefix unhandled:  " + cmd);
+			msg_db_l(1+ASM_DB_LEVEL);
+			return;
 		}
 		InstructionWithParams iwp;
 		iwp.inst = inst;
@@ -2464,7 +2463,7 @@ void InstructionWithParamsList::AppendFromSource(const char *code)
 
 
 // convert human readable asm code into opcode
-const char *Assemble(const char *code)
+bool Assemble(const char *code, char *oc, int &ocs)
 {
 	msg_db_r("Assemble", 1+ASM_DB_LEVEL);
 	/*if (!Instruction)
@@ -2474,13 +2473,16 @@ const char *Assemble(const char *code)
 
 	list.AppendFromSource(code);
 
+	if (!Error)
+		list.Optimize(oc, ocs);
 
 	// compile commands
-	list.Compile(buffer, CodeLength);
+	if (!Error)
+		list.Compile(oc, ocs);
 
 
 	msg_db_l(1+ASM_DB_LEVEL);
-	return buffer;
+	return !Error;
 }
 
 inline bool _size_match_(InstructionParamFuzzy &inst_p, InstructionParam &wanted_p)
@@ -2697,7 +2699,7 @@ bool InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)
 {
 	msg_db_r("AsmAddInstructionLow", 1+ASM_DB_LEVEL);
 
-	//int ocs0 = ocs;
+	int ocs0 = ocs;
 	InstructionWithParams &iwp = (*this)[n];
 	current_inst = n;
 
@@ -2723,14 +2725,49 @@ bool InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)
 		}
 
 	// compile
-	if (ninst >= 0)
+	if (ninst >= 0){
 		OpcodeAddInstruction(oc, ocs, Instruction[ninst], iwp.p1, iwp.p2, *this);
+		iwp.size = ocs - ocs0;
+	}
 	/*else
 		Error(string("unknown instruction:  ",cmd));*/
 	//msg_write(d2h(&oc[ocs0], ocs - ocs0, false));
 	
 	msg_db_l(1+ASM_DB_LEVEL);
 	return (ninst >= 0);
+}
+
+void InstructionWithParamsList::ShrinkJumps(void *oc, int ocs)
+{
+	int _ocs = ocs;
+	Compile(oc, _ocs);
+
+	foreachi(InstructionWithParams &iwp, *this, i){
+		if ((iwp.inst == inst_jmp) || (iwp.inst == inst_jz) || (iwp.inst == inst_jnz)){
+			if (iwp.p1.is_label){
+				int target = label[iwp.p1.value].InstNo;
+				int dist = 0;
+				for (int j=i+1;j<target;j++)
+					dist += (*this)[j].size;
+				for (int j=target;j<=i;j++)
+					dist += (*this)[j].size;
+				//msg_write(format("%d %d   %d", i, target, dist));
+
+				if (dist < 127){
+					so("really shrink");
+					if (iwp.inst == inst_jmp)	iwp.inst = inst_jmp_b;
+					if (iwp.inst == inst_jz)	iwp.inst = inst_jz_b;
+					if (iwp.inst == inst_jnz)	iwp.inst = inst_jnz_b;
+					iwp.p1.size = Size8;
+				}
+			}
+		}
+	}
+}
+
+void InstructionWithParamsList::Optimize(void *oc, int ocs)
+{
+	ShrinkJumps(oc, ocs);
 }
 
 void InstructionWithParamsList::Compile(void *oc, int &ocs)
@@ -2748,7 +2785,6 @@ void InstructionWithParamsList::Compile(void *oc, int &ocs)
 		// opcode
 		if (!AddInstruction((char*)oc, ocs, i)){
 			SetError("instruction is not compatible with its parameters (a):  ");// + cmd + " " + param1 + " " + param2);
-			CodeLength = -1;
 			return;
 		}
 	}
