@@ -93,6 +93,8 @@ struct SerializerData
 	Array<sTempVar> TempVar;
 
 	Array<sStuffToAdd> StuffToAdd;
+
+	void Compile(char *Opcode, int &OpcodeSize);
 };
 
 inline void add_reg_channel(SerializerData *d, int reg, int first, int last)
@@ -2764,8 +2766,7 @@ void CompileAsmBlock(char *Opcode, int &OpcodeSize)
 		OpcodeSize += Asm::CodeLength;
 #endif
 	}else{
-		Asm::ErrorLine--; // (T_T)
-		cur_script->DoError("error in assembler code...", Asm::ErrorLine);
+		cur_script->DoError("assembler: " + Asm::ErrorMessage, Asm::ErrorLine);
 		_return_(4,);
 	}
 	delete[](ps->AsmBlocks[0].block);
@@ -2773,17 +2774,17 @@ void CompileAsmBlock(char *Opcode, int &OpcodeSize)
 	msg_db_l(4);
 }
 
-void CompileSerialized(SerializerData *d, char *Opcode, int &OpcodeSize)
+void SerializerData::Compile(char *Opcode, int &OpcodeSize)
 {
-	msg_db_r("CompileSerialized", 2);
-	InstructionPos.resize(d->cmd.num + 1);
-	for (int i=0;i<d->cmd.num;i++){
+	msg_db_r("Serializer.Compile", 2);
+	InstructionPos.resize(cmd.num + 1);
+	for (int i=0;i<cmd.num;i++){
 		InstructionPos[i] = OpcodeSize;
 
-		if (d->cmd[i].inst == inst_marker)
+		if (cmd[i].inst == inst_marker)
 			continue;
 
-		if (d->cmd[i].inst == inst_asm){
+		if (cmd[i].inst == inst_asm){
 			CompileAsmBlock(Opcode, OpcodeSize);
 			if (cur_script->Error)
 				_return_(2,);
@@ -2796,23 +2797,23 @@ void CompileSerialized(SerializerData *d, char *Opcode, int &OpcodeSize)
 				d->cmd[i].p1.p = (char*)(  (long)d->cmd[i].p1.p - (long)&Opcode[OpcodeSize] - 5 );*/
 
 		// push 8 bit -> push 32 bit
-		if (d->cmd[i].inst == Asm::inst_push)
-			if (d->cmd[i].p1.kind == KindRegister)
-				d->cmd[i].p1.p = (char*) Asm::RegRoot[(long)d->cmd[i].p1.p];
+		if (cmd[i].inst == Asm::inst_push)
+			if (cmd[i].p1.kind == KindRegister)
+				cmd[i].p1.p = (char*) Asm::RegRoot[(long)cmd[i].p1.p];
 			
 
-		assemble_cmd(Opcode, OpcodeSize, d->cmd[i]);
+		assemble_cmd(Opcode, OpcodeSize, cmd[i]);
 		if (cur_script->Error)
 			_return_(2,);
 	}
-	InstructionPos[d->cmd.num] = OpcodeSize;
+	InstructionPos[cmd.num] = OpcodeSize;
 
-	ProcessJumpTargets(d, Opcode, OpcodeSize);
+	ProcessJumpTargets(this, Opcode, OpcodeSize);
 
 	//msg_write(Opcode2Asm(Opcode, OpcodeSize));
 
 #ifdef allow_simplification
-	ShrinkJumps(d, Opcode, OpcodeSize);
+	ShrinkJumps(this, Opcode, OpcodeSize);
 #endif
 
 
@@ -2832,7 +2833,7 @@ void Script::CompileFunction(Function *f, char *Opcode, int &OpcodeSize)
 	if (!Error)
 		SerializeFunction(&d, f);
 	if (!Error)
-		CompileSerialized(&d, Opcode, OpcodeSize);
+		d.Compile(Opcode, OpcodeSize);
 	msg_db_l(2);
 }
 

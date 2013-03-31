@@ -276,7 +276,7 @@ void Script::CompileTaskEntryPoint()
 		OCAddChar(0x90);*/
 	}
 
-	list->Assemble(ThreadOpcode, ThreadOpcodeSize);
+	list->Compile(ThreadOpcode, ThreadOpcodeSize);
 
 	first_execution = (t_func*)list->label[label_first].Value;
 	continue_execution = (t_func*)list->label[label_cont].Value;

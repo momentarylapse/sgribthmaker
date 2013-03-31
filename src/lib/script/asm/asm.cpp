@@ -10,6 +10,7 @@ namespace Asm
 int CodeLength;
 int OCParam;
 bool Error;
+string ErrorMessage;
 int ErrorLine;
 
 
@@ -25,7 +26,8 @@ static bool small_addr;
 
 void SetError(const string &str)
 {
-	msg_error(format("%s\nline %d",str.c_str(),LineNo+1));
+	msg_error(str + format("\nline %d", LineNo + 1));
+	ErrorMessage = str;
 	ErrorLine = LineNo;
 	Error = true;
 }
@@ -390,16 +392,16 @@ int InstructionWithParamsList::add_label(const string &name, bool declaring)
 	// label already in use? (used before declared)
 	if (declaring){
 		foreachi(Label &l, label, i)
-			if (l.InstPos < 0)
+			if (l.InstNo < 0)
 				if (l.Name == name){
-					l.InstPos = num;
+					l.InstNo = num;
 					so("----redecl");
 					return i;
 				}
 	}
 	Label l;
 	l.Name = name;
-	l.InstPos = declaring ? num : -1;
+	l.InstNo = declaring ? num : -1;
 	l.Value = -1;
 	label.add(l);
 	return label.num - 1;
@@ -2230,6 +2232,7 @@ void OpcodeAddImmideate(char *oc, int &ocs, InstructionParamFuzzy &ip, Instructi
 		w.LabelNo = value;
 		w.Name = list.label[p.value].Name;
 		w.Relative = rel;
+		w.InstNo = list.current_inst;
 		list.wanted_label.add(w);
 		so("add wanted label");
 	}else if (rel){
@@ -2243,10 +2246,10 @@ void OpcodeAddImmideate(char *oc, int &ocs, InstructionParamFuzzy &ip, Instructi
 		append_val(oc, ocs, p.value >> 32, 2); // bits 33-47
 }
 
-void LinkWantedLabels(void *oc, InstructionWithParamsList &list)
+void InstructionWithParamsList::LinkWantedLabels(void *oc)
 {
-	foreachib(WantedLabel &w, list.wanted_label, i){
-		Label &l = list.label[w.LabelNo];
+	foreachib(WantedLabel &w, wanted_label, i){
+		Label &l = label[w.LabelNo];
 		if (l.Value < 0)
 			continue;
 		so("linking label");
@@ -2258,18 +2261,14 @@ void LinkWantedLabels(void *oc, InstructionWithParamsList &list)
 		insert_val((char*)oc, w.Pos, value, w.Size);
 
 
-		list.wanted_label.erase(i);
+		wanted_label.erase(i);
 		_foreach_it_.update();
 	}
 }
 
-
-// convert human readable asm code into opcode
-const char *Assemble(const char *code)
+void InstructionWithParamsList::AppendFromSource(const char *code)
 {
-	msg_db_r("Asm2Opcode", 1+ASM_DB_LEVEL);
-	/*if (!Instruction)
-		SetInstructionSet(InstructionSetDefault);*/
+	msg_db_r("AppendFromSource", 1+ASM_DB_LEVEL);
 	
 	Error = false;
 
@@ -2280,11 +2279,10 @@ const char *Assemble(const char *code)
 	}else{
 		SetError("no CurrentMetaInfo");
 		msg_db_l(1+ASM_DB_LEVEL);
-		return NULL;
+		return;
 	}
 
 	LineNo = CurrentMetaInfo->LineOffset;
-	InstructionWithParamsList list = InstructionWithParamsList(CurrentMetaInfo->LineOffset);
 
 	// CurrentMetaInfo->CurrentOpcodePos // Anfang aktuelle Zeile im gesammten Opcode
 	code_buffer = code; // Asm-Source-Puffer
@@ -2299,7 +2297,7 @@ const char *Assemble(const char *code)
 		resize_buffer(CodeLength + 128);
 		if (Error){
 			msg_db_l(1+ASM_DB_LEVEL);
-			return "";
+			return;
 		}
 
 		string cmd, param1, param2;
@@ -2316,7 +2314,7 @@ const char *Assemble(const char *code)
 	// interpret asm code (1 line)
 		// find command
 		cmd = FindMnemonic(pos);
-		list.current_line = LineNo;
+		current_line = LineNo;
 		//msg_write(cmd);
 		if (cmd.num == 0)
 			break;
@@ -2341,12 +2339,12 @@ const char *Assemble(const char *code)
 		so("------");
 
 		// parameters
-		GetParam(p1, param1, list, 0);
-		GetParam(p2, param2, list, 1);
+		GetParam(p1, param1, *this, 0);
+		GetParam(p2, param2, *this, 1);
 		if ((p1.type == ParamTInvalid) || (p2.type == ParamTInvalid)){
 			CodeLength=-1;
 			msg_db_l(1+ASM_DB_LEVEL);
-			return "";
+			return;
 		}
 
 	// special stuff
@@ -2429,7 +2427,7 @@ const char *Assemble(const char *code)
 			so("Label");
 			cmd.resize(cmd.num - 1);
 			so(cmd);
-			list.add_label(cmd, true);
+			add_label(cmd, true);
 
 			continue;
 		}
@@ -2443,7 +2441,7 @@ const char *Assemble(const char *code)
 			SetError("unknown instruction:  " + cmd);
 			CodeLength = -1;
 			msg_db_l(1+ASM_DB_LEVEL);
-			return "";
+			return;
 		}
 		// prefix
 		if (small_param != mode16){
@@ -2454,16 +2452,31 @@ const char *Assemble(const char *code)
 		iwp.inst = inst;
 		iwp.p1 = p1;
 		iwp.p2 = p2;
-		list.add(iwp);
+		iwp.line = current_line;
+		add(iwp);
 
 
 		if (EndOfCode)
 			break;
 	}
+	msg_db_l(1+ASM_DB_LEVEL);
+}
+
+
+// convert human readable asm code into opcode
+const char *Assemble(const char *code)
+{
+	msg_db_r("Assemble", 1+ASM_DB_LEVEL);
+	/*if (!Instruction)
+		SetInstructionSet(InstructionSetDefault);*/
+
+	InstructionWithParamsList list = InstructionWithParamsList(CurrentMetaInfo->LineOffset);
+
+	list.AppendFromSource(code);
 
 
 	// compile commands
-	list.Assemble(buffer, CodeLength);
+	list.Compile(buffer, CodeLength);
 
 
 	msg_db_l(1+ASM_DB_LEVEL);
@@ -2686,6 +2699,7 @@ bool InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)
 
 	//int ocs0 = ocs;
 	InstructionWithParams &iwp = (*this)[n];
+	current_inst = n;
 
 	// test if any instruction matches our wishes
 	int ninst = -1;
@@ -2719,12 +2733,12 @@ bool InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)
 	return (ninst >= 0);
 }
 
-void InstructionWithParamsList::Assemble(void *oc, int &ocs)
+void InstructionWithParamsList::Compile(void *oc, int &ocs)
 {
 	for (int i=0;i<num+1;i++){
 		// defining a label?
 		for (int j=0;j<label.num;j++)
-			if (i == label[j].InstPos){
+			if (i == label[j].InstNo){
 				so("defining found: " + label[j].Name);
 				label[j].Value = (long)oc + ocs;
 			}
@@ -2735,12 +2749,17 @@ void InstructionWithParamsList::Assemble(void *oc, int &ocs)
 		if (!AddInstruction((char*)oc, ocs, i)){
 			SetError("instruction is not compatible with its parameters (a):  ");// + cmd + " " + param1 + " " + param2);
 			CodeLength = -1;
-			msg_db_l(1+ASM_DB_LEVEL);
 			return;
 		}
 	}
 
-	LinkWantedLabels(oc, *this);
+	if (!Error)
+		LinkWantedLabels(oc);
+
+	if (wanted_label.num > 0){
+		LineNo = (*this)[wanted_label[0].InstNo].line;
+		SetError("undeclared label used: " + wanted_label[0].Name);
+	}
 }
 
 // only used for error messages

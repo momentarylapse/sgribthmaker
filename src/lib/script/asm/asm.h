@@ -242,7 +242,7 @@ struct GlobalVar
 struct Label
 {
 	string Name;
-	int InstPos;
+	int InstNo;
 	int Value;
 };
 
@@ -253,6 +253,7 @@ struct WantedLabel
 	int Size; // number of bytes to fill
 	int Add; // to add to the value...
 	int LabelNo;
+	int InstNo;
 	bool Relative;
 };
 
@@ -295,12 +296,15 @@ struct InstructionWithParamsList : public Array<InstructionWithParams>
 	void add_easy(int inst, int param1_type = PKNone, void *param1 = NULL, int param2_type = PKNone, void *param2 = NULL);
 	int add_label(const string &name, bool declaring);
 
-	void Assemble(void *oc, int &ocs);
+	void AppendFromSource(const char *code);
+	void Compile(void *oc, int &ocs);
+	void LinkWantedLabels(void *oc);
 	bool AddInstruction(char *oc, int &ocs, int n);
 
 	Array<Label> label;
 	Array<WantedLabel> wanted_label;
 	int current_line;
+	int current_inst;
 };
 
 void Init();
@@ -308,6 +312,7 @@ const char *Assemble(const char *code);
 const char *Disassemble(void *code, int length = -1, bool allow_comments = true);
 extern bool Error;
 extern int ErrorLine;
+extern string ErrorMessage;
 
 bool AddInstruction(char *oc, int &ocs, int inst, int param1_type = PKNone, void *param1 = NULL, int param2_type = PKNone, void *param2 = NULL);
 void SetInstructionSet(int set);
