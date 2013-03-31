@@ -62,15 +62,16 @@ void AddEspAdd(Asm::InstructionWithParamsList *list,int d)
 void init_all_global_objects(PreScript *ps, Function *f, Array<char*> &g_var)
 {
 	foreachi(LocalVariable &v, f->var, i){
-		foreach(ClassFunction &f, v.type->function){
+		foreach(ClassFunction &cf, v.type->function){
 			typedef void init_func(void *);
-			if (f.name == "__init__"){ // TODO test signature "void __init__()"
+			if (cf.name == "__init__"){ // TODO test signature "void __init__()"
 				//msg_write("global init: " + v.type->name);
 				init_func *ff = NULL;
-				if (f.kind == KindCompilerFunction)
-					ff = (init_func*)PreCommands[f.nr].func;
-				else if (f.kind == KindFunction)
-					ff = (init_func*)ps->script->func[f.nr];
+				if (cf.kind == KindCompilerFunction){
+					ff = (init_func*)PreCommands[cf.nr].func;
+				}else if (cf.kind == KindFunction){
+					ff = (init_func*)v.type->owner->script->func[cf.nr];
+				}
 				if (ff)
 					ff(g_var[i]);
 			}
