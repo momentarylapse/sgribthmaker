@@ -22,8 +22,6 @@ int LineNo;
 static bool mode16;
 static bool small_param;
 static bool small_addr;
-//static bool ConstantIsLabel, UnknownLabel;
-static bool UnknownLabel;
 
 void SetError(const string &str)
 {
@@ -351,6 +349,23 @@ struct InstructionParam{
 	long long value; // disp or immediate
 	bool is_label;
 	bool immediate_is_relative;	// for jump
+};
+
+struct InstructionWithParams{
+	int inst;
+	InstructionParam p1, p2;
+};
+
+
+InstructionParam _make_param_(int type, long long param);
+
+void InstructionWithParamsList::add_easy(int inst, int param1_type, void *param1, int param2_type, void *param2)
+{
+	InstructionWithParams i;
+	i.inst = inst;
+	i.p1 = _make_param_(param1_type, (long)param1);
+	i.p2 = _make_param_(param2_type, (long)param2);
+	add(i);
 };
 
 // which part of the modr/m byte is used
@@ -1418,9 +1433,12 @@ const char *Disassemble(void *_code_,int length,bool allow_comments)
 		if (CurrentMetaInfo){
 
 			// labels
+#if 0
+			// TODO
 			for (int i=0;i<CurrentMetaInfo->label.num;i++)
 				if ((long)code - (long)orig == CurrentMetaInfo->label[i].Pos)
 					bufstr += "    " + CurrentMetaInfo->label[i].Name + ":\n";
+#endif
 
 			// data blocks
 			bool inserted = false;
@@ -1895,7 +1913,7 @@ string FindMnemonic(int &pos)
 }
 
 // interpret an expression from source code as an assembler parameter
-void GetParam(InstructionParam &p, const string &param, int pn)
+void GetParam(InstructionParam &p, const string &param, int inst_no, int pn)
 {
 	msg_db_r("GetParam", 1+ASM_DB_LEVEL);
 	p.type = ParamTInvalid;
@@ -1916,7 +1934,7 @@ void GetParam(InstructionParam &p, const string &param, int pn)
 			printf("deref:   ");
 		so("Deref:");
 		//bool u16 = use_mode16;
-		GetParam(p, param.substr(1, -2), pn);
+		GetParam(p, param.substr(1, -2), inst_no, pn);
 		p.deref = true;
 		//use_mode16 = u16;
 
@@ -1943,7 +1961,7 @@ void GetParam(InstructionParam &p, const string &param, int pn)
 			else
 				part.add(param[i]);
 		int offset = part.num;
-		GetParam(sub, part, pn);
+		GetParam(sub, part, inst_no, pn);
 		if (sub.type == ParamTRegister){
 			//msg_write("reg");
 			p.type = ParamTRegister;
@@ -1959,7 +1977,7 @@ void GetParam(InstructionParam &p, const string &param, int pn)
 				break;
 			}
 		part = param.substr(offset, -1);
-		GetParam(sub, part, pn);
+		GetParam(sub, part, inst_no, pn);
 		if (sub.type == ParamTImmediate){
 			//msg_write("c2 = im");
 			if (((long)sub.value & 0xffffff00) == 0)
@@ -1989,7 +2007,7 @@ void GetParam(InstructionParam &p, const string &param, int pn)
 				v+=param[i]-'0';
 			}else if (param[i]==':'){
 				InstructionParam sub;
-				GetParam(sub, param.tail(param.num - i), pn);
+				GetParam(sub, param.tail(param.num - i), inst_no, pn);
 				if (sub.type != ParamTImmediate){
 					SetError("error in hex parameter:  " + string(param));
 					p.type = PKInvalid;
@@ -2025,9 +2043,14 @@ void GetParam(InstructionParam &p, const string &param, int pn)
 
 	// label substitude
 	}else if (param == "$"){
-		p.value = CurrentMetaInfo->CurrentOpcodePos + CurrentMetaInfo->CodeOrigin;
+		p.value = CurrentMetaInfo->label.num;
 		p.type = ParamTImmediate;
 		p.is_label = true;
+		Label l;
+		l.Name = "$";
+		l.InstPos = inst_no;
+		l.Value = -1;
+		CurrentMetaInfo->label.add(l);
 		so("label:  " + param + "\n");
 		
 	}else{
@@ -2041,46 +2064,40 @@ void GetParam(InstructionParam &p, const string &param, int pn)
 				msg_db_l(1+ASM_DB_LEVEL);
 				return;
 			}
-		if (CurrentMetaInfo){
-			string sparam = param;
-			// existing label
-			for (int i=0;i<CurrentMetaInfo->label.num;i++)
-				if (CurrentMetaInfo->label[i].Name == sparam){
-					p.value = CurrentMetaInfo->label[i].Pos + CurrentMetaInfo->CodeOrigin;
-					p.type = ParamTImmediate;
-					p.is_label = true;
-					so("label:  " + param + "\n");
-					msg_db_l(1+ASM_DB_LEVEL);
-					return;
-				}
-			// C-Script variable (global)
-			for (int i=0;i<CurrentMetaInfo->global_var.num;i++){
-				if (CurrentMetaInfo->global_var[i].Name == sparam){
-					p.value = (long)CurrentMetaInfo->global_var[i].Pos;
-					p.type = ParamTImmediate;
-					p.deref = true;
-					so("global variable:  \"" + param + "\"\n");
-					msg_db_l(1+ASM_DB_LEVEL);
-					return;
-				}
-			}
-			// not yet existing label...
-			if (param[0]=='_'){
-				WantedLabel w;
-				w.Name = param;
-				w.Size = 0;
-				w.Pos = -1;
-				w.Add = 0;
-				w.ParamNo = pn;
-				CurrentMetaInfo->wanted_label.add(w);
-				UnknownLabel = true;
-				so("wanted label:  \"" + param + "\"\n");
-				p.value = 0;
+		// existing label
+		for (int i=0;i<CurrentMetaInfo->label.num;i++)
+			if (CurrentMetaInfo->label[i].Name == param){
+				p.value = i;
 				p.type = ParamTImmediate;
 				p.is_label = true;
+				so("label:  " + param + "\n");
 				msg_db_l(1+ASM_DB_LEVEL);
 				return;
 			}
+		// script variable (global)
+		for (int i=0;i<CurrentMetaInfo->global_var.num;i++){
+			if (CurrentMetaInfo->global_var[i].Name == param){
+				p.value = (long)CurrentMetaInfo->global_var[i].Pos;
+				p.type = ParamTImmediate;
+				p.deref = true;
+				so("global variable:  \"" + param + "\"\n");
+				msg_db_l(1+ASM_DB_LEVEL);
+				return;
+			}
+		}
+		// not yet existing label...
+		if (param[0]=='_'){
+			so("label as param:  \"" + param + "\"\n");
+			p.value = CurrentMetaInfo->label.num;
+			p.type = ParamTImmediate;
+			p.is_label = true;
+			Label l;
+			l.InstPos = -1;
+			l.Name = param;
+			l.Value = -1;
+			CurrentMetaInfo->label.add(l);
+			msg_db_l(1+ASM_DB_LEVEL);
+			return;
 		}
 	}
 	if (p.type == ParamTInvalid)
@@ -2096,8 +2113,10 @@ int CalcCommandSize(sInstruction *i, InstructionParamFuzzy &ip1, InstructionPara
 	if (i->has_modrm)
 		size ++;
 	
-	if ((p1.type == ParamTImmediate) && (!p1.deref))	size += absolute_size(ip1.size);
-	if ((p2.type == ParamTImmediate) && (!p2.deref))	size += absolute_size(ip2.size);
+	if ((p1.type == ParamTImmediate) && (!p1.deref))
+		size += absolute_size(ip1.size);
+	if ((p2.type == ParamTImmediate) && (!p2.deref))
+		size += absolute_size(ip2.size);
 	msg_db_l(1+ASM_DB_LEVEL);
 	return size;
 }
@@ -2112,10 +2131,15 @@ inline void insert_val(char *oc, int &ocs, long long val, int size)
 		*(int*)&oc[ocs] = (int)val;
 	else
 		memcpy(&oc[ocs], &val, size);
+}
+
+inline void append_val(char *oc, int &ocs, long long val, int size)
+{
+	insert_val(oc, ocs, val, size);
 	ocs += size;
 }
 
-void OpcodeAddImmideate(char *oc, int &ocs, InstructionParamFuzzy &ip, InstructionParam &p, int pn)
+void OpcodeAddImmideate(char *oc, int &ocs, InstructionParamFuzzy &ip, InstructionParam &p, sInstruction &inst)
 {
 	int size = 0;
 	if (p.type == ParamTImmediate){
@@ -2131,26 +2155,44 @@ void OpcodeAddImmideate(char *oc, int &ocs, InstructionParamFuzzy &ip, Instructi
 		if (p.disp == DispMode32)	size = 4;
 	}
 
-	// wanted label -> set new information
-	if ((UnknownLabel) && ((p.type == ParamTImmediate) || (p.type == ParamTImmediateDouble)))
-		for (int i=0;i<CurrentMetaInfo->wanted_label.num;i++){
-			WantedLabel *w = &CurrentMetaInfo->wanted_label[i];
-			if ((pn == w->ParamNo) && (w->Pos < 0)){
-				//msg_error("--------------------------- got wanted label!??");
-				// the constant is just fake, since its value is still unknown!
-				w->Pos = ocs + CurrentMetaInfo->PreInsertionLength;
-				w->Size = size;
-			}
-		}
+	if (p.is_label){
+		WantedLabel w;
+		w.Pos = ocs;// + CurrentMetaInfo->PreInsertionLength;
+		w.Size = size;
+		w.LabelNo = p.value;
+		w.Name = CurrentMetaInfo->label[p.value].Name;
+		w.Relative = ((inst.name[0] == 'j') && (inst.param1._type_ != ParamTImmediateDouble)) || (inst.name == "call") || (inst.name.find("loop") >= 0);
+		CurrentMetaInfo->wanted_label.add(w);
+	}
 
-	insert_val(oc, ocs, p.value, size);
+	append_val(oc, ocs, p.value, size);
 
 
 	if (p.type == ParamTImmediateDouble)
-		insert_val(oc, ocs, p.value >> 32, 2); // bits 33-47
+		append_val(oc, ocs, p.value >> 32, 2); // bits 33-47
 }
 
-bool AddInstructionLowLevel(char *oc, int &ocs, int inst, InstructionParam &wp1, InstructionParam &wp2);
+bool AddInstructionLowLevel(char *oc, int &ocs, int inst, InstructionParam &wp1, InstructionParam &wp2, int inst_no);
+
+void LinkLabels(char *oc, InstructionWithParamsList &list)
+{
+	foreachib(WantedLabel &w, CurrentMetaInfo->wanted_label, i){
+		Label &l = CurrentMetaInfo->label[w.LabelNo];
+		if (l.Value < 0)
+			continue;
+		so("linking label");
+
+		int value = l.Value;
+		if (w.Relative)
+			value -= (long)oc + w.Pos + w.Size; // TODO first byte after command
+
+		insert_val(oc, w.Pos, value, w.Size);
+
+
+		CurrentMetaInfo->wanted_label.erase(i);
+		_foreach_it_.update();
+	}
+}
 
 
 // convert human readable asm code into opcode
@@ -2162,11 +2204,19 @@ const char *Assemble(const char *code)
 	
 	Error = false;
 
+	InstructionWithParamsList list;
+
 	
 	CodeLength = 0; // beginning of block -> current char
 	if (CurrentMetaInfo){
 		CurrentMetaInfo->PreInsertionLength = CurrentMetaInfo->CurrentOpcodePos; // position of the block withing (overall) opcode
+	}else{
+		SetError("no CurrentMetaInfo");
+		msg_db_l(1+ASM_DB_LEVEL);
+		return NULL;
 	}
+	CurrentMetaInfo->label.clear();
+	CurrentMetaInfo->wanted_label.clear();
 	// CurrentMetaInfo->CurrentOpcodePos // Anfang aktuelle Zeile im gesammten Opcode
 	code_buffer = code; // Asm-Source-Puffer
 	LineNo = 0;
@@ -2191,7 +2241,6 @@ const char *Assemble(const char *code)
 		//msg_write("..");
 		small_param = mode16;
 		small_addr = mode16;
-		UnknownLabel = false;
 		if (CurrentMetaInfo){
 			CurrentMetaInfo->CurrentOpcodePos = CurrentMetaInfo->PreInsertionLength + CodeLength;
 			//msg_write(CurrentMetaInfo->CurrentOpcodePos);
@@ -2225,8 +2274,8 @@ const char *Assemble(const char *code)
 		so("------");
 
 		// parameters
-		GetParam(p1, param1, 0);
-		GetParam(p2, param2, 1);
+		GetParam(p1, param1, list.num, 0);
+		GetParam(p2, param2, list.num, 1);
 		if ((p1.type == ParamTInvalid) || (p2.type == ParamTInvalid)){
 			CodeLength=-1;
 			msg_db_l(1+ASM_DB_LEVEL);
@@ -2311,54 +2360,29 @@ const char *Assemble(const char *code)
 			continue;
 		}else if (cmd[cmd.num - 1] == ':'){
 			so("Label");
-			if (CurrentMetaInfo){
-				cmd.resize(cmd.num - 1);
-				so(cmd);
+			cmd.resize(cmd.num - 1);
+			so(cmd);
+			bool found = false;
+			// label already in use? (used before declared)
+			foreach(Label &l, CurrentMetaInfo->label)
+				if (l.InstPos < 0)
+					if (l.Name == cmd){
+						l.InstPos = list.num;
+						found = true;
+					}
+			if (!found){
+				// new label
 				Label l;
 				l.Name = cmd;
-				l.Pos = CurrentMetaInfo->CurrentOpcodePos;
+				l.InstPos = list.num;
+				l.Value = -1;
 				CurrentMetaInfo->label.add(l);
-
-				//msg_write("-------------label-----------------------");
-
-				// replace the old place holders
-				for (int i=0;i<CurrentMetaInfo->wanted_label.num;i++)
-					if (CurrentMetaInfo->wanted_label[i].Name == cmd){
-						WantedLabel *w = &CurrentMetaInfo->wanted_label[i];
-						//msg_error("    -> wanted");
-						//printf("cop %d   orig %d  add %d  pos %d  pil %d\n", (long)CurrentMetaInfo->CurrentOpcodePos, (long)CurrentMetaInfo->CodeOrigin, (long)w->Add, w->Pos, CurrentMetaInfo->PreInsertionLength);
-
-						// location???
-						char *a = NULL;
-						// int this asm block?
-						if (w->Pos >= CurrentMetaInfo->PreInsertionLength){
-							//msg_write("inside");
-							// inside
-							a = &buffer[w->Pos - CurrentMetaInfo->PreInsertionLength];
-							//msg_write(w->Pos - CurrentMetaInfo->PreInsertionLength);
-						}else{
-							//msg_write("before");
-							// before asm
-							a = &CurrentMetaInfo->Opcode[w->Pos];
-						}
-						int lvalue = CurrentMetaInfo->CurrentOpcodePos + CurrentMetaInfo->CodeOrigin + w->Add;
-						/*msg_write(lvalue);
-						msg_write(w->Size);*/
-
-						// insert
-						int temp = 0;
-						insert_val(a, temp, lvalue, w->Size);
-						//InsertConstant(lvalue, w->Size, -1, a);
-
-						// remove from list
-						CurrentMetaInfo->wanted_label.erase(i);
-						i--;
-					}
 			}
+
 			continue;
 		}
 
-	// compile command
+		// command
 		int inst = -1;
 		for (int i=0;i<NumInstructionNames;i++)
 			if (InstructionNames[i].name == cmd)
@@ -2370,21 +2394,46 @@ const char *Assemble(const char *code)
 			return "";
 		}
 		// prefix
-		if (small_param != mode16)
+		if (small_param != mode16){
 			buffer[CodeLength ++] = 0x66;
-
-		// command
-		if (!AddInstructionLowLevel(buffer, CodeLength, inst, p1, p2)){
-			SetError("instruction is not compatible with its parameters (a):  " + cmd + " " + param1 + " " + param2);
-			CodeLength=-1;
-			msg_db_l(1+ASM_DB_LEVEL);
-			return "";
+			msg_error("small param....");
 		}
+		InstructionWithParams iwp;
+		iwp.inst = inst;
+		iwp.p1 = p1;
+		iwp.p2 = p2;
+		list.add(iwp);
 
 
 		if (EndOfCode)
 			break;
 	}
+
+
+	// compile command
+	for (int i=0;i<list.num+1;i++){
+		// defining a label?
+		for (int j=0;j<CurrentMetaInfo->label.num;j++)
+			if (i == CurrentMetaInfo->label[j].InstPos){
+				so("defining found: " + CurrentMetaInfo->label[j].Name);
+				CurrentMetaInfo->label[j].Value = (long)buffer + CodeLength;
+			}
+		if (i >= list.num)
+			break;
+
+		// opcode
+		if (!AddInstructionLowLevel(buffer, CodeLength, list[i].inst, list[i].p1, list[i].p2, i)){
+			SetError("instruction is not compatible with its parameters (a):  ");// + cmd + " " + param1 + " " + param2);
+			CodeLength=-1;
+			msg_db_l(1+ASM_DB_LEVEL);
+			return "";
+		}
+	}
+
+
+	LinkLabels(buffer, list);
+
+
 	msg_db_l(1+ASM_DB_LEVEL);
 	return buffer;
 }
@@ -2483,9 +2532,9 @@ InstructionParam _make_param_(int type, long long param)
 		i.type = ParamTImmediate;
 		i.deref = true;
 		i.value = param;
-	}else if ((type == PKLocal) || (type == PKStackRel) || (type == PKEdxRel)){
+	}else if ((type == PKLocal) || (type == PKEdxRel)){
 		i.type = ParamTRegister;
-		i.reg = (type == PKLocal) ? RegisterByID[RegEbp] : ((type == PKStackRel) ? RegisterByID[RegEsp] : RegisterByID[RegEdx]);
+		i.reg = (type == PKLocal) ? RegisterByID[RegEbp] : RegisterByID[RegEdx];
 		i.deref = true;
 		i.disp = ((param < 120) && (param > -120)) ? DispMode8 : DispMode32;
 		i.value = param;
@@ -2561,56 +2610,40 @@ inline char CreatePartialModRMByte(InstructionParamFuzzy &pf, InstructionParam &
 	return 0x00;
 }
 
-char CreateModRMByte(sInstruction *inst, InstructionParam &p1, InstructionParam &p2)
+char CreateModRMByte(sInstruction &inst, InstructionParam &p1, InstructionParam &p2)
 {
-	char mrm = CreatePartialModRMByte(inst->param1, p1) | CreatePartialModRMByte(inst->param2, p2);
-	if (inst->cap >= 0)
-		mrm |= (inst->cap * 8);
+	char mrm = CreatePartialModRMByte(inst.param1, p1) | CreatePartialModRMByte(inst.param2, p2);
+	if (inst.cap >= 0)
+		mrm |= (inst.cap * 8);
 	return mrm;
 }
 
-void OpcodeAddInstruction(char *oc, int &ocs, sInstruction *inst, InstructionParam &p1, InstructionParam &p2)
+void OpcodeAddInstruction(char *oc, int &ocs, sInstruction &inst, InstructionParam &p1, InstructionParam &p2)
 {
 	msg_db_r("OpcodeAddInstruction", 1+ASM_DB_LEVEL);
 
 	// add opcode
-	*(int*)&oc[ocs] = inst->code;
-	ocs += inst->code_size;
+	*(int*)&oc[ocs] = inst.code;
+	ocs += inst.code_size;
 
 	// create mod/rm-byte
-	if (inst->has_modrm)
+	if (inst.has_modrm)
 		oc[ocs ++] = CreateModRMByte(inst, p1, p2);
 
-	InstructionParamFuzzy ip1 = inst->param1;
-	InstructionParamFuzzy ip2 = inst->param2;
+	InstructionParamFuzzy ip1 = inst.param1;
+	InstructionParamFuzzy ip2 = inst.param2;
 	ApplyParamSize(ip1);
 	ApplyParamSize(ip2);
 
-
-	// encountered some interesting labels?
-	bool lc_relative = ((inst->name[0] == 'j') && (inst->param1._type_ != ParamTImmediateDouble)) || (inst->name == "call") || (inst->name.find("loop") >= 0);
-	// inst->param1.immediate_is_relative
-	if ((!UnknownLabel) && (lc_relative) && (CurrentMetaInfo)){
-		// relative jump.... use label only relatively!!!
-		//msg_write("----rel----");
-		//printf("ocp %d   orig %d  cmd %d\n", CurrentMetaInfo->CurrentOpcodePos, CurrentMetaInfo->CodeOrigin, CalcCommandSize(inst, ip1, ip2, p1, p2));
-		int diff = CurrentMetaInfo->CurrentOpcodePos + CurrentMetaInfo->CodeOrigin + CalcCommandSize(inst, ip1, ip2, p1, p2);
-		/*msg_write(diff);
-		msg_write(p1.is_label);
-		msg_write(p2.is_label);*/
-		if (p1.is_label)	p1.value -= diff;
-		if (p2.is_label)	p2.value -= diff;
-	}
-
 	OCParam = ocs;
 
-	OpcodeAddImmideate(oc, ocs, ip1, p1, 0);
-	OpcodeAddImmideate(oc, ocs, ip2, p2, 1);
+	OpcodeAddImmideate(oc, ocs, ip1, p1, inst);
+	OpcodeAddImmideate(oc, ocs, ip2, p2, inst);
 
 	msg_db_l(1+ASM_DB_LEVEL);
 }
 
-bool AddInstructionLowLevel(char *oc, int &ocs, int inst, InstructionParam &wp1, InstructionParam &wp2)
+bool AddInstructionLowLevel(char *oc, int &ocs, int inst, InstructionParam &wp1, InstructionParam &wp2, int inst_no)
 {
 	msg_db_r("AsmAddInstructionLow", 1+ASM_DB_LEVEL);
 
@@ -2639,7 +2672,7 @@ bool AddInstructionLowLevel(char *oc, int &ocs, int inst, InstructionParam &wp1,
 
 	// compile
 	if (ninst >= 0)
-		OpcodeAddInstruction(oc, ocs, &Instruction[ninst], wp1, wp2);
+		OpcodeAddInstruction(oc, ocs, Instruction[ninst], wp1, wp2);
 	/*else
 		Error(string("unknown instruction:  ",cmd));*/
 	//msg_write(d2h(&oc[ocs0], ocs - ocs0, false));
@@ -2677,9 +2710,6 @@ void param2str(string &str, int type, void *param)
 			break;
 		case PKLocal:
 			str = "local " + d2h(&param, 4);
-			break;
-		case PKStackRel:
-			str = "stackrel " + d2h(&param, 4);
 			break;
 		case PKEdxRel:
 			str = "edx rel " + d2h(&param, 4);
@@ -2722,7 +2752,7 @@ bool AddInstruction(char *oc, int &ocs, int inst, int param1_type, void *param1,
 	InstructionParam wp2 = _make_param_(param2_type, (long)param2);
 
 	OCParam = ocs;
-	bool ok = AddInstructionLowLevel(oc, ocs, inst, wp1, wp2);
+	bool ok = AddInstructionLowLevel(oc, ocs, inst, wp1, wp2, 0);
 	if (!ok){
 		bool found = false;
 		for (int i=0;i<NumInstructionNames;i++)

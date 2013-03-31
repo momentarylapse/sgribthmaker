@@ -32,13 +32,13 @@ enum{
 	PKRegister,			// eAX
 	PKDerefRegister,	// [eAX]
 	PKLocal,			// [ebp + 0x0000]
-	PKStackRel,			// [esp + 0x0000]
 	PKEdxRel,			// [edx + 0x0000]
 	PKConstant32,		// 0x00000000
 	PKConstant16,		// 0x0000
 	PKConstant8,		// 0x00
 	PKConstantDouble,   // 0x00:0x0000   ...
-	PKDerefConstant		// [0x0000]
+	PKDerefConstant,	// [0x0000]
+	PKLabel				// _label
 };
 
 
@@ -240,7 +240,8 @@ struct GlobalVar
 struct Label
 {
 	string Name;
-	int Pos; // relative to CodeOrigin (Opcode[0])
+	int InstPos;
+	int Value;
 };
 
 struct WantedLabel
@@ -249,7 +250,8 @@ struct WantedLabel
 	int Pos; // position to fill into     relative to CodeOrigin (Opcode[0])
 	int Size; // number of bytes to fill
 	int Add; // to add to the value...
-	int ParamNo; // -> 0:param1 / 1:param2
+	int LabelNo;
+	bool Relative;
 };
 
 struct AsmData
@@ -288,6 +290,12 @@ struct InstructionName{
 	int rw1, rw2; // parameter is read(1), modified(2) or both (3)
 };
 extern InstructionName InstructionNames[];
+
+struct InstructionWithParams;
+struct InstructionWithParamsList : public Array<InstructionWithParams>
+{
+	void add_easy(int inst, int param1_type = PKNone, void *param1 = NULL, int param2_type = PKNone, void *param2 = NULL);
+};
 
 void Init();
 const char *Assemble(const char *code);
