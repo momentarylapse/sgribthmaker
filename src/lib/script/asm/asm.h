@@ -228,8 +228,10 @@ enum{
 	inst_cld,
 	inst_std,
 	
-	NumInstructionNames
+	NUM_INSTRUCTION_NAMES
 };
+
+string GetInstructionName(int inst);
 
 struct GlobalVar
 {
@@ -275,8 +277,8 @@ struct MetaInfo
 	bool Mode16;
 	int LineOffset; // number of script lines preceding asm block (to give correct error messages)
 
-	Array<Label> label;
-	Array<WantedLabel> wanted_label;
+	//Array<Label> label;
+	//Array<WantedLabel> wanted_label;
 
 	Array<AsmData> data;
 	Array<BitChange> bit_change;
@@ -284,17 +286,20 @@ struct MetaInfo
 };
 
 
-struct InstructionName{
-	int inst;
-	string name;
-	int rw1, rw2; // parameter is read(1), modified(2) or both (3)
-};
-extern InstructionName InstructionNames[];
-
 struct InstructionWithParams;
 struct InstructionWithParamsList : public Array<InstructionWithParams>
 {
+	InstructionWithParamsList(int line_offset);
+
 	void add_easy(int inst, int param1_type = PKNone, void *param1 = NULL, int param2_type = PKNone, void *param2 = NULL);
+	int add_label(const string &name, bool declaring);
+
+	void Assemble(void *opcode);
+	bool AddInstruction(char *oc, int &ocs, int n);
+
+	Array<Label> label;
+	Array<WantedLabel> wanted_label;
+	int current_line;
 };
 
 void Init();
@@ -309,36 +314,9 @@ bool ImmediateAllowed(int inst);
 extern int CodeLength, OCParam;
 extern MetaInfo *CurrentMetaInfo;
 
-inline void GetInstructionParamFlags(int inst, bool &p1_read, bool &p1_write, bool &p2_read, bool &p2_write)
-{
-	for (int i=0;i<NumInstructionNames;i++)
-		if (InstructionNames[i].inst == inst){
-			p1_read = ((InstructionNames[i].rw1 & 1) > 0);
-			p1_write = ((InstructionNames[i].rw1 & 2) > 0);
-			p2_read = ((InstructionNames[i].rw2 & 1) > 0);
-			p2_write = ((InstructionNames[i].rw2 & 2) > 0);
-		}
-}
-
-inline bool GetInstructionAllowConst(int inst)
-{
-	if ((inst == inst_div) || (inst == inst_idiv))
-		return false;
-	for (int i=0;i<NumInstructionNames;i++)
-		if (InstructionNames[i].inst == inst)
-			return (InstructionNames[i].name[0] != 'f');
-	return true;
-}
-
-inline bool GetInstructionAllowGenReg(int inst)
-{
-	if (inst == inst_lea)
-		return false;
-	for (int i=0;i<NumInstructionNames;i++)
-		if (InstructionNames[i].inst == inst)
-			return (InstructionNames[i].name[0] != 'f');
-	return true;
-}
+void GetInstructionParamFlags(int inst, bool &p1_read, bool &p1_write, bool &p2_read, bool &p2_write);
+bool GetInstructionAllowConst(int inst);
+bool GetInstructionAllowGenReg(int inst);
 
 };
 

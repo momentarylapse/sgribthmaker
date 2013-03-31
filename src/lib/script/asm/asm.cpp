@@ -104,8 +104,14 @@ inline void add_reg(const string &name, int id, int group, int size, int root = 
 	RegRoot[id] = (root < 0) ? id : root;
 }
 
+struct InstructionName{
+	int inst;
+	string name;
+	int rw1, rw2; // parameter is read(1), modified(2) or both (3)
+};
+
 // rw1/2: 
-InstructionName InstructionNames[NumInstructionNames + 1] = {
+InstructionName InstructionNames[NUM_INSTRUCTION_NAMES + 1] = {
 	{inst_add,		"add",		3, 1},
 	{inst_add_b,	"add.b",	3, 1},
 	{inst_adc,		"adc",		3, 1},
@@ -354,10 +360,16 @@ struct InstructionParam{
 struct InstructionWithParams{
 	int inst;
 	InstructionParam p1, p2;
+	int line;
 };
 
 
 InstructionParam _make_param_(int type, long long param);
+
+InstructionWithParamsList::InstructionWithParamsList(int line_no)
+{
+	current_line = line_no;
+}
 
 void InstructionWithParamsList::add_easy(int inst, int param1_type, void *param1, int param2_type, void *param2)
 {
@@ -365,8 +377,30 @@ void InstructionWithParamsList::add_easy(int inst, int param1_type, void *param1
 	i.inst = inst;
 	i.p1 = _make_param_(param1_type, (long)param1);
 	i.p2 = _make_param_(param2_type, (long)param2);
+	i.line = current_line;
 	add(i);
 };
+
+int InstructionWithParamsList::add_label(const string &name, bool declaring)
+{
+	so("add_label: " + name);
+	// label already in use? (used before declared)
+	if (declaring){
+		foreachi(Label &l, label, i)
+			if (l.InstPos < 0)
+				if (l.Name == name){
+					l.InstPos = num;
+					so("----redecl");
+					return i;
+				}
+	}
+	Label l;
+	l.Name = name;
+	l.InstPos = declaring ? num : -1;
+	l.Value = -1;
+	label.add(l);
+	return label.num - 1;
+}
 
 // which part of the modr/m byte is used
 enum{
@@ -598,11 +632,50 @@ void add_inst(int inst, int code, int code_size, int cap, int param1, int param2
 	bool m2 = _get_inst_param_(param2, i.param2);
 	i.has_modrm  = m1 || m2 || (cap >= 0);
 	
-	i.name = InstructionNames[NumInstructionNames].name;
-	for (int j=0;j<NumInstructionNames;j++)
+	i.name = InstructionNames[NUM_INSTRUCTION_NAMES].name;
+	for (int j=0;j<NUM_INSTRUCTION_NAMES;j++)
 		if (inst == InstructionNames[j].inst)
 			i.name = InstructionNames[j].name;
 	Instruction.add(i);
+}
+
+string GetInstructionName(int inst)
+{
+	for (int i=0;i<Asm::NUM_INSTRUCTION_NAMES;i++)
+		if (inst == InstructionNames[i].inst)
+			return Asm::InstructionNames[i].name;
+	return "???";
+}
+
+void GetInstructionParamFlags(int inst, bool &p1_read, bool &p1_write, bool &p2_read, bool &p2_write)
+{
+	for (int i=0;i<NUM_INSTRUCTION_NAMES;i++)
+		if (InstructionNames[i].inst == inst){
+			p1_read = ((InstructionNames[i].rw1 & 1) > 0);
+			p1_write = ((InstructionNames[i].rw1 & 2) > 0);
+			p2_read = ((InstructionNames[i].rw2 & 1) > 0);
+			p2_write = ((InstructionNames[i].rw2 & 2) > 0);
+		}
+}
+
+bool GetInstructionAllowConst(int inst)
+{
+	if ((inst == inst_div) || (inst == inst_idiv))
+		return false;
+	for (int i=0;i<NUM_INSTRUCTION_NAMES;i++)
+		if (InstructionNames[i].inst == inst)
+			return (InstructionNames[i].name[0] != 'f');
+	return true;
+}
+
+bool GetInstructionAllowGenReg(int inst)
+{
+	if (inst == inst_lea)
+		return false;
+	for (int i=0;i<NUM_INSTRUCTION_NAMES;i++)
+		if (InstructionNames[i].inst == inst)
+			return (InstructionNames[i].name[0] != 'f');
+	return true;
 }
 
 /*
@@ -633,8 +706,8 @@ void SetInstructionSet(int set)
 	
 	// build name table
 	for (int i=0;i<NumInstructions;i++){
-		Instruction[i].name==InstructionName[NumInstructionNames].name;
-		for (int j=0;j<NumInstructionNames;j++)
+		Instruction[i].name==InstructionName[NUM_INSTRUCTION_NAMES].name;
+		for (int j=0;j<NUM_INSTRUCTION_NAMES;j++)
 			if (Instruction[i].inst==InstructionName[j].inst)
 				Instruction[i].name=InstructionName[j].name;
 	}
@@ -1880,7 +1953,6 @@ string FindMnemonic(int &pos)
 		// end of line
 		if (code_buffer[pos] == '\n'){
 			mne[i] = 0;
-			LineNo ++;
 			EndOfLine = true;
 			break;
 		}
@@ -1913,7 +1985,7 @@ string FindMnemonic(int &pos)
 }
 
 // interpret an expression from source code as an assembler parameter
-void GetParam(InstructionParam &p, const string &param, int inst_no, int pn)
+void GetParam(InstructionParam &p, const string &param, InstructionWithParamsList &list, int pn)
 {
 	msg_db_r("GetParam", 1+ASM_DB_LEVEL);
 	p.type = ParamTInvalid;
@@ -1934,7 +2006,7 @@ void GetParam(InstructionParam &p, const string &param, int inst_no, int pn)
 			printf("deref:   ");
 		so("Deref:");
 		//bool u16 = use_mode16;
-		GetParam(p, param.substr(1, -2), inst_no, pn);
+		GetParam(p, param.substr(1, -2), list, pn);
 		p.deref = true;
 		//use_mode16 = u16;
 
@@ -1961,7 +2033,7 @@ void GetParam(InstructionParam &p, const string &param, int inst_no, int pn)
 			else
 				part.add(param[i]);
 		int offset = part.num;
-		GetParam(sub, part, inst_no, pn);
+		GetParam(sub, part, list, pn);
 		if (sub.type == ParamTRegister){
 			//msg_write("reg");
 			p.type = ParamTRegister;
@@ -1977,7 +2049,7 @@ void GetParam(InstructionParam &p, const string &param, int inst_no, int pn)
 				break;
 			}
 		part = param.substr(offset, -1);
-		GetParam(sub, part, inst_no, pn);
+		GetParam(sub, part, list, pn);
 		if (sub.type == ParamTImmediate){
 			//msg_write("c2 = im");
 			if (((long)sub.value & 0xffffff00) == 0)
@@ -2007,7 +2079,7 @@ void GetParam(InstructionParam &p, const string &param, int inst_no, int pn)
 				v+=param[i]-'0';
 			}else if (param[i]==':'){
 				InstructionParam sub;
-				GetParam(sub, param.tail(param.num - i), inst_no, pn);
+				GetParam(sub, param.tail(param.num - i), list, pn);
 				if (sub.type != ParamTImmediate){
 					SetError("error in hex parameter:  " + string(param));
 					p.type = PKInvalid;
@@ -2043,14 +2115,9 @@ void GetParam(InstructionParam &p, const string &param, int inst_no, int pn)
 
 	// label substitude
 	}else if (param == "$"){
-		p.value = CurrentMetaInfo->label.num;
+		p.value = list.add_label(param, true);
 		p.type = ParamTImmediate;
 		p.is_label = true;
-		Label l;
-		l.Name = "$";
-		l.InstPos = inst_no;
-		l.Value = -1;
-		CurrentMetaInfo->label.add(l);
 		so("label:  " + param + "\n");
 		
 	}else{
@@ -2065,8 +2132,8 @@ void GetParam(InstructionParam &p, const string &param, int inst_no, int pn)
 				return;
 			}
 		// existing label
-		for (int i=0;i<CurrentMetaInfo->label.num;i++)
-			if (CurrentMetaInfo->label[i].Name == param){
+		for (int i=0;i<list.label.num;i++)
+			if (list.label[i].Name == param){
 				p.value = i;
 				p.type = ParamTImmediate;
 				p.is_label = true;
@@ -2088,14 +2155,9 @@ void GetParam(InstructionParam &p, const string &param, int inst_no, int pn)
 		// not yet existing label...
 		if (param[0]=='_'){
 			so("label as param:  \"" + param + "\"\n");
-			p.value = CurrentMetaInfo->label.num;
+			p.value = list.add_label(param, false);
 			p.type = ParamTImmediate;
 			p.is_label = true;
-			Label l;
-			l.InstPos = -1;
-			l.Name = param;
-			l.Value = -1;
-			CurrentMetaInfo->label.add(l);
 			msg_db_l(1+ASM_DB_LEVEL);
 			return;
 		}
@@ -2139,7 +2201,7 @@ inline void append_val(char *oc, int &ocs, long long val, int size)
 	ocs += size;
 }
 
-void OpcodeAddImmideate(char *oc, int &ocs, InstructionParamFuzzy &ip, InstructionParam &p, sInstruction &inst)
+void OpcodeAddImmideate(char *oc, int &ocs, InstructionParamFuzzy &ip, InstructionParam &p, sInstruction &inst, InstructionWithParamsList &list)
 {
 	int size = 0;
 	if (p.type == ParamTImmediate){
@@ -2160,9 +2222,10 @@ void OpcodeAddImmideate(char *oc, int &ocs, InstructionParamFuzzy &ip, Instructi
 		w.Pos = ocs;// + CurrentMetaInfo->PreInsertionLength;
 		w.Size = size;
 		w.LabelNo = p.value;
-		w.Name = CurrentMetaInfo->label[p.value].Name;
+		w.Name = list.label[p.value].Name;
 		w.Relative = ((inst.name[0] == 'j') && (inst.param1._type_ != ParamTImmediateDouble)) || (inst.name == "call") || (inst.name.find("loop") >= 0);
-		CurrentMetaInfo->wanted_label.add(w);
+		list.wanted_label.add(w);
+		so("add wanted label");
 	}
 
 	append_val(oc, ocs, p.value, size);
@@ -2172,12 +2235,10 @@ void OpcodeAddImmideate(char *oc, int &ocs, InstructionParamFuzzy &ip, Instructi
 		append_val(oc, ocs, p.value >> 32, 2); // bits 33-47
 }
 
-bool AddInstructionLowLevel(char *oc, int &ocs, int inst, InstructionParam &wp1, InstructionParam &wp2, int inst_no);
-
 void LinkLabels(char *oc, InstructionWithParamsList &list)
 {
-	foreachib(WantedLabel &w, CurrentMetaInfo->wanted_label, i){
-		Label &l = CurrentMetaInfo->label[w.LabelNo];
+	foreachib(WantedLabel &w, list.wanted_label, i){
+		Label &l = list.label[w.LabelNo];
 		if (l.Value < 0)
 			continue;
 		so("linking label");
@@ -2189,7 +2250,7 @@ void LinkLabels(char *oc, InstructionWithParamsList &list)
 		insert_val(oc, w.Pos, value, w.Size);
 
 
-		CurrentMetaInfo->wanted_label.erase(i);
+		list.wanted_label.erase(i);
 		_foreach_it_.update();
 	}
 }
@@ -2204,8 +2265,6 @@ const char *Assemble(const char *code)
 	
 	Error = false;
 
-	InstructionWithParamsList list;
-
 	
 	CodeLength = 0; // beginning of block -> current char
 	if (CurrentMetaInfo){
@@ -2215,14 +2274,13 @@ const char *Assemble(const char *code)
 		msg_db_l(1+ASM_DB_LEVEL);
 		return NULL;
 	}
-	CurrentMetaInfo->label.clear();
-	CurrentMetaInfo->wanted_label.clear();
+
+	LineNo = CurrentMetaInfo->LineOffset;
+	InstructionWithParamsList list = InstructionWithParamsList(CurrentMetaInfo->LineOffset);
+
 	// CurrentMetaInfo->CurrentOpcodePos // Anfang aktuelle Zeile im gesammten Opcode
 	code_buffer = code; // Asm-Source-Puffer
-	LineNo = 0;
-	if (CurrentMetaInfo)
-		LineNo = CurrentMetaInfo->LineOffset;
-	LineNo -= 2; // ????
+
 	int pos = 0;
 	InstructionParam p1, p2;
 	mode16 = false;
@@ -2250,6 +2308,7 @@ const char *Assemble(const char *code)
 	// interpret asm code (1 line)
 		// find command
 		cmd = FindMnemonic(pos);
+		list.current_line = LineNo;
 		//msg_write(cmd);
 		if (cmd.num == 0)
 			break;
@@ -2274,8 +2333,8 @@ const char *Assemble(const char *code)
 		so("------");
 
 		// parameters
-		GetParam(p1, param1, list.num, 0);
-		GetParam(p2, param2, list.num, 1);
+		GetParam(p1, param1, list, 0);
+		GetParam(p2, param2, list, 1);
 		if ((p1.type == ParamTInvalid) || (p2.type == ParamTInvalid)){
 			CodeLength=-1;
 			msg_db_l(1+ASM_DB_LEVEL);
@@ -2362,29 +2421,14 @@ const char *Assemble(const char *code)
 			so("Label");
 			cmd.resize(cmd.num - 1);
 			so(cmd);
-			bool found = false;
-			// label already in use? (used before declared)
-			foreach(Label &l, CurrentMetaInfo->label)
-				if (l.InstPos < 0)
-					if (l.Name == cmd){
-						l.InstPos = list.num;
-						found = true;
-					}
-			if (!found){
-				// new label
-				Label l;
-				l.Name = cmd;
-				l.InstPos = list.num;
-				l.Value = -1;
-				CurrentMetaInfo->label.add(l);
-			}
+			list.add_label(cmd, true);
 
 			continue;
 		}
 
 		// command
 		int inst = -1;
-		for (int i=0;i<NumInstructionNames;i++)
+		for (int i=0;i<NUM_INSTRUCTION_NAMES;i++)
 			if (InstructionNames[i].name == cmd)
 				inst = InstructionNames[i].inst;
 		if (inst < 0){
@@ -2413,16 +2457,16 @@ const char *Assemble(const char *code)
 	// compile command
 	for (int i=0;i<list.num+1;i++){
 		// defining a label?
-		for (int j=0;j<CurrentMetaInfo->label.num;j++)
-			if (i == CurrentMetaInfo->label[j].InstPos){
-				so("defining found: " + CurrentMetaInfo->label[j].Name);
-				CurrentMetaInfo->label[j].Value = (long)buffer + CodeLength;
+		for (int j=0;j<list.label.num;j++)
+			if (i == list.label[j].InstPos){
+				so("defining found: " + list.label[j].Name);
+				list.label[j].Value = (long)buffer + CodeLength;
 			}
 		if (i >= list.num)
 			break;
 
 		// opcode
-		if (!AddInstructionLowLevel(buffer, CodeLength, list[i].inst, list[i].p1, list[i].p2, i)){
+		if (!list.AddInstruction(buffer, CodeLength, i)){
 			SetError("instruction is not compatible with its parameters (a):  ");// + cmd + " " + param1 + " " + param2);
 			CodeLength=-1;
 			msg_db_l(1+ASM_DB_LEVEL);
@@ -2618,7 +2662,7 @@ char CreateModRMByte(sInstruction &inst, InstructionParam &p1, InstructionParam 
 	return mrm;
 }
 
-void OpcodeAddInstruction(char *oc, int &ocs, sInstruction &inst, InstructionParam &p1, InstructionParam &p2)
+void OpcodeAddInstruction(char *oc, int &ocs, sInstruction &inst, InstructionParam &p1, InstructionParam &p2, InstructionWithParamsList &list)
 {
 	msg_db_r("OpcodeAddInstruction", 1+ASM_DB_LEVEL);
 
@@ -2637,28 +2681,29 @@ void OpcodeAddInstruction(char *oc, int &ocs, sInstruction &inst, InstructionPar
 
 	OCParam = ocs;
 
-	OpcodeAddImmideate(oc, ocs, ip1, p1, inst);
-	OpcodeAddImmideate(oc, ocs, ip2, p2, inst);
+	OpcodeAddImmideate(oc, ocs, ip1, p1, inst, list);
+	OpcodeAddImmideate(oc, ocs, ip2, p2, inst, list);
 
 	msg_db_l(1+ASM_DB_LEVEL);
 }
 
-bool AddInstructionLowLevel(char *oc, int &ocs, int inst, InstructionParam &wp1, InstructionParam &wp2, int inst_no)
+bool InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)
 {
 	msg_db_r("AsmAddInstructionLow", 1+ASM_DB_LEVEL);
 
 	int ocs0 = ocs;
+	InstructionWithParams &iwp = (*this)[n];
 
 	// test if any instruction matches our wishes
 	int ninst = -1;
 	bool has_mod_rm = false;
 	for (int i=0;i<Instruction.num;i++)
-		if (Instruction[i].inst == inst){
+		if (Instruction[i].inst == iwp.inst){
 			InstructionParamFuzzy ip1 = Instruction[i].param1;
 			InstructionParamFuzzy ip2 = Instruction[i].param2;
 			ApplyParamSize(ip1);
 			ApplyParamSize(ip2);
-			if ((_test_param_(ip1, wp1)) && (_test_param_(ip2, wp2))){
+			if ((_test_param_(ip1, iwp.p1)) && (_test_param_(ip2, iwp.p2))){
 
 				if (((!Instruction[i].has_modrm) && (has_mod_rm)) || (ninst < 0)){
 					has_mod_rm = Instruction[i].has_modrm;
@@ -2672,7 +2717,7 @@ bool AddInstructionLowLevel(char *oc, int &ocs, int inst, InstructionParam &wp1,
 
 	// compile
 	if (ninst >= 0)
-		OpcodeAddInstruction(oc, ocs, Instruction[ninst], wp1, wp2);
+		OpcodeAddInstruction(oc, ocs, Instruction[ninst], iwp.p1, iwp.p2, *this);
 	/*else
 		Error(string("unknown instruction:  ",cmd));*/
 	//msg_write(d2h(&oc[ocs0], ocs - ocs0, false));
@@ -2744,7 +2789,7 @@ bool AddInstruction(char *oc, int &ocs, int inst, int param1_type, void *param1,
 	small_param = mode16;
 	small_addr = mode16;
 	/*msg_write("--------");
-	for (int i=0;i<NumInstructionNames;i++)
+	for (int i=0;i<NUM_INSTRUCTION_NAMES;i++)
 		if (InstructionName[i].inst == inst)
 			printf("%s\n", InstructionName[i].name);*/
 
@@ -2752,10 +2797,17 @@ bool AddInstruction(char *oc, int &ocs, int inst, int param1_type, void *param1,
 	InstructionParam wp2 = _make_param_(param2_type, (long)param2);
 
 	OCParam = ocs;
-	bool ok = AddInstructionLowLevel(oc, ocs, inst, wp1, wp2, 0);
+	InstructionWithParamsList list = InstructionWithParamsList(0);
+	InstructionWithParams iwp;
+	iwp.inst = inst;
+	iwp.p1 = wp1;
+	iwp.p2 = wp2;
+	iwp.line = -1;
+	list.add(iwp);
+	bool ok = list.AddInstruction(oc, ocs, 0);
 	if (!ok){
 		bool found = false;
-		for (int i=0;i<NumInstructionNames;i++)
+		for (int i=0;i<NUM_INSTRUCTION_NAMES;i++)
 			if (InstructionNames[i].inst == inst){
 				string ps1, ps2;
 				param2str(ps1, param1_type, param1);
@@ -2763,8 +2815,10 @@ bool AddInstruction(char *oc, int &ocs, int inst, int param1_type, void *param1,
 				SetError("command not compatible with its parameters\n" + InstructionNames[i].name + " " + ps1 + " " + ps2);
 				found = true;
 			}
-		if (!found)
+		if (!found){
+			LineNo = iwp.line;
 			SetError(format("instruction unknown: %d", inst));
+		}
 	}
 	
 	msg_db_l(1+ASM_DB_LEVEL);

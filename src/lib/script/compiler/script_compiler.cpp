@@ -324,11 +324,8 @@ void Script::Compiler()
 		func[i] = (t_func*)&Opcode[OpcodeSize];
 		CompileFunction(f, Opcode, OpcodeSize);
 		left();
-
-		if (!Error)
-			if (pre_script->AsmMetaInfo)
-				if (pre_script->AsmMetaInfo->wanted_label.num > 0)
-					_do_error_(format("unknown name in assembler code:  \"%s\"", pre_script->AsmMetaInfo->wanted_label[0].Name.c_str()), 2,);
+		if (Error)
+			_return_(2, );
 	}
 
 

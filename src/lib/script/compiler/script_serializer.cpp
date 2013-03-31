@@ -221,12 +221,7 @@ void cmd_out(int n, sSerialCommand &c)
 	else if (c.inst == inst_asm)
 		so(format("%d: -- Asm --", n));
 	else{
-		string t;
-		t = "???";
-		bool found = false;
-		for (int i=0;i<Asm::NumInstructionNames;i++)
-			if (c.inst == Asm::InstructionNames[i].inst)
-				t = format("%3d:  %s", n, Asm::InstructionNames[i].name.c_str());
+		string t = format("%3d:  ", n) + Asm::GetInstructionName(c.inst);
 		param_out(t, c.p1);
 		param_out(t, c.p2);
 		so(t);
@@ -2819,6 +2814,13 @@ void CompileSerialized(SerializerData *d, char *Opcode, int &OpcodeSize)
 #ifdef allow_simplification
 	ShrinkJumps(d, Opcode, OpcodeSize);
 #endif
+
+
+
+	/*if (!Error)
+		if (pre_script->AsmMetaInfo)
+			if (pre_script->AsmMetaInfo->wanted_label.num > 0)
+				_do_error_(format("unknown name in assembler code:  \"%s\"", pre_script->AsmMetaInfo->wanted_label[0].Name.c_str()), 2,);*/
 	msg_db_l(2);
 }
 
@@ -2826,8 +2828,10 @@ void Script::CompileFunction(Function *f, char *Opcode, int &OpcodeSize)
 {
 	cur_func = f;
 	SerializerData d;
-	SerializeFunction(&d, f);
-	CompileSerialized(&d, Opcode, OpcodeSize);
+	if (!Error)
+		SerializeFunction(&d, f);
+	if (!Error)
+		CompileSerialized(&d, Opcode, OpcodeSize);
 }
 
 };
