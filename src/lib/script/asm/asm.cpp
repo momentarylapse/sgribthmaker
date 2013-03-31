@@ -398,6 +398,12 @@ int InstructionWithParamsList::add_label(const string &name, bool declaring)
 					so("----redecl");
 					return i;
 				}
+	}else{
+		foreachi(Label &l, label, i)
+			if (l.Name == name){
+				so("----reuse");
+				return i;
+			}
 	}
 	Label l;
 	l.Name = name;
@@ -2741,6 +2747,8 @@ void InstructionWithParamsList::ShrinkJumps(void *oc, int ocs)
 {
 	int _ocs = ocs;
 	Compile(oc, _ocs);
+	if (Error)
+		return;
 
 	foreachi(InstructionWithParams &iwp, *this, i){
 		if ((iwp.inst == inst_jmp) || (iwp.inst == inst_jz) || (iwp.inst == inst_jnz)){
@@ -2792,7 +2800,7 @@ void InstructionWithParamsList::Compile(void *oc, int &ocs)
 	if (!Error)
 		LinkWantedLabels(oc);
 
-	if (wanted_label.num > 0){
+	if ((wanted_label.num > 0) && (!Error)){
 		LineNo = (*this)[wanted_label[0].InstNo].line;
 		SetError("undeclared label used: " + wanted_label[0].Name);
 	}

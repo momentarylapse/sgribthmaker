@@ -39,7 +39,7 @@ struct sRegChannel
 inline bool is_reg_used_in_interval(SerializerData *d, int reg, int first, int last);
 
 enum{
-	inst_marker = 1000,
+	inst_marker = 10000,
 	inst_asm,
 	inst_end,
 };
@@ -2429,6 +2429,13 @@ void Script::SerializeFunction(SerializerData *d, Function *f)
 
 	cur_script = this;
 
+	CreateAsmMetaInfo(pre_script);
+	pre_script->AsmMetaInfo->CurrentOpcodePos = OpcodeSize;
+	pre_script->AsmMetaInfo->PreInsertionLength = OpcodeSize;
+	pre_script->AsmMetaInfo->LineOffset = 0;
+	Asm::CurrentMetaInfo = pre_script->AsmMetaInfo;
+
+	d->cur_script = this;
 	d->cur_func = f;
 	d->NumMarkers = 0;
 	d->call_used = false;
@@ -2549,15 +2556,15 @@ void Script::SerializeFunction(SerializerData *d, Function *f)
 	msg_db_l(2);
 }
 
-inline void get_param(int inst, sSerialCommandParam &p, int &param_type, void *&param)
+inline void get_param(int inst, sSerialCommandParam &p, int &param_type, void *&param, Asm::InstructionWithParamsList *list)
 {
 	if (p.kind < 0){
 		param_type = Asm::PKNone;
 		param = NULL;
 	}else if (p.kind == KindMarker){
 		//msg_error("marker");
-		param_type = Asm::PKConstant32;
-		param = NULL; // real position will be inserted at the end
+		param_type = Asm::PKLabel;
+		param = (void*)list->add_label("_kaba_" + i2s((int)(long)p.p), false);
 	}else if (p.kind == KindRegister){
 		param_type = Asm::PKRegister;
 		param = p.p;
@@ -2599,6 +2606,7 @@ inline void get_param(int inst, sSerialCommandParam &p, int &param_type, void *&
 		cur_script->DoErrorInternal("get_param: unexpected param..." + Kind2Str(p.kind));
 }
 
+#if 0
 Array<int> InstructionPos;
 
 void ProcessJumpTargets(SerializerData *d, char *Opcode, int &OpcodeSize)
@@ -2768,27 +2776,69 @@ void CompileAsmBlock(char *Opcode, int &OpcodeSize)
 	msg_db_l(4);
 }
 
+#endif
+
+
+void assemble_cmd(Asm::InstructionWithParamsList *list, sSerialCommand &c)
+{
+	// translate parameters
+	int param1_type, param2_type;
+	void *param1, *param2;
+	get_param(c.inst, c.p1, param1_type, param1, list);
+	if (cur_script->Error)	return;
+	get_param(c.inst, c.p2, param2_type, param2, list);
+	if (cur_script->Error)	return;
+
+	// assemble instruction
+	//list->current_line = c.
+	list->add_easy(c.inst, param1_type, param1, param2_type, param2);
+	if (Asm::Error)
+		cur_script->DoErrorInternal("asm error");
+	//printf("%s", Opcode2Asm(oc, ocs));
+}
+
+void AddAsmBlock(Asm::InstructionWithParamsList *list)
+{
+	msg_db_r("AddAsmBlock", 4);
+	//msg_write(".------------------------------- asm");
+	PreScript *ps = cur_script->pre_script;
+	ps->AsmMetaInfo->LineOffset = ps->AsmBlocks[0].line;
+	list->AppendFromSource(ps->AsmBlocks[0].block);
+	if (!Asm::Error){
+		//msg_write(Asm::CodeLength);
+		//msg_write(d2h(pac, Asm::CodeLength, false));
+		//msg_write(Opcode2Asm(pac, Asm::CodeLength));
+	}else{
+		cur_script->DoError("assembler: " + Asm::ErrorMessage, Asm::ErrorLine);
+		_return_(4,);
+	}
+	delete[](ps->AsmBlocks[0].block);
+	ps->AsmBlocks.erase(0);
+	msg_db_l(4);
+}
+
 void SerializerData::Compile(char *Opcode, int &OpcodeSize)
 {
 	msg_db_r("Serializer.Compile", 2);
-	InstructionPos.resize(cmd.num + 1);
-	for (int i=0;i<cmd.num;i++){
-		InstructionPos[i] = OpcodeSize;
+	//InstructionPos.resize(cmd.num + 1);
 
-		if (cmd[i].inst == inst_marker)
+	Asm::InstructionWithParamsList *list = new Asm::InstructionWithParamsList(0);
+
+	for (int i=0;i<cmd.num;i++){
+		//InstructionPos[i] = OpcodeSize;
+
+		if (cmd[i].inst == inst_marker){
+			//msg_write("marker _kaba_" + i2s(cmd[i].p1.kind));
+			list->add_label("_kaba_" + i2s(cmd[i].p1.kind), true);
 			continue;
+		}
 
 		if (cmd[i].inst == inst_asm){
-			CompileAsmBlock(Opcode, OpcodeSize);
+			AddAsmBlock(list);
 			if (cur_script->Error)
 				_return_(2,);
 			continue;
 		}
-
-		// make calls relative...
-		/*if (d->cmd[i].inst == Asm::inst_call)
-			if (d->cmd[i].p1.p) // we need to keep 0x0000...
-				d->cmd[i].p1.p = (char*)(  (long)d->cmd[i].p1.p - (long)&Opcode[OpcodeSize] - 5 );*/
 
 		// push 8 bit -> push 32 bit
 		if (cmd[i].inst == Asm::inst_push)
@@ -2796,20 +2846,29 @@ void SerializerData::Compile(char *Opcode, int &OpcodeSize)
 				cmd[i].p1.p = (char*) Asm::RegRoot[(long)cmd[i].p1.p];
 			
 
-		assemble_cmd(Opcode, OpcodeSize, cmd[i]);
+		assemble_cmd(list, cmd[i]);
 		if (cur_script->Error)
 			_return_(2,);
 	}
-	InstructionPos[cmd.num] = OpcodeSize;
+//	InstructionPos[cmd.num] = OpcodeSize;
 
-	ProcessJumpTargets(this, Opcode, OpcodeSize);
+//	ProcessJumpTargets(this, Opcode, OpcodeSize);
 
 	//msg_write(Opcode2Asm(Opcode, OpcodeSize));
 
 #ifdef allow_simplification
-	ShrinkJumps(this, Opcode, OpcodeSize);
+//	ShrinkJumps(this, Opcode, OpcodeSize);
 #endif
 
+	if (!Asm::Error)
+		list->Optimize(Opcode, OpcodeSize);
+	if (!Asm::Error)
+		list->Compile(Opcode, OpcodeSize);
+
+	if (Asm::Error)
+		cur_script->DoErrorInternal("assembler: " + Asm::ErrorMessage);
+
+	delete(list);
 
 
 	/*if (!Error)
