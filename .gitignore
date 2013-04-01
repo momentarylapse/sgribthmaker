@@ -3,3 +3,5 @@ Release
 sgribthmaker
 message.txt
 Data/config.txt
+*.o
+*.a
