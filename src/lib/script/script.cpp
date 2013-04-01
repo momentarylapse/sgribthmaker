@@ -24,7 +24,7 @@
 
 namespace Script{
 
-string Version = "0.10.6.0";
+string Version = "0.10.10.0";
 
 //#define ScriptDebug
 
@@ -38,15 +38,10 @@ static Array<Script*> cur_script_stack;
 inline void push_cur_script(Script *s)
 {
 	cur_script_stack.add(s);
-	cur_script = s;
 }
 inline void pop_cur_script()
 {
 	cur_script_stack.resize(cur_script_stack.num - 1);
-	if (cur_script_stack.num >= 1)
-		cur_script = cur_script_stack.back();
-	else
-		cur_script = NULL;
 }
 
 

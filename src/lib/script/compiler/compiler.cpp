@@ -1,5 +1,4 @@
 #include "../script.h"
-//#include "dasm.h"
 #include "../../file/file.h"
 
 #ifdef OS_LINUX

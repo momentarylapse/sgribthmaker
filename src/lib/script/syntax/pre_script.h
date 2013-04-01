@@ -51,13 +51,6 @@ struct Define
 	Array<string> Dest;
 };
 
-// single enum entries
-/*struct sEnum
-{
-	string Name;
-	int Value;
-};*/
-
 // for any type of constant used in the script
 struct Constant
 {
@@ -293,7 +286,6 @@ public:
 
 	int NumOwnTypes;
 	Array<Type*> Types;
-	//Array<sEnum> Enum;
 	Array<Script*> Includes;
 	Array<Define> Defines;
 	Asm::MetaInfo *AsmMetaInfo;
@@ -317,7 +309,6 @@ string Kind2Str(int kind);
 string Operator2Str(PreScript *s,int cmd);
 void clear_exp_buffer(ps_exp_buffer_t *e);
 void CreateAsmMetaInfo(PreScript* ps);
-extern Script *cur_script;
 
 
 

@@ -399,7 +399,6 @@ bool IsIfDefed(int &num_ifdefs,bool *defed)
 	return true;
 }
 
-Script *cur_script;
 void CreateAsmMetaInfo(PreScript* ps)
 {
 	msg_db_r("CreateAsmMetaInfo",5);
@@ -409,12 +408,12 @@ void CreateAsmMetaInfo(PreScript* ps)
 		ps->AsmMetaInfo->Mode16 = ps->FlagCompileInitialRealMode;
 		ps->AsmMetaInfo->CodeOrigin = 0; // FIXME:  &Opcode[0] ????
 	}
-	ps->AsmMetaInfo->Opcode = cur_script->Opcode;
+	ps->AsmMetaInfo->Opcode = ps->script->Opcode;
 	ps->AsmMetaInfo->global_var.clear();
 	for (int i=0;i<ps->RootOfAllEvil.var.num;i++){
 		Asm::GlobalVar v;
 		v.Name = ps->RootOfAllEvil.var[i].name;
-		v.Pos = cur_script->g_var[i];
+		v.Pos = ps->script->g_var[i];
 		ps->AsmMetaInfo->global_var.add(v);
 	}
 	msg_db_l(5);
