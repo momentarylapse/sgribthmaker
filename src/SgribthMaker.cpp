@@ -830,18 +830,20 @@ void Compile()
 	HuiGetTime(CompileTimer);
 
 	Script::CompileSilently = true;
-	msg_write(Filename);
-	Script::Script *compile_script = Script::Load(Filename, true, true);
 
-	float dt = HuiGetTime(CompileTimer);
+	try{
+		Script::Script *compile_script = Script::Load(Filename, true, true);
 
-	//compile_script->Show();
+		float dt = HuiGetTime(CompileTimer);
 
-	if (compile_script->Error){
-		HuiErrorBox(MainWin, _("Fehler"), compile_script->ErrorMsgExt[0] + "\n" + compile_script->ErrorMsgExt[1]);
-		MoveCursorTo(compile_script->ErrorLine, compile_script->ErrorColumn);
-	}else
+		//compile_script->Show();
+
 		SetMessage(format(_("Script ist fehler-frei &ubersetzbar!        (in %s)"), get_time_str(dt).c_str()));
+
+	}catch(const Script::Exception &e){
+		HuiErrorBox(MainWin, _("Fehler"), e.message);
+		MoveCursorTo(e.line, e.column);
+	}
 
 	//RemoveScript(compile_script);
 	Script::DeleteAllScripts(true, true);
@@ -850,9 +852,6 @@ void Compile()
 	msg_set_verbose(ALLOW_LOGGING);
 	msg_db_l(1);
 }
-
-void OnMessageDialogClose()
-{	delete(MessageDialog);	}
 
 void CompileAndRun(bool verbose)
 {
@@ -873,13 +872,10 @@ void CompileAndRun(bool verbose)
 	// compile
 	HuiGetTime(CompileTimer);
 	Script::CompileSilently = true;
-	Script::Script *compile_script = Script::Load(Filename);
-	float dt_compile = HuiGetTime(CompileTimer);
 
-	if (compile_script->Error){
-		HuiErrorBox(MainWin,_("Fehler"), compile_script->ErrorMsgExt[0] + "\n" + compile_script->ErrorMsgExt[1]);
-		MoveCursorTo(compile_script->ErrorLine, compile_script->ErrorColumn);
-	}else{
+	try{
+		Script::Script *compile_script = Script::Load(Filename);
+		float dt_compile = HuiGetTime(CompileTimer);
 
 		void *x = NULL;
 		//compile_script->SetVariable("this", &x);
@@ -907,10 +903,7 @@ void CompileAndRun(bool verbose)
 			HuiPopMainLevel();
 		}
 		
-		if (compile_script->Error)
-			HuiErrorBox(MainWin,_("Fehler"), _("beim Ausf&uhren des Scriptes:\n") + compile_script->ErrorMsgExt[0]);
-		else
-			SetMessage(format(_("Compilieren: %s         Opcode: %db         Ausf&uhren: %s"), get_time_str(dt_compile).c_str(), compile_script->OpcodeSize, get_time_str(dt_execute).c_str()));
+		SetMessage(format(_("Compilieren: %s         Opcode: %db         Ausf&uhren: %s"), get_time_str(dt_compile).c_str(), compile_script->OpcodeSize, get_time_str(dt_execute).c_str()));
 		//if (verbose)
 		//	HuiInfoBox(MainWin,"Speicher",string("nicht freigegebener Speicher des Scriptes: ",i2s(script->MemoryUsed),"b"));}
 
@@ -921,6 +914,9 @@ void CompileAndRun(bool verbose)
 			MainWin->SetString("log", msg_get_buffer(msg_size - msg_size0));
 		}
 
+	}catch(const Script::Exception &e){
+		HuiErrorBox(MainWin, _("Fehler"), e.message);
+		MoveCursorTo(e.line, e.column);
 	}
 	
 
