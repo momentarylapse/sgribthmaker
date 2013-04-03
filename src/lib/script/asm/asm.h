@@ -296,12 +296,15 @@ struct InstructionWithParamsList : public Array<InstructionWithParams>
 	void add_easy(int inst, int param1_type = PKNone, void *param1 = NULL, int param2_type = PKNone, void *param2 = NULL);
 	int add_label(const string &name, bool declaring);
 
+	void add_func_intro(int stack_alloc_size);
+	void add_func_return(int return_size);
+
 	void AppendFromSource(const char *code);
 	void ShrinkJumps(void *oc, int ocs);
 	void Optimize(void *oc, int ocs);
 	void Compile(void *oc, int &ocs);
 	void LinkWantedLabels(void *oc);
-	bool AddInstruction(char *oc, int &ocs, int n);
+	void AddInstruction(char *oc, int &ocs, int n);
 
 	Array<Label> label;
 	Array<WantedLabel> wanted_label;
@@ -310,7 +313,7 @@ struct InstructionWithParamsList : public Array<InstructionWithParams>
 	int current_inst;
 };
 
-void Init();
+void Init(int instruction_set = InstructionSetDefault);
 bool Assemble(const char *code, char *oc, int &ocs);
 string Disassemble(void *code, int length = -1, bool allow_comments = true);
 
@@ -324,7 +327,7 @@ public:
 	int line, column;
 };
 
-bool AddInstruction(char *oc, int &ocs, int inst, int param1_type = PKNone, void *param1 = NULL, int param2_type = PKNone, void *param2 = NULL);
+void AddInstruction(char *oc, int &ocs, int inst, int param1_type = PKNone, void *param1 = NULL, int param2_type = PKNone, void *param2 = NULL);
 void SetInstructionSet(int set);
 bool ImmediateAllowed(int inst);
 extern int OCParam;

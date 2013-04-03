@@ -18,7 +18,8 @@ struct sRegChannel
 enum{
 	inst_marker = 10000,
 	inst_asm,
-	inst_func_init,
+	inst_func_intro,
+	inst_func_outro,
 };
 
 struct sLoopData

@@ -2308,11 +2308,6 @@ void Serializer::SerializeFunction(Function *f)
 
 // serialize
 
-	// intro
-	add_cmd(Asm::inst_push, param_reg(TypeReg32, Asm::RegEbp));
-	add_cmd(Asm::inst_mov, param_reg(TypeReg32, Asm::RegEbp), param_reg(TypeReg32, Asm::RegEsp));
-	
-
 	FillInConstructorsFunc();
 
 	// function
@@ -2331,19 +2326,6 @@ void Serializer::SerializeFunction(Function *f)
 			msg_write(StuffToAdd[i].level);
 		}
 		DoError("StuffToAdd");
-	}
-
-	// outro
-	bool need_outro = true;
-	if (f->block->command.num > 0)
-		if ((f->block->command.back()->kind == KindCompilerFunction) && (f->block->command.back()->link_nr == CommandReturn))
-			need_outro = false;
-	if (need_outro){
-		add_cmd(Asm::inst_leave);
-		if (f->return_type->size > 4)
-			add_cmd(Asm::inst_ret, param_const(TypeInt, (void*)4));
-		else
-			add_cmd(Asm::inst_ret);
 	}
 	
 	cmd_list_out();
@@ -2379,17 +2361,7 @@ void Serializer::SerializeFunction(Function *f)
 
 	CorrectUnallowedParamCombis();
 
-	// allocate stack memory
-	//if (call_used){
-	StackMaxSize = ((StackMaxSize + StackMemAlign - 1) / StackMemAlign) * StackMemAlign;
-		if (StackMaxSize > 127){
-			add_cmd(Asm::inst_sub, param_reg(TypeReg32, Asm::RegEsp), param_const(TypeInt, (void*)StackMaxSize));
-			move_last_cmd(2);
-		}else if (StackMaxSize > 0){
-			add_cmd(Asm::inst_sub_b, param_reg(TypeReg32, Asm::RegEsp), param_const(TypeInt, (void*)StackMaxSize));
-			move_last_cmd(2);
-		}
-	//}
+
 	cmd_list_out();
 }
 
@@ -2473,6 +2445,10 @@ void Serializer::Assemble(char *Opcode, int &OpcodeSize)
 {
 	msg_db_f("Serializer.void Serializer::ResolveDerefRegShift()", 2);
 
+	// intro + allocate stack memory
+	StackMaxSize = ((StackMaxSize + StackMemAlign - 1) / StackMemAlign) * StackMemAlign;
+	list->add_func_intro(StackMaxSize);
+
 	for (int i=0;i<cmd.num;i++){
 
 		if (cmd[i].inst == inst_marker){
@@ -2491,6 +2467,13 @@ void Serializer::Assemble(char *Opcode, int &OpcodeSize)
 			assemble_cmd(list, cmd[i], script);
 		}
 	}
+
+	// outro (if last command != return)
+	bool need_outro = true;
+	if (cur_func->block->command.num > 0)
+		if ((cur_func->block->command.back()->kind == KindCompilerFunction) && (cur_func->block->command.back()->link_nr == CommandReturn))
+			need_outro = false;
+	list->add_func_return(cur_func->return_type->size);
 
 	//msg_write(Opcode2Asm(Opcode, OpcodeSize));
 

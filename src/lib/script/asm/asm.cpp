@@ -9,17 +9,25 @@ namespace Asm
 
 int OCParam;
 
+struct ParserState
+{
+	bool EndOfLine;
+	bool EndOfCode;
+	int LineNo;
+	int ColumnNo;
+	int DefaultSize;
+	int ParamSize, AddrSize;
+	void reset()
+	{
+		ParamSize = DefaultSize;
+		AddrSize = DefaultSize;
+	}
+};
+static ParserState state;
+static int InstructionSet;
 
 const char *code_buffer;
-bool EndOfLine;
-bool EndOfCode;
 MetaInfo *CurrentMetaInfo = NULL;
-//bool use_mode16 = false;
-int LineNo;
-int ColumnNo;
-static bool mode16;
-static bool small_param;
-static bool small_addr;
 
 Exception::Exception(const string &_message, const string &_expression, int _line, int _column)
 {
@@ -43,7 +51,7 @@ void Exception::print() const
 void SetError(const string &str)
 {
 	//msg_error(str + format("\nline %d", LineNo + 1));
-	throw Exception(str, "", LineNo, ColumnNo);
+	throw Exception(str, "", state.LineNo, state.ColumnNo);
 }
 
 
@@ -82,14 +90,14 @@ inline void resize_buffer(int size)
 }*/
 
 enum{
-	Size8,
-	Size16,
-	Size32,
-	//Size48,
-	Size16or32,
-	Size32or48,
-	Size64,
-	SizeUnknown
+	Size8 = 1,
+	Size16 = 2,
+	Size32 = 4,
+//	Size48 = 6,
+	Size64 = 8,
+	SizeVariable = -5,
+	Size32or48 = -6,
+	SizeUnknown = -7
 };
 
 inline int absolute_size(int s)
@@ -109,7 +117,7 @@ Array<Register> Registers;
 Array<Register*> RegisterByID;
 int RegRoot[NUM_REGISTERS];
 
-inline void add_reg(const string &name, int id, int group, int size, int root = -1)
+void add_reg(const string &name, int id, int group, int size, int root = -1)
 {
 	Register r;
 	r.name = name;
@@ -341,10 +349,14 @@ enum{
 // short parameter type
 enum{
 	__Dummy__ = 10000,
-	Eb,Ev,Ew,Ed,Gb,Gv,Gw,Gd,
-	Ib,Iv,Iw,Id,Ob,Ov,Ow,Od,
-	Rb,Rv,Rw,Rd,Cb,Cv,Cw,Cd,
-	Mb,Mv,Mw,Md,Jb,Jv,Jw,Jd,
+	Eb,Ev,Ew,Ed,
+	Gb,Gv,Gw,Gd,
+	Ib,Iv,Iw,Id,
+	Ob,Ov,Ow,Od,
+	Rb,Rv,Rw,Rd,Rq,
+	Cb,Cv,Cw,Cd,
+	Mb,Mv,Mw,Md,
+	Jb,Jv,Jw,Jd,
 	Sw,Ap,
 };
 
@@ -371,6 +383,7 @@ struct InstructionParam{
 	long long value; // disp or immediate
 	bool is_label;
 	bool immediate_is_relative;	// for jump
+	string str();
 };
 
 struct InstructionWithParams{
@@ -378,6 +391,8 @@ struct InstructionWithParams{
 	InstructionParam p1, p2;
 	int line, col;
 	int size;
+	int addr_size;
+	int param_size;
 };
 
 
@@ -430,6 +445,28 @@ int InstructionWithParamsList::add_label(const string &name, bool declaring)
 	return label.num - 1;
 }
 
+void InstructionWithParamsList::add_func_intro(int stack_alloc_size)
+{
+	int reg_bp = (InstructionSet == InstructionSetAMD64) ? RegRbp : RegEbp;
+	int reg_sp = (InstructionSet == InstructionSetAMD64) ? RegRsp : RegEsp;
+	add_easy(inst_push, PKRegister, (void*)reg_bp);
+	add_easy(inst_mov, PKRegister, (void*)reg_bp, PKRegister, (void*)reg_sp);
+	if (stack_alloc_size > 127){
+		add_easy(inst_sub, PKRegister, (void*)reg_sp, PKConstant32, (void*)stack_alloc_size);
+	}else if (stack_alloc_size > 0){
+		add_easy(inst_sub_b, PKRegister, (void*)reg_sp, PKConstant8, (void*)stack_alloc_size);
+	}
+}
+
+void InstructionWithParamsList::add_func_return(int return_size)
+{
+	add_easy(inst_leave);
+	if (return_size > 4)
+		add_easy(inst_ret, PKConstant16, (void*)4);
+	else
+		add_easy(inst_ret);
+}
+
 // which part of the modr/m byte is used
 enum{
 	MRMNone,
@@ -442,7 +479,7 @@ string SizeOut(int size)
 	if (size == Size8)		return "8";
 	if (size == Size16)		return "16";
 	if (size == Size32)		return "32";
-	if (size == Size16or32)	return "16/32";
+	if (size == SizeVariable)	return "16/32/64";
 	if (size == Size32or48)	return "32/48";
 	if (size == Size64)		return "64";
 	return "???";
@@ -545,7 +582,7 @@ bool _get_inst_param_(int param, InstructionParamFuzzy &ip)
 		ip.reg_group = RegGroupGeneral;
 		ip.mrm_mode = MRMModRM;
 		if (param == Eb)	ip.size = Size8;
-		if (param == Ev)	ip.size = Size16or32;
+		if (param == Ev)	ip.size = SizeVariable;
 		if (param == Ew)	ip.size = Size16;
 		if (param == Ed)	ip.size = Size32;
 		return true;
@@ -557,7 +594,7 @@ bool _get_inst_param_(int param, InstructionParamFuzzy &ip)
 		ip.reg_group = RegGroupGeneral;
 		ip.mrm_mode = MRMReg;
 		if (param == Gb)	ip.size = Size8;
-		if (param == Gv)	ip.size = Size16or32;
+		if (param == Gv)	ip.size = SizeVariable;
 		if (param == Gw)	ip.size = Size16;
 		if (param == Gd)	ip.size = Size32;
 		return true;
@@ -569,9 +606,10 @@ bool _get_inst_param_(int param, InstructionParamFuzzy &ip)
 		ip.reg_group = RegGroupGeneral;
 		ip.mrm_mode = MRMModRM;
 		if (param == Rb)	ip.size = Size8;
-		if (param == Rv)	ip.size = Size16or32;
+		if (param == Rv)	ip.size = SizeVariable;
 		if (param == Rw)	ip.size = Size16;
 		if (param == Rd)	ip.size = Size32;
+		if (param == Rq)	ip.size = Size64;
 		return true;
 	}
 	// immediate
@@ -579,7 +617,7 @@ bool _get_inst_param_(int param, InstructionParamFuzzy &ip)
 		ip._type_ = ParamTImmediate;
 		ip.allow_immediate = true;
 		if (param == Ib)	ip.size = Size8;
-		if (param == Iv)	ip.size = Size16or32;
+		if (param == Iv)	ip.size = SizeVariable;
 		if (param == Iw)	ip.size = Size16;
 		if (param == Id)	ip.size = Size32;
 		if (param == Ap){	ip.size = Size32or48;	ip._type_ = ParamTImmediateDouble;	} // TODO allowed??? (instead of ParamTImmediate)
@@ -591,7 +629,7 @@ bool _get_inst_param_(int param, InstructionParamFuzzy &ip)
 		ip.allow_immediate = true;
 		ip.immediate_is_relative = true;
 		if (param == Jb)	ip.size = Size8;
-		if (param == Jv)	ip.size = Size16or32;
+		if (param == Jv)	ip.size = SizeVariable;
 		if (param == Jw)	ip.size = Size16;
 		if (param == Jd)	ip.size = Size32;
 		return false;
@@ -601,7 +639,7 @@ bool _get_inst_param_(int param, InstructionParamFuzzy &ip)
 		ip._type_ = ParamTMemory;
 		ip.allow_memory_address = true;
 		if (param == Ob)	ip.size = Size8;
-		if (param == Ov)	ip.size = Size16or32;
+		if (param == Ov)	ip.size = SizeVariable;
 		if (param == Ow)	ip.size = Size16;
 		if (param == Od)	ip.size = Size32;
 		return false;
@@ -614,7 +652,7 @@ bool _get_inst_param_(int param, InstructionParamFuzzy &ip)
 		ip.reg_group = RegGroupGeneral;
 		ip.mrm_mode = MRMModRM;
 		if (param == Mb)	ip.size = Size8;
-		if (param == Mv)	ip.size = Size16or32;
+		if (param == Mv)	ip.size = SizeVariable;
 		if (param == Mw)	ip.size = Size16;
 		if (param == Md)	ip.size = Size32;
 		return true;
@@ -626,7 +664,7 @@ bool _get_inst_param_(int param, InstructionParamFuzzy &ip)
 		ip.reg_group = RegGroupControl;
 		ip.mrm_mode = MRMReg;
 		if (param == Cb)	ip.size = Size8;
-		if (param == Cv)	ip.size = Size16or32;
+		if (param == Cv)	ip.size = SizeVariable;
 		if (param == Cw)	ip.size = Size16;
 		if (param == Cd)	ip.size = Size32;
 		return true;
@@ -743,32 +781,53 @@ void SetInstructionSet(int set)
 
 
 
-void Init()
+void Init(int set)
 {
+	if (set == InstructionSetDefault){
+		if (sizeof(void*) == 8)
+			set = InstructionSetAMD64;
+		else if (sizeof(void*) == 4)
+			set = InstructionSetX86;
+		else{
+			msg_error("Asm: unknown instruction set");
+			set = InstructionSetX86;
+		}
+	}
+	InstructionSet = set;
+
+
 	Registers.clear();
+	add_reg("rax",	RegRax,	RegGroupGeneral,	Size64,	RegEax);
 	add_reg("eax",	RegEax,	RegGroupGeneral,	Size32,	RegEax);
 	add_reg("ax",	RegAx,	RegGroupGeneral,	Size16,	RegEax);
 	add_reg("ah",	RegAh,	RegGroupGeneral,	Size8,	RegEax);
 	add_reg("al",	RegAl,	RegGroupGeneral,	Size8,	RegEax);
+	add_reg("rcx",	RegRcx,	RegGroupGeneral,	Size64,	RegEcx);
 	add_reg("ecx",	RegEcx,	RegGroupGeneral,	Size32,	RegEcx);
 	add_reg("cx",	RegCx,	RegGroupGeneral,	Size16,	RegEcx);
 	add_reg("ch",	RegCh,	RegGroupGeneral,	Size8,	RegEcx);
 	add_reg("cl",	RegCl,	RegGroupGeneral,	Size8,	RegEcx);
+	add_reg("rdx",	RegRdx,	RegGroupGeneral,	Size64,	RegEdx);
 	add_reg("edx",	RegEdx,	RegGroupGeneral,	Size32,	RegEdx);
 	add_reg("dx",	RegDx,	RegGroupGeneral,	Size16,	RegEdx);
 	add_reg("dh",	RegDh,	RegGroupGeneral,	Size8,	RegEdx);
 	add_reg("dl",	RegDl,	RegGroupGeneral,	Size8,	RegEdx);
+	add_reg("rbx",	RegRbx,	RegGroupGeneral,	Size64,	RegEbx);
 	add_reg("ebx",	RegEbx,	RegGroupGeneral,	Size32,	RegEbx);
 	add_reg("bx",	RegBx,	RegGroupGeneral,	Size16,	RegEbx);
 	add_reg("bh",	RegBh,	RegGroupGeneral,	Size8,	RegEbx);
 	add_reg("bl",	RegBl,	RegGroupGeneral,	Size8,	RegEbx);
 
+	add_reg("rsp",	RegRsp,	RegGroupGeneral,	Size64);
 	add_reg("esp",	RegEsp,	RegGroupGeneral,	Size32);
 	add_reg("sp",	RegSp,	RegGroupGeneral,	Size16);
+	add_reg("rsi",	RegRsi,	RegGroupGeneral,	Size64);
 	add_reg("esi",	RegEsi,	RegGroupGeneral,	Size32);
 	add_reg("si",	RegSi,	RegGroupGeneral,	Size16);
+	add_reg("rdi",	RegRdi,	RegGroupGeneral,	Size64);
 	add_reg("edi",	RegEdi,	RegGroupGeneral,	Size32);
 	add_reg("di",	RegDi,	RegGroupGeneral,	Size16);
+	add_reg("rbp",	RegRbp,	RegGroupGeneral,	Size64);
 	add_reg("ebp",	RegEbp,	RegGroupGeneral,	Size32);
 	add_reg("bp",	RegBp,	RegGroupGeneral,	Size16);
 
@@ -793,16 +852,6 @@ void Init()
 	add_reg("st6",	RegSt6,	-1,	Size32);
 	add_reg("st7",	RegSt7,	-1,	Size32);
 
-
-	add_reg("rax",	RegRax,	RegGroupGeneral,	Size64,	RegEax);
-	add_reg("rdx",	RegRdx,	RegGroupGeneral,	Size64,	RegEdx);
-	add_reg("rcx",	RegRcx,	RegGroupGeneral,	Size64,	RegEcx);
-	add_reg("rbx",	RegRbx,	RegGroupGeneral,	Size64,	RegEdx);
-	add_reg("rsp",	RegRsp,	RegGroupGeneral,	Size64);
-	add_reg("rbp",	RegRbp,	RegGroupGeneral,	Size64);
-	add_reg("rdi",	RegRdi,	RegGroupGeneral,	Size64);
-	add_reg("rdx",	RegRdx,	RegGroupGeneral,	Size64);
-
 	// create easy to access array
 	RegisterByID.clear();
 	for (int i=0;i<Registers.num;i++){
@@ -811,7 +860,7 @@ void Init()
 		RegisterByID[Registers[i].id] = &Registers[i];
 	}
 
-
+	Instruction.clear();
 	add_inst(inst_add_b		,0x00	,1	,-1	,Eb	,Gb	);
 	add_inst(inst_add		,0x01	,1	,-1	,Ev	,Gv	);
 	add_inst(inst_add_b		,0x02	,1	,-1	,Gb	,Eb	);
@@ -918,38 +967,59 @@ void Init()
 	add_inst(inst_cmp		,0x3b	,1	,-1	,Gv	,Ev	);
 	add_inst(inst_cmp_b		,0x3c	,1	,-1	,RegAl	,Ib	);
 	add_inst(inst_cmp		,0x3d	,1	,-1	,RegEax	,Iv	);
-	add_inst(inst_inc		,0x40	,1	,-1	,RegEax	,-1	);
-	add_inst(inst_inc		,0x41	,1	,-1	,RegEcx	,-1	);
-	add_inst(inst_inc		,0x42	,1	,-1	,RegEdx	,-1	);
-	add_inst(inst_inc		,0x43	,1	,-1	,RegEbx	,-1	);
-	add_inst(inst_inc		,0x44	,1	,-1	,RegEsp	,-1	);
-	add_inst(inst_inc		,0x45	,1	,-1	,RegEbp	,-1	);
-	add_inst(inst_inc		,0x46	,1	,-1	,RegEsi	,-1	);
-	add_inst(inst_inc		,0x47	,1	,-1	,RegEdi	,-1	);
-	add_inst(inst_dec		,0x48	,1	,-1	,RegEax	,-1	);
-	add_inst(inst_dec		,0x49	,1	,-1	,RegEcx	,-1	);
-	add_inst(inst_dec		,0x4a	,1	,-1	,RegEdx	,-1	);
-	add_inst(inst_dec		,0x4b	,1	,-1	,RegEbx	,-1	);
-	add_inst(inst_dec		,0x4c	,1	,-1	,RegEsp	,-1	);
-	add_inst(inst_dec		,0x4d	,1	,-1	,RegEbp	,-1	);
-	add_inst(inst_dec		,0x4e	,1	,-1	,RegEsi	,-1	);
-	add_inst(inst_dec		,0x4f	,1	,-1	,RegEdi	,-1	);
-	add_inst(inst_push		,0x50	,1	,-1	,RegEax	,-1	);
-	add_inst(inst_push		,0x51	,1	,-1	,RegEcx	,-1	);
-	add_inst(inst_push		,0x52	,1	,-1	,RegEdx	,-1	);
-	add_inst(inst_push		,0x53	,1	,-1	,RegEbx	,-1	);
-	add_inst(inst_push		,0x54	,1	,-1	,RegEsp	,-1	);
-	add_inst(inst_push		,0x55	,1	,-1	,RegEbp	,-1	);
-	add_inst(inst_push		,0x56	,1	,-1	,RegEsi	,-1	);
-	add_inst(inst_push		,0x57	,1	,-1	,RegEdi	,-1	);
-	add_inst(inst_pop		,0x58	,1	,-1	,RegEax	,-1	);
-	add_inst(inst_pop		,0x59	,1	,-1	,RegEcx	,-1	);
-	add_inst(inst_pop		,0x5a	,1	,-1	,RegEdx	,-1	);
-	add_inst(inst_pop		,0x5b	,1	,-1	,RegEbx	,-1	);
-	add_inst(inst_pop		,0x5c	,1	,-1	,RegEsp	,-1	);
-	add_inst(inst_pop		,0x5d	,1	,-1	,RegEbp	,-1	);
-	add_inst(inst_pop		,0x5e	,1	,-1	,RegEsi	,-1	);
-	add_inst(inst_pop		,0x5f	,1	,-1	,RegEdi	,-1	);
+	if (set == InstructionSetX86){
+		add_inst(inst_inc		,0x40	,1	,-1	,RegEax	,-1	);
+		add_inst(inst_inc		,0x41	,1	,-1	,RegEcx	,-1	);
+		add_inst(inst_inc		,0x42	,1	,-1	,RegEdx	,-1	);
+		add_inst(inst_inc		,0x43	,1	,-1	,RegEbx	,-1	);
+		add_inst(inst_inc		,0x44	,1	,-1	,RegEsp	,-1	);
+		add_inst(inst_inc		,0x45	,1	,-1	,RegEbp	,-1	);
+		add_inst(inst_inc		,0x46	,1	,-1	,RegEsi	,-1	);
+		add_inst(inst_inc		,0x47	,1	,-1	,RegEdi	,-1	);
+		add_inst(inst_dec		,0x48	,1	,-1	,RegEax	,-1	);
+		add_inst(inst_dec		,0x49	,1	,-1	,RegEcx	,-1	);
+		add_inst(inst_dec		,0x4a	,1	,-1	,RegEdx	,-1	);
+		add_inst(inst_dec		,0x4b	,1	,-1	,RegEbx	,-1	);
+		add_inst(inst_dec		,0x4c	,1	,-1	,RegEsp	,-1	);
+		add_inst(inst_dec		,0x4d	,1	,-1	,RegEbp	,-1	);
+		add_inst(inst_dec		,0x4e	,1	,-1	,RegEsi	,-1	);
+		add_inst(inst_dec		,0x4f	,1	,-1	,RegEdi	,-1	);
+	}
+	if (set == InstructionSetX86){
+		add_inst(inst_push		,0x50	,1	,-1	,RegEax	,-1	);
+		add_inst(inst_push		,0x51	,1	,-1	,RegEcx	,-1	);
+		add_inst(inst_push		,0x52	,1	,-1	,RegEdx	,-1	);
+		add_inst(inst_push		,0x53	,1	,-1	,RegEbx	,-1	);
+		add_inst(inst_push		,0x54	,1	,-1	,RegEsp	,-1	);
+		add_inst(inst_push		,0x55	,1	,-1	,RegEbp	,-1	);
+		add_inst(inst_push		,0x56	,1	,-1	,RegEsi	,-1	);
+		add_inst(inst_push		,0x57	,1	,-1	,RegEdi	,-1	);
+		add_inst(inst_pop		,0x58	,1	,-1	,RegEax	,-1	);
+		add_inst(inst_pop		,0x59	,1	,-1	,RegEcx	,-1	);
+		add_inst(inst_pop		,0x5a	,1	,-1	,RegEdx	,-1	);
+		add_inst(inst_pop		,0x5b	,1	,-1	,RegEbx	,-1	);
+		add_inst(inst_pop		,0x5c	,1	,-1	,RegEsp	,-1	);
+		add_inst(inst_pop		,0x5d	,1	,-1	,RegEbp	,-1	);
+		add_inst(inst_pop		,0x5e	,1	,-1	,RegEsi	,-1	);
+		add_inst(inst_pop		,0x5f	,1	,-1	,RegEdi	,-1	);
+	}else if (set == InstructionSetAMD64){
+		add_inst(inst_push		,0x50	,1	,-1	,RegRax	,-1	);
+		add_inst(inst_push		,0x51	,1	,-1	,RegRcx	,-1	);
+		add_inst(inst_push		,0x52	,1	,-1	,RegRdx	,-1	);
+		add_inst(inst_push		,0x53	,1	,-1	,RegRbx	,-1	);
+		add_inst(inst_push		,0x54	,1	,-1	,RegRsp	,-1	);
+		add_inst(inst_push		,0x55	,1	,-1	,RegRbp	,-1	);
+		add_inst(inst_push		,0x56	,1	,-1	,RegRsi	,-1	);
+		add_inst(inst_push		,0x57	,1	,-1	,RegRdi	,-1	);
+		add_inst(inst_pop		,0x58	,1	,-1	,RegRax	,-1	);
+		add_inst(inst_pop		,0x59	,1	,-1	,RegRcx	,-1	);
+		add_inst(inst_pop		,0x5a	,1	,-1	,RegRdx	,-1	);
+		add_inst(inst_pop		,0x5b	,1	,-1	,RegRbx	,-1	);
+		add_inst(inst_pop		,0x5c	,1	,-1	,RegRsp	,-1	);
+		add_inst(inst_pop		,0x5d	,1	,-1	,RegRbp	,-1	);
+		add_inst(inst_pop		,0x5e	,1	,-1	,RegRsi	,-1	);
+		add_inst(inst_pop		,0x5f	,1	,-1	,RegRdi	,-1	);
+	}
 	add_inst(inst_pusha		,0x60	,1	,-1	,-1	,-1	);
 	add_inst(inst_popa		,0x61	,1	,-1	,-1	,-1	);
 	add_inst(inst_push		,0x68	,1	,-1	,Iv	,-1	);
@@ -1147,48 +1217,48 @@ void Init()
 }
 
 // convert an asm parameter into a human readable expression
-void AddParam(string &str, InstructionParam &p)
+string InstructionParam::str()
 {
 	msg_db_f("AddParam", 1+ASM_DB_LEVEL);
-	str = "\?\?\?";
+	string str = "\?\?\?";
 	//msg_write("----");
 	//msg_write(p.type);
-	if (p.type == ParamTInvalid){
+	if (type == ParamTInvalid){
 		str = "-\?\?\?-";
-	}else if (p.type == ParamTNone){
+	}else if (type == ParamTNone){
 		str = "";
-	}else if (p.type == ParamTRegister){
-			//msg_write((long)p.reg);
-			//msg_write((long)p.disp);
-		if (p.deref){
+	}else if (type == ParamTRegister){
+			//msg_write((long)reg);
+			//msg_write((long)disp);
+		if (deref){
 			//msg_write("deref");
-			if (p.disp == DispModeNone)
-				str = "[" + p.reg->name + "]";
-			else if (p.disp == DispMode8)
-				str += format("[%s + %2x]", p.reg->name.c_str(), p.value);
-			else if (p.disp == DispMode16)
-				str += format("[%s + %4x]", p.reg->name.c_str(), p.value);
-			else if (p.disp == DispMode32)
-				str += format("[%s + %8x]", p.reg->name.c_str(), p.value);
-			else if (p.disp == DispModeSIB)
+			if (disp == DispModeNone)
+				str = "[" + reg->name + "]";
+			else if (disp == DispMode8)
+				str += format("[%s + %2x]", reg->name.c_str(), value);
+			else if (disp == DispMode16)
+				str += format("[%s + %4x]", reg->name.c_str(), value);
+			else if (disp == DispMode32)
+				str += format("[%s + %8x]", reg->name.c_str(), value);
+			else if (disp == DispModeSIB)
 				str = "SIB[...][...]";
-			else if (p.disp == DispMode8SIB)
-				str = format("[SIB... + %2x]", p.value);
-			else if (p.disp == DispMode8Reg2)
-				str = format("[%s + %s + %2x]", p.reg->name.c_str(), p.reg2->name.c_str(), p.value);
-			else if (p.disp == DispModeReg2)
-				str = "[" + p.reg->name + " + " + p.reg2->name + "]";
+			else if (disp == DispMode8SIB)
+				str = format("[SIB... + %2x]", value);
+			else if (disp == DispMode8Reg2)
+				str = format("[%s + %s + %2x]", reg->name.c_str(), reg2->name.c_str(), value);
+			else if (disp == DispModeReg2)
+				str = "[" + reg->name + " + " + reg2->name + "]";
 		}else
-			str = p.reg->name;
-	}else if (p.type == ParamTImmediate){
+			str = reg->name;
+	}else if (type == ParamTImmediate){
 		//msg_write("im");
-		if (p.deref)
-			str = format("[%s]", d2h(&p.value, small_addr ? 2 : 4).c_str());
+		if (deref)
+			str = format("[%s]", d2h(&value, state.AddrSize).c_str());
 		else
-			str = d2h(&p.value, absolute_size(p.size));
-	}else if (p.type == ParamTImmediateDouble){
+			str = d2h(&value, absolute_size(size));
+	}else if (type == ParamTImmediateDouble){
 		//msg_write("im");
-		str = format("%s:%s", d2h(&((char*)&p.value)[4], 2).c_str(), d2h(&p.value, small_param ? 2 : 4).c_str());
+		str = format("%s:%s", d2h(&((char*)&value)[4], 2).c_str(), d2h(&value, state.ParamSize).c_str());
 	}
 #if 0
 	for (int i=0;i<Registers.num;i++)
@@ -1262,14 +1332,15 @@ void AddParam(string &str, InstructionParam &p)
 		default:	strcat(str,string(i2s(param),": -\?\?- "));	break;
 	};
 #endif
+	return str;
 }
 
 // adjust parameter type to ... 32bit / 16bit
 inline void ApplyParamSize(InstructionParamFuzzy &p)
 {
 	msg_db_f("CorrectParam", 1+ASM_DB_LEVEL);
-	if (small_param){
-		if (p.size == Size16or32){
+	if (state.ParamSize == Size16){
+		if (p.size == SizeVariable){
 			//if ((p.allow_register) || (p.allow_memory_address) || (p.allow_memory_indirect) || (p.allow_immediate))
 				p.size = Size16;
 		}
@@ -1283,8 +1354,23 @@ inline void ApplyParamSize(InstructionParamFuzzy &p)
 			if (p.reg->id == RegEsi){	p.reg = RegisterByID[RegSi];	p.size = Size16;	}
 			if (p.reg->id == RegEdi){	p.reg = RegisterByID[RegDi];	p.size = Size16;	}
 		}
+	}else if (state.ParamSize == Size64){
+			if (p.size == SizeVariable){
+				//if ((p.allow_register) || (p.allow_memory_address) || (p.allow_memory_indirect) || (p.allow_immediate))
+					p.size = Size64;
+			}
+			if (p.reg){
+				if (p.reg->id == RegEax){	p.reg = RegisterByID[RegRax];	p.size = Size64;	}
+				if (p.reg->id == RegEcx){	p.reg = RegisterByID[RegRcx];	p.size = Size64;	}
+				if (p.reg->id == RegEdx){	p.reg = RegisterByID[RegRdx];	p.size = Size64;	}
+				if (p.reg->id == RegEbx){	p.reg = RegisterByID[RegRbx];	p.size = Size64;	}
+				if (p.reg->id == RegEsp){	p.reg = RegisterByID[RegRsp];	p.size = Size64;	}
+				if (p.reg->id == RegEbp){	p.reg = RegisterByID[RegRbp];	p.size = Size64;	}
+				if (p.reg->id == RegEsi){	p.reg = RegisterByID[RegRsi];	p.size = Size64;	}
+				if (p.reg->id == RegEdi){	p.reg = RegisterByID[RegRdi];	p.size = Size64;	}
+			}
 	}else{
-		if (p.size == Size16or32){
+		if (p.size == SizeVariable){
 			//if ((p.type == ParamTRegister) || (p.type == ParamTRegisterOrMem) || (p.type == ParamTImmediate))
 			if ((p.allow_register) || (p.allow_memory_address) || (p.allow_memory_indirect) || (p.allow_immediate))
 				p.size = Size32;
@@ -1309,6 +1395,47 @@ inline void UnfuzzyParam(InstructionParam &p, InstructionParamFuzzy &pf)
 	}
 }
 
+Register *GetModRMRegister(int reg, int size)
+{
+	if (size == Size8){
+		if (reg == 0x00)	return RegisterByID[RegAl];
+		if (reg == 0x01)	return RegisterByID[RegCl];
+		if (reg == 0x02)	return RegisterByID[RegDl];
+		if (reg == 0x03)	return RegisterByID[RegBl];
+		if (reg == 0x04)	return RegisterByID[RegAh];
+		if (reg == 0x05)	return RegisterByID[RegCh];
+		if (reg == 0x06)	return RegisterByID[RegDh];
+		if (reg == 0x07)	return RegisterByID[RegBh];
+	}else if (size == Size16){
+		if (reg == 0x00)	return RegisterByID[RegAx];
+		if (reg == 0x01)	return RegisterByID[RegCx];
+		if (reg == 0x02)	return RegisterByID[RegDx];
+		if (reg == 0x03)	return RegisterByID[RegBx];
+		if (reg == 0x04)	return RegisterByID[RegSp];
+		if (reg == 0x05)	return RegisterByID[RegBp];
+		if (reg == 0x06)	return RegisterByID[RegSi];
+		if (reg == 0x07)	return RegisterByID[RegDi];
+	}else if (size == Size32){
+		if (reg == 0x00)	return RegisterByID[RegEax];
+		if (reg == 0x01)	return RegisterByID[RegEcx];
+		if (reg == 0x02)	return RegisterByID[RegEdx];
+		if (reg == 0x03)	return RegisterByID[RegEbx];
+		if (reg == 0x04)	return RegisterByID[RegEsp];
+		if (reg == 0x05)	return RegisterByID[RegEbp];
+		if (reg == 0x06)	return RegisterByID[RegEsi];
+		if (reg == 0x07)	return RegisterByID[RegEdi];
+	}else if (size == Size64){
+		if (reg == 0x00)	return RegisterByID[RegRax];
+		if (reg == 0x01)	return RegisterByID[RegRcx];
+		if (reg == 0x02)	return RegisterByID[RegRdx];
+		if (reg == 0x03)	return RegisterByID[RegRbx];
+		if (reg == 0x04)	return RegisterByID[RegRsp];
+		if (reg == 0x05)	return RegisterByID[RegRbp];
+		if (reg == 0x06)	return RegisterByID[RegRsi];
+		if (reg == 0x07)	return RegisterByID[RegRdi];
+	}
+}
+
 inline void GetFromModRM(InstructionParam &p, InstructionParamFuzzy &pf, unsigned char modrm)
 {
 	msg_db_f("GetFromModRM", 2+ASM_DB_LEVEL);
@@ -1329,20 +1456,13 @@ inline void GetFromModRM(InstructionParam &p, InstructionParamFuzzy &pf, unsigne
 			if (reg == 0x10)	p.reg = RegisterByID[RegCr2];
 			if (reg == 0x18)	p.reg = RegisterByID[RegCr3];
 		}else{
-			if (reg == 0x00)	p.reg = (p.size == Size8) ? RegisterByID[RegAl] : ((p.size == Size16) ? RegisterByID[RegAx] : RegisterByID[RegEax]);
-			if (reg == 0x08)	p.reg = (p.size == Size8) ? RegisterByID[RegCl] : ((p.size == Size16) ? RegisterByID[RegCx] : RegisterByID[RegEcx]);
-			if (reg == 0x10)	p.reg = (p.size == Size8) ? RegisterByID[RegDl] : ((p.size == Size16) ? RegisterByID[RegDx] : RegisterByID[RegEdx]);
-			if (reg == 0x18)	p.reg = (p.size == Size8) ? RegisterByID[RegBl] : ((p.size == Size16) ? RegisterByID[RegBx] : RegisterByID[RegEbx]);
-			if (reg == 0x20)	p.reg = (p.size == Size8) ? RegisterByID[RegAh] : ((p.size == Size16) ? RegisterByID[RegSp] : RegisterByID[RegEsp]);
-			if (reg == 0x28)	p.reg = (p.size == Size8) ? RegisterByID[RegCh] : ((p.size == Size16) ? RegisterByID[RegBp] : RegisterByID[RegEbp]);
-			if (reg == 0x30)	p.reg = (p.size == Size8) ? RegisterByID[RegDh] : ((p.size == Size16) ? RegisterByID[RegSi] : RegisterByID[RegEsi]);
-			if (reg == 0x38)	p.reg = (p.size == Size8) ? RegisterByID[RegBh] : ((p.size == Size16) ? RegisterByID[RegDi] : RegisterByID[RegEdi]);
+			p.reg = GetModRMRegister(reg >> 3, p.size);
 		}
 	}else if (pf.mrm_mode == MRMModRM){
 		unsigned char mod = modrm & 0xc0; // bits 7, 6
 		unsigned char rm = modrm & 0x07; // bits 2, 1, 0
 		if (mod == 0x00){
-			if (small_addr){
+			if (state.AddrSize == Size16){
 				p.type = ParamTRegister;
 				p.deref = true;
 				if (rm == 0x00){p.reg = RegisterByID[RegBx];	p.reg2 = RegisterByID[RegSi];	p.disp = DispModeReg2;	}
@@ -1367,7 +1487,7 @@ inline void GetFromModRM(InstructionParam &p, InstructionParamFuzzy &pf, unsigne
 				if (rm == 0x07)	p.reg = RegisterByID[RegEdi];
 			}
 		}else if ((mod == 0x40) || (mod == 0x80)){
-			if (small_addr){
+			if (state.AddrSize == Size16){
 				p.type = ParamTRegister;
 				p.deref = true;
 				if (rm == 0x00){p.reg = RegisterByID[RegBx];	p.reg2 = RegisterByID[RegSi];	p.disp = (mod == 0x40) ? DispMode8Reg2 : DispMode16Reg2;	}
@@ -1395,14 +1515,7 @@ inline void GetFromModRM(InstructionParam &p, InstructionParamFuzzy &pf, unsigne
 		}else if (mod == 0xc0){
 			p.type = ParamTRegister;
 			p.deref = false;
-			if (rm == 0x00)	p.reg = (p.size == Size8) ? RegisterByID[RegAl] : ((p.size == Size16) ? RegisterByID[RegAx] : RegisterByID[RegEax]);
-			if (rm == 0x01)	p.reg = (p.size == Size8) ? RegisterByID[RegCl] : ((p.size == Size16) ? RegisterByID[RegCx] : RegisterByID[RegEcx]);
-			if (rm == 0x02)	p.reg = (p.size == Size8) ? RegisterByID[RegDl] : ((p.size == Size16) ? RegisterByID[RegDx] : RegisterByID[RegEdx]);
-			if (rm == 0x03)	p.reg = (p.size == Size8) ? RegisterByID[RegBl] : ((p.size == Size16) ? RegisterByID[RegBx] : RegisterByID[RegEbx]);
-			if (rm == 0x04)	p.reg = (p.size == Size8) ? RegisterByID[RegAh] : ((p.size == Size16) ? RegisterByID[RegSp] : RegisterByID[RegEsp]);
-			if (rm == 0x05)	p.reg = (p.size == Size8) ? RegisterByID[RegCh] : ((p.size == Size16) ? RegisterByID[RegBp] : RegisterByID[RegEbp]);
-			if (rm == 0x06)	p.reg = (p.size == Size8) ? RegisterByID[RegDh] : ((p.size == Size16) ? RegisterByID[RegSi] : RegisterByID[RegEsi]);
-			if (rm == 0x07)	p.reg = (p.size == Size8) ? RegisterByID[RegBh] : ((p.size == Size16) ? RegisterByID[RegDi] : RegisterByID[RegEdi]);
+			p.reg = GetModRMRegister(rm, p.size);
 		}
 	}
 }
@@ -1452,17 +1565,14 @@ inline void ReadParamData(char *&cur, InstructionParam &p)
 	p.value = 0;
 	if (p.type == ParamTImmediate){
 		if (p.deref){
-			if (small_addr){
-				*(short*)&p.value = *(short*)cur;		cur += 2;
-			}else{
-				*(int*)&p.value = *(int*)cur;		cur += 4;
-			}
+			memcpy(&p.value, cur, state.AddrSize);
+			cur += state.AddrSize;
 		}else{
 			memcpy(&p.value, cur, absolute_size(p.size));
 			cur += absolute_size(p.size);
 		}
 	}else if (p.type == ParamTImmediateDouble){
-		if (small_param){
+		if (state.ParamSize == Size16){ // addr?
 			*(short*)&p.value = *(short*)cur;	cur += 2;	((short*)&p.value)[2] = *(short*)cur;	cur += 2;
 		}else{
 			memcpy(&p.value, cur, 6);		cur += 6;
@@ -1495,18 +1605,18 @@ string Disassemble(void *_code_,int length,bool allow_comments)
 	char *orig=code;
 	if (length<0)	end=code+65536;
 
-	// code points to the start of the start of the (current) complete command (dword cs: mov ax, ...)
+	// code points to the start of the (current) complete command (dword cs: mov ax, ...)
 	// cur points to the currently processed byte
 	// opcode points to the start of the instruction (mov)
 	char *cur = code;
-	mode16 = false;
+	state.DefaultSize = Size32;
 	if (CurrentMetaInfo)
-		mode16 = CurrentMetaInfo->Mode16;
+		if (CurrentMetaInfo->Mode16)
+			state.DefaultSize = Size16;
 
 
 	while(code < end){
-		small_param = mode16;
-		small_addr = mode16;
+		state.reset();
 		opcode = cur;
 		code = cur;
 
@@ -1554,10 +1664,9 @@ string Disassemble(void *_code_,int length,bool allow_comments)
 			// change of bits (processor mode)
 			for (int i=0;i<CurrentMetaInfo->bit_change.num;i++)
 				if ((long)code-(long)orig == CurrentMetaInfo->bit_change[i].Pos){
-					mode16 = (CurrentMetaInfo->bit_change[i].Bits == 16);
-					small_param = mode16;
-					small_addr = mode16;
-					if (mode16)
+					state.DefaultSize = (CurrentMetaInfo->bit_change[i].Bits == 16) ? Size16 : Size32;
+					state.reset();
+					if (state.DefaultSize == Size16)
 						bufstr += "   bits_16\n";
 					else
 						bufstr += "   bits_32\n";
@@ -1566,10 +1675,20 @@ string Disassemble(void *_code_,int length,bool allow_comments)
 
 		// code
 
-		// praefix (size/segment register)
+		// prefix (size/segment register)
 		Register *seg = NULL;
-		if (cur[0]==0x67){	small_addr = !mode16;		cur++;	}
-		if (cur[0]==0x66){	small_param = !mode16;		cur++;	}
+		if (cur[0]==0x67){
+			state.AddrSize = (state.DefaultSize == Size32) ? Size16 : Size32;
+			cur++;
+		}
+		if (cur[0]==0x66){
+			state.ParamSize = (state.DefaultSize == Size32) ? Size16 : Size32;
+			cur++;
+		}
+		if ((cur[0]==0x48) && (InstructionSet == InstructionSetAMD64)){
+			state.ParamSize = Size64;
+			cur++;
+		}
 		if (cur[0]==0x2e){	seg = RegisterByID[RegCs];	cur++;	}
 		else if (cur[0]==0x36){	seg = RegisterByID[RegSs];	cur++;	}
 		else if (cur[0]==0x3e){	seg = RegisterByID[RegDs];	cur++;	}
@@ -1634,16 +1753,18 @@ string Disassemble(void *_code_,int length,bool allow_comments)
 			str += inst->name;
 
 			// parameters
-			if (small_param != mode16)
-				str += small_param ? " word" : " dword";
-			if (p1.type != ParamTNone){
-				AddParam(param, p1);
-				str += " " + param;
+			if (state.ParamSize != state.DefaultSize){
+				if (state.ParamSize == Size16)
+					str += " word";
+				else if (state.ParamSize == Size32)
+					str += " dword";
+				else if (state.ParamSize == Size64)
+					str += " qword";
 			}
-			if (p2.type != ParamTNone){
-				AddParam(param, p2);
-				str += ", " + param;
-			}
+			if (p1.type != ParamTNone)
+				str += " " + p1.str();
+			if (p2.type != ParamTNone)
+				str += ", " + p2.str();
 			
 			
 			if (allow_comments){
@@ -1905,32 +2026,32 @@ bool IgnoreUnimportant(int &pos)
 	// ignore comments and "white space"
 	for (int i=0;i<1048576;i++){
 		if (code_buffer[pos] == 0){
-			EndOfCode = true;
-			EndOfLine = true;
+			state.EndOfCode = true;
+			state.EndOfLine = true;
 			return true;
 		}
 		if (code_buffer[pos] == '\n'){
-			LineNo ++;
-			ColumnNo = 0;
+			state.LineNo ++;
+			state.ColumnNo = 0;
 			CommentLine = false;
 		}
 		// "white space"
 		if ((code_buffer[pos] == '\n') || (code_buffer[pos] == ' ') || (code_buffer[pos] == '\t')){
 			pos ++;
-			ColumnNo ++;
+			state.ColumnNo ++;
 			continue;
 		}
 		// comments
 		if ((code_buffer[pos] == ';') || ((code_buffer[pos] == '/') && (code_buffer[pos] == '/'))){
 			CommentLine = true;
 			pos ++;
-			ColumnNo ++;
+			state.ColumnNo ++;
 			continue;
 		}
 		if (!CommentLine)
 			break;
 		pos ++;
-		ColumnNo ++;
+		state.ColumnNo ++;
 	}
 	return false;
 }
@@ -1939,7 +2060,7 @@ bool IgnoreUnimportant(int &pos)
 string FindMnemonic(int &pos)
 {
 	msg_db_f("GetMne", 1+ASM_DB_LEVEL);
-	EndOfLine = false;
+	state.EndOfLine = false;
 	char mne[128];
 	strcpy(mne, "");
 
@@ -1957,14 +2078,14 @@ string FindMnemonic(int &pos)
 		// end of code
 		if (code_buffer[pos] == 0){
 			mne[i] = 0;
-			EndOfCode = true;
-			EndOfLine = true;
+			state.EndOfCode = true;
+			state.EndOfLine = true;
 			break;
 		}
 		// end of line
 		if (code_buffer[pos] == '\n'){
 			mne[i] = 0;
-			EndOfLine = true;
+			state.EndOfLine = true;
 			break;
 		}
 		if (!in_string){
@@ -1975,14 +2096,14 @@ string FindMnemonic(int &pos)
 				for (int j=0;j<128;j++){
 					if ((code_buffer[pos+j] != ' ') && (code_buffer[pos+j] != '\t') && (code_buffer[pos+j] != ',')){
 						if ((code_buffer[pos + j] == 0) || (code_buffer[pos + j] == '\n'))
-							EndOfLine = true;
+							state.EndOfLine = true;
 						// comment ending the line
 						if ((code_buffer[pos + j] == ';') || ((code_buffer[pos + j] == '/') && (code_buffer[pos + j + 1] == '/')))
-							EndOfLine = true;
+							state.EndOfLine = true;
 						pos += j;
-						ColumnNo += j;
+						state.ColumnNo += j;
 						if (code_buffer[pos] == '\n')
-							ColumnNo = 0;
+							state.ColumnNo = 0;
 						break;
 					}
 				}
@@ -1990,7 +2111,7 @@ string FindMnemonic(int &pos)
 			}
 		}
 		pos ++;
-		ColumnNo ++;
+		state.ColumnNo ++;
 	}
 	/*msg_write>Write(mne);
 	if (EndOfLine)
@@ -2174,19 +2295,6 @@ void GetParam(InstructionParam &p, const string &param, InstructionWithParamsLis
 		SetError("unknown parameter:  \"" + param + "\"\n");
 }
 
-// complete size of command??
-int AppraiseCommandSize(InstructionWithParams &i)
-{
-	msg_db_f("CalcCommandSize", 1+ASM_DB_LEVEL);
-	int size = 4; // 1 prefix + 2 opcode + 1 modrm
-	
-	if ((i.p1.type == ParamTImmediate) && (!i.p1.deref)) // TODO why !deref?!?!?
-		size += absolute_size(i.p1.size);
-	if ((i.p2.type == ParamTImmediate) && (!i.p2.deref))
-		size += absolute_size(i.p2.size);
-	return size;
-}
-
 inline void insert_val(char *oc, int &ocs, long long val, int size)
 {
 	if (size == 1)
@@ -2195,6 +2303,8 @@ inline void insert_val(char *oc, int &ocs, long long val, int size)
 		*(short*)&oc[ocs] = (short)val;
 	else if (size == 4)
 		*(int*)&oc[ocs] = (int)val;
+	else if (size == 8)
+		*(long long int*)&oc[ocs] = val;
 	else
 		memcpy(&oc[ocs], &val, size);
 }
@@ -2210,11 +2320,11 @@ void OpcodeAddImmideate(char *oc, int &ocs, InstructionParamFuzzy &ip, Instructi
 	int size = 0;
 	if (p.type == ParamTImmediate){
 		if (p.deref)
-			size = small_addr ? 2 : 4;
+			size = state.AddrSize;
 		else
 			size = absolute_size(ip.size);
 	}else if (p.type == ParamTImmediateDouble){
-		size = small_param ? 2 : 4;  // bits 0-15  /  0-31
+		size = state.ParamSize;  // bits 0-15  /  0-31
 	}else if (p.type == ParamTRegister){
 		if (p.disp == DispMode8)	size = 1;
 		if (p.disp == DispMode16)	size = 2;
@@ -2275,25 +2385,25 @@ void InstructionWithParamsList::AppendFromSource(const char *code)
 		SetError("no CurrentMetaInfo");
 	}
 
-	LineNo = CurrentMetaInfo->LineOffset;
-	ColumnNo = 0;
+	state.LineNo = CurrentMetaInfo->LineOffset;
+	state.ColumnNo = 0;
 
 	// CurrentMetaInfo->CurrentOpcodePos // Anfang aktuelle Zeile im gesammten Opcode
 	code_buffer = code; // Asm-Source-Puffer
 
 	int pos = 0;
 	InstructionParam p1, p2;
-	mode16 = false;
+	state.DefaultSize = Size32;
 	if (CurrentMetaInfo)
-		mode16 = CurrentMetaInfo->Mode16;
-	EndOfCode = false;
+		if (CurrentMetaInfo->Mode16)
+			state.DefaultSize = Size16;
+	state.EndOfCode = false;
 	while((unsigned)pos < strlen(code) - 2){
 
 		string cmd, param1, param2;
 
 		//msg_write("..");
-		small_param = mode16;
-		small_addr = mode16;
+		state.reset();
 #if 0
 		if (CurrentMetaInfo){
 			CurrentMetaInfo->CurrentOpcodePos = CurrentMetaInfo->PreInsertionLength + CodeLength;
@@ -2305,24 +2415,29 @@ void InstructionWithParamsList::AppendFromSource(const char *code)
 	// interpret asm code (1 line)
 		// find command
 		cmd = FindMnemonic(pos);
-		current_line = LineNo;
-		current_col = ColumnNo;
+		current_line = state.LineNo;
+		current_col = state.ColumnNo;
 		//msg_write(cmd);
 		if (cmd.num == 0)
 			break;
 		// find parameters
-		if (!EndOfLine){
+		if (!state.EndOfLine){
 			param1 = FindMnemonic(pos);
-			if ((param1 == "dword") || (param1 == "word")){
-				small_param = (param1 == "word");
-				if (!EndOfLine)
+			if ((param1 == "dword") || (param1 == "word") || (param1 == "qword")){
+				if (param1 == "word")
+					state.ParamSize = Size16;
+				else if (param1 == "dword")
+					state.ParamSize = Size32;
+				else if (param1 == "qword")
+					state.ParamSize = Size64;
+				if (!state.EndOfLine)
 					param1 = FindMnemonic(pos);
 			}
 		}
-		if (!EndOfLine)
+		if (!state.EndOfLine)
 			param2 = FindMnemonic(pos);
 		//msg_write(string2("----: %s %s%s %s", cmd, param1, (strlen(param2)>0)?",":"", param2));
-		if (EndOfCode)
+		if (state.EndOfCode)
 			break;
 		so("------------------------------");
 		so(cmd);
@@ -2339,9 +2454,8 @@ void InstructionWithParamsList::AppendFromSource(const char *code)
 	// special stuff
 		if (cmd == "bits_16"){
 			so("16 bit Modus!");
-			mode16 = true;
-			small_addr = true;
-			small_param = true;
+			state.DefaultSize = Size16;
+			state.reset();
 			if (CurrentMetaInfo){
 				CurrentMetaInfo->Mode16 = true;
 				BitChange b;
@@ -2352,9 +2466,8 @@ void InstructionWithParamsList::AppendFromSource(const char *code)
 			continue;
 		}else if (cmd == "bits_32"){
 			so("32 bit Modus!");
-			mode16 = false;
-			small_addr = false;
-			small_param = false;
+			state.DefaultSize = Size32;
+			state.reset();
 			if (CurrentMetaInfo){
 				CurrentMetaInfo->Mode16 = false;
 				BitChange b;
@@ -2431,7 +2544,7 @@ void InstructionWithParamsList::AppendFromSource(const char *code)
 		if (inst < 0)
 			SetError("unknown instruction:  " + cmd);
 		// prefix
-		if (small_param != mode16){
+		if (state.ParamSize != state.DefaultSize){
 			//buffer[CodeLength ++] = 0x66;
 			SetError("prefix unhandled:  " + cmd);
 		}
@@ -2444,7 +2557,7 @@ void InstructionWithParamsList::AppendFromSource(const char *code)
 		add(iwp);
 
 
-		if (EndOfCode)
+		if (state.EndOfCode)
 			break;
 	}
 }
@@ -2475,7 +2588,7 @@ inline bool _size_match_(InstructionParamFuzzy &inst_p, InstructionParam &wanted
 		return true;
 	if ((inst_p.size == SizeUnknown) || (wanted_p.size == SizeUnknown))
 		return true;
-	if ((inst_p.size == Size16or32) && ((wanted_p.size == Size16) || (wanted_p.size == Size32)))
+	if ((inst_p.size == SizeVariable) && ((wanted_p.size == Size16) || (wanted_p.size == Size32)))
 		return true;
 	return false;
 }
@@ -2616,7 +2729,7 @@ inline char CreatePartialModRMByte(InstructionParamFuzzy &pf, InstructionParam &
 		if ((p.reg == RegisterByID[RegEdi]) || (p.reg == RegisterByID[RegDi]) || (p.reg == RegisterByID[RegBh]))	return 0x38;
 	}else if (pf.mrm_mode == MRMModRM){
 		if (p.deref){
-			if (small_addr){
+			if (state.AddrSize == Size16){
 				if ((p.type == ParamTImmediate) && (p.deref))	return 0x06;
 			}else{
 				if (p.reg == RegisterByID[RegEax])	return (p.disp == DispModeNone) ? 0x00 : ((p.disp == DispMode8) ? 0x40 : 0x80); // default = DispMode32
@@ -2677,7 +2790,7 @@ void OpcodeAddInstruction(char *oc, int &ocs, sInstruction &inst, InstructionPar
 	OpcodeAddImmideate(oc, ocs, ip2, p2, inst, list);
 }
 
-bool InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)
+void InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)
 {
 	msg_db_f("AsmAddInstructionLow", 1+ASM_DB_LEVEL);
 
@@ -2710,12 +2823,15 @@ bool InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)
 	if (ninst >= 0){
 		OpcodeAddInstruction(oc, ocs, Instruction[ninst], iwp.p1, iwp.p2, *this);
 		iwp.size = ocs - ocs0;
+	}else{
+		for (int i=0;i<NUM_INSTRUCTION_NAMES;i++)
+			if (InstructionNames[i].inst == iwp.inst){
+				SetError("command not compatible with its parameters\n" + InstructionNames[i].name + " " + iwp.p1.str() + " " + iwp.p2.str());
+			}
+		state.LineNo = iwp.line;
+		SetError(format("instruction unknown: %d", iwp.inst));
 	}
-	/*else
-		Error(string("unknown instruction:  ",cmd));*/
 	//msg_write(d2h(&oc[ocs0], ocs - ocs0, false));
-
-	return (ninst >= 0);
 }
 
 void InstructionWithParamsList::ShrinkJumps(void *oc, int ocs)
@@ -2764,15 +2880,14 @@ void InstructionWithParamsList::Compile(void *oc, int &ocs)
 			break;
 
 		// opcode
-		if (!AddInstruction((char*)oc, ocs, i))
-			SetError("instruction is not compatible with its parameters (a):  ");// + cmd + " " + param1 + " " + param2);
+		AddInstruction((char*)oc, ocs, i);
 	}
 
 	LinkWantedLabels(oc);
 
 	if (wanted_label.num > 0){
-		LineNo = (*this)[wanted_label[0].InstNo].line;
-		ColumnNo = (*this)[wanted_label[0].InstNo].col;
+		state.LineNo = (*this)[wanted_label[0].InstNo].line;
+		state.ColumnNo = (*this)[wanted_label[0].InstNo].col;
 		SetError("undeclared label used: " + wanted_label[0].Name);
 	}
 }
@@ -2831,14 +2946,13 @@ void param2str(string &str, int type, void *param)
 	}
 }
 
-bool AddInstruction(char *oc, int &ocs, int inst, int param1_type, void *param1, int param2_type, void *param2)
+void AddInstruction(char *oc, int &ocs, int inst, int param1_type, void *param1, int param2_type, void *param2)
 {
 	msg_db_f("AsmAddInstruction", 1+ASM_DB_LEVEL);
 	/*if (!Instruction)
 		SetInstructionSet(InstructionSetDefault);*/
-	mode16 = false;
-	small_param = mode16;
-	small_addr = mode16;
+	state.DefaultSize = Size32;
+	state.reset();
 	/*msg_write("--------");
 	for (int i=0;i<NUM_INSTRUCTION_NAMES;i++)
 		if (InstructionName[i].inst == inst)
@@ -2855,24 +2969,7 @@ bool AddInstruction(char *oc, int &ocs, int inst, int param1_type, void *param1,
 	iwp.p2 = wp2;
 	iwp.line = -1;
 	list.add(iwp);
-	bool ok = list.AddInstruction(oc, ocs, 0);
-	if (!ok){
-		bool found = false;
-		for (int i=0;i<NUM_INSTRUCTION_NAMES;i++)
-			if (InstructionNames[i].inst == inst){
-				string ps1, ps2;
-				param2str(ps1, param1_type, param1);
-				param2str(ps2, param2_type, param2);
-				SetError("command not compatible with its parameters\n" + InstructionNames[i].name + " " + ps1 + " " + ps2);
-				found = true;
-			}
-		if (!found){
-			LineNo = iwp.line;
-			SetError(format("instruction unknown: %d", inst));
-		}
-	}
-	
-	return ok;
+	list.AddInstruction(oc, ocs, 0);
 }
 
 bool ImmediateAllowed(int inst)
