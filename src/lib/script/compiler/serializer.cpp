@@ -1181,7 +1181,7 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 					}
 					add_cmd(Asm::inst_leave);
 					if (cur_func->return_type->size > 4)
-						add_cmd(Asm::inst_ret, param_const(TypeInt, (void*)4));
+						add_cmd(Asm::inst_ret, param_const(TypeReg16, (void*)4));
 					else
 						add_cmd(Asm::inst_ret);
 					break;
@@ -2404,6 +2404,8 @@ inline void get_param(int inst, SerialCommandParam &p, int &param_type, void *&p
 		param_type = Asm::PKConstant32;
 		if (p.type->size == 1)
 			param_type = Asm::PKConstant8;
+		if (p.type->size == 2)
+			param_type = Asm::PKConstant16;
 		param = p.p;
 		if (p.shift > 0)
 			s->DoErrorInternal("get_param: const + shift");
@@ -2469,7 +2471,8 @@ void Serializer::Assemble(char *Opcode, int &OpcodeSize)
 	if (cur_func->block->command.num > 0)
 		if ((cur_func->block->command.back()->kind == KindCompilerFunction) && (cur_func->block->command.back()->link_nr == CommandReturn))
 			need_outro = false;
-	list->add_func_return(cur_func->return_type->size);
+	if (need_outro)
+		list->add_func_return(cur_func->return_type->size);
 
 	//msg_write(Opcode2Asm(Opcode, OpcodeSize));
 

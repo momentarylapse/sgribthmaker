@@ -2269,14 +2269,17 @@ inline void append_val(char *oc, int &ocs, long long val, int size)
 	ocs += size;
 }
 
-void OpcodeAddImmideate(char *oc, int &ocs, InstructionParamFuzzy &ip, InstructionParam &p, sInstruction &inst, InstructionWithParamsList &list)
+void OpcodeAddImmideate(char *oc, int &ocs, InstructionParam &p, sInstruction &inst, InstructionWithParamsList &list)
 {
+	long long value = p.value;
 	int size = 0;
 	if (p.type == ParamTImmediate){
-		if (p.deref)
+		size = p.size;
+		if (p.deref){
 			size = state.AddrSize;
-		else
-			size = p.size;
+			if (InstructionSet == InstructionSetAMD64)
+				value -= (long)oc + ocs + size; // amd64 uses RIP-relative addressing!
+		}
 	}else if (p.type == ParamTImmediateDouble){
 		size = state.ParamSize;  // bits 0-15  /  0-31
 	}else if (p.type == ParamTRegister){
@@ -2286,7 +2289,6 @@ void OpcodeAddImmideate(char *oc, int &ocs, InstructionParamFuzzy &ip, Instructi
 	}else
 		return;
 
-	long long value = p.value;
 	bool rel = ((inst.name[0] == 'j') && (inst.param1._type_ != ParamTImmediateDouble)) || (inst.name == "call") || (inst.name.find("loop") >= 0);
 	if (p.is_label){
 		WantedLabel w;
@@ -2727,9 +2729,6 @@ void OpcodeAddInstruction(char *oc, int &ocs, sInstruction &inst, InstructionPar
 {
 	msg_db_f("OpcodeAddInstruction", 1+ASM_DB_LEVEL);
 
-	msg_write(ocs);
-	msg_write(inst.name + " " + p1.str() + " " + p2.str());
-
 	// add opcode
 	*(int*)&oc[ocs] = inst.code;
 	ocs += inst.code_size;
@@ -2738,15 +2737,10 @@ void OpcodeAddInstruction(char *oc, int &ocs, sInstruction &inst, InstructionPar
 	if (inst.has_modrm)
 		oc[ocs ++] = CreateModRMByte(inst, p1, p2);
 
-	InstructionParamFuzzy ip1 = inst.param1;
-	InstructionParamFuzzy ip2 = inst.param2;
-	ApplyParamSize(ip1);
-	ApplyParamSize(ip2);
-
 	OCParam = ocs;
 
-	OpcodeAddImmideate(oc, ocs, ip1, p1, inst, list);
-	OpcodeAddImmideate(oc, ocs, ip2, p2, inst, list);
+	OpcodeAddImmideate(oc, ocs, p1, inst, list);
+	OpcodeAddImmideate(oc, ocs, p2, inst, list);
 }
 
 void InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)
@@ -2778,18 +2772,18 @@ void InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)
 			}
 		}
 
-	// compile
-	if (ninst >= 0){
-		OpcodeAddInstruction(oc, ocs, Instruction[ninst], iwp.p1, iwp.p2, *this);
-		iwp.size = ocs - ocs0;
-	}else{
-		for (int i=0;i<NUM_INSTRUCTION_NAMES;i++)
-			if (InstructionNames[i].inst == iwp.inst){
-				SetError("command not compatible with its parameters\n" + InstructionNames[i].name + " " + iwp.p1.str() + " " + iwp.p2.str());
-			}
+	if (ninst < 0){
 		state.LineNo = iwp.line;
+		for (int i=0;i<NUM_INSTRUCTION_NAMES;i++)
+			if (InstructionNames[i].inst == iwp.inst)
+				SetError("command not compatible with its parameters\n" + InstructionNames[i].name + " " + iwp.p1.str() + " " + iwp.p2.str());
 		SetError(format("instruction unknown: %d", iwp.inst));
 	}
+
+	// compile
+	OpcodeAddInstruction(oc, ocs, Instruction[ninst], iwp.p1, iwp.p2, *this);
+	iwp.size = ocs - ocs0;
+
 	//msg_write(d2h(&oc[ocs0], ocs - ocs0, false));
 }
 

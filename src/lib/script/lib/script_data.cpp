@@ -636,9 +636,9 @@ void SIAddPackageBase()
 
 	// internal
 	TypeUnknown			= add_type  ("-\?\?\?-",	0); // should not appear anywhere....or else we're screwed up!
-	TypeReg32			= add_type  ("-reg32-",		PointerSize);
-	TypeReg16			= add_type  ("-reg16-",		PointerSize);
-	TypeReg8			= add_type  ("-reg8-",		PointerSize);
+	TypeReg32			= add_type  ("-reg32-",		4);
+	TypeReg16			= add_type  ("-reg16-",		2);
+	TypeReg8			= add_type  ("-reg8-",		1);
 	TypeClass			= add_type  ("-class-",	0); // substitute for all class types
 
 	// "real"
