@@ -275,7 +275,7 @@ void Serializer::move_param(SerialCommandParam &p, int from, int to)
 			TempVar[v].first = min(from, to);
 	}else if ((p.kind == KindRegister) || (p.kind == KindDerefRegister)){
 		so("move_param reg");
-		long r = (long)p.p;
+		long r = Asm::RegRoot[(long)p.p];
 		bool found = false;
 		foreach(sRegChannel &rc, RegChannel)
 			if ((r == rc.reg) && (from >= rc.first) && (from >= rc.first)){
@@ -285,8 +285,10 @@ void Serializer::move_param(SerialCommandParam &p, int from, int to)
 					rc.first = min(from, to);
 				found = true;
 			}
-		if (!found)
-			msg_error(format("move_param: kein RegChannel...  reg=%d  from=%d", r, from));
+		if (!found){
+			msg_error(format("move_param: no RegChannel...  reg=%d  from=%d", r, from));
+			msg_write(script->pre_script->Filename + " : " + cur_func->name);
+		}
 	}
 }
 
