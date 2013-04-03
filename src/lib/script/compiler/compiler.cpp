@@ -278,8 +278,8 @@ void Script::CompileTaskEntryPoint()
 
 	list->Compile(ThreadOpcode, ThreadOpcodeSize);
 
-	first_execution = (t_func*)list->label[label_first].Value;
-	continue_execution = (t_func*)list->label[label_cont].Value;
+	first_execution = (t_func*)(long)list->label[label_first].Value;
+	continue_execution = (t_func*)(long)list->label[label_cont].Value;
 
 	delete(list);
 }

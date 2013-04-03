@@ -47,7 +47,7 @@ void Serializer::add_temp(Type *t, SerialCommandParam &param)
 		v.entangled = 0;
 		TempVar.add(v);
 		param.kind = KindVarTemp;
-		param.p = (char*)(TempVar.num - 1);
+		param.p = (char*)(long)(TempVar.num - 1);
 		param.type = t;
 		param.shift = 0;
 		
@@ -102,7 +102,7 @@ inline SerialCommandParam param_local(Type *type, int offset)
 	SerialCommandParam p;
 	p.type = type;
 	p.kind = KindVarLocal;
-	p.p = (char*)offset;
+	p.p = (char*)(long)offset;
 	p.shift = 0;
 	return p;
 }
@@ -122,7 +122,7 @@ inline SerialCommandParam param_marker(int m)
 	SerialCommandParam p;
 	p.type = TypeInt;
 	p.kind = KindMarker;
-	p.p = (char*)m;
+	p.p = (char*)(long)m;
 	p.shift = 0;
 	return p;
 }
@@ -131,7 +131,7 @@ inline SerialCommandParam param_reg(Type *type, int reg)
 {
 	SerialCommandParam p;
 	p.kind = KindRegister;
-	p.p = (char*)reg;
+	p.p = (char*)(long)reg;
 	p.type = type;
 	p.shift = 0;
 	return p;
@@ -367,7 +367,7 @@ void Serializer::AddFunctionCall(void *func, int func_no)
 
 	// grow stack (down) for local variables of the calling function
 //	add_cmd(- cur_func->_VarSize - LocalOffset - 8);
-	int push_size = 0;
+	long push_size = 0;
 
 	// push parameters onto stack
 	for (int p=CompilerFunctionParam.num-1;p>=0;p--){
@@ -497,7 +497,7 @@ void Serializer::SerializeParameter(Command *link, int level, int index, SerialC
 		p.kind = KindVarGlobal;
 	}else if (link->kind == KindMemory){
 		so(" -mem");
-		p.p = (char*)link->link_nr;
+		p.p = (char*)(long)link->link_nr;
 		p.kind = KindVarGlobal;
 	}else if (link->kind == KindAddress){
 		so(" -addr");
@@ -514,12 +514,12 @@ void Serializer::SerializeParameter(Command *link, int level, int index, SerialC
 		p.p = (char*)(long)cur_func->var[link->link_nr]._offset;
 	}else if (link->kind == KindLocalMemory){
 		so(" -local mem");
-		p.p = (char*)link->link_nr;
+		p.p = (char*)(long)link->link_nr;
 		p.kind = KindVarLocal;
 	}else if (link->kind == KindLocalAddress){
 		so(" -local addr");
 		SerialCommandParam param;
-		param.p = (char*)link->link_nr;
+		param.p = (char*)(long)link->link_nr;
 		param.kind = KindVarLocal;
 		param.type = TypePointer;
 		param.shift = 0;
@@ -1564,7 +1564,7 @@ void Serializer::solve_deref_temp_local(int c, int np, bool is_local)
 	SerialCommandParam p_reg = param_reg(type_pointer, reg);
 	SerialCommandParam p_deref_reg;
 	p_deref_reg.kind = KindDerefRegister;
-	p_deref_reg.p = (char*)reg;
+	p_deref_reg.p = (char*)(long)reg;
 	p_deref_reg.type = type_data;
 	p_deref_reg.shift = 0;
 	
@@ -1573,7 +1573,7 @@ void Serializer::solve_deref_temp_local(int c, int np, bool is_local)
 	add_cmd(Asm::inst_mov, p_reg, p);
 	move_last_cmd(c);
 	if (shift > 0){
-		add_cmd(Asm::inst_add, p_reg, param_const(TypeInt, (void*)shift));
+		add_cmd(Asm::inst_add, p_reg, param_const(TypeInt, (void*)(long)shift));
 		move_last_cmd(c + 1);
 		add_reg_channel(reg, c, c + 2);
 	}else
@@ -1698,7 +1698,7 @@ void Serializer::ResolveDerefTempAndLocal()
 			SerialCommandParam p_reg2 = param_reg(type_pointer, reg2);
 			SerialCommandParam p_deref_reg2;
 			p_deref_reg2.kind = KindDerefRegister;
-			p_deref_reg2.p = (char*)reg2;
+			p_deref_reg2.p = (char*)(long)reg2;
 			p_deref_reg2.type = type_data;
 			p_deref_reg2.shift = 0;
 			RegChannel.pop(); // remove temp reg channel...
@@ -1730,7 +1730,7 @@ void Serializer::ResolveDerefTempAndLocal()
 			move_last_cmd(cmd_pos ++);
 
 			if (shift2 > 0){
-				add_cmd(Asm::inst_add, p_reg2, param_const(TypeInt, (void*)shift2));
+				add_cmd(Asm::inst_add, p_reg2, param_const(TypeInt, (void*)(long)shift2));
 				move_last_cmd(cmd_pos ++);
 			}
 
@@ -1742,7 +1742,7 @@ void Serializer::ResolveDerefTempAndLocal()
 			move_last_cmd(cmd_pos ++);
 
 			if (shift1 > 0){
-				add_cmd(Asm::inst_add, p_reg2, param_const(TypeInt, (void*)shift1));
+				add_cmd(Asm::inst_add, p_reg2, param_const(TypeInt, (void*)(long)shift1));
 				move_last_cmd(cmd_pos ++);
 			}
 
@@ -1980,7 +1980,7 @@ void Serializer::add_stack_var(Type *type, int first, int last, SerialCommandPar
 		StackMaxSize = StackOffset;
 
 	p.kind = KindVarLocal;
-	p.p = (char*)offset;
+	p.p = (char*)(long)offset;
 	p.type = type;
 	p.shift = 0;
 }
@@ -2234,7 +2234,7 @@ void Serializer::ResolveDerefRegShift()
 	msg_db_f("ResolveDerefRegShift", 3);
 	for (int i=cmd.num-1;i>=0;i--){
 		if ((cmd[i].p1.kind == KindDerefRegister) && (cmd[i].p1.shift > 0)){
-			int s = cmd[i].p1.shift;
+			long s = cmd[i].p1.shift;
 			cmd[i].p1.shift = 0;
 			add_cmd(Asm::inst_add, param_reg(TypeReg32, Asm::RegRoot[(long)cmd[i].p1.p]), param_const(TypeInt, (void*)s));
 			move_last_cmd(i);
@@ -2243,7 +2243,7 @@ void Serializer::ResolveDerefRegShift()
 			continue;
 		}
 		if ((cmd[i].p2.kind == KindDerefRegister) && (cmd[i].p2.shift > 0)){
-			int s = cmd[i].p2.shift;
+			long int s = cmd[i].p2.shift;
 			cmd[i].p2.shift = 0;
 			add_cmd(Asm::inst_add, param_reg(TypeReg32, Asm::RegRoot[(long)cmd[i].p2.p]), param_const(TypeInt, (void*)s));
 			move_last_cmd(i);
@@ -2371,7 +2371,7 @@ inline void get_param(int inst, SerialCommandParam &p, int &param_type, void *&p
 	}else if (p.kind == KindMarker){
 		//msg_error("marker");
 		param_type = Asm::PKLabel;
-		param = (void*)list->add_label("_kaba_" + i2s((int)(long)p.p), false);
+		param = (void*)(long)list->add_label("_kaba_" + i2s((int)(long)p.p), false);
 	}else if (p.kind == KindRegister){
 		param_type = Asm::PKRegister;
 		param = p.p;
@@ -2383,7 +2383,7 @@ inline void get_param(int inst, SerialCommandParam &p, int &param_type, void *&p
 		if (p.shift > 0){
 			if ((long)p.p == Asm::RegEdx){
 				param_type = Asm::PKEdxRel;
-				param = (void*)p.shift;
+				param = (void*)(long)p.shift;
 			}else
 				s->DoErrorInternal("get_param: [reg] + shift");
 		}
@@ -2397,7 +2397,7 @@ inline void get_param(int inst, SerialCommandParam &p, int &param_type, void *&p
 		bool imm_allowed = Asm::GetInstructionAllowConst(inst);
 		if ((p.type->size <= 4) && (imm_allowed)){
 			param_type = (p.type->size == 1) ? Asm::PKConstant8 : Asm::PKConstant32;
-			param = (char*)*(int*)(p.p + p.shift);
+			param = (char*)(long)*(int*)(p.p + p.shift);
 		}else{
 			param_type = Asm::PKDerefConstant;
 			param = p.p + p.shift;
@@ -2461,7 +2461,7 @@ void Serializer::Assemble(char *Opcode, int &OpcodeSize)
 			// push 8 bit -> push 32 bit
 			if (cmd[i].inst == Asm::inst_push)
 				if (cmd[i].p1.kind == KindRegister)
-					cmd[i].p1.p = (char*) Asm::RegRoot[(long)cmd[i].p1.p];
+					cmd[i].p1.p = (char*)(long)Asm::RegRoot[(long)cmd[i].p1.p];
 			
 
 			assemble_cmd(list, cmd[i], script);

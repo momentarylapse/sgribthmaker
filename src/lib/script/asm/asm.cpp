@@ -395,14 +395,14 @@ int InstructionWithParamsList::add_label(const string &name, bool declaring)
 
 void InstructionWithParamsList::add_func_intro(int stack_alloc_size)
 {
-	int reg_bp = (InstructionSet == InstructionSetAMD64) ? RegRbp : RegEbp;
-	int reg_sp = (InstructionSet == InstructionSetAMD64) ? RegRsp : RegEsp;
+	long reg_bp = (InstructionSet == InstructionSetAMD64) ? RegRbp : RegEbp;
+	long reg_sp = (InstructionSet == InstructionSetAMD64) ? RegRsp : RegEsp;
 	add_easy(inst_push, PKRegister, (void*)reg_bp);
 	add_easy(inst_mov, PKRegister, (void*)reg_bp, PKRegister, (void*)reg_sp);
 	if (stack_alloc_size > 127){
-		add_easy(inst_sub, PKRegister, (void*)reg_sp, PKConstant32, (void*)stack_alloc_size);
+		add_easy(inst_sub, PKRegister, (void*)reg_sp, PKConstant32, (void*)(long)stack_alloc_size);
 	}else if (stack_alloc_size > 0){
-		add_easy(inst_sub, PKRegister, (void*)reg_sp, PKConstant8, (void*)stack_alloc_size);
+		add_easy(inst_sub, PKRegister, (void*)reg_sp, PKConstant8, (void*)(long)stack_alloc_size);
 	}
 }
 
