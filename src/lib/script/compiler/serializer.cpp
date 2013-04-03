@@ -1794,18 +1794,22 @@ void Serializer::SimplifyFPUStack()
 
 // fstp temp
 // fld temp
-	for (int v=TempVar.num-1;v>=0;v--){
+	for (int vi=TempVar.num-1;vi>=0;vi--){
+		sTempVar &v = TempVar[vi];
+		if (v.first < 0)
+			continue;
+
 		// may only appear two times
-		if (TempVar[v].count > 2)
+		if (v.count > 2)
 			continue;
 
 		// stored then loaded...?
-		if ((cmd[TempVar[v].first].inst != Asm::inst_fstp) || (cmd[TempVar[v].last].inst != Asm::inst_fld))
+		if ((cmd[v.first].inst != Asm::inst_fstp) || (cmd[v.last].inst != Asm::inst_fld))
 			continue;
 
 		// value still on the stack?
 		int d_stack = 0, min_d_stack = 0, max_d_stack = 0;
-		for (int i=TempVar[v].first + 1;i<TempVar[v].last;i++){
+		for (int i=v.first + 1;i<v.last;i++){
 			if (cmd[i].inst == Asm::inst_fld)
 				d_stack ++;
 			else if (cmd[i].inst == Asm::inst_fstp)
@@ -1817,43 +1821,47 @@ void Serializer::SimplifyFPUStack()
 			continue;
 
 		// reuse value on the stack
-		so(format("fpu (a)  var=%d first=%d last=%d stack: d=%d min=%d max=%d", v, TempVar[v].first, TempVar[v].last, d_stack, min_d_stack, max_d_stack));
-		remove_cmd(TempVar[v].last);
-		remove_cmd(TempVar[v].first);
-		remove_temp_var(v);
+		so(format("fpu (a)  var=%d first=%d last=%d stack: d=%d min=%d max=%d", vi, v.first, v.last, d_stack, min_d_stack, max_d_stack));
+		remove_cmd(v.last);
+		remove_cmd(v.first);
+		remove_temp_var(vi);
 	}
 
 // fstp temp
 // mov xxx, temp
-	for (int v=TempVar.num-1;v>=0;v--){
+	for (int vi=TempVar.num-1;vi>=0;vi--){
+		sTempVar &v = TempVar[vi];
+		if (v.first < 0)
+			continue;
+
 		// may only appear two times
-		if (TempVar[v].count > 2)
+		if (v.count > 2)
 			continue;
 
 		// stored then moved...?
-		if ((cmd[TempVar[v].first].inst != Asm::inst_fstp) || (cmd[TempVar[v].last].inst != Asm::inst_mov))
+		if ((cmd[v.first].inst != Asm::inst_fstp) || (cmd[v.last].inst != Asm::inst_mov))
 			continue;
-		if (temp_in_cmd(TempVar[v].last, v) != 2)
+		if (temp_in_cmd(v.last, vi) != 2)
 			continue;
 		// moved into fstore'able?
-		int kind = cmd[TempVar[v].last].p1.kind;
+		int kind = cmd[v.last].p1.kind;
 		if ((kind != KindVarLocal) && (kind != KindVarGlobal) && (kind != KindVarTemp) && (kind != KindDerefVarTemp) && (kind != KindDerefRegister))
 		    continue;
 
 		// check, if mov target is used in between
-		SerialCommandParam target = cmd[TempVar[v].last].p1;
-		if (!ParamUntouchedInInterval(target, TempVar[v].first + 1 ,TempVar[v].last - 1))
+		SerialCommandParam target = cmd[v.last].p1;
+		if (!ParamUntouchedInInterval(target, v.first + 1 ,v.last - 1))
 			continue;
 		// ...we are lazy...
-		//if (TempVar[v].last - TempVar[v].first != 1)
+		//if (v.last - v.first != 1)
 		//	continue;
 
 		// store directly into target
-		so(format("fpu (b)  var=%d first=%d last=%d", v, TempVar[v].first, TempVar[v].last));
-		cmd[TempVar[v].first].p1 = target;
-		move_param(target, TempVar[v].last, TempVar[v].first);
-		remove_cmd(TempVar[v].last);
-		remove_temp_var(v);
+		so(format("fpu (b)  var=%d first=%d last=%d", v, v.first, v.last));
+		cmd[v.first].p1 = target;
+		move_param(target, v.last, v.first);
+		remove_cmd(v.last);
+		remove_temp_var(vi);
 	}
 }
 
@@ -1863,10 +1871,12 @@ void Serializer::SimplifyMovs()
 {
 	// TODO: count > 2 .... first == input && all_other == output?  (only if first == mov (!=eax?)... else count == 2)
 	// should take care of fpu simplification (b)...
-	
+
 	msg_db_f("SimplifyMovs", 3);
 	for (int vi=TempVar.num-1;vi>=0;vi--){
 		sTempVar &v = TempVar[vi];
+		if (v.first < 0)
+			continue;
 		
 		// may only appear two times
 		if (v.count > 2)
@@ -1914,6 +1924,15 @@ void Serializer::SimplifyMovs()
 	// TODO: should happen automatically...
 	//ScanTempVarUsage();
 	//cmd_list_out();
+}
+
+void Serializer::RemoveUnusedTempVars()
+{
+	// unused temp vars...
+	for (int v=TempVar.num-1;v>=0;v--)
+		if (TempVar[v].first < 0){
+			remove_temp_var(v);
+		}
 }
 
 /*inline void test_reg_usage(int c)
@@ -2116,6 +2135,8 @@ void Serializer::MapTempVar(int vi)
 	sTempVar &v = TempVar[vi];
 	int first = v.first;
 	int last = v.last;
+	if (first < 0)
+		return;
 
 	bool reg_allowed = true;
 	for (int i=first;i<=last;i++)
@@ -2327,13 +2348,8 @@ void Serializer::SerializeFunction(Function *f)
 		}
 		DoError("StuffToAdd");
 	}
-	
-	// unused temp vars...
-	for (int v=TempVar.num-1;v>=0;v--)
-		if (TempVar[v].first < 0)
-			remove_temp_var(v);
 
-	cmd_list_out();
+	//cmd_list_out();
 
 // do all the translations...
 
@@ -2342,27 +2358,22 @@ void Serializer::SerializeFunction(Function *f)
 	//HandleDerefTemp();
 
 	DisentangleShiftedTempVars();
-	cmd_list_out();
 
 	ResolveDerefTempAndLocal();
-	cmd_list_out();
+
+	RemoveUnusedTempVars();
 
 #ifdef allow_simplification
 	SimplifyMovs();
-	cmd_list_out();
 
 	SimplifyFPUStack();
-	cmd_list_out();
 #endif
 
 	MapTempVars();
-	cmd_list_out();
 
 	ResolveDerefRegShift();
-	cmd_list_out();
 
 	//ResolveDerefLocal();
-	//cmd_list_out();
 
 	CorrectUnallowedParamCombis();
 

@@ -139,6 +139,7 @@ struct Serializer
 	bool ParamUntouchedInInterval(SerialCommandParam &p, int first, int last);
 	void SimplifyFPUStack();
 	void SimplifyMovs();
+	void RemoveUnusedTempVars();
 
 	void AddFunctionCall(void *func, int func_no = -1);
 	void AddReference(SerialCommandParam &param, Type *type, SerialCommandParam &ret);
