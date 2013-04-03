@@ -9,6 +9,19 @@ namespace Asm
 
 int OCParam;
 
+
+
+enum{
+	Size8 = 1,
+	Size16 = 2,
+	Size32 = 4,
+//	Size48 = 6,
+	Size64 = 8,
+	SizeVariable = -5,
+	Size32or48 = -6,
+	SizeUnknown = -7
+};
+
 struct ParserState
 {
 	bool EndOfLine;
@@ -17,6 +30,14 @@ struct ParserState
 	int ColumnNo;
 	int DefaultSize;
 	int ParamSize, AddrSize;
+	/*int FullRegisterSize;
+	void set_(int set)
+	{
+		DefaultSize = Size32;
+		FullRegisterSize = Size32;
+		if (set == InstructionSetAMD64)
+			FullRegisterSize = Size64;
+	}*/
 	void reset()
 	{
 		ParamSize = DefaultSize;
@@ -80,17 +101,6 @@ static void so(int i)
 
 
 
-
-enum{
-	Size8 = 1,
-	Size16 = 2,
-	Size32 = 4,
-//	Size48 = 6,
-	Size64 = 8,
-	SizeVariable = -5,
-	Size32or48 = -6,
-	SizeUnknown = -7
-};
 
 struct Register{
 	string name;
@@ -2672,6 +2682,20 @@ InstructionParam _make_param_(int type, long long param)
 	return i;
 }
 
+char GetModRMReg(Register *r)
+{
+	if ((r == RegisterByID[RegRax]) || (r == RegisterByID[RegEax]) || (r == RegisterByID[RegAx]) || (r == RegisterByID[RegAl]))	return 0x00;
+	if ((r == RegisterByID[RegRcx]) || (r == RegisterByID[RegEcx]) || (r == RegisterByID[RegCx]) || (r == RegisterByID[RegCl]))	return 0x01;
+	if ((r == RegisterByID[RegRdx]) || (r == RegisterByID[RegEdx]) || (r == RegisterByID[RegDx]) || (r == RegisterByID[RegDl]))	return 0x02;
+	if ((r == RegisterByID[RegRbx]) || (r == RegisterByID[RegEbx]) || (r == RegisterByID[RegBx]) || (r == RegisterByID[RegBl]))	return 0x03;
+	if ((r == RegisterByID[RegRsp]) || (r == RegisterByID[RegEsp]) || (r == RegisterByID[RegSp]) || (r == RegisterByID[RegAh]))	return 0x04;
+	if ((r == RegisterByID[RegRbp]) || (r == RegisterByID[RegEbp]) || (r == RegisterByID[RegBp]) || (r == RegisterByID[RegCh]))	return 0x05;
+	if ((r == RegisterByID[RegRsi]) || (r == RegisterByID[RegEsi]) || (r == RegisterByID[RegSi]) || (r == RegisterByID[RegDh]))	return 0x06;
+	if ((r == RegisterByID[RegRdi]) || (r == RegisterByID[RegEdi]) || (r == RegisterByID[RegDi]) || (r == RegisterByID[RegBh]))	return 0x07;
+	SetError("GetModRMReg: register not allowed: " + r->name);
+	return 0;
+}
+
 inline char CreatePartialModRMByte(InstructionParamFuzzy &pf, InstructionParam &p)
 {
 	if (pf.mrm_mode == MRMReg){
@@ -2685,14 +2709,7 @@ inline char CreatePartialModRMByte(InstructionParamFuzzy &pf, InstructionParam &
 		if (p.reg == RegisterByID[RegCr1])	return 0x08;
 		if (p.reg == RegisterByID[RegCr2])	return 0x10;
 		if (p.reg == RegisterByID[RegCr3])	return 0x18;
-		if ((p.reg == RegisterByID[RegEax]) || (p.reg == RegisterByID[RegAx]) || (p.reg == RegisterByID[RegAl]))	return 0x00;
-		if ((p.reg == RegisterByID[RegEcx]) || (p.reg == RegisterByID[RegCx]) || (p.reg == RegisterByID[RegCl]))	return 0x08;
-		if ((p.reg == RegisterByID[RegEdx]) || (p.reg == RegisterByID[RegDx]) || (p.reg == RegisterByID[RegDl]))	return 0x10;
-		if ((p.reg == RegisterByID[RegEbx]) || (p.reg == RegisterByID[RegBx]) || (p.reg == RegisterByID[RegBl]))	return 0x18;
-		if ((p.reg == RegisterByID[RegEsp]) || (p.reg == RegisterByID[RegSp]) || (p.reg == RegisterByID[RegAh]))	return 0x20;
-		if ((p.reg == RegisterByID[RegEbp]) || (p.reg == RegisterByID[RegBp]) || (p.reg == RegisterByID[RegCh]))	return 0x28;
-		if ((p.reg == RegisterByID[RegEsi]) || (p.reg == RegisterByID[RegSi]) || (p.reg == RegisterByID[RegDh]))	return 0x30;
-		if ((p.reg == RegisterByID[RegEdi]) || (p.reg == RegisterByID[RegDi]) || (p.reg == RegisterByID[RegBh]))	return 0x38;
+		return GetModRMReg(p.reg) << 3;
 	}else if (pf.mrm_mode == MRMModRM){
 		if (p.deref){
 			if (state.AddrSize == Size16){
@@ -2710,14 +2727,7 @@ inline char CreatePartialModRMByte(InstructionParamFuzzy &pf, InstructionParam &
 				if (p.reg == RegisterByID[RegEdi])	return (p.disp == DispModeNone) ? 0x07 : ((p.disp == DispMode8) ? 0x47 : 0x87);
 			}
 		}else{
-			if ((p.reg == RegisterByID[RegEax]) || (p.reg == RegisterByID[RegAx]) || (p.reg == RegisterByID[RegAl]))	return 0xc0;
-			if ((p.reg == RegisterByID[RegEcx]) || (p.reg == RegisterByID[RegCx]) || (p.reg == RegisterByID[RegCl]))	return 0xc1;
-			if ((p.reg == RegisterByID[RegEdx]) || (p.reg == RegisterByID[RegDx]) || (p.reg == RegisterByID[RegDl]))	return 0xc2;
-			if ((p.reg == RegisterByID[RegEbx]) || (p.reg == RegisterByID[RegBx]) || (p.reg == RegisterByID[RegBl]))	return 0xc3;
-			if ((p.reg == RegisterByID[RegEsp]) || (p.reg == RegisterByID[RegSp]) || (p.reg == RegisterByID[RegAh]))	return 0xc4;
-			if ((p.reg == RegisterByID[RegEbp]) || (p.reg == RegisterByID[RegBp]) || (p.reg == RegisterByID[RegCh]))	return 0xc5;
-			if ((p.reg == RegisterByID[RegEsi]) || (p.reg == RegisterByID[RegSi]) || (p.reg == RegisterByID[RegDh]))	return 0xc6;
-			if ((p.reg == RegisterByID[RegEdi]) || (p.reg == RegisterByID[RegDi]) || (p.reg == RegisterByID[RegBh]))	return 0xc7;
+			return GetModRMReg(p.reg) | 0xc0;
 		}
 	}
 	if (pf.mrm_mode != MRMNone)
@@ -2736,6 +2746,10 @@ char CreateModRMByte(CPUInstruction &inst, InstructionParam &p1, InstructionPara
 void OpcodeAddInstruction(char *oc, int &ocs, CPUInstruction &inst, InstructionParam &p1, InstructionParam &p2, InstructionWithParamsList &list)
 {
 	msg_db_f("OpcodeAddInstruction", 1+ASM_DB_LEVEL);
+
+	// prefix
+	if (state.ParamSize == Size64)
+		append_val(oc, ocs, 0x48, 1); // REX
 
 	// add opcode
 	*(int*)&oc[ocs] = inst.code;
@@ -2758,6 +2772,7 @@ void InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)
 	int ocs0 = ocs;
 	InstructionWithParams &iwp = (*this)[n];
 	current_inst = n;
+	state.reset();
 
 	// test if any instruction matches our wishes
 	int ninst = -1;
@@ -2769,6 +2784,20 @@ void InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)
 				ninst = i;
 			}
 		}
+
+	// try again with REX prefix?
+	if ((ninst < 0) && (InstructionSet == InstructionSetAMD64)){
+		state.ParamSize = Size64;
+
+		for (int i=0;i<CPUInstructions.num;i++)
+			if (CPUInstructions[i].match(iwp)){
+				if (((!CPUInstructions[i].has_modrm) && (has_mod_rm)) || (ninst < 0)){
+					has_mod_rm = CPUInstructions[i].has_modrm;
+					ninst = i;
+				}
+			}
+
+	}
 
 	// none found?
 	if (ninst < 0){
