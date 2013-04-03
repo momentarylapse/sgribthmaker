@@ -1184,45 +1184,43 @@ void Init(int set)
 string InstructionParam::str()
 {
 	msg_db_f("AddParam", 1+ASM_DB_LEVEL);
-	string str = "\?\?\?";
 	//msg_write("----");
 	//msg_write(p.type);
 	if (type == ParamTInvalid){
-		str = "-\?\?\?-";
+		return "-\?\?\?-";
 	}else if (type == ParamTNone){
-		str = "";
+		return "";
 	}else if (type == ParamTRegister){
 			//msg_write((long)reg);
 			//msg_write((long)disp);
 		if (deref){
 			//msg_write("deref");
 			if (disp == DispModeNone)
-				str = "[" + reg->name + "]";
+				return "[" + reg->name + "]";
 			else if (disp == DispMode8)
-				str += format("[%s + %2x]", reg->name.c_str(), value);
+				return format("[%s + 0x%2x]", reg->name.c_str(), value);
 			else if (disp == DispMode16)
-				str += format("[%s + %4x]", reg->name.c_str(), value);
+				return format("[%s + 0x%4x]", reg->name.c_str(), value);
 			else if (disp == DispMode32)
-				str += format("[%s + %8x]", reg->name.c_str(), value);
+				return format("[%s + 0x%8x]", reg->name.c_str(), value);
 			else if (disp == DispModeSIB)
-				str = "SIB[...][...]";
+				return "SIB[...][...]";
 			else if (disp == DispMode8SIB)
-				str = format("[SIB... + %2x]", value);
+				return format("[SIB... + 0x%2x]", value);
 			else if (disp == DispMode8Reg2)
-				str = format("[%s + %s + %2x]", reg->name.c_str(), reg2->name.c_str(), value);
+				return format("[%s + %s + 0x%2x]", reg->name.c_str(), reg2->name.c_str(), value);
 			else if (disp == DispModeReg2)
-				str = "[" + reg->name + " + " + reg2->name + "]";
+				return "[" + reg->name + " + " + reg2->name + "]";
 		}else
-			str = reg->name;
+			return reg->name;
 	}else if (type == ParamTImmediate){
 		//msg_write("im");
 		if (deref)
-			str = format("[%s]", d2h(&value, state.AddrSize).c_str());
-		else
-			str = d2h(&value, size);
+			return format("[%s]", d2h(&value, state.AddrSize).c_str());
+		return d2h(&value, size);
 	}else if (type == ParamTImmediateDouble){
 		//msg_write("im");
-		str = format("%s:%s", d2h(&((char*)&value)[4], 2).c_str(), d2h(&value, state.ParamSize).c_str());
+		return format("%s:%s", d2h(&((char*)&value)[4], 2).c_str(), d2h(&value, state.ParamSize).c_str());
 	}
 #if 0
 	for (int i=0;i<Registers.num;i++)
@@ -1296,7 +1294,7 @@ string InstructionParam::str()
 		default:	strcat(str,string(i2s(param),": -\?\?- "));	break;
 	};
 #endif
-	return str;
+	return "\?\?\?";
 }
 
 // adjust parameter type to ... 32bit / 16bit
@@ -1717,7 +1715,7 @@ string Disassemble(void *_code_,int length,bool allow_comments)
 			str += inst->name;
 
 			// parameters
-			if (state.ParamSize != state.DefaultSize){
+			if ((state.ParamSize != state.DefaultSize) && ((p1.type != ParamTRegister) || (p1.deref)) && ((p2.type != ParamTRegister) || p2.deref)){
 				if (state.ParamSize == Size16)
 					str += " word";
 				else if (state.ParamSize == Size32)
