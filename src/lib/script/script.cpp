@@ -250,33 +250,6 @@ void DeleteAllScripts(bool even_immortal, bool force)
 	*/
 }
 
-void reset_script(Script *s)
-{
-	s->ReferenceCounter = 0;
-	s->isCopy = false;
-	s->isPrivate = false;
-	
-	s->cur_func = NULL;
-	s->WaitingMode = 0;
-	s->TimeToWait = 0;
-	s->ShowCompilerStats = (!CompileSilently) && ShowCompilerStats;
-	
-	s->pre_script = NULL;
-
-	s->Opcode = NULL;
-	s->OpcodeSize = 0;
-	s->ThreadOpcode = NULL;
-	s->ThreadOpcodeSize = 0;
-	s->Memory = NULL;
-	s->MemorySize = 0;
-	s->MemoryUsed = 0;
-	s->Stack = NULL;
-
-	//func.clear();
-	//g_var.clear();
-	//cnst.clear();
-}
-
 void Script::Load(const string &filename, bool just_analyse)
 {
 	msg_db_f("loading script", 1);
@@ -288,12 +261,13 @@ void Script::Load(const string &filename, bool just_analyse)
 	/*if (pre_script->FlagShow)
 		pre_script->Show();*/
 	if ((!JustAnalyse) && (pre_script->FlagDisassemble)){
-		msg_write("disasm");
-		msg_write(OpcodeSize);
-		msg_write(Asm::Disassemble(ThreadOpcode,ThreadOpcodeSize));
-		msg_write("\n\n");
-		//printf("%s\n\n", Asm::Disassemble(Opcode,OpcodeSize));
-		msg_write(Asm::Disassemble(Opcode,OpcodeSize));
+		if (ThreadOpcodeSize > 0){
+			msg_write(format("ThreadOpcode: %d bytes", ThreadOpcodeSize));
+			msg_write(Asm::Disassemble(ThreadOpcode, ThreadOpcodeSize));
+			msg_write("\n\n");
+		}
+		msg_write(format("Opcode: %d bytes", OpcodeSize));
+		msg_write(Asm::Disassemble(Opcode, OpcodeSize));
 	}
 }
 
@@ -329,24 +303,35 @@ void Script::SetVariable(const string &name, void *data)
 
 Script::Script()
 {
-	so("creating empty script (for console)");
-	right();
-	reset_script(this);
+	so("creating empty script");
+
+	ReferenceCounter = 0;
+	isCopy = false;
+	isPrivate = false;
+
+	cur_func = NULL;
 	WaitingMode = WaitingModeFirst;
+	TimeToWait = 0;
+	ShowCompilerStats = (!CompileSilently) && ShowCompilerStats;
+
+	Opcode = NULL;
+	OpcodeSize = 0;
+	ThreadOpcode = NULL;
+	ThreadOpcodeSize = 0;
+	Memory = NULL;
+	MemorySize = 0;
+	MemoryUsed = 0;
+	Stack = NULL;
 
 	pre_script = new PreScript(this);
-	
-	pre_script->Filename = "-console script-";
-
-	so("-ok");
-	left();
 }
 
 Script::~Script()
 {
 	msg_db_f("~CScript", 4);
 	if ((Memory) && (!JustAnalyse)){
-		delete[](Memory);
+		//delete[](Memory);
+		int r=munmap(Memory,MemorySize);
 	}
 	if (Opcode){
 		#ifdef OS_WINDOWS
@@ -454,10 +439,10 @@ void *Script::MatchFunction(const string &name, const string &return_type, int n
 				if (f->literal_param_type[j]->name != param_type[j])
 					params_ok = false;
 			if (params_ok){
-				if (func.num > 0)
-					return (void*)func[i];
+				if (JustAnalyse)
+					return (void*)0xdeadbeaf;
 				else
-					return (void*)0xdeadbeaf; // when just analyzing...
+					return (void*)func[i];
 			}
 		}
 

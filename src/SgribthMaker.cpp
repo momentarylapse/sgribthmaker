@@ -893,10 +893,17 @@ void CompileAndRun(bool verbose)
 			HuiPushMainLevel();
 			HuiGetTime(CompileTimer);
 			if (!compile_script->pre_script->FlagNoExecution){
-				compile_script->Execute();
-				while(compile_script->WaitingMode != 0){
-					//msg_write(string("kleiner Test", HuiAppDirectory));
-					compile_script->Execute();
+				typedef void void_func();
+				void_func *f = (void_func*)compile_script->MatchFunction("main", "void", 0);
+				if (f)
+					f();
+				msg_write(string(compile_script->Memory, compile_script->MemorySize).hex());
+				typedef int int_func();
+				int_func *f2 = (int_func*)compile_script->MatchFunction("f", "int", 0);
+				if (f2){
+					msg_write("--------------f");
+					int r = f2();
+					msg_write(r);
 				}
 			}
 			dt_execute = HuiGetTime(CompileTimer);
@@ -1182,6 +1189,13 @@ void SetTag(int i, const char *fg_color, const char *bg_color, bool bold, bool i
 		g_object_set(tag[i].tag, "style", PANGO_STYLE_ITALIC, NULL);
 }
 
+int __i;
+
+void fff()
+{
+	__i = 4;
+}
+
 int hui_main(Array<string> arg)
 {
 	msg_init(false);
@@ -1349,6 +1363,10 @@ int hui_main(Array<string> arg)
 	MainWin->Update();
 
 	Script::Init();
+
+	msg_write(p2s(&__i));
+	msg_write(p2s((void*)&fff));
+	msg_write(Asm::Disassemble((void*)&fff, -1, true));
 
 	New();
 

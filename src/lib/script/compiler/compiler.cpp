@@ -93,7 +93,8 @@ void Script::AllocateMemory()
 		MemorySize += mem_align(s);
 	}
 	if (MemorySize > 0)
-		Memory = new char[MemorySize];
+		Memory = (char*)mmap(0, MemorySize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS | MAP_EXECUTABLE | MAP_32BIT, 0, 0);
+		//Memory = new char[MemorySize];
 }
 
 void Script::AllocateStack()
@@ -117,8 +118,8 @@ void Script::AllocateOpcode()
 	Opcode=(char*)VirtualAlloc(NULL,SCRIPT_MAX_OPCODE,MEM_COMMIT | MEM_RESERVE,PAGE_EXECUTE_READWRITE);
 	ThreadOpcode=(char*)VirtualAlloc(NULL,SCRIPT_MAX_THREAD_OPCODE,MEM_COMMIT | MEM_RESERVE,PAGE_EXECUTE_READWRITE);
 #else
-	Opcode = (char*)mmap(0, SCRIPT_MAX_OPCODE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS | MAP_EXECUTABLE, 0, 0);
-	ThreadOpcode = (char*)mmap(0, SCRIPT_MAX_THREAD_OPCODE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS | MAP_EXECUTABLE, 0, 0);
+	Opcode = (char*)mmap(0, SCRIPT_MAX_OPCODE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS | MAP_EXECUTABLE | MAP_32BIT, 0, 0);
+	ThreadOpcode = (char*)mmap(0, SCRIPT_MAX_THREAD_OPCODE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS | MAP_EXECUTABLE | MAP_32BIT, 0, 0);
 #endif
 	if (((long)Opcode==-1)||((long)ThreadOpcode==-1))
 		DoErrorInternal("CScript:  could not allocate executable memory");
@@ -216,11 +217,20 @@ void Script::LinkOsEntryPoint()
 void Script::CompileTaskEntryPoint()
 {
 	// "stack" usage for waiting:
-	//  -4 - ebp (before execution)
-	//  -8 - ebp (script continue)
-	// -12 - esp (script continue)
-	// -16 - eip (script continue)
-	// -20 - script stack...
+	//  -4| -8 - ebp (before execution)
+	//  -8|-16 - ebp (script continue)
+	// -12|-24 - esp (script continue)
+	// -16|-32 - eip (script continue)
+	// -20|-40 - script stack...
+
+	// call
+	void *_main_ = MatchFunction("main", "void", 0);
+
+	if ((!Stack) || (!_main_)){
+		first_execution = (t_func*)_main_;
+		continue_execution = NULL;
+		return;
+	}
 
 	Asm::InstructionWithParamsList *list = new Asm::InstructionWithParamsList(0);
 
@@ -230,51 +240,39 @@ void Script::CompileTaskEntryPoint()
 	// intro
 	list->add_easy(Asm::inst_push, Asm::PKRegister, (void*)Asm::RegEbp); // within the actual program
 	list->add_easy(Asm::inst_mov, Asm::PKRegister, (void*)Asm::RegEbp, Asm::PKRegister, (void*)Asm::RegEsp);
-	if (Stack){
-		list->add_easy(Asm::inst_mov, Asm::PKRegister, (void*)Asm::RegEsp, Asm::PKDerefConstant, (void*)&Stack[StackSize]); // start of the script stack
-		list->add_easy(Asm::inst_push, Asm::PKRegister, (void*)Asm::RegEbp); // address of the old stack
-		AddEspAdd(list, -12); // space for wait() task data
-		list->add_easy(Asm::inst_mov, Asm::PKRegister, (void*)Asm::RegEbp, Asm::PKRegister, (void*)Asm::RegEsp);
-		list->add_easy(Asm::inst_mov, Asm::PKRegister, (void*)Asm::RegEax, Asm::PKConstant32, (void*)WaitingModeNone); // "reset"
-		list->add_easy(Asm::inst_mov, Asm::PKDerefConstant, (void*)&WaitingMode, Asm::PKRegister, (void*)Asm::RegEax);
-	}
-	// call
-	int nf = -1;
-	foreachi(Function *ff, pre_script->Functions, index){
-		if (ff->name == "main")
-			if (ff->num_params == 0)
-				nf = index;
-	}
-	if (nf >= 0){
-		// call main()
-		list->add_easy(Asm::inst_call, Asm::PKConstant32, (void*)func[nf]);
-	}
+	list->add_easy(Asm::inst_mov, Asm::PKRegister, (void*)Asm::RegEsp, Asm::PKDerefConstant, (void*)&Stack[StackSize]); // start of the script stack
+	list->add_easy(Asm::inst_push, Asm::PKRegister, (void*)Asm::RegEbp); // address of the old stack
+	AddEspAdd(list, -12); // space for wait() task data
+	list->add_easy(Asm::inst_mov, Asm::PKRegister, (void*)Asm::RegEbp, Asm::PKRegister, (void*)Asm::RegEsp);
+	list->add_easy(Asm::inst_mov, Asm::PKRegister, (void*)Asm::RegEax, Asm::PKConstant32, (void*)WaitingModeNone); // "reset"
+	list->add_easy(Asm::inst_mov, Asm::PKDerefConstant, (void*)&WaitingMode, Asm::PKRegister, (void*)Asm::RegEax);
+
+	// call main()
+	list->add_easy(Asm::inst_call, Asm::PKConstant32, _main_);
+
 	// outro
-	if (Stack){
-		AddEspAdd(list, 12); // make space for wait() task data
-		list->add_easy(Asm::inst_pop, Asm::PKRegister, (void*)Asm::RegEsp);
-		list->add_easy(Asm::inst_mov, Asm::PKRegister, (void*)Asm::RegEbp, Asm::PKRegister, (void*)Asm::RegEsp);
-	}
+	AddEspAdd(list, 12); // make space for wait() task data
+	list->add_easy(Asm::inst_pop, Asm::PKRegister, (void*)Asm::RegEsp);
+	list->add_easy(Asm::inst_mov, Asm::PKRegister, (void*)Asm::RegEbp, Asm::PKRegister, (void*)Asm::RegEsp);
 	list->add_easy(Asm::inst_leave);
 	list->add_easy(Asm::inst_ret);
 
 	// "task" for execution after some wait()
 	int label_cont = list->add_label("_continue_execution", true);
+
 	// Intro
-	if (Stack){
-		list->add_easy(Asm::inst_push, Asm::PKRegister, (void*)Asm::RegEbp); // within the external program
-		list->add_easy(Asm::inst_mov, Asm::PKRegister, (void*)Asm::RegEbp, Asm::PKRegister, (void*)Asm::RegEsp);
-		list->add_easy(Asm::inst_mov, Asm::PKDerefConstant, &Stack[StackSize - 4], Asm::PKRegister, (void*)Asm::RegEbp); // save the external ebp
-		list->add_easy(Asm::inst_mov, Asm::PKRegister, (void*)Asm::RegEsp, Asm::PKDerefConstant, &Stack[StackSize - 16]); // to the eIP of the script
-		list->add_easy(Asm::inst_pop, Asm::PKRegister, (void*)Asm::RegEax);
-		list->add_easy(Asm::inst_add, Asm::PKRegister, (void*)Asm::RegEax, Asm::PKConstant32, (void*)AfterWaitOCSize);
-		list->add_easy(Asm::inst_jmp, Asm::PKRegister, (void*)Asm::RegEax);
-		//list->add_easy(Asm::inst_leave);
-		//list->add_easy(Asm::inst_ret);
-		/*OCAddChar(0x90);
-		OCAddChar(0x90);
-		OCAddChar(0x90);*/
-	}
+	list->add_easy(Asm::inst_push, Asm::PKRegister, (void*)Asm::RegEbp); // within the external program
+	list->add_easy(Asm::inst_mov, Asm::PKRegister, (void*)Asm::RegEbp, Asm::PKRegister, (void*)Asm::RegEsp);
+	list->add_easy(Asm::inst_mov, Asm::PKDerefConstant, &Stack[StackSize - 4], Asm::PKRegister, (void*)Asm::RegEbp); // save the external ebp
+	list->add_easy(Asm::inst_mov, Asm::PKRegister, (void*)Asm::RegEsp, Asm::PKDerefConstant, &Stack[StackSize - 16]); // to the eIP of the script
+	list->add_easy(Asm::inst_pop, Asm::PKRegister, (void*)Asm::RegEax);
+	list->add_easy(Asm::inst_add, Asm::PKRegister, (void*)Asm::RegEax, Asm::PKConstant32, (void*)AfterWaitOCSize);
+	list->add_easy(Asm::inst_jmp, Asm::PKRegister, (void*)Asm::RegEax);
+	//list->add_easy(Asm::inst_leave);
+	//list->add_easy(Asm::inst_ret);
+	/*OCAddChar(0x90);
+	OCAddChar(0x90);
+	OCAddChar(0x90);*/
 
 	list->Compile(ThreadOpcode, ThreadOpcodeSize);
 

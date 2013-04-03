@@ -2287,7 +2287,7 @@ inline void append_val(char *oc, int &ocs, long long val, int size)
 	ocs += size;
 }
 
-void OpcodeAddImmideate(char *oc, int &ocs, InstructionParam &p, CPUInstruction &inst, InstructionWithParamsList &list)
+void OpcodeAddImmideate(char *oc, int &ocs, InstructionParam &p, CPUInstruction &inst, InstructionWithParamsList &list, int next_param_size)
 {
 	long long value = p.value;
 	int size = 0;
@@ -2295,8 +2295,12 @@ void OpcodeAddImmideate(char *oc, int &ocs, InstructionParam &p, CPUInstruction 
 		size = p.size;
 		if (p.deref){
 			size = state.AddrSize;
-			if (InstructionSet == InstructionSetAMD64)
-				value -= (long)oc + ocs + size; // amd64 uses RIP-relative addressing!
+			if (InstructionSet == InstructionSetAMD64){
+				if (inst.has_modrm)
+					value -= (long)oc + ocs + size + next_param_size; // amd64 uses RIP-relative addressing!
+				else
+					size = Size64;
+			}
 		}
 	}else if (p.type == ParamTImmediateDouble){
 		size = state.ParamSize;  // bits 0-15  /  0-31
@@ -2319,7 +2323,7 @@ void OpcodeAddImmideate(char *oc, int &ocs, InstructionParam &p, CPUInstruction 
 		list.wanted_label.add(w);
 		so("add wanted label");
 	}else if (rel){
-		value -= (long)oc + ocs + size; // TODO ...first byte of next opcode
+		value -= (long)oc + ocs + size + next_param_size; // TODO ...first byte of next opcode
 	}
 
 	append_val(oc, ocs, value, size);
@@ -2761,8 +2765,12 @@ void OpcodeAddInstruction(char *oc, int &ocs, CPUInstruction &inst, InstructionP
 
 	OCParam = ocs;
 
-	OpcodeAddImmideate(oc, ocs, p1, inst, list);
-	OpcodeAddImmideate(oc, ocs, p2, inst, list);
+	int param2_size = 0;
+	if (p2.type == ParamTImmediate)
+		param2_size = p2.size;
+
+	OpcodeAddImmideate(oc, ocs, p1, inst, list, param2_size);
+	OpcodeAddImmideate(oc, ocs, p2, inst, list, 0);
 }
 
 void InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)

@@ -69,35 +69,32 @@ inline void deref_command(PreScript *ps, Command *c)
 void reset_pre_script(PreScript *ps)
 {
 	msg_db_f("reset_pre_script", 2);
-	//memset(ps, 0, sizeof(CPreScript));
-	ps->Filename = "";
-	ps->Buffer = "";
-	ps->Exp.buffer = NULL;
-	ps->FlagShow = false;
-	ps->FlagShowPrae = false;
-	ps->FlagDisassemble = false;
-	ps->FlagCompileOS = false;
-	ps->FlagCompileInitialRealMode = false;
-	ps->FlagOverwriteVariablesOffset = false;
-	ps->FlagImmortal = false;
-	ps->FlagNoExecution = false;
-	ps->AsmMetaInfo = NULL;
-	ps->RootOfAllEvil.name = "RootOfAllEvil";
-	ps->RootOfAllEvil.num_params = 0;
-	ps->RootOfAllEvil.return_type = TypeVoid;
-	ps->cur_func = NULL;
-	ps->script = NULL;
-
-	// "include" default stuff
-	ps->NumOwnTypes = 0;
-	for (int i=0;i<PreTypes.num;i++)
-		ps->Types.add(PreTypes[i]);
 }
 
 PreScript::PreScript(Script *_script)
 {
-	reset_pre_script(this);
+	Filename = "-empty script-";
+	Buffer = "";
+	Exp.buffer = NULL;
+	FlagShow = false;
+	FlagShowPrae = false;
+	FlagDisassemble = false;
+	FlagCompileOS = false;
+	FlagCompileInitialRealMode = false;
+	FlagOverwriteVariablesOffset = false;
+	FlagImmortal = false;
+	FlagNoExecution = false;
+	AsmMetaInfo = NULL;
+	RootOfAllEvil.name = "RootOfAllEvil";
+	RootOfAllEvil.num_params = 0;
+	RootOfAllEvil.return_type = TypeVoid;
+	cur_func = NULL;
 	script = _script;
+
+	// "include" default stuff
+	NumOwnTypes = 0;
+	for (int i=0;i<PreTypes.num;i++)
+		Types.add(PreTypes[i]);
 }
 
 
