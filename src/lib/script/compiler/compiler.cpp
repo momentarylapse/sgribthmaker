@@ -49,12 +49,12 @@ void AddEspAdd(Asm::InstructionWithParamsList *list,int d)
 		if (d>120)
 			list->add_easy(Asm::inst_add, Asm::PKRegister, (void*)Asm::RegEsp, Asm::PKConstant32, (void*)(long)d);
 		else
-			list->add_easy(Asm::inst_add_b, Asm::PKRegister, (void*)Asm::RegEsp, Asm::PKConstant8, (void*)(long)d);
+			list->add_easy(Asm::inst_add, Asm::PKRegister, (void*)Asm::RegEsp, Asm::PKConstant8, (void*)(long)d);
 	}else if (d<0){
 		if (d<-120)
 			list->add_easy(Asm::inst_sub, Asm::PKRegister, (void*)Asm::RegEsp, Asm::PKConstant32, (void*)(long)(-d));
 		else
-			list->add_easy(Asm::inst_sub_b, Asm::PKRegister, (void*)Asm::RegEsp, Asm::PKConstant8, (void*)(long)(-d));
+			list->add_easy(Asm::inst_sub, Asm::PKRegister, (void*)Asm::RegEsp, Asm::PKConstant8, (void*)(long)(-d));
 	}
 }
 

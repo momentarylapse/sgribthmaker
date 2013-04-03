@@ -100,15 +100,6 @@ enum{
 	SizeUnknown = -7
 };
 
-inline int absolute_size(int s)
-{
-	if (s == Size8)		return 1;
-	if (s == Size16)	return 2;
-	if (s == Size32)	return 4;
-	if (s == Size64)	return 8;
-	return 0;
-}
-
 struct Register{
 	string name;
 	int id, group, size;
@@ -137,96 +128,63 @@ struct InstructionName{
 // rw1/2: 
 InstructionName InstructionNames[NUM_INSTRUCTION_NAMES + 1] = {
 	{inst_add,		"add",		3, 1},
-	{inst_add_b,	"add.b",	3, 1},
 	{inst_adc,		"adc",		3, 1},
-	{inst_adc_b,	"adc.b",	3, 1},
 	{inst_sub,		"sub",		3, 1},
-	{inst_sub_b,	"sub.b",	3, 1},
 	{inst_sbb,		"sbb",		3, 1},
-	{inst_sbb_b,	"sbb.b",	3, 1},
 	{inst_inc,		"inc",		3},
-	{inst_inc_b,	"inc.b",	3},
 	{inst_dec,		"dec",		3},
-	{inst_dec_b,	"dec.b",	3},
 	{inst_mul,		"mul",		3, 1},
-	{inst_mul_b,	"mul.b",	3, 1},
 	{inst_imul,		"imul",		3, 1},
-	{inst_imul_b,	"imul.b",	3, 1},
 	{inst_div,		"div",		3, 1},
-	{inst_div_b,	"div.b",	3, 1},
 	{inst_idiv,		"idiv",		3, 1},
-	{inst_idiv_b,	"idiv.b",	3, 1},
 	{inst_mov,		"mov",		2, 1},
-	{inst_mov_b,	"mov.b",	2, 1},
 	{inst_movzx,	"movzx",	2, 1},
 	{inst_movsx,	"movsx",	2, 1},
 	{inst_and,		"and",		3, 1},
-	{inst_and_b,	"and.b",	3, 1},
 	{inst_or,		"or",		3, 1},
-	{inst_or_b,		"or.b",		3, 1},
 	{inst_xor,		"xor",		3, 1},
-	{inst_xor_b,	"xor.b",	3, 1},
 	{inst_not,		"not",		3},
-	{inst_not_b,	"not.b",	3},
 	{inst_neg,		"neg",		3},
-	{inst_neg_b,	"neg.b",	3},
 	{inst_pop,		"pop",		2},
 	{inst_popa,		"popa",		2},
 	{inst_push,		"push",		1},
 	{inst_pusha,	"pusha",	1},
 	
 	{inst_jo,		"jo",		1},
-	{inst_jo_b,		"jo.b",		1},
 	{inst_jno,		"jno",		1},
-	{inst_jno_b,	"jno.b",	1},
 	{inst_jb,		"jb",		1},
-	{inst_jb_b,		"jb.b",		1},
 	{inst_jnb,		"jnb",		1},
-	{inst_jnb_b,	"jnb.b",	1},
 	{inst_jz,		"jz",		1},
-	{inst_jz_b,		"jz.b",		1},
 	{inst_jnz,		"jnz",		1},
-	{inst_jnz_b,	"jnz.b",	1},
 	{inst_jbe,		"jbe",		1},
-	{inst_jbe_b,	"jbe.b",	1},
 	{inst_jnbe,		"jnbe",		1},
-	{inst_jnbe_b,	"jnbe.b",	1},
 	{inst_js,		"js",		1},
-	{inst_js_b,		"js.b",		1},
 	{inst_jns,		"jns",		1},
-	{inst_jns_b,	"jns.b",	1},
 	{inst_jp,		"jp",		1},
-	{inst_jp_b,		"jp.b",		1},
 	{inst_jnp,		"jnp",		1},
-	{inst_jnp_b,	"jnp.b",	1},
 	{inst_jl,		"jl",		1},
-	{inst_jl_b,		"jl.b",		1},
 	{inst_jnl,		"jnl",		1},
-	{inst_jnl_b,	"jnl.b",	1},
 	{inst_jle,		"jle",		1},
-	{inst_jle_b,	"jle.b",	1},
 	{inst_jnle,		"jnle",		1},
-	{inst_jnle_b,	"jnle.b",	1},
 	
 	{inst_cmp,		"cmp",		1, 1},
-	{inst_cmp_b,	"cmp.b",	1, 1},
 	
-	{inst_seto_b,	"seto.b",	2},
-	{inst_setno_b,	"setno.b",	2},
-	{inst_setb_b,	"setb.b",	2},
-	{inst_setnb_b,	"setnb.b",	2},
-	{inst_setz_b,	"setz.b",	2},
-	{inst_setnz_b,	"setnz.b",	2},
-	{inst_setbe_b,	"setbe.b",	2},
-	{inst_setnbe_b,	"setnbe.b",	2},
-	{inst_sets_b,	"sets.b",	2},
-	{inst_setns_b,	"setns.b",	2},
-	{inst_setp_b,	"setp.b",	2},
-	{inst_setnp_b,	"setnp.b",	2},
-	{inst_setl_b,	"setl.b",	2},
-	{inst_setnl_b,	"setn.bl",	2},
-	{inst_setle_b,	"setle.b",	2},
-	{inst_setnle_b,	"setnle.b",	2},
+	{inst_seto,		"seto",		2},
+	{inst_setno,	"setno",	2},
+	{inst_setb,		"setb",		2},
+	{inst_setnb,	"setnb",	2},
+	{inst_setz,		"setz",		2},
+	{inst_setnz,	"setnz",	2},
+	{inst_setbe,	"setbe",	2},
+	{inst_setnbe,	"setnbe",	2},
+	{inst_sets,		"sets",		2},
+	{inst_setns,	"setns",	2},
+	{inst_setp,		"setp",		2},
+	{inst_setnp,	"setnp",	2},
+	{inst_setl,		"setl",		2},
+	{inst_setnl,	"setnl",	2},
+	{inst_setle,	"setle",	2},
+	{inst_setnle,	"setnle",	2},
 	
 	{inst_sldt,		"sldt"},
 	{inst_str,		"str"},
@@ -242,9 +200,7 @@ InstructionName InstructionNames[NUM_INSTRUCTION_NAMES + 1] = {
 	{inst_lmsw,		"lmsw"},
 	
 	{inst_test,		"test",		1, 1},
-	{inst_test_b,	"test.b",	1, 1},
 	{inst_xchg,		"xchg",		3, 3},
-	{inst_xchg_b,	"xchg.b",	3, 3},
 	{inst_lea,		"lea", 		2, 1},
 	{inst_nop,		"nop"},
 	{inst_cbw_cwde,	"cbw/cwde"},
@@ -254,19 +210,12 @@ InstructionName InstructionNames[NUM_INSTRUCTION_NAMES + 1] = {
 	{inst_cmps_ds_esi_es_edi,	"cmps_ds:esi,es:edi"},
 	{inst_cmps_b_ds_esi_es_edi,	"cmps.b_ds:esi,es:edi"},
 	{inst_rol,		"rol",		3, 1},
-	{inst_rol_b,	"rol.b",	3, 1},
 	{inst_ror,		"ror",		3, 1},
-	{inst_ror_b,	"ror.b",	3, 1},
 	{inst_rcl,		"rcl",		3, 1},
-	{inst_rcl_b,	"rcl.b",	3, 1},
 	{inst_rcr,		"rcr",		3, 1},
-	{inst_rcr_b,	"rcr.b",	3, 1},
 	{inst_shl,		"shl",		3, 1},
-	{inst_shl_b,	"shl.b",	3, 1},
 	{inst_shr,		"shr",		3, 1},
-	{inst_shr_b,	"shr.b",	3, 1},
 	{inst_sar,		"sar",		3, 1},
-	{inst_sar_b,	"sar.b",	3, 1},
 	{inst_ret,		"ret",		1},
 	{inst_leave,	"leave",	1},
 	{inst_ret_far,	"ret_far",	1},
@@ -300,14 +249,11 @@ InstructionName InstructionNames[NUM_INSTRUCTION_NAMES + 1] = {
 	{inst_loope,	"loope"},
 	{inst_loopne,	"loopne"},
 	{inst_in,		"in",		2, 1},
-	{inst_in_b,		"in.b",		2, 1},
 	{inst_out,		"out",		1, 1},
-	{inst_out_b,	"out.b",	1, 1},
 	
 	{inst_call,		"call",		1},
 	{inst_call_far,	"call_far", 1},
 	{inst_jmp,		"jmp",		1},
-	{inst_jmp_b,	"jmp.b",	1},
 	{inst_lock,		"lock"},
 	{inst_rep,		"rep"},
 	{inst_repne,	"repne"},
@@ -454,7 +400,7 @@ void InstructionWithParamsList::add_func_intro(int stack_alloc_size)
 	if (stack_alloc_size > 127){
 		add_easy(inst_sub, PKRegister, (void*)reg_sp, PKConstant32, (void*)stack_alloc_size);
 	}else if (stack_alloc_size > 0){
-		add_easy(inst_sub_b, PKRegister, (void*)reg_sp, PKConstant8, (void*)stack_alloc_size);
+		add_easy(inst_sub, PKRegister, (void*)reg_sp, PKConstant8, (void*)stack_alloc_size);
 	}
 }
 
@@ -861,19 +807,19 @@ void Init(int set)
 	}
 
 	Instruction.clear();
-	add_inst(inst_add_b		,0x00	,1	,-1	,Eb	,Gb	);
+	add_inst(inst_add		,0x00	,1	,-1	,Eb	,Gb	);
 	add_inst(inst_add		,0x01	,1	,-1	,Ev	,Gv	);
-	add_inst(inst_add_b		,0x02	,1	,-1	,Gb	,Eb	);
+	add_inst(inst_add		,0x02	,1	,-1	,Gb	,Eb	);
 	add_inst(inst_add		,0x03	,1	,-1	,Gv	,Ev	);
-	add_inst(inst_add_b		,0x04	,1	,-1	,RegAl	,Ib	);
+	add_inst(inst_add		,0x04	,1	,-1	,RegAl	,Ib	);
 	add_inst(inst_add		,0x05	,1	,-1	,RegEax,Iv	);
 	add_inst(inst_push		,0x06	,1	,-1	,RegEs	,-1	);
 	add_inst(inst_pop		,0x07	,1	,-1	,RegEs	,-1	);
-	add_inst(inst_or_b		,0x08	,1	,-1	,Eb	,Gb	);
+	add_inst(inst_or		,0x08	,1	,-1	,Eb	,Gb	);
 	add_inst(inst_or		,0x09	,1	,-1	,Ev	,Gv	);
-	add_inst(inst_or_b		,0x0a	,1	,-1	,Gb	,Eb	);
+	add_inst(inst_or		,0x0a	,1	,-1	,Gb	,Eb	);
 	add_inst(inst_or		,0x0b	,1	,-1	,Gv	,Ev	);
-	add_inst(inst_or_b		,0x0c	,1	,-1	,RegAl	,Ib	);
+	add_inst(inst_or		,0x0c	,1	,-1	,RegAl	,Ib	);
 	add_inst(inst_or		,0x0d	,1	,-1	,RegEax,Iv	);
 	add_inst(inst_push		,0x0e	,1	,-1	,RegCs	,-1	);
 	add_inst(inst_sldt		,0x000f	,2	,0	,Ew	,-1	);
@@ -906,66 +852,66 @@ void Init(int set)
 	add_inst(inst_jnl		,0x8d0f	,2	,-1	,Iv	,-1	);
 	add_inst(inst_jle		,0x8e0f	,2	,-1	,Iv	,-1	);
 	add_inst(inst_jnle		,0x8f0f	,2	,-1	,Iv	,-1	);
-	add_inst(inst_seto_b	,0x900f	,2	,-1	,Eb	,-1	);
-	add_inst(inst_setno_b	,0x910f	,2	,-1	,Eb	,-1	);
-	add_inst(inst_setb_b	,0x920f	,2	,-1	,Eb	,-1	);
-	add_inst(inst_setnb_b	,0x930f	,2	,-1	,Eb	,-1	);
-	add_inst(inst_setz_b	,0x940f	,2	,-1	,Eb	,-1	);
-	add_inst(inst_setnz_b	,0x950f	,2	,-1	,Eb	,-1	);
-	add_inst(inst_setbe_b	,0x960f	,2	,-1	,Eb	,-1	);
-	add_inst(inst_setnbe_b	,0x970f	,2	,-1	,Eb	,-1	);
-	add_inst(inst_sets_b	,0x980f	,2	,-1	,Eb	,-1	); // error in table... "Ev"
-	add_inst(inst_setns_b	,0x990f	,2	,-1	,Eb	,-1	);
-	add_inst(inst_setp_b	,0x9a0f	,2	,-1	,Eb	,-1	);
-	add_inst(inst_setnp_b	,0x9b0f	,2	,-1	,Eb	,-1	);
-	add_inst(inst_setl_b	,0x9c0f	,2	,-1	,Eb	,-1	);
-	add_inst(inst_setnl_b	,0x9d0f	,2	,-1	,Eb	,-1	);
-	add_inst(inst_setle_b	,0x9e0f	,2	,-1	,Eb	,-1	);
-	add_inst(inst_setnle_b	,0x9f0f	,2	,-1	,Eb	,-1	);
+	add_inst(inst_seto		,0x900f	,2	,-1	,Eb	,-1	);
+	add_inst(inst_setno		,0x910f	,2	,-1	,Eb	,-1	);
+	add_inst(inst_setb		,0x920f	,2	,-1	,Eb	,-1	);
+	add_inst(inst_setnb		,0x930f	,2	,-1	,Eb	,-1	);
+	add_inst(inst_setz		,0x940f	,2	,-1	,Eb	,-1	);
+	add_inst(inst_setnz		,0x950f	,2	,-1	,Eb	,-1	);
+	add_inst(inst_setbe		,0x960f	,2	,-1	,Eb	,-1	);
+	add_inst(inst_setnbe	,0x970f	,2	,-1	,Eb	,-1	);
+	add_inst(inst_sets		,0x980f	,2	,-1	,Eb	,-1	); // error in table... "Ev"
+	add_inst(inst_setns		,0x990f	,2	,-1	,Eb	,-1	);
+	add_inst(inst_setp		,0x9a0f	,2	,-1	,Eb	,-1	);
+	add_inst(inst_setnp		,0x9b0f	,2	,-1	,Eb	,-1	);
+	add_inst(inst_setl		,0x9c0f	,2	,-1	,Eb	,-1	);
+	add_inst(inst_setnl		,0x9d0f	,2	,-1	,Eb	,-1	);
+	add_inst(inst_setle		,0x9e0f	,2	,-1	,Eb	,-1	);
+	add_inst(inst_setnle	,0x9f0f	,2	,-1	,Eb	,-1	);
 	add_inst(inst_imul		,0xaf0f	,2	,-1	,Gv	,Ev	);
 	add_inst(inst_movzx		,0xb60f	,2	,-1	,Gv	,Eb	);
 	add_inst(inst_movzx		,0xb70f	,2	,-1	,Gv	,Ew	);
 	add_inst(inst_movsx		,0xbe0f	,2	,-1	,Gv	,Eb	);
 	add_inst(inst_movsx		,0xbf0f	,2	,-1	,Gv	,Ew	);
-	add_inst(inst_adc_b		,0x10	,1	,-1	,Eb	,Gb	);
+	add_inst(inst_adc		,0x10	,1	,-1	,Eb	,Gb	);
 	add_inst(inst_adc		,0x11	,1	,-1	,Ev	,Gv	);
-	add_inst(inst_adc_b		,0x12	,1	,-1	,Gb	,Eb	);
+	add_inst(inst_adc		,0x12	,1	,-1	,Gb	,Eb	);
 	add_inst(inst_adc		,0x13	,1	,-1	,Gv	,Ev	);
-	add_inst(inst_adc_b		,0x14	,1	,-1	,RegAl	,Ib	);
+	add_inst(inst_adc		,0x14	,1	,-1	,RegAl	,Ib	);
 	add_inst(inst_adc		,0x15	,1	,-1	,RegEax,Iv	);
 	add_inst(inst_push		,0x16	,1	,-1	,RegSs	,-1	);
 	add_inst(inst_pop		,0x17	,1	,-1	,RegSs	,-1	);
-	add_inst(inst_sbb_b		,0x18	,1	,-1	,Eb	,Gb	);
+	add_inst(inst_sbb		,0x18	,1	,-1	,Eb	,Gb	);
 	add_inst(inst_sbb		,0x19	,1	,-1	,Ev	,Gv	);
-	add_inst(inst_sbb_b		,0x1a	,1	,-1	,Gb	,Eb	);
+	add_inst(inst_sbb		,0x1a	,1	,-1	,Gb	,Eb	);
 	add_inst(inst_sbb		,0x1b	,1	,-1	,Gv	,Ev	);
-	add_inst(inst_sbb_b		,0x1c	,1	,-1	,RegAl	,Ib	);
+	add_inst(inst_sbb		,0x1c	,1	,-1	,RegAl	,Ib	);
 	add_inst(inst_sbb		,0x1d	,1	,-1	,RegEax	,Iv	);
 	add_inst(inst_push		,0x1e	,1	,-1	,RegDs	,-1	);
 	add_inst(inst_pop		,0x1f	,1	,-1	,RegDs	,-1	);
-	add_inst(inst_and_b		,0x20	,1	,-1	,Eb	,Gb	);
+	add_inst(inst_and		,0x20	,1	,-1	,Eb	,Gb	);
 	add_inst(inst_and		,0x21	,1	,-1	,Ev	,Gv	);
-	add_inst(inst_and_b		,0x22	,1	,-1	,Gb	,Eb	);
+	add_inst(inst_and		,0x22	,1	,-1	,Gb	,Eb	);
 	add_inst(inst_and		,0x23	,1	,-1	,Gv	,Ev	);
-	add_inst(inst_and_b		,0x24	,1	,-1	,RegAl	,Ib	);
+	add_inst(inst_and		,0x24	,1	,-1	,RegAl	,Ib	);
 	add_inst(inst_and		,0x25	,1	,-1	,RegEax	,Iv	);
-	add_inst(inst_sub_b		,0x28	,1	,-1	,Eb	,Gb	);
+	add_inst(inst_sub		,0x28	,1	,-1	,Eb	,Gb	);
 	add_inst(inst_sub		,0x29	,1	,-1	,Ev	,Gv	);
-	add_inst(inst_sub_b		,0x2a	,1	,-1	,Gb	,Eb	);
+	add_inst(inst_sub		,0x2a	,1	,-1	,Gb	,Eb	);
 	add_inst(inst_sub		,0x2b	,1	,-1	,Gv	,Ev	);
-	add_inst(inst_sub_b		,0x2c	,1	,-1	,RegAl	,Ib	);
+	add_inst(inst_sub		,0x2c	,1	,-1	,RegAl	,Ib	);
 	add_inst(inst_sub		,0x2d	,1	,-1	,RegEax	,Iv	);
-	add_inst(inst_xor_b		,0x30	,1	,-1	,Eb	,Gb	);
+	add_inst(inst_xor		,0x30	,1	,-1	,Eb	,Gb	);
 	add_inst(inst_xor		,0x31	,1	,-1	,Ev	,Gv	);
-	add_inst(inst_xor_b		,0x32	,1	,-1	,Gb	,Eb	);
+	add_inst(inst_xor		,0x32	,1	,-1	,Gb	,Eb	);
 	add_inst(inst_xor		,0x33	,1	,-1	,Gv	,Ev	);
-	add_inst(inst_xor_b		,0x34	,1	,-1	,RegAl	,Ib	);
+	add_inst(inst_xor		,0x34	,1	,-1	,RegAl	,Ib	);
 	add_inst(inst_xor		,0x35	,1	,-1	,RegEax	,Iv	);
-	add_inst(inst_cmp_b		,0x38	,1	,-1	,Eb	,Gb	);
+	add_inst(inst_cmp		,0x38	,1	,-1	,Eb	,Gb	);
 	add_inst(inst_cmp		,0x39	,1	,-1	,Ev	,Gv	);
-	add_inst(inst_cmp_b		,0x3a	,1	,-1	,Gb	,Eb	);
+	add_inst(inst_cmp		,0x3a	,1	,-1	,Gb	,Eb	);
 	add_inst(inst_cmp		,0x3b	,1	,-1	,Gv	,Ev	);
-	add_inst(inst_cmp_b		,0x3c	,1	,-1	,RegAl	,Ib	);
+	add_inst(inst_cmp		,0x3c	,1	,-1	,RegAl	,Ib	);
 	add_inst(inst_cmp		,0x3d	,1	,-1	,RegEax	,Iv	);
 	if (set == InstructionSetX86){
 		add_inst(inst_inc		,0x40	,1	,-1	,RegEax	,-1	);
@@ -1025,31 +971,31 @@ void Init(int set)
 	add_inst(inst_push		,0x68	,1	,-1	,Iv	,-1	);
 	add_inst(inst_imul		,0x69	,1	,-1	,Ev	,Iv	);
 	add_inst(inst_push		,0x6a	,1	,-1	,Ib	,-1	);
-	add_inst(inst_jo_b		,0x70	,1	,-1	,Jb	,-1	);
-	add_inst(inst_jno_b		,0x71	,1	,-1	,Jb	,-1	);
-	add_inst(inst_jb_b		,0x72	,1	,-1	,Jb	,-1	);
-	add_inst(inst_jnb_b		,0x73	,1	,-1	,Jb	,-1	);
-	add_inst(inst_jz_b		,0x74	,1	,-1	,Jb	,-1	);
-	add_inst(inst_jnz_b		,0x75	,1	,-1	,Jb	,-1	);
-	add_inst(inst_jbe_b		,0x76	,1	,-1	,Jb	,-1	);
-	add_inst(inst_jnbe_b	,0x77	,1	,-1	,Jb	,-1	);
-	add_inst(inst_js_b		,0x78	,1	,-1	,Jb	,-1	);
-	add_inst(inst_jns_b		,0x79	,1	,-1	,Jb	,-1	);
-	add_inst(inst_jp_b		,0x7a	,1	,-1	,Jb	,-1	);
-	add_inst(inst_jnp_b		,0x7b	,1	,-1	,Jb	,-1	);
-	add_inst(inst_jl_b		,0x7c	,1	,-1	,Jb	,-1	);
-	add_inst(inst_jnl_b		,0x7d	,1	,-1	,Jb	,-1	);
-	add_inst(inst_jle_b		,0x7e	,1	,-1	,Jb	,-1	);
-	add_inst(inst_jnle_b	,0x7f	,1	,-1	,Jb	,-1	);
+	add_inst(inst_jo		,0x70	,1	,-1	,Jb	,-1	);
+	add_inst(inst_jno		,0x71	,1	,-1	,Jb	,-1	);
+	add_inst(inst_jb		,0x72	,1	,-1	,Jb	,-1	);
+	add_inst(inst_jnb		,0x73	,1	,-1	,Jb	,-1	);
+	add_inst(inst_jz		,0x74	,1	,-1	,Jb	,-1	);
+	add_inst(inst_jnz		,0x75	,1	,-1	,Jb	,-1	);
+	add_inst(inst_jbe		,0x76	,1	,-1	,Jb	,-1	);
+	add_inst(inst_jnbe		,0x77	,1	,-1	,Jb	,-1	);
+	add_inst(inst_js		,0x78	,1	,-1	,Jb	,-1	);
+	add_inst(inst_jns		,0x79	,1	,-1	,Jb	,-1	);
+	add_inst(inst_jp		,0x7a	,1	,-1	,Jb	,-1	);
+	add_inst(inst_jnp		,0x7b	,1	,-1	,Jb	,-1	);
+	add_inst(inst_jl		,0x7c	,1	,-1	,Jb	,-1	);
+	add_inst(inst_jnl		,0x7d	,1	,-1	,Jb	,-1	);
+	add_inst(inst_jle		,0x7e	,1	,-1	,Jb	,-1	);
+	add_inst(inst_jnle		,0x7f	,1	,-1	,Jb	,-1	);
 	// Immediate Group 1
-	add_inst(inst_add_b		,0x80	,1	,0	,Eb	,Ib	);
-	add_inst(inst_or_b		,0x80	,1	,1	,Eb	,Ib	);
-	add_inst(inst_adc_b		,0x80	,1	,2	,Eb	,Ib	);
-	add_inst(inst_sbb_b		,0x80	,1	,3	,Eb	,Ib	);
-	add_inst(inst_and_b		,0x80	,1	,4	,Eb	,Ib	);
-	add_inst(inst_sub_b		,0x80	,1	,5	,Eb	,Ib	);
-	add_inst(inst_xor_b		,0x80	,1	,6	,Eb	,Ib	);
-	add_inst(inst_cmp_b		,0x80	,1	,7	,Eb	,Ib	);
+	add_inst(inst_add		,0x80	,1	,0	,Eb	,Ib	);
+	add_inst(inst_or		,0x80	,1	,1	,Eb	,Ib	);
+	add_inst(inst_adc		,0x80	,1	,2	,Eb	,Ib	);
+	add_inst(inst_sbb		,0x80	,1	,3	,Eb	,Ib	);
+	add_inst(inst_and		,0x80	,1	,4	,Eb	,Ib	);
+	add_inst(inst_sub		,0x80	,1	,5	,Eb	,Ib	);
+	add_inst(inst_xor		,0x80	,1	,6	,Eb	,Ib	);
+	add_inst(inst_cmp		,0x80	,1	,7	,Eb	,Ib	);
 	add_inst(inst_add		,0x81	,1	,0	,Ev	,Iv	);
 	add_inst(inst_or		,0x81	,1	,1	,Ev	,Iv	);
 	add_inst(inst_adc		,0x81	,1	,2	,Ev	,Iv	);
@@ -1058,21 +1004,21 @@ void Init(int set)
 	add_inst(inst_sub		,0x81	,1	,5	,Ev	,Iv	);
 	add_inst(inst_xor		,0x81	,1	,6	,Ev	,Iv	);
 	add_inst(inst_cmp		,0x81	,1	,7	,Ev	,Iv	);
-	add_inst(inst_add_b		,0x83	,1	,0	,Ev	,Ib	);
-	add_inst(inst_or_b		,0x83	,1	,1	,Ev	,Ib	);
-	add_inst(inst_adc_b		,0x83	,1	,2	,Ev	,Ib	);
-	add_inst(inst_sbb_b		,0x83	,1	,3	,Ev	,Ib	);
-	add_inst(inst_and_b		,0x83	,1	,4	,Ev	,Ib	);
-	add_inst(inst_sub_b		,0x83	,1	,5	,Ev	,Ib	);
-	add_inst(inst_xor_b		,0x83	,1	,6	,Ev	,Ib	);
-	add_inst(inst_cmp_b		,0x83	,1	,7	,Ev	,Ib	);
-	add_inst(inst_test_b	,0x84	,1	,-1	,Eb	,Gb	);
+	add_inst(inst_add		,0x83	,1	,0	,Ev	,Ib	);
+	add_inst(inst_or		,0x83	,1	,1	,Ev	,Ib	);
+	add_inst(inst_adc		,0x83	,1	,2	,Ev	,Ib	);
+	add_inst(inst_sbb		,0x83	,1	,3	,Ev	,Ib	);
+	add_inst(inst_and		,0x83	,1	,4	,Ev	,Ib	);
+	add_inst(inst_sub		,0x83	,1	,5	,Ev	,Ib	);
+	add_inst(inst_xor		,0x83	,1	,6	,Ev	,Ib	);
+	add_inst(inst_cmp		,0x83	,1	,7	,Ev	,Ib	);
+	add_inst(inst_test		,0x84	,1	,-1	,Eb	,Gb	);
 	add_inst(inst_test		,0x85	,1	,-1	,Ev	,Gv	);
-	add_inst(inst_xchg_b	,0x86	,1	,-1	,Eb	,Gb	);
+	add_inst(inst_xchg		,0x86	,1	,-1	,Eb	,Gb	);
 	add_inst(inst_xchg		,0x87	,1	,-1	,Ev	,Gv	);
-	add_inst(inst_mov_b		,0x88	,1	,-1	,Eb	,Gb	);
+	add_inst(inst_mov		,0x88	,1	,-1	,Eb	,Gb	);
 	add_inst(inst_mov		,0x89	,1	,-1	,Ev	,Gv	);
-	add_inst(inst_mov_b		,0x8a	,1	,-1	,Gb	,Eb	);
+	add_inst(inst_mov		,0x8a	,1	,-1	,Gb	,Eb	);
 	add_inst(inst_mov		,0x8b	,1	,-1	,Gv	,Ev	);
 	add_inst(inst_mov		,0x8c	,1	,-1	,Ew	,Sw	);
 	//add_inst(inst_lea		,0x8d	,1	,-1	,Gv	,Ev	);
@@ -1091,20 +1037,20 @@ void Init(int set)
 	add_inst(inst_cgq_cwd	,0x99	,1	,-1	,-1 ,-1	);
 	add_inst(inst_mov		,0xa0	,1	,-1	,RegAl	,Ob	);
 	add_inst(inst_mov		,0xa1	,1	,-1	,RegEax	,Ov	);
-	add_inst(inst_mov_b		,0xa2	,1	,-1	,Ob	,RegAl	);
+	add_inst(inst_mov		,0xa2	,1	,-1	,Ob	,RegAl	);
 	add_inst(inst_mov		,0xa3	,1	,-1	,Ov	,RegEax	);
 	add_inst(inst_movs_b_ds_esi_es_edi	,0xa4	,1	,-1	,-1,-1	);
 	add_inst(inst_movs_ds_esi_es_edi	,0xa5	,1	,-1	,-1,-1	);
 	add_inst(inst_cmps_b_ds_esi_es_edi	,0xa6	,1	,-1	,-1,-1	);
 	add_inst(inst_cmps_ds_esi_es_edi	,0xa7	,1	,-1	,-1,-1	);
-	add_inst(inst_mov_b		,0xb0	,1	,-1	,RegAl	,Ib	);
-	add_inst(inst_mov_b		,0xb1	,1	,-1	,RegCl	,Ib	);
-	add_inst(inst_mov_b		,0xb2	,1	,-1	,RegDl	,Ib	);
-	add_inst(inst_mov_b		,0xb3	,1	,-1	,RegBl	,Ib	);
-	add_inst(inst_mov_b		,0xb4	,1	,-1	,RegAh	,Ib	);
-	add_inst(inst_mov_b		,0xb5	,1	,-1	,RegCh	,Ib	);
-	add_inst(inst_mov_b		,0xb6	,1	,-1	,RegDh	,Ib	);
-	add_inst(inst_mov_b		,0xb7	,1	,-1	,RegBh	,Ib	);
+	add_inst(inst_mov		,0xb0	,1	,-1	,RegAl	,Ib	);
+	add_inst(inst_mov		,0xb1	,1	,-1	,RegCl	,Ib	);
+	add_inst(inst_mov		,0xb2	,1	,-1	,RegDl	,Ib	);
+	add_inst(inst_mov		,0xb3	,1	,-1	,RegBl	,Ib	);
+	add_inst(inst_mov		,0xb4	,1	,-1	,RegAh	,Ib	);
+	add_inst(inst_mov		,0xb5	,1	,-1	,RegCh	,Ib	);
+	add_inst(inst_mov		,0xb6	,1	,-1	,RegDh	,Ib	);
+	add_inst(inst_mov		,0xb7	,1	,-1	,RegBh	,Ib	);
 	add_inst(inst_mov		,0xb8	,1	,-1	,RegEax	,Iv	);
 	add_inst(inst_mov		,0xb9	,1	,-1	,RegEcx	,Iv	);
 	add_inst(inst_mov		,0xba	,1	,-1	,RegEdx	,Iv	);
@@ -1114,13 +1060,13 @@ void Init(int set)
 	add_inst(inst_mov		,0xbe	,1	,-1	,RegEsi	,Iv	);
 	add_inst(inst_mov		,0xbf	,1	,-1	,RegEdi	,Iv	);
 	// Shift Group 2
-	add_inst(inst_rol_b		,0xc0	,1	,0	,Eb	,Ib	);
-	add_inst(inst_ror_b		,0xc0	,1	,1	,Eb	,Ib	);
-	add_inst(inst_rcl_b		,0xc0	,1	,2	,Eb	,Ib	);
-	add_inst(inst_rcr_b		,0xc0	,1	,3	,Eb	,Ib	);
-	add_inst(inst_shl_b		,0xc0	,1	,4	,Eb	,Ib	);
-	add_inst(inst_shr_b		,0xc0	,1	,5	,Eb	,Ib	);
-	add_inst(inst_sar_b		,0xc0	,1	,7	,Eb	,Ib	);
+	add_inst(inst_rol		,0xc0	,1	,0	,Eb	,Ib	);
+	add_inst(inst_ror		,0xc0	,1	,1	,Eb	,Ib	);
+	add_inst(inst_rcl		,0xc0	,1	,2	,Eb	,Ib	);
+	add_inst(inst_rcr		,0xc0	,1	,3	,Eb	,Ib	);
+	add_inst(inst_shl		,0xc0	,1	,4	,Eb	,Ib	);
+	add_inst(inst_shr		,0xc0	,1	,5	,Eb	,Ib	);
+	add_inst(inst_sar		,0xc0	,1	,7	,Eb	,Ib	);
 	add_inst(inst_rol		,0xc1	,1	,0	,Ev	,Ib	); // Ib, auch wenn die Tabelle Iv sagt!!!!
 	add_inst(inst_ror		,0xc1	,1	,1	,Ev	,Ib	);
 	add_inst(inst_rcl		,0xc1	,1	,2	,Ev	,Ib	);
@@ -1130,7 +1076,7 @@ void Init(int set)
 	add_inst(inst_sar		,0xc1	,1	,7	,Ev	,Ib	);
 	add_inst(inst_ret		,0xc2	,1	,-1	,Iw	,-1	);
 	add_inst(inst_ret		,0xc3	,1	,-1	,-1	,-1	);
-	add_inst(inst_mov_b		,0xc6	,1	,-1	,Eb	,Ib	);
+	add_inst(inst_mov		,0xc6	,1	,-1	,Eb	,Ib	);
 	add_inst(inst_mov		,0xc7	,1	,-1	,Ev	,Iv	);
 	add_inst(inst_leave		,0xc9	,1	,-1	,-1	,-1	);
 	add_inst(inst_ret_far	,0xca	,1	,-1	,Iw	,-1	);
@@ -1167,14 +1113,14 @@ void Init(int set)
 	add_inst(inst_loopne	,0xe0	,1	,-1	,Jb	,-1	);
 	add_inst(inst_loope		,0xe1	,1	,-1	,Jb	,-1	);
 	add_inst(inst_loop		,0xe2	,1	,-1	,Jb	,-1	);
-	add_inst(inst_in_b		,0xe4	,1	,-1	,RegAl	,Ib	);
-	add_inst(inst_in_b		,0xe5	,1	,-1	,RegEax,Ib	);
-	add_inst(inst_out_b		,0xe6	,1	,-1	,Ib	,RegAl	);
-	add_inst(inst_out_b		,0xe7	,1	,-1	,Ib	,RegEax);
+	add_inst(inst_in		,0xe4	,1	,-1	,RegAl	,Ib	);
+	add_inst(inst_in		,0xe5	,1	,-1	,RegEax,Ib	);
+	add_inst(inst_out		,0xe6	,1	,-1	,Ib	,RegAl	);
+	add_inst(inst_out		,0xe7	,1	,-1	,Ib	,RegEax);
 	add_inst(inst_call		,0xe8	,1	,-1	,Jv	,-1	); // well... "Av" in tyble
 	add_inst(inst_jmp		,0xe9	,1	,-1	,Jv	,-1	); // miswritten in the table
 	add_inst(inst_jmp		,0xea	,1	,-1	,Ap	,-1	);
-	add_inst(inst_jmp_b		,0xeb	,1	,-1	,Jb	,-1	);
+	add_inst(inst_jmp		,0xeb	,1	,-1	,Jb	,-1	);
 	add_inst(inst_in		,0xec	,1	,-1	,RegAl	,RegDx	);
 	add_inst(inst_in		,0xed	,1	,-1	,RegEax,RegDx	);
 	add_inst(inst_out		,0xee	,1	,-1	,RegDx	,RegAl	);
@@ -1185,13 +1131,13 @@ void Init(int set)
 	add_inst(inst_hlt		,0xf4	,1	,-1	,-1	,-1	);
 	add_inst(inst_cmc		,0xf5	,1	,-1	,-1	,-1	);
 	// Unary Group 3
-	add_inst(inst_test_b	,0xf6	,1	,0	,Eb	,Ib	);
-	add_inst(inst_not_b		,0xf6	,1	,2	,Eb	,-1	);
-	add_inst(inst_neg_b		,0xf6	,1	,3	,Eb	,-1	);
-	add_inst(inst_mul_b		,0xf6	,1	,4	,RegAl	,Eb	);
-	add_inst(inst_imul_b	,0xf6	,1	,5	,RegAl	,Eb	);
-	add_inst(inst_div_b		,0xf6	,1	,6	,RegAl	,Eb	);
-	add_inst(inst_idiv_b	,0xf6	,1	,7	,Eb	,-1	);
+	add_inst(inst_test		,0xf6	,1	,0	,Eb	,Ib	);
+	add_inst(inst_not		,0xf6	,1	,2	,Eb	,-1	);
+	add_inst(inst_neg		,0xf6	,1	,3	,Eb	,-1	);
+	add_inst(inst_mul		,0xf6	,1	,4	,RegAl	,Eb	);
+	add_inst(inst_imul		,0xf6	,1	,5	,RegAl	,Eb	);
+	add_inst(inst_div		,0xf6	,1	,6	,RegAl	,Eb	);
+	add_inst(inst_idiv		,0xf6	,1	,7	,Eb	,-1	);
 	add_inst(inst_test		,0xf7	,1	,0	,Ev	,Iv	);
 	add_inst(inst_not		,0xf7	,1	,2	,Ev	,-1	);
 	add_inst(inst_neg		,0xf7	,1	,3	,Ev	,-1	);
@@ -1205,8 +1151,8 @@ void Init(int set)
 	add_inst(inst_sti		,0xfb	,1	,-1	,-1	,-1	);
 	add_inst(inst_cld		,0xfc	,1	,-1	,-1	,-1	);
 	add_inst(inst_std		,0xfd	,1	,-1	,-1	,-1	);
-	add_inst(inst_inc_b		,0xfe	,1	,0	,Eb	,-1	);
-	add_inst(inst_dec_b		,0xfe	,1	,1	,Eb	,-1	);
+	add_inst(inst_inc		,0xfe	,1	,0	,Eb	,-1	);
+	add_inst(inst_dec		,0xfe	,1	,1	,Eb	,-1	);
 	add_inst(inst_inc		,0xff	,1	,0	,Ev	,-1	);
 	add_inst(inst_dec		,0xff	,1	,1	,Ev	,-1	);
 	add_inst(inst_call		,0xff	,1	,2	,Ev	,-1	);
@@ -1255,7 +1201,7 @@ string InstructionParam::str()
 		if (deref)
 			str = format("[%s]", d2h(&value, state.AddrSize).c_str());
 		else
-			str = d2h(&value, absolute_size(size));
+			str = d2h(&value, size);
 	}else if (type == ParamTImmediateDouble){
 		//msg_write("im");
 		str = format("%s:%s", d2h(&((char*)&value)[4], 2).c_str(), d2h(&value, state.ParamSize).c_str());
@@ -1568,8 +1514,8 @@ inline void ReadParamData(char *&cur, InstructionParam &p)
 			memcpy(&p.value, cur, state.AddrSize);
 			cur += state.AddrSize;
 		}else{
-			memcpy(&p.value, cur, absolute_size(p.size));
-			cur += absolute_size(p.size);
+			memcpy(&p.value, cur, p.size);
+			cur += p.size;
 		}
 	}else if (p.type == ParamTImmediateDouble){
 		if (state.ParamSize == Size16){ // addr?
@@ -2231,6 +2177,11 @@ void GetParam(InstructionParam &p, const string &param, InstructionWithParamsLis
 				return;
 			}
 			p.value = (long)v;
+			p.size = Size8;
+			if (param.num > 4)
+				p.size = Size16;
+			if (param.num > 6)
+				p.size = Size32;
 		}
 		if (DebugAsm){
 			if (p.type == ParamTImmediateDouble)
@@ -2250,6 +2201,7 @@ void GetParam(InstructionParam &p, const string &param, InstructionWithParamsLis
 	}else if (param == "$"){
 		p.value = list.add_label(param, true);
 		p.type = ParamTImmediate;
+		p.size = Size32;
 		p.is_label = true;
 		so("label:  " + param + "\n");
 		
@@ -2268,6 +2220,7 @@ void GetParam(InstructionParam &p, const string &param, InstructionWithParamsLis
 			if (list.label[i].Name == param){
 				p.value = i;
 				p.type = ParamTImmediate;
+				p.size = Size32;
 				p.is_label = true;
 				so("label:  " + param + "\n");
 				return;
@@ -2288,6 +2241,7 @@ void GetParam(InstructionParam &p, const string &param, InstructionWithParamsLis
 			p.value = list.add_label(param, false);
 			p.type = ParamTImmediate;
 			p.is_label = true;
+			p.size = Size32;
 			return;
 		}
 	}
@@ -2322,13 +2276,13 @@ void OpcodeAddImmideate(char *oc, int &ocs, InstructionParamFuzzy &ip, Instructi
 		if (p.deref)
 			size = state.AddrSize;
 		else
-			size = absolute_size(ip.size);
+			size = p.size;
 	}else if (p.type == ParamTImmediateDouble){
 		size = state.ParamSize;  // bits 0-15  /  0-31
 	}else if (p.type == ParamTRegister){
-		if (p.disp == DispMode8)	size = 1;
-		if (p.disp == DispMode16)	size = 2;
-		if (p.disp == DispMode32)	size = 4;
+		if (p.disp == DispMode8)	size = Size8;
+		if (p.disp == DispMode16)	size = Size16;
+		if (p.disp == DispMode32)	size = Size32;
 	}else
 		return;
 
@@ -2612,8 +2566,10 @@ inline bool _test_param_(InstructionParamFuzzy &inst_p, InstructionParam &wanted
 	if (wanted_p.type == ParamTImmediate){
 		if ((inst_p.allow_memory_address) && (wanted_p.deref))
 			return true;
-		if ((inst_p.allow_immediate) && (!wanted_p.deref))
-			return true;
+		if ((inst_p.allow_immediate) && (!wanted_p.deref)){
+			//msg_write("imm " + SizeOut(inst_p.size) + " " + SizeOut(wanted_p.size));
+			return (inst_p.size == wanted_p.size);
+		}
 		return false;
 	}
 
@@ -2771,6 +2727,9 @@ void OpcodeAddInstruction(char *oc, int &ocs, sInstruction &inst, InstructionPar
 {
 	msg_db_f("OpcodeAddInstruction", 1+ASM_DB_LEVEL);
 
+	msg_write(ocs);
+	msg_write(inst.name + " " + p1.str() + " " + p2.str());
+
 	// add opcode
 	*(int*)&oc[ocs] = inst.code;
 	ocs += inst.code_size;
@@ -2836,13 +2795,17 @@ void InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)
 
 void InstructionWithParamsList::ShrinkJumps(void *oc, int ocs)
 {
+	// first pass compilation (we need real jump distances)
 	int _ocs = ocs;
 	Compile(oc, _ocs);
 
+	// try shrinking
 	foreachi(InstructionWithParams &iwp, *this, i){
 		if ((iwp.inst == inst_jmp) || (iwp.inst == inst_jz) || (iwp.inst == inst_jnz)){
 			if (iwp.p1.is_label){
 				int target = label[iwp.p1.value].InstNo;
+
+				// jump distance
 				int dist = 0;
 				for (int j=i+1;j<target;j++)
 					dist += (*this)[j].size;
@@ -2852,9 +2815,6 @@ void InstructionWithParamsList::ShrinkJumps(void *oc, int ocs)
 
 				if (dist < 127){
 					so("really shrink");
-					if (iwp.inst == inst_jmp)	iwp.inst = inst_jmp_b;
-					if (iwp.inst == inst_jz)	iwp.inst = inst_jz_b;
-					if (iwp.inst == inst_jnz)	iwp.inst = inst_jnz_b;
 					iwp.p1.size = Size8;
 				}
 			}
@@ -2869,6 +2829,9 @@ void InstructionWithParamsList::Optimize(void *oc, int ocs)
 
 void InstructionWithParamsList::Compile(void *oc, int &ocs)
 {
+	state.DefaultSize = Size32;
+	state.reset();
+
 	for (int i=0;i<num+1;i++){
 		// defining a label?
 		for (int j=0;j<label.num;j++)
