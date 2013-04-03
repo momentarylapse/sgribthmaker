@@ -3,6 +3,9 @@
 
 #ifdef OS_LINUX
 	#include <sys/mman.h>
+	#if (!defined(__x86_64__)) && (!defined(__amd64__))
+		#define MAP_32BIT		0
+	#endif
 #endif
 #ifdef OS_WINDOWS
 	#include "windows.h"
