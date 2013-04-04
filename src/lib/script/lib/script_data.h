@@ -19,8 +19,8 @@ namespace Script{
 #define SCRIPT_DEFAULT_STACK_SIZE		32768	// max. amount of stack memory
 extern int StackSize;
 
-#define PointerSize (sizeof(char*))
-#define SuperArraySize	(sizeof(DynamicArray))
+extern int PointerSize;
+#define SuperArraySize	(PointerSize + 3 * sizeof(int))//(sizeof(DynamicArray))
 
 
 //#define mem_align(x)	((x) + (4 - (x) % 4) % 4)
@@ -363,7 +363,7 @@ public:
 	void func(){}
 };
 
-extern void Init();
+extern void Init(int instruction_set = -1);
 extern void End();
 extern void ResetSemiExternalData();
 extern void LinkSemiExternalVar(const string &name, void *pointer);

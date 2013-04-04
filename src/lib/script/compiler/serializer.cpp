@@ -1547,13 +1547,8 @@ void Serializer::CorrectUnallowedParamCombis()
 		SerialCommandParam *pp = mov_first_param ? &cmd[i].p1 : &cmd[i].p2;
 		SerialCommandParam p = *pp;
 
-		if (p.type->size == 1){
-			*pp = param_reg(p.type, Asm::RegAl);
-			add_cmd(Asm::inst_mov, *pp, p);
-		}else{
-			*pp = param_reg(p.type, Asm::RegEax);
-			add_cmd(Asm::inst_mov, *pp, p);
-		}
+		*pp = param_reg(p.type, Asm::RegResize[0][p.type->size]);
+		add_cmd(Asm::inst_mov, *pp, p);
 		move_last_cmd(i);
 		//so("...ok");
 	}

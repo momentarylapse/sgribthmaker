@@ -29,7 +29,7 @@ namespace Script{
 string DataVersion = "0.10.5.1";
 
 
-
+int PointerSize;
 int StackSize = SCRIPT_DEFAULT_STACK_SIZE;
 
 
@@ -1029,11 +1029,12 @@ void SIAddPackageImage();
 void SIAddPackageSound();
 void SIAddPackageX();
 
-void Init()
+void Init(int instruction_set)
 {
 	msg_db_f("ScriptInit", 1);
 
-	Asm::Init();
+	Asm::Init(instruction_set);
+	PointerSize = Asm::InstructionSet.pointer_size;
 
 	SIAddPackageBase();
 	SIAddBasicCommands();
