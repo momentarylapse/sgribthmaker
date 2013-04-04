@@ -2220,7 +2220,7 @@ void GetParam(InstructionParam &p, const string &param, InstructionWithParamsLis
 	// hex const
 	}else if ((param[0] == '0') && (param[1] == 'x')){
 		p.type = ParamTImmediate;
-		int v = 0;
+		long long v = 0;
 		for (int i=2;i<param.num;i++){
 			if (param[i] == '.'){
 			}else if ((param[i] >= 'a') && (param[i] <= 'f')){
@@ -2256,12 +2256,14 @@ void GetParam(InstructionParam &p, const string &param, InstructionWithParamsLis
 				p.size = Size16;
 			if (param.num > 6)
 				p.size = Size32;
+			if (param.num > 10)
+				p.size = Size64;
 		}
 		if (DebugAsm){
 			if (p.type == ParamTImmediateDouble)
 				printf("hex const:  %s:%s\n",d2h((char*)&p.value+4,2).c_str(),d2h((char*)&p.value,4).c_str());
 			else
-				printf("hex const:  %s\n",d2h((char*)&p.value,4).c_str());
+				printf("hex const:  %s\n",d2h((char*)&p.value,p.size).c_str());
 		}
 
 	// char const

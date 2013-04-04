@@ -392,12 +392,12 @@ void Serializer::AddFunctionCall(void *func, int func_no)
 	// _cdecl: Klassen-Instanz als ersten Parameter push'en
 	if (CompilerFunctionInstance.type){
 		add_cmd(Asm::inst_push, CompilerFunctionInstance);
-		push_size += 4;
+		push_size += PointerSize;
 	}
 	
 #ifndef NIX_IDE_VCS
 	// more than 4 byte have to be returned -> give return address as very first parameter!
-	if (type->size > 4)
+	if (type->size > PointerSize)
 		add_cmd(Asm::inst_push, ret_ref); // nachtraegliche eSP-Korrektur macht die Funktion
 #endif
 
@@ -434,7 +434,7 @@ void Serializer::AddFunctionCall(void *func, int func_no)
 
 	// return > 4b already got copied to [ret] by the function!
 	if (type != TypeVoid)
-		if (type->size <= 4){
+		if (type->size <= PointerSize){
 			if (type == TypeFloat)
 				add_cmd(Asm::inst_fstp, CompilerFunctionReturn);
 			else if (type->size == 1){
