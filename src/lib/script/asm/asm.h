@@ -21,6 +21,8 @@ enum{
 	RegCr0, RegCr1, RegCr2, RegCr3,
 	RegSt0, RegSt1, RegSt2, RegSt3, RegSt4, RegSt5, RegSt6, RegSt7,
 	RegRax, RegRcx, RegRdx, RegRbx, RegRsp, RegRsi, RegRdi, RegRbp, // 8 byte
+	RegR8, RegR9, RegR10, RegR11, RegR12, RegR13, RegR14, RegR15,
+	RegR8d, RegR9d, RegR10d, RegR11d, RegR12d, RegR13d, RegR14d, RegR15d,
 	NUM_REGISTERS
 };
 

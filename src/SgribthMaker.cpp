@@ -905,6 +905,11 @@ void CompileAndRun(bool verbose)
 					int r = f2();
 					msg_write(r);
 				}
+				foreachi(Script::LocalVariable &v, compile_script->pre_script->RootOfAllEvil.var, i)
+					if (v.type == Script::TypeInt)
+						msg_write(v.name + ": " + i2s(*(int*)compile_script->g_var[i]));
+					else if (v.type == Script::TypeFloat)
+						msg_write(v.name + ": " + f2s(*(float*)compile_script->g_var[i], 3));
 			}
 			dt_execute = HuiGetTime(CompileTimer);
 			HuiPopMainLevel();

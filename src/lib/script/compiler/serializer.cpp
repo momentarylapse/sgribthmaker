@@ -371,6 +371,8 @@ void Serializer::AddFunctionCall(void *func, int func_no)
 //	add_cmd(- cur_func->_VarSize - LocalOffset - 8);
 	long push_size = 0;
 
+	if (PointerSize == 4){
+	
 	// push parameters onto stack
 	for (int p=CompilerFunctionParam.num-1;p>=0;p--){
 		if (CompilerFunctionParam[p].type){
@@ -398,6 +400,25 @@ void Serializer::AddFunctionCall(void *func, int func_no)
 	if (type->size > 4)
 		add_cmd(Asm::inst_push, ret_ref); // nachtraegliche eSP-Korrektur macht die Funktion
 #endif
+
+	}else if (PointerSize == 8){
+		// map params...
+		int num_reg = 0;
+		foreach(SerialCommandParam &p, CompilerFunctionParam){
+			if (p.type == TypeInt){
+				if (num_reg < 6)
+					num_reg ++;
+			}
+		}
+		int n = 0;
+		int param_regs[6] = {Asm::RegR8d, Asm::RegR9d, Asm::RegEcx, Asm::RegEdx, Asm::RegEsi, Asm::RegEdi};
+		foreachb(SerialCommandParam &p, CompilerFunctionParam){
+			if (p.type == TypeInt){
+				add_cmd(Asm::inst_mov, param_reg(TypeInt, param_regs[n]), p);
+				n ++;
+			}
+		}
+	}
 	
 	add_cmd(Asm::inst_call, param_const(TypePointer, func)); // the actual call
 	// function pointer will be shifted later...

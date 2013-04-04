@@ -30,6 +30,9 @@ struct ParserState
 	int ColumnNo;
 	int DefaultSize;
 	int ParamSize, AddrSize;
+	bool ExtendModRMBase;
+	bool ExtendModRMReg;
+	bool ExtendModRMIndex;
 	/*int FullRegisterSize;
 	void set_(int set)
 	{
@@ -42,6 +45,9 @@ struct ParserState
 	{
 		ParamSize = DefaultSize;
 		AddrSize = DefaultSize;
+		ExtendModRMBase = false;
+		ExtendModRMReg = false;
+		ExtendModRMIndex = false;
 	}
 };
 static ParserState state;
@@ -102,9 +108,21 @@ static void so(int i)
 
 
 
+// groups of registers
+enum{
+	RegGroupNone,
+	RegGroupGeneral,
+	RegGroupGeneral2,
+	RegGroupSegment,
+	RegGroupFlags,
+	RegGroupControl
+};
+
+
 struct Register{
 	string name;
 	int id, group, size;
+	bool extend_mod_rm;
 };
 Array<Register> Registers;
 Array<Register*> RegisterByID;
@@ -113,9 +131,14 @@ int RegRoot[NUM_REGISTERS];
 void add_reg(const string &name, int id, int group, int size, int root = -1)
 {
 	Register r;
+	r.extend_mod_rm = false;
 	r.name = name;
 	r.id = id;
 	r.group = group;
+	if (group == RegGroupGeneral2){
+		r.group = RegGroupGeneral;
+		r.extend_mod_rm = true;
+	}
 	r.size = size;
 	Registers.add(r);
 	RegRoot[id] = (root < 0) ? id : root;
@@ -272,15 +295,6 @@ InstructionName InstructionNames[NUM_INSTRUCTION_NAMES + 1] = {
 };
 
 
-
-// groups of registers
-enum{
-	RegGroupNone,
-	RegGroupGeneral,
-	RegGroupSegment,
-	RegGroupFlags,
-	RegGroupControl
-};
 
 // parameter types
 enum{
@@ -815,6 +829,23 @@ void Init(int set)
 	add_reg("st5",	RegSt5,	-1,	Size32);
 	add_reg("st6",	RegSt6,	-1,	Size32);
 	add_reg("st7",	RegSt7,	-1,	Size32);
+	
+	add_reg("r8",	RegR8,	RegGroupGeneral2,	Size64,	RegR8);
+	add_reg("r8d",	RegR8d,	RegGroupGeneral2,	Size32,	RegR8);	
+	add_reg("r9",	RegR9,	RegGroupGeneral2,	Size64,	RegR9);
+	add_reg("r9d",	RegR9d,	RegGroupGeneral2,	Size32,	RegR9);	
+	add_reg("r10",	RegR10,	RegGroupGeneral2,	Size64,	RegR10);
+	add_reg("r10d",	RegR10d,RegGroupGeneral2,	Size32,	RegR10);	
+	add_reg("r11",	RegR11,	RegGroupGeneral2,	Size64,	RegR10);
+	add_reg("r11d",	RegR11d,RegGroupGeneral2,	Size32,	RegR11);	
+	add_reg("r12",	RegR12,	RegGroupGeneral2,	Size64,	RegR12);
+	add_reg("r12d",	RegR12d,RegGroupGeneral2,	Size32,	RegR12);	
+	add_reg("r13",	RegR13,	RegGroupGeneral2,	Size64,	RegR13);
+	add_reg("r13d",	RegR13d,RegGroupGeneral2,	Size32,	RegR13);	
+	add_reg("r14",	RegR14,	RegGroupGeneral2,	Size64,	RegR14);
+	add_reg("r14d",	RegR14d,RegGroupGeneral2,	Size32,	RegR14);	
+	add_reg("r15",	RegR15,	RegGroupGeneral2,	Size64,	RegR15);
+	add_reg("r15d",	RegR15d,RegGroupGeneral2,	Size32,	RegR15);
 
 	// create easy to access array
 	RegisterByID.clear();
@@ -1357,45 +1388,63 @@ inline void UnfuzzyParam(InstructionParam &p, InstructionParamFuzzy &pf)
 	}
 }
 
-Register *GetModRMRegister(int reg, int size)
+int GetModRMRegister(int reg, int size)
 {
 	if (size == Size8){
-		if (reg == 0x00)	return RegisterByID[RegAl];
-		if (reg == 0x01)	return RegisterByID[RegCl];
-		if (reg == 0x02)	return RegisterByID[RegDl];
-		if (reg == 0x03)	return RegisterByID[RegBl];
-		if (reg == 0x04)	return RegisterByID[RegAh];
-		if (reg == 0x05)	return RegisterByID[RegCh];
-		if (reg == 0x06)	return RegisterByID[RegDh];
-		if (reg == 0x07)	return RegisterByID[RegBh];
+		if (reg == 0x00)	return RegAl;
+		if (reg == 0x01)	return RegCl;
+		if (reg == 0x02)	return RegDl;
+		if (reg == 0x03)	return RegBl;
+		if (reg == 0x04)	return RegAh;
+		if (reg == 0x05)	return RegCh;
+		if (reg == 0x06)	return RegDh;
+		if (reg == 0x07)	return RegBh;
 	}else if (size == Size16){
-		if (reg == 0x00)	return RegisterByID[RegAx];
-		if (reg == 0x01)	return RegisterByID[RegCx];
-		if (reg == 0x02)	return RegisterByID[RegDx];
-		if (reg == 0x03)	return RegisterByID[RegBx];
-		if (reg == 0x04)	return RegisterByID[RegSp];
-		if (reg == 0x05)	return RegisterByID[RegBp];
-		if (reg == 0x06)	return RegisterByID[RegSi];
-		if (reg == 0x07)	return RegisterByID[RegDi];
+		if (reg == 0x00)	return RegAx;
+		if (reg == 0x01)	return RegCx;
+		if (reg == 0x02)	return RegDx;
+		if (reg == 0x03)	return RegBx;
+		if (reg == 0x04)	return RegSp;
+		if (reg == 0x05)	return RegBp;
+		if (reg == 0x06)	return RegSi;
+		if (reg == 0x07)	return RegDi;
 	}else if (size == Size32){
-		if (reg == 0x00)	return RegisterByID[RegEax];
-		if (reg == 0x01)	return RegisterByID[RegEcx];
-		if (reg == 0x02)	return RegisterByID[RegEdx];
-		if (reg == 0x03)	return RegisterByID[RegEbx];
-		if (reg == 0x04)	return RegisterByID[RegEsp];
-		if (reg == 0x05)	return RegisterByID[RegEbp];
-		if (reg == 0x06)	return RegisterByID[RegEsi];
-		if (reg == 0x07)	return RegisterByID[RegEdi];
+		if (reg == 0x00)	return RegEax;
+		if (reg == 0x01)	return RegEcx;
+		if (reg == 0x02)	return RegEdx;
+		if (reg == 0x03)	return RegEbx;
+		if (reg == 0x04)	return RegEsp;
+		if (reg == 0x05)	return RegEbp;
+		if (reg == 0x06)	return RegEsi;
+		if (reg == 0x07)	return RegEdi;
+		if (reg == 0x08)	return RegR8d;
+		if (reg == 0x09)	return RegR9d;
+		if (reg == 0x0a)	return RegR10d;
+		if (reg == 0x0b)	return RegR11d;
+		if (reg == 0x0c)	return RegR12d;
+		if (reg == 0x0d)	return RegR13d;
+		if (reg == 0x0e)	return RegR14d;
+		if (reg == 0x0f)	return RegR15d;
 	}else if (size == Size64){
-		if (reg == 0x00)	return RegisterByID[RegRax];
-		if (reg == 0x01)	return RegisterByID[RegRcx];
-		if (reg == 0x02)	return RegisterByID[RegRdx];
-		if (reg == 0x03)	return RegisterByID[RegRbx];
-		if (reg == 0x04)	return RegisterByID[RegRsp];
-		if (reg == 0x05)	return RegisterByID[RegRbp];
-		if (reg == 0x06)	return RegisterByID[RegRsi];
-		if (reg == 0x07)	return RegisterByID[RegRdi];
+		if (reg == 0x00)	return RegRax;
+		if (reg == 0x01)	return RegRcx;
+		if (reg == 0x02)	return RegRdx;
+		if (reg == 0x03)	return RegRbx;
+		if (reg == 0x04)	return RegRsp;
+		if (reg == 0x05)	return RegRbp;
+		if (reg == 0x06)	return RegRsi;
+		if (reg == 0x07)	return RegRdi;
+		if (reg == 0x08)	return RegR8;
+		if (reg == 0x09)	return RegR9;
+		if (reg == 0x0a)	return RegR10;
+		if (reg == 0x0b)	return RegR11;
+		if (reg == 0x0c)	return RegR12;
+		if (reg == 0x0d)	return RegR13;
+		if (reg == 0x0e)	return RegR14;
+		if (reg == 0x0f)	return RegR15;
 	}
+	msg_error("unhandled mod/rm register: " + i2s(reg));
+	return 0;
 }
 
 inline void GetFromModRM(InstructionParam &p, InstructionParamFuzzy &pf, unsigned char modrm)
@@ -1418,11 +1467,13 @@ inline void GetFromModRM(InstructionParam &p, InstructionParamFuzzy &pf, unsigne
 			if (reg == 0x10)	p.reg = RegisterByID[RegCr2];
 			if (reg == 0x18)	p.reg = RegisterByID[RegCr3];
 		}else{
-			p.reg = GetModRMRegister(reg >> 3, p.size);
+			reg = (reg >> 3) | (state.ExtendModRMReg ? 0x08 : 0x00);
+			p.reg = RegisterByID[GetModRMRegister(reg, p.size)];
 		}
 	}else if (pf.mrm_mode == MRMModRM){
 		unsigned char mod = modrm & 0xc0; // bits 7, 6
 		unsigned char rm = modrm & 0x07; // bits 2, 1, 0
+		if (state.ExtendModRMBase)	rm |= 0x08;
 		if (mod == 0x00){
 			if (state.AddrSize == Size16){
 				p.type = ParamTRegister;
@@ -1477,7 +1528,8 @@ inline void GetFromModRM(InstructionParam &p, InstructionParamFuzzy &pf, unsigne
 		}else if (mod == 0xc0){
 			p.type = ParamTRegister;
 			p.deref = false;
-			p.reg = GetModRMRegister(rm, p.size);
+			if (state.ExtendModRMBase)	rm |= 0x08;
+			p.reg = RegisterByID[GetModRMRegister(rm, p.size)];
 		}
 	}
 }
@@ -1647,9 +1699,15 @@ string Disassemble(void *_code_,int length,bool allow_comments)
 			state.ParamSize = (state.DefaultSize == Size32) ? Size16 : Size32;
 			cur++;
 		}
-		if ((cur[0]==0x48) && (InstructionSet == InstructionSetAMD64)){
-			state.ParamSize = Size64;
-			cur++;
+		if (InstructionSet == InstructionSetAMD64){
+			if ((cur[0] & 0xf0) == 0x40){
+				if ((cur[0] & 0x08) > 0)
+					state.ParamSize = Size64;
+				state.ExtendModRMReg = ((cur[0] & 0x04) > 0);
+				state.ExtendModRMIndex = ((cur[0] & 0x02) > 0);
+				state.ExtendModRMBase = ((cur[0] & 0x01) > 0);
+				cur++;
+			}
 		}
 		if (cur[0]==0x2e){	seg = RegisterByID[RegCs];	cur++;	}
 		else if (cur[0]==0x36){	seg = RegisterByID[RegSs];	cur++;	}
@@ -2686,14 +2744,15 @@ InstructionParam _make_param_(int type, long long param)
 
 char GetModRMReg(Register *r)
 {
-	if ((r == RegisterByID[RegRax]) || (r == RegisterByID[RegEax]) || (r == RegisterByID[RegAx]) || (r == RegisterByID[RegAl]))	return 0x00;
-	if ((r == RegisterByID[RegRcx]) || (r == RegisterByID[RegEcx]) || (r == RegisterByID[RegCx]) || (r == RegisterByID[RegCl]))	return 0x01;
-	if ((r == RegisterByID[RegRdx]) || (r == RegisterByID[RegEdx]) || (r == RegisterByID[RegDx]) || (r == RegisterByID[RegDl]))	return 0x02;
-	if ((r == RegisterByID[RegRbx]) || (r == RegisterByID[RegEbx]) || (r == RegisterByID[RegBx]) || (r == RegisterByID[RegBl]))	return 0x03;
-	if ((r == RegisterByID[RegRsp]) || (r == RegisterByID[RegEsp]) || (r == RegisterByID[RegSp]) || (r == RegisterByID[RegAh]))	return 0x04;
-	if ((r == RegisterByID[RegRbp]) || (r == RegisterByID[RegEbp]) || (r == RegisterByID[RegBp]) || (r == RegisterByID[RegCh]))	return 0x05;
-	if ((r == RegisterByID[RegRsi]) || (r == RegisterByID[RegEsi]) || (r == RegisterByID[RegSi]) || (r == RegisterByID[RegDh]))	return 0x06;
-	if ((r == RegisterByID[RegRdi]) || (r == RegisterByID[RegEdi]) || (r == RegisterByID[RegDi]) || (r == RegisterByID[RegBh]))	return 0x07;
+	int id = r->id;
+	if ((id == RegR8)  || (id == RegR8d)  || (id == RegRax) || (id == RegEax) || (id == RegAx) || (id == RegAl))	return 0x00;
+	if ((id == RegR9)  || (id == RegR9d)  || (id == RegRcx) || (id == RegEcx) || (id == RegCx) || (id == RegCl))	return 0x01;
+	if ((id == RegR10) || (id == RegR10d) || (id == RegRdx) || (id == RegEdx) || (id == RegDx) || (id == RegDl))	return 0x02;
+	if ((id == RegR11) || (id == RegR11d) || (id == RegRbx) || (id == RegEbx) || (id == RegBx) || (id == RegBl))	return 0x03;
+	if ((id == RegR12) || (id == RegR12d) || (id == RegRsp) || (id == RegEsp) || (id == RegSp) || (id == RegAh))	return 0x04;
+	if ((id == RegR13) || (id == RegR13d) || (id == RegRbp) || (id == RegEbp) || (id == RegBp) || (id == RegCh))	return 0x05;
+	if ((id == RegR14) || (id == RegR14d) || (id == RegRsi) || (id == RegEsi) || (id == RegSi) || (id == RegDh))	return 0x06;
+	if ((id == RegR15) || (id == RegR15d) || (id == RegRdi) || (id == RegEdi) || (id == RegDi) || (id == RegBh))	return 0x07;
 	SetError("GetModRMReg: register not allowed: " + r->name);
 	return 0;
 }
@@ -2749,9 +2808,16 @@ void OpcodeAddInstruction(char *oc, int &ocs, CPUInstruction &inst, InstructionP
 {
 	msg_db_f("OpcodeAddInstruction", 1+ASM_DB_LEVEL);
 
-	// prefix
+	// REX prefix
+	char rex = 0;
 	if (state.ParamSize == Size64)
-		append_val(oc, ocs, 0x48, 1); // REX
+		rex |= 0x08;
+	if (p1.reg && p1.reg->extend_mod_rm)
+		rex |= 0x01;
+	if (p2.reg && p2.reg->extend_mod_rm)
+		rex |= 0x04;
+	if (rex != 0)
+		append_val(oc, ocs, 0x40 | rex, 1);
 
 	// add opcode
 	*(int*)&oc[ocs] = inst.code;
