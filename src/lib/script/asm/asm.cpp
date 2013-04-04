@@ -22,6 +22,8 @@ enum{
 	SizeUnknown = -7
 };
 
+InstructionSetData InstructionSet;
+
 struct ParserState
 {
 	bool EndOfLine;
@@ -33,14 +35,16 @@ struct ParserState
 	bool ExtendModRMBase;
 	bool ExtendModRMReg;
 	bool ExtendModRMIndex;
-	/*int FullRegisterSize;
-	void set_(int set)
+	int FullRegisterSize;
+	void init()
 	{
 		DefaultSize = Size32;
-		FullRegisterSize = Size32;
-		if (set == InstructionSetAMD64)
-			FullRegisterSize = Size64;
-	}*/
+		FullRegisterSize = InstructionSet.pointer_size;
+
+		if (CurrentMetaInfo)
+			if (CurrentMetaInfo->Mode16)
+				DefaultSize = Size16;
+	}
 	void reset()
 	{
 		ParamSize = DefaultSize;
@@ -51,7 +55,6 @@ struct ParserState
 	}
 };
 static ParserState state;
-static int InstructionSet;
 
 const char *code_buffer;
 MetaInfo *CurrentMetaInfo = NULL;
@@ -127,6 +130,7 @@ struct Register{
 Array<Register> Registers;
 Array<Register*> RegisterByID;
 int RegRoot[NUM_REGISTERS];
+int RegResize[NUM_REG_ROOTS][9];
 
 void add_reg(const string &name, int id, int group, int size, int root = -1)
 {
@@ -141,7 +145,10 @@ void add_reg(const string &name, int id, int group, int size, int root = -1)
 	}
 	r.size = size;
 	Registers.add(r);
-	RegRoot[id] = (root < 0) ? id : root;
+	if (root < 0)
+		root = NUM_REG_ROOTS - 1;
+	RegRoot[id] = root;
+	RegResize[root][size] = id;
 }
 
 struct InstructionName{
@@ -409,8 +416,8 @@ int InstructionWithParamsList::add_label(const string &name, bool declaring)
 
 void InstructionWithParamsList::add_func_intro(int stack_alloc_size)
 {
-	long reg_bp = (InstructionSet == InstructionSetAMD64) ? RegRbp : RegEbp;
-	long reg_sp = (InstructionSet == InstructionSetAMD64) ? RegRsp : RegEsp;
+	long reg_bp = (InstructionSet.set == InstructionSetAMD64) ? RegRbp : RegEbp;
+	long reg_sp = (InstructionSet.set == InstructionSetAMD64) ? RegRsp : RegEsp;
 	add_easy(inst_push, PKRegister, (void*)reg_bp);
 	add_easy(inst_mov, PKRegister, (void*)reg_bp, PKRegister, (void*)reg_sp);
 	if (stack_alloc_size > 127){
@@ -761,7 +768,7 @@ void SetInstructionSet(int set)
 
 void Init(int set)
 {
-	if (set == InstructionSetDefault){
+	if (set < 0){
 		if (sizeof(void*) == 8)
 			set = InstructionSetAMD64;
 		else if (sizeof(void*) == 4)
@@ -771,43 +778,63 @@ void Init(int set)
 			set = InstructionSetX86;
 		}
 	}
-	InstructionSet = set;
+	InstructionSet.set = set;
+	InstructionSet.pointer_size = 4;
+	if (set == InstructionSetAMD64)
+		InstructionSet.pointer_size = 8;
 
 
 	Registers.clear();
-	add_reg("rax",	RegRax,	RegGroupGeneral,	Size64,	RegEax);
-	add_reg("eax",	RegEax,	RegGroupGeneral,	Size32,	RegEax);
-	add_reg("ax",	RegAx,	RegGroupGeneral,	Size16,	RegEax);
-	add_reg("ah",	RegAh,	RegGroupGeneral,	Size8,	RegEax);
-	add_reg("al",	RegAl,	RegGroupGeneral,	Size8,	RegEax);
-	add_reg("rcx",	RegRcx,	RegGroupGeneral,	Size64,	RegEcx);
-	add_reg("ecx",	RegEcx,	RegGroupGeneral,	Size32,	RegEcx);
-	add_reg("cx",	RegCx,	RegGroupGeneral,	Size16,	RegEcx);
-	add_reg("ch",	RegCh,	RegGroupGeneral,	Size8,	RegEcx);
-	add_reg("cl",	RegCl,	RegGroupGeneral,	Size8,	RegEcx);
-	add_reg("rdx",	RegRdx,	RegGroupGeneral,	Size64,	RegEdx);
-	add_reg("edx",	RegEdx,	RegGroupGeneral,	Size32,	RegEdx);
-	add_reg("dx",	RegDx,	RegGroupGeneral,	Size16,	RegEdx);
-	add_reg("dh",	RegDh,	RegGroupGeneral,	Size8,	RegEdx);
-	add_reg("dl",	RegDl,	RegGroupGeneral,	Size8,	RegEdx);
-	add_reg("rbx",	RegRbx,	RegGroupGeneral,	Size64,	RegEbx);
-	add_reg("ebx",	RegEbx,	RegGroupGeneral,	Size32,	RegEbx);
-	add_reg("bx",	RegBx,	RegGroupGeneral,	Size16,	RegEbx);
-	add_reg("bh",	RegBh,	RegGroupGeneral,	Size8,	RegEbx);
-	add_reg("bl",	RegBl,	RegGroupGeneral,	Size8,	RegEbx);
+	add_reg("rax",	RegRax,	RegGroupGeneral,	Size64,	0);
+	add_reg("eax",	RegEax,	RegGroupGeneral,	Size32,	0);
+	add_reg("ax",	RegAx,	RegGroupGeneral,	Size16,	0);
+	add_reg("ah",	RegAh,	RegGroupGeneral,	Size8,	0);
+	add_reg("al",	RegAl,	RegGroupGeneral,	Size8,	0);
+	add_reg("rcx",	RegRcx,	RegGroupGeneral,	Size64,	1);
+	add_reg("ecx",	RegEcx,	RegGroupGeneral,	Size32,	1);
+	add_reg("cx",	RegCx,	RegGroupGeneral,	Size16,	1);
+	add_reg("ch",	RegCh,	RegGroupGeneral,	Size8,	1);
+	add_reg("cl",	RegCl,	RegGroupGeneral,	Size8,	1);
+	add_reg("rdx",	RegRdx,	RegGroupGeneral,	Size64,	2);
+	add_reg("edx",	RegEdx,	RegGroupGeneral,	Size32,	2);
+	add_reg("dx",	RegDx,	RegGroupGeneral,	Size16,	2);
+	add_reg("dh",	RegDh,	RegGroupGeneral,	Size8,	2);
+	add_reg("dl",	RegDl,	RegGroupGeneral,	Size8,	2);
+	add_reg("rbx",	RegRbx,	RegGroupGeneral,	Size64,	3);
+	add_reg("ebx",	RegEbx,	RegGroupGeneral,	Size32,	3);
+	add_reg("bx",	RegBx,	RegGroupGeneral,	Size16,	3);
+	add_reg("bh",	RegBh,	RegGroupGeneral,	Size8,	3);
+	add_reg("bl",	RegBl,	RegGroupGeneral,	Size8,	3);
 
-	add_reg("rsp",	RegRsp,	RegGroupGeneral,	Size64);
-	add_reg("esp",	RegEsp,	RegGroupGeneral,	Size32);
-	add_reg("sp",	RegSp,	RegGroupGeneral,	Size16);
-	add_reg("rsi",	RegRsi,	RegGroupGeneral,	Size64);
-	add_reg("esi",	RegEsi,	RegGroupGeneral,	Size32);
-	add_reg("si",	RegSi,	RegGroupGeneral,	Size16);
-	add_reg("rdi",	RegRdi,	RegGroupGeneral,	Size64);
-	add_reg("edi",	RegEdi,	RegGroupGeneral,	Size32);
-	add_reg("di",	RegDi,	RegGroupGeneral,	Size16);
-	add_reg("rbp",	RegRbp,	RegGroupGeneral,	Size64);
-	add_reg("ebp",	RegEbp,	RegGroupGeneral,	Size32);
-	add_reg("bp",	RegBp,	RegGroupGeneral,	Size16);
+	add_reg("rsp",	RegRsp,	RegGroupGeneral,	Size64,	4);
+	add_reg("esp",	RegEsp,	RegGroupGeneral,	Size32,	4);
+	add_reg("sp",	RegSp,	RegGroupGeneral,	Size16,	4);
+	add_reg("rbp",	RegRbp,	RegGroupGeneral,	Size64,	5);
+	add_reg("ebp",	RegEbp,	RegGroupGeneral,	Size32,	5);
+	add_reg("bp",	RegBp,	RegGroupGeneral,	Size16,	5);
+	add_reg("rsi",	RegRsi,	RegGroupGeneral,	Size64,	6);
+	add_reg("esi",	RegEsi,	RegGroupGeneral,	Size32,	6);
+	add_reg("si",	RegSi,	RegGroupGeneral,	Size16,	6);
+	add_reg("rdi",	RegRdi,	RegGroupGeneral,	Size64,	7);
+	add_reg("edi",	RegEdi,	RegGroupGeneral,	Size32,	7);
+	add_reg("di",	RegDi,	RegGroupGeneral,	Size16,	7);
+
+	add_reg("r8",	RegR8,	RegGroupGeneral2,	Size64,	8);
+	add_reg("r8d",	RegR8d,	RegGroupGeneral2,	Size32,	8);
+	add_reg("r9",	RegR9,	RegGroupGeneral2,	Size64,	9);
+	add_reg("r9d",	RegR9d,	RegGroupGeneral2,	Size32,	9);
+	add_reg("r10",	RegR10,	RegGroupGeneral2,	Size64,	10);
+	add_reg("r10d",	RegR10d,RegGroupGeneral2,	Size32,	10);
+	add_reg("r11",	RegR11,	RegGroupGeneral2,	Size64,	10);
+	add_reg("r11d",	RegR11d,RegGroupGeneral2,	Size32,	11);
+	add_reg("r12",	RegR12,	RegGroupGeneral2,	Size64,	12);
+	add_reg("r12d",	RegR12d,RegGroupGeneral2,	Size32,	12);
+	add_reg("r13",	RegR13,	RegGroupGeneral2,	Size64,	13);
+	add_reg("r13d",	RegR13d,RegGroupGeneral2,	Size32,	13);
+	add_reg("r14",	RegR14,	RegGroupGeneral2,	Size64,	14);
+	add_reg("r14d",	RegR14d,RegGroupGeneral2,	Size32,	14);
+	add_reg("r15",	RegR15,	RegGroupGeneral2,	Size64,	15);
+	add_reg("r15d",	RegR15d,RegGroupGeneral2,	Size32,	15);
 
 	add_reg("cs",	RegCs,	RegGroupSegment,	Size16);
 	add_reg("ss",	RegSs,	RegGroupSegment,	Size16);
@@ -821,31 +848,14 @@ void Init(int set)
 	add_reg("cr2",	RegCr2,	RegGroupControl,	Size32);
 	add_reg("cr3",	RegCr3,	RegGroupControl,	Size32);
 
-	add_reg("st0",	RegSt0,	-1,	Size32); // ??? 32
-	add_reg("st1",	RegSt1,	-1,	Size32);
-	add_reg("st2",	RegSt2,	-1,	Size32);
-	add_reg("st3",	RegSt3,	-1,	Size32);
-	add_reg("st4",	RegSt4,	-1,	Size32);
-	add_reg("st5",	RegSt5,	-1,	Size32);
-	add_reg("st6",	RegSt6,	-1,	Size32);
-	add_reg("st7",	RegSt7,	-1,	Size32);
-	
-	add_reg("r8",	RegR8,	RegGroupGeneral2,	Size64,	RegR8);
-	add_reg("r8d",	RegR8d,	RegGroupGeneral2,	Size32,	RegR8);	
-	add_reg("r9",	RegR9,	RegGroupGeneral2,	Size64,	RegR9);
-	add_reg("r9d",	RegR9d,	RegGroupGeneral2,	Size32,	RegR9);	
-	add_reg("r10",	RegR10,	RegGroupGeneral2,	Size64,	RegR10);
-	add_reg("r10d",	RegR10d,RegGroupGeneral2,	Size32,	RegR10);	
-	add_reg("r11",	RegR11,	RegGroupGeneral2,	Size64,	RegR10);
-	add_reg("r11d",	RegR11d,RegGroupGeneral2,	Size32,	RegR11);	
-	add_reg("r12",	RegR12,	RegGroupGeneral2,	Size64,	RegR12);
-	add_reg("r12d",	RegR12d,RegGroupGeneral2,	Size32,	RegR12);	
-	add_reg("r13",	RegR13,	RegGroupGeneral2,	Size64,	RegR13);
-	add_reg("r13d",	RegR13d,RegGroupGeneral2,	Size32,	RegR13);	
-	add_reg("r14",	RegR14,	RegGroupGeneral2,	Size64,	RegR14);
-	add_reg("r14d",	RegR14d,RegGroupGeneral2,	Size32,	RegR14);	
-	add_reg("r15",	RegR15,	RegGroupGeneral2,	Size64,	RegR15);
-	add_reg("r15d",	RegR15d,RegGroupGeneral2,	Size32,	RegR15);
+	add_reg("st0",	RegSt0,	-1,	Size32,	16); // ??? 32
+	add_reg("st1",	RegSt1,	-1,	Size32,	17);
+	add_reg("st2",	RegSt2,	-1,	Size32,	18);
+	add_reg("st3",	RegSt3,	-1,	Size32,	19);
+	add_reg("st4",	RegSt4,	-1,	Size32,	20);
+	add_reg("st5",	RegSt5,	-1,	Size32,	21);
+	add_reg("st6",	RegSt6,	-1,	Size32,	22);
+	add_reg("st7",	RegSt7,	-1,	Size32,	23);
 
 	// create easy to access array
 	RegisterByID.clear();
@@ -1607,8 +1617,6 @@ inline void ReadParamData(char *&cur, InstructionParam &p)
 string Disassemble(void *_code_,int length,bool allow_comments)
 {
 	msg_db_f("Disassemble", 1+ASM_DB_LEVEL);
-	/*if (!CPUInstructions)
-		SetInstructionSet(InstructionSetDefault);*/
 
 	char *code = (char*)_code_;
 
@@ -1623,10 +1631,8 @@ string Disassemble(void *_code_,int length,bool allow_comments)
 	// cur points to the currently processed byte
 	// opcode points to the start of the instruction (mov)
 	char *cur = code;
+	state.init();
 	state.DefaultSize = Size32;
-	if (CurrentMetaInfo)
-		if (CurrentMetaInfo->Mode16)
-			state.DefaultSize = Size16;
 
 
 	while(code < end){
@@ -1699,7 +1705,7 @@ string Disassemble(void *_code_,int length,bool allow_comments)
 			state.ParamSize = (state.DefaultSize == Size32) ? Size16 : Size32;
 			cur++;
 		}
-		if (InstructionSet == InstructionSetAMD64){
+		if (InstructionSet.set == InstructionSetAMD64){
 			if ((cur[0] & 0xf0) == 0x40){
 				if ((cur[0] & 0x08) > 0)
 					state.ParamSize = Size64;
@@ -2353,7 +2359,7 @@ void OpcodeAddImmideate(char *oc, int &ocs, InstructionParam &p, CPUInstruction 
 		size = p.size;
 		if (p.deref){
 			size = state.AddrSize;
-			if (InstructionSet == InstructionSetAMD64){
+			if (InstructionSet.set == InstructionSetAMD64){
 				if (inst.has_modrm)
 					value -= (long)oc + ocs + size + next_param_size; // amd64 uses RIP-relative addressing!
 				else
@@ -2746,6 +2752,7 @@ InstructionParam _make_param_(int type, long long param)
 
 char GetModRMReg(Register *r)
 {
+	// TODO  already create REX byte...
 	int id = r->id;
 	if ((id == RegR8)  || (id == RegR8d)  || (id == RegRax) || (id == RegEax) || (id == RegAx) || (id == RegAl))	return 0x00;
 	if ((id == RegR9)  || (id == RegR9d)  || (id == RegRcx) || (id == RegEcx) || (id == RegCx) || (id == RegCl))	return 0x01;
@@ -2860,7 +2867,7 @@ void InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)
 		}
 
 	// try again with REX prefix?
-	if ((ninst < 0) && (InstructionSet == InstructionSetAMD64)){
+	if ((ninst < 0) && (InstructionSet.set == InstructionSetAMD64)){
 		state.ParamSize = Size64;
 
 		for (int i=0;i<CPUInstructions.num;i++)

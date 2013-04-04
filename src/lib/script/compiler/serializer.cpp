@@ -28,13 +28,16 @@ extern float GlobalTimeToWait;
 inline bool is_reg_used_in_interval(Serializer *d, int reg, int first, int last);
 
 
-static SerialCommandParam p_eax, p_eax_int, p_deref_eax, p_ax, p_al, p_ah, p_al_bool, p_al_char, p_st0, p_st1;
+static SerialCommandParam p_eax, p_eax_int, p_deref_eax;
+static SerialCommandParam p_rax;
+static SerialCommandParam p_ax, p_al, p_ah, p_al_bool, p_al_char;
+static SerialCommandParam p_st0, p_st1;
 static const SerialCommandParam p_none = {-1, NULL, NULL, 0};
 
 
 void Serializer::add_reg_channel(int reg, int first, int last)
 {
-	sRegChannel c = {reg, first, last};
+	sRegChannel c = {Asm::RegRoot[reg], first, last};
 	RegChannel.add(c);
 }
 
@@ -192,8 +195,8 @@ void Serializer::add_cmd(int inst, SerialCommandParam p1, SerialCommandParam p2)
 
 	// call violates all used registers...
 	if (inst == Asm::inst_call)
-		for (int i=0;i<MapReg.num;i++)
-			add_reg_channel(MapReg[i], cmd.num - 1, cmd.num - 1);
+		for (int i=0;i<MapRegRoot.num;i++)
+			add_reg_channel(Asm::RegResize[MapRegRoot[i]][4], cmd.num - 1, cmd.num - 1);
 }
 
 void Serializer::add_cmd(int inst, SerialCommandParam p)
@@ -280,7 +283,7 @@ void Serializer::move_param(SerialCommandParam &p, int from, int to)
 		long r = Asm::RegRoot[(long)p.p];
 		bool found = false;
 		foreach(sRegChannel &rc, RegChannel)
-			if ((r == rc.reg) && (from >= rc.first) && (from >= rc.first)){
+			if ((r == rc.reg_root) && (from >= rc.first) && (from >= rc.first)){
 				if (rc.last < max(from, to))
 					rc.last = max(from, to);
 				if (rc.first > min(from, to))
@@ -288,7 +291,7 @@ void Serializer::move_param(SerialCommandParam &p, int from, int to)
 				found = true;
 			}
 		if (!found){
-			msg_error(format("move_param: no RegChannel...  reg=%d  from=%d", r, from));
+			msg_error(format("move_param: no RegChannel...  reg_root=%d  from=%d", r, from));
 			msg_write(script->pre_script->Filename + " : " + cur_func->name);
 		}
 	}
@@ -318,14 +321,9 @@ void Serializer::add_jump_after_command(int level, int index, int marker)
 	StuffToAdd.add(j);
 }
 
-inline int reg_smallify(int reg)
+inline int reg_smallify(int reg, int size)
 {
-	if (reg == Asm::RegEax)	return Asm::RegAl;
-	if (reg == Asm::RegEcx)	return Asm::RegCl;
-	if (reg == Asm::RegEdx)	return Asm::RegDl;
-	if (reg == Asm::RegEbx)	return Asm::RegBl;
-	msg_error("reg smallify");
-	return -1;
+	return Asm::RegResize[Asm::RegRoot[reg]][size];
 }
 
 
@@ -438,10 +436,10 @@ void Serializer::AddFunctionCall(void *func, int func_no)
 			if (type == TypeFloat)
 				add_cmd(Asm::inst_fstp, CompilerFunctionReturn);
 			else if (type->size == 1){
-				add_cmd(Asm::inst_mov, CompilerFunctionReturn, param_reg(type, Asm::RegAl));
+				add_cmd(Asm::inst_mov, CompilerFunctionReturn, p_al);
 				add_reg_channel(Asm::RegEax, cmd.num - 2, cmd.num - 1);
 			}else{
-				add_cmd(Asm::inst_mov, CompilerFunctionReturn, param_reg(type, Asm::RegEax));
+				add_cmd(Asm::inst_mov, CompilerFunctionReturn, p_eax);
 				add_reg_channel(Asm::RegEax, cmd.num - 2, cmd.num - 1);
 			}
 		}
@@ -473,8 +471,13 @@ void Serializer::AddReference(SerialCommandParam &param, Type *type, SerialComma
 		param.kind = KindVarTemp;
 	}else{
 		add_temp(type, ret);
-		add_cmd(Asm::inst_lea, param_reg(type, Asm::RegEax), param);
-		add_cmd(Asm::inst_mov, ret, param_reg(type, Asm::RegEax));
+		if (Asm::InstructionSet.set == Asm::InstructionSetAMD64){
+			add_cmd(Asm::inst_lea, p_rax, param);
+			add_cmd(Asm::inst_mov, ret, p_rax);
+		}else{
+			add_cmd(Asm::inst_lea, p_eax, param);
+			add_cmd(Asm::inst_mov, ret, p_eax);
+		}
 		add_reg_channel(Asm::RegEax, cmd.num - 2, cmd.num - 1);
 	}
 }
@@ -1558,14 +1561,14 @@ void Serializer::CorrectUnallowedParamCombis()
 	ScanTempVarUsage();
 }
 
-int Serializer::find_unused_reg(int first, int last, bool allow_eax)
+int Serializer::find_unused_reg(int first, int last, int size, bool allow_eax)
 {
-	for (int r=0;r<MapReg.num;r++)
-		if (!is_reg_used_in_interval(MapReg[r], first, last))
-			return MapReg[r];
+	for (int r=0;r<MapRegRoot.num;r++)
+		if (!is_reg_root_used_in_interval(MapRegRoot[r], first, last))
+			return Asm::RegResize[MapRegRoot[r]][size];
 	if (allow_eax)
-		if (!is_reg_used_in_interval(Asm::RegEax, first, last))
-			return Asm::RegEax;
+		if (!is_reg_root_used_in_interval(0, first, last))
+			return Asm::RegResize[0][size];
 	return -1;
 }
 
@@ -1584,7 +1587,7 @@ void Serializer::solve_deref_temp_local(int c, int np, bool is_local)
 	p.shift = 0;
 	p.type = type_pointer;
 
-	int reg = find_unused_reg(c, c, true);
+	int reg = find_unused_reg(c, c, PointerSize, true);
 	//so(reg);
 	if (reg < 0)
 		script->DoErrorInternal("solve_deref_temp_local... no registers available");
@@ -1708,17 +1711,15 @@ void Serializer::ResolveDerefTempAndLocal()
 			Type *type_pointer = TypePointer;
 			Type *type_data = cmd[i].p1.type;
 
-			int reg = find_unused_reg(i, i, true);
+			int reg = find_unused_reg(i, i, type_data->size, true);
 			so(reg);
 			if (reg < 0)
 				DoError("deref local... both sides... .no registers available");
 			
 			SerialCommandParam p_reg = param_reg(type_data, reg);
-			if (type_data->size == 1)
-				p_reg = param_reg(type_data, reg_smallify(reg));
 			add_reg_channel(reg, i, i); // temp
 			
-			int reg2 = find_unused_reg(i, i, true);
+			int reg2 = find_unused_reg(i, i, PointerSize, true);
 			so(reg2);
 			if (reg2 < 0)
 				DoError("deref temp/local... both sides... .no registers available");
@@ -1979,17 +1980,6 @@ void Serializer::MapTempVarToReg(int vi, int reg)
 	msg_db_f("reg", 4);
 	sTempVar &v = TempVar[vi];
 	so(format("temp=reg:  %d - %d:   tv %d := reg %d", v.first, v.last, vi, reg));
-
-	int reg32 = reg;
-	
-	// only small register?
-	if (v.type->size == 1){
-		if (reg == Asm::RegEax)		reg = Asm::RegAl;
-		else if (reg == Asm::RegEdx)	reg = Asm::RegDl;
-		else if (reg == Asm::RegEcx)	reg = Asm::RegCl;
-		else if (reg == Asm::RegEbx)	reg = Asm::RegBl;
-		else DoError(format("wrong 8b register: %d", reg));
-	}
 	
 	SerialCommandParam p = param_reg(v.type, reg);
 	
@@ -2009,7 +1999,7 @@ void Serializer::MapTempVarToReg(int vi, int reg)
 				cmd[i].p2.kind = KindDerefRegister;
 		}
 	}
-	add_reg_channel(reg32, v.first, v.last);
+	add_reg_channel(reg, v.first, v.last);
 }
 
 void Serializer::add_stack_var(Type *type, int first, int last, SerialCommandParam &p)
@@ -2139,11 +2129,11 @@ void Serializer::MapTempVarToStack(int vi)
 	}
 }
 
-bool Serializer::is_reg_used_in_interval(int reg, int first, int last)
+bool Serializer::is_reg_root_used_in_interval(int reg_root, int first, int last)
 {
 	//so(string2("used?   %d: %d - %d", reg, first, last));
 	for (int i=0;i<RegChannel.num;i++)
-		if (RegChannel[i].reg == reg){
+		if (RegChannel[i].reg_root == reg_root){
 			//so(string2("rc   %d: %d - %d", RegChannel[i].reg, RegChannel[i].first, RegChannel[i].last));
 			if ((RegChannel[i].first <= last) && (RegChannel[i].last >= first)){
 				so(i);
@@ -2176,13 +2166,13 @@ void Serializer::MapTempVar(int vi)
 
 		// any register not used in this interval?
 		for (int i=0;i<max_reg;i++)
-			RegUsed[i] = false;
+			RegRootUsed[i] = false;
 		for (int i=0;i<RegChannel.num;i++)
 			if ((RegChannel[i].first <= last) && (RegChannel[i].last >= first))
-				RegUsed[RegChannel[i].reg] = true;
-		for (int i=0;i<MapReg.num;i++)
-			if (!RegUsed[MapReg[i]]){
-				reg = MapReg[i];
+				RegRootUsed[RegChannel[i].reg_root] = true;
+		for (int i=0;i<MapRegRoot.num;i++)
+			if (!RegRootUsed[MapRegRoot[i]]){
+				reg = Asm::RegResize[MapRegRoot[i]][v.type->size];
 				break;
 			}
 	}
@@ -2276,27 +2266,28 @@ void Serializer::DisentangleShiftedTempVars()
 	ScanTempVarUsage();
 }
 
+inline void _resolve_deref_reg_shift_(Serializer *_s, SerialCommandParam &p, int i)
+{
+	long s = p.shift;
+	p.shift = 0;
+	int reg = Asm::RegResize[Asm::RegRoot[(long)p.p]][4];
+	_s->add_cmd(Asm::inst_add, param_reg(TypeReg32, reg), param_const(TypeInt, (void*)s));
+	_s->move_last_cmd(i);
+	_s->add_cmd(Asm::inst_sub, param_reg(TypeReg32, reg), param_const(TypeInt, (void*)s));
+	_s->move_last_cmd(i + 2);
+}
+
 // TODO....
 void Serializer::ResolveDerefRegShift()
 {
 	msg_db_f("ResolveDerefRegShift", 3);
 	for (int i=cmd.num-1;i>=0;i--){
 		if ((cmd[i].p1.kind == KindDerefRegister) && (cmd[i].p1.shift > 0)){
-			long s = cmd[i].p1.shift;
-			cmd[i].p1.shift = 0;
-			add_cmd(Asm::inst_add, param_reg(TypeReg32, Asm::RegRoot[(long)cmd[i].p1.p]), param_const(TypeInt, (void*)s));
-			move_last_cmd(i);
-			add_cmd(Asm::inst_sub, param_reg(TypeReg32, Asm::RegRoot[(long)cmd[i].p1.p]), param_const(TypeInt, (void*)s));
-			move_last_cmd(i + 2);
+			_resolve_deref_reg_shift_(this, cmd[i].p1, i);
 			continue;
 		}
 		if ((cmd[i].p2.kind == KindDerefRegister) && (cmd[i].p2.shift > 0)){
-			long int s = cmd[i].p2.shift;
-			cmd[i].p2.shift = 0;
-			add_cmd(Asm::inst_add, param_reg(TypeReg32, Asm::RegRoot[(long)cmd[i].p2.p]), param_const(TypeInt, (void*)s));
-			move_last_cmd(i);
-			add_cmd(Asm::inst_sub, param_reg(TypeReg32, Asm::RegRoot[(long)cmd[i].p2.p]), param_const(TypeInt, (void*)s));
-			move_last_cmd(i + 2);
+			_resolve_deref_reg_shift_(this, cmd[i].p2, i);
 			continue;
 		}
 	}
@@ -2306,6 +2297,7 @@ void init_serializing()
 {
 	p_eax = param_reg(TypeReg32, Asm::RegEax);
 	p_eax_int = param_reg(TypeInt, Asm::RegEax);
+	p_rax = param_reg(TypeReg64, Asm::RegRax);
 
 	p_deref_eax.kind = KindDerefRegister;
 	p_deref_eax.p = (char*)Asm::RegEax;
@@ -2344,12 +2336,12 @@ void Serializer::SerializeFunction(Function *f)
 	InsertedConstructorFunc.clear();
 	
 #ifdef allow_registers
-	//MapReg.add(Asm::RegEax);
-	MapReg.add(Asm::RegEcx);
-	MapReg.add(Asm::RegEdx);
-	/*MapReg.add(Asm::RegEbx);
-	MapReg.add(Asm::RegEsi);
-	MapReg.add(Asm::RegEdi);*/
+//	MapRegRoot.add(0); // eax
+	MapRegRoot.add(1); // ecx
+	MapRegRoot.add(2); // edx
+//	MapRegRoot.add(3); // ebx
+//	MapRegRoot.add(6); // esi
+//	MapRegRoot.add(7); // edi
 #endif
 
 // serialize
@@ -2486,7 +2478,7 @@ void AddAsmBlock(Asm::InstructionWithParamsList *list, Script *s)
 
 void Serializer::Assemble(char *Opcode, int &OpcodeSize)
 {
-	msg_db_f("Serializer.void Serializer::ResolveDerefRegShift()", 2);
+	msg_db_f("Serializer.Assemble", 2);
 
 	// intro + allocate stack memory
 	StackMaxSize = ((StackMaxSize + StackMemAlign - 1) / StackMemAlign) * StackMemAlign;

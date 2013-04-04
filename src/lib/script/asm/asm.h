@@ -7,10 +7,17 @@ namespace Asm
 
 // instruction sets
 enum{
-	InstructionSetDefault,
 	InstructionSetX86,
 	InstructionSetAMD64
 };
+
+struct InstructionSetData
+{
+	int set;
+	int pointer_size;
+};
+
+extern InstructionSetData InstructionSet;
 
 // single registers
 enum{
@@ -26,7 +33,10 @@ enum{
 	NUM_REGISTERS
 };
 
+const int NUM_REG_ROOTS = 32;
+
 extern int RegRoot[];
+extern int RegResize[NUM_REG_ROOTS][9];
 
 enum{
 	PKInvalid,
@@ -270,7 +280,7 @@ struct InstructionWithParamsList : public Array<InstructionWithParams>
 	int current_inst;
 };
 
-void Init(int instruction_set = InstructionSetDefault);
+void Init(int instruction_set = -1);
 bool Assemble(const char *code, char *oc, int &ocs);
 string Disassemble(void *code, int length = -1, bool allow_comments = true);
 

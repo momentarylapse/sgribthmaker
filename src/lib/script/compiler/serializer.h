@@ -10,7 +10,7 @@ namespace Script
 
 struct sRegChannel
 {
-	int reg;
+	int reg_root;
 	int first, last;
 };
 
@@ -81,10 +81,10 @@ struct Serializer
 	Command *NextCommand;
 	bool TempVarRangesDefined;
 
-	Array<int> MapReg;
+	Array<int> MapRegRoot;
 	Array<sRegChannel> RegChannel;
 
-	bool RegUsed[max_reg];
+	bool RegRootUsed[max_reg];
 	Array<sLoopData> LoopData;
 
 	int StackOffset, StackMaxSize;
@@ -122,7 +122,7 @@ struct Serializer
 	void add_cmd_constructor(SerialCommandParam &param, bool is_temp);
 	void add_cmd_destructor(SerialCommandParam &param);
 
-	bool is_reg_used_in_interval(int reg, int first, int last);
+	bool is_reg_root_used_in_interval(int reg_root, int first, int last);
 	void MapTempVar(int vi);
 	void MapTempVars();
 	void MapReferencedTempVars();
@@ -133,7 +133,7 @@ struct Serializer
 	void ScanTempVarUsage();
 	void CorrectUnallowedParamCombis();
 
-	int find_unused_reg(int first, int last, bool allow_eax);
+	int find_unused_reg(int first, int last, int size, bool allow_eax);
 	void solve_deref_temp_local(int c, int np, bool is_local);
 	void ResolveDerefTempAndLocal();
 	bool ParamUntouchedInInterval(SerialCommandParam &p, int first, int last);
