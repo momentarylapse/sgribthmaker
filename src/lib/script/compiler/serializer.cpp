@@ -411,10 +411,10 @@ void Serializer::AddFunctionCall(void *func, int func_no)
 			}
 		}
 		int n = 0;
-		int param_regs[6] = {Asm::RegR8d, Asm::RegR9d, Asm::RegEcx, Asm::RegEdx, Asm::RegEsi, Asm::RegEdi};
+		int param_regs[6] = {Asm::RegEdi, Asm::RegEsi, Asm::RegEdx, Asm::RegEcx, Asm::RegR9d, Asm::RegR8d};
 		foreachb(SerialCommandParam &p, CompilerFunctionParam){
 			if (p.type == TypeInt){
-				add_cmd(Asm::inst_mov, param_reg(TypeInt, param_regs[n]), p);
+				add_cmd(Asm::inst_mov, param_reg(TypeInt, param_regs[num_reg - n - 1]), p);
 				n ++;
 			}
 		}

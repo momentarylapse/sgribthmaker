@@ -6,3 +6,5 @@ Data/config.txt
 *.o
 *.a
 *~
+src/.anjuta/*
+src/.anjuta*
