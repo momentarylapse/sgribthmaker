@@ -386,7 +386,7 @@ void Serializer::add_function_call_x86(void *func, int func_no)
 		add_cmd(Asm::inst_push, ret_ref; // nachtraegliche eSP-Korrektur macht die Funktion
 #endif
 	
-	// _cdecl: Klassen-Instanz als ersten Parameter push'en
+	// _cdecl: push class instance as first parameter
 	if (CompilerFunctionInstance.type){
 		add_cmd(Asm::inst_push, CompilerFunctionInstance);
 		push_size += PointerSize;
@@ -442,6 +442,11 @@ void Serializer::add_function_call_amd64(void *func, int func_no)
 	// grow stack (down) for local variables of the calling function
 //	add_cmd(- cur_func->_VarSize - LocalOffset - 8);
 	long push_size = 0;
+
+		
+	// instance as first parameter
+	if (CompilerFunctionInstance.type)
+		CompilerFunctionParam.insert(CompilerFunctionInstance, 0);
 
 	// map params...
 	int num_reg = 0;

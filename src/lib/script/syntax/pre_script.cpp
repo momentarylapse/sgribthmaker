@@ -2817,31 +2817,41 @@ void PreScript::MapLocalVariablesToStack()
 {
 	msg_db_f("MapLocalVariablesToStack", 1);
 	foreach(Function *f, Functions){
-		f->_param_size = 8; // space for return value and eBP
-		if (f->return_type->size > 4)
-			f->_param_size += 4;
-		f->_var_size = 0;
+		f->_param_size = 2 * PointerSize; // space for return value and eBP
+		if (Asm::InstructionSet.set == Asm::InstructionSetX86){
+			if (f->return_type->size > 4)
+				f->_param_size += 4;
+			f->_var_size = 0;
 
-		// map "self" to the first parameter
-		if (f->_class){
-			foreachi(LocalVariable &v, f->var, i)
-				if (v.name == "self"){
-					int s = mem_align(v.type->size);
+			// map "self" to the first parameter
+			if (f->_class){
+				foreachi(LocalVariable &v, f->var, i)
+					if (v.name == "self"){
+						int s = mem_align(v.type->size);
+						v._offset = f->_param_size;
+						f->_param_size += s;
+					}
+			}
+
+			foreachi(LocalVariable &v, f->var, i){
+				if ((f->_class) && (v.name == "self"))
+					continue;
+				int s = mem_align(v.type->size);
+				if (i < f->num_params){
+					// parameters
 					v._offset = f->_param_size;
 					f->_param_size += s;
-				}
-		}
-
-		foreachi(LocalVariable &v, f->var, i){
-			if ((f->_class) && (v.name == "self"))
-				continue;
-			int s = mem_align(v.type->size);
-			if (i < f->num_params){
-				// parameters
-				v._offset = f->_param_size;
-				f->_param_size += s;
-			}else{
-				// "real" local variables
+				}else{
+					// "real" local variables
+					v._offset = - f->_var_size - s;
+					f->_var_size += s;
+				}				
+			}
+		}else if (Asm::InstructionSet.set == Asm::InstructionSetAMD64){
+			f->_var_size = 0;
+			
+			foreachi(LocalVariable &v, f->var, i){
+				int s = mem_align(v.type->size);
 				v._offset = - f->_var_size - s;
 				f->_var_size += s;
 			}
