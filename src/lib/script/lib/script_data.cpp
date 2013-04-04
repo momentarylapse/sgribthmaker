@@ -635,14 +635,15 @@ void SIAddPackageBase()
 	set_cur_package("base");
 
 	// internal
-	TypeUnknown			= add_type  ("-\?\?\?-",	0); // should not appear anywhere....or else we're screwed up!
-	TypeReg32			= add_type  ("-reg32-",		4);
-	TypeReg16			= add_type  ("-reg16-",		2);
-	TypeReg8			= add_type  ("-reg8-",		1);
+	TypeUnknown			= add_type  ("-unknown-",	0); // should not appear anywhere....or else we're screwed up!
+	TypeReg64			= add_type  ("-reg32-",		8, FLAG_CALL_BY_VALUE);
+	TypeReg32			= add_type  ("-reg32-",		4, FLAG_CALL_BY_VALUE);
+	TypeReg16			= add_type  ("-reg16-",		2, FLAG_CALL_BY_VALUE);
+	TypeReg8			= add_type  ("-reg8-",		1, FLAG_CALL_BY_VALUE);
 	TypeClass			= add_type  ("-class-",	0); // substitute for all class types
 
 	// "real"
-	TypeVoid			= add_type  ("void",		0);
+	TypeVoid			= add_type  ("void",		0, FLAG_CALL_BY_VALUE);
 	TypeSuperArray		= add_type_a("void[]",		TypeVoid, -1); // substitute for all super arrays
 	TypePointer			= add_type_p("void*",		TypeVoid, FLAG_CALL_BY_VALUE); // substitute for all pointer types
 	TypePointerPs		= add_type_p("void*&",		TypePointer, FLAG_SILENT);

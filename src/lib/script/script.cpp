@@ -449,42 +449,51 @@ void *Script::MatchFunction(const string &name, const string &return_type, int n
 	return NULL;
 }
 
-void Script::ShowVars(bool include_consts)
-{	
-/*	int ss=0;
-	int i;
-	string name;
-	Type *t;
-	int n=pre_script->RootOfAllEvil.Var.num;
-	if (include_consts)
-		n+=pre_script->Constant.num;
-	for (i=0;i<n;i++){
-		char *add=(char*)&Stack[ss];
-		if (i<pre_script->RootOfAllEvil.Var.num){
-			name = pre_script->RootOfAllEvil.Var[i].Name;
-			t=pre_script->RootOfAllEvil.Var[i].Type;
-		}else{
-			name = "---const---";
-			t=pre_script->Constant[i-pre_script->RootOfAllEvil.Var.num].type;
+string var2str(void *p, Type *t)
+{
+	if (t == TypeInt)
+		return i2s(*(int*)p);
+	else if (t == TypeFloat)
+		return f2s(*(float*)p, 3);
+	else if (t == TypeBool)
+		return b2s(*(bool*)p);
+	else if (t->is_pointer)
+		return p2s(*(void**)p);
+	else if (t == TypeString)
+		return "\"" + *(string*)p + "\"";
+	else if (t->is_super_array){
+		string s;
+		DynamicArray *da = (DynamicArray*)p;
+		for (int i=0; i<da->num; i++){
+			if (i > 0)
+				s += ", ";
+			s += var2str(((char*)da->data) + i * da->element_size, t->parent);
 		}
-		if (t == TypeInt)
-			msg_write(format("%p: %s = %d", &add, name.c_str(), *(int*)&Stack[ss]));
-		else if (t==TypeFloat)
-			msg_write(format("%p: %s = %.3f", &add, name.c_str(), *(float*)&Stack[ss]));
-		else if (t==TypeBool)
-			msg_write(format("%p: %s = (bool) %d", &add, name.c_str(), *(int*)&Stack[ss]));
-		else if (t==TypeVector)
-			msg_write(string(d2h((char*)&add,4,false),":  ",name,"  =  (",string(f2s(*(float*)&Stack[ss],3)," , ",f2s(*(float*)&Stack[ss+4],3)," , ",f2s(*(float*)&Stack[ss+8],3),")")));
-		else if ((t==TypeColor)||(t==TypeRect)||(t==TypeQuaternion))
-			msg_write(string(d2h((char*)&add,4,false),":  ",name,"  =  (",string(f2s(*(float*)&Stack[ss],3)," , ",f2s(*(float*)&Stack[ss+4],3),string(" , ",f2s(*(float*)&Stack[ss+8],3)," , ",f2s(*(float*)&Stack[ss+12],3),")"))));
-		else if (t->IsPointer)
-			msg_write(format("%p: %s = %p", &add, name.c_str(), Stack[ss]));
-		else if (t==TypeString)
-			msg_write(format("%p: %s = \"...\"", &add, name.c_str()));
-		else
-			msg_write(string(d2h((char*)&add,4,false),":  ",name,"  =  ??? (unbekannter Typ)"));
-		ss+=t->Size;
-	}*/
+		return "[" + s + "]";
+	}else if (t->element.num > 0){
+		string s;
+		foreachi(ClassElement &e, t->element, i){
+			if (i > 0)
+				s += ", ";
+			s += var2str(((char*)p) + e.offset, e.type);
+		}
+		return "(" + s + ")";
+	}
+	return string((char*)p, t->size).hex();
+}
+
+void print_var(void *p, const string &name, Type *t)
+{
+	msg_write(t->name + " " + name + " = " + var2str(p, t));
+}
+
+void Script::ShowVars(bool include_consts)
+{
+	foreachi(LocalVariable &v, pre_script->RootOfAllEvil.var, i)
+		print_var((void*)g_var[i], v.name, v.type);
+	/*if (include_consts)
+		foreachi(LocalVariable &c, pre_script->Constant, i)
+			print_var((void*)g_var[i], c.name, c.type);*/
 }
 
 void Script::Execute()

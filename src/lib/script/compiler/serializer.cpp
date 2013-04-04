@@ -405,16 +405,20 @@ void Serializer::AddFunctionCall(void *func, int func_no)
 		// map params...
 		int num_reg = 0;
 		foreach(SerialCommandParam &p, CompilerFunctionParam){
-			if (p.type == TypeInt){
+			if ((p.type == TypeInt) || (p.type->is_pointer)){
 				if (num_reg < 6)
 					num_reg ++;
 			}
 		}
 		int n = 0;
-		int param_regs[6] = {Asm::RegEdi, Asm::RegEsi, Asm::RegEdx, Asm::RegEcx, Asm::RegR9d, Asm::RegR8d};
+		int param_regs32[6] = {Asm::RegEdi, Asm::RegEsi, Asm::RegEdx, Asm::RegEcx, Asm::RegR9d, Asm::RegR8d};
+		int param_regs64[6] = {Asm::RegRdi, Asm::RegRsi, Asm::RegRdx, Asm::RegRcx, Asm::RegR9, Asm::RegR8};
 		foreachb(SerialCommandParam &p, CompilerFunctionParam){
 			if (p.type == TypeInt){
-				add_cmd(Asm::inst_mov, param_reg(TypeInt, param_regs[num_reg - n - 1]), p);
+				add_cmd(Asm::inst_mov, param_reg(TypeReg32, param_regs32[num_reg - n - 1]), p);
+				n ++;
+			}else if (p.type->is_pointer){
+				add_cmd(Asm::inst_mov, param_reg(TypeReg64, param_regs64[num_reg - n - 1]), p);
 				n ++;
 			}
 		}

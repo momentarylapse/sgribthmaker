@@ -74,7 +74,7 @@ struct Type{
 
 	bool force_call_by_value;
 	bool UsesCallByReference()
-	{	return (!force_call_by_value) && (!is_pointer) && ((is_array) || (is_super_array) || (element.num > 0));	}
+	{	return ((!force_call_by_value) && (!is_pointer)) || (is_array);	}
 	int GetFunc(const string &name)
 	{
 		foreachi(ClassFunction &f, function, i)
