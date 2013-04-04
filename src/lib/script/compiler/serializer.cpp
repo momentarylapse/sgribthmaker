@@ -348,9 +348,10 @@ void AddFuncInstance(SerialCommandParam &inst)
 
 void AddReference(Serializer *d, SerialCommandParam &param, Type *type, SerialCommandParam &ret);
 
-void Serializer::AddFunctionCall(void *func, int func_no)
+
+void Serializer::add_function_call_x86(void *func, int func_no)
 {
-	msg_db_f("AddFunctionCall", 4);
+	msg_db_f("AddFunctionCallX86", 4);
 	call_used = true;
 	Type *type = CompilerFunctionReturn.type;
 	if (!type)
@@ -368,8 +369,6 @@ void Serializer::AddFunctionCall(void *func, int func_no)
 	// grow stack (down) for local variables of the calling function
 //	add_cmd(- cur_func->_VarSize - LocalOffset - 8);
 	long push_size = 0;
-
-	if (PointerSize == 4){
 	
 	// push parameters onto stack
 	for (int p=CompilerFunctionParam.num-1;p>=0;p--){
@@ -399,26 +398,66 @@ void Serializer::AddFunctionCall(void *func, int func_no)
 		add_cmd(Asm::inst_push, ret_ref); // nachtraegliche eSP-Korrektur macht die Funktion
 #endif
 
-	}else if (PointerSize == 8){
-		// map params...
-		int num_reg = 0;
-		foreach(SerialCommandParam &p, CompilerFunctionParam){
-			if ((p.type == TypeInt) || (p.type->is_pointer)){
-				if (num_reg < 6)
-					num_reg ++;
+	
+	add_cmd(Asm::inst_call, param_const(TypePointer, func)); // the actual call
+	// function pointer will be shifted later...
+
+	if (push_size > 127)
+		add_cmd(Asm::inst_add, param_reg(TypePointer, Asm::RegEsp), param_const(TypeInt, (void*)push_size));
+	else if (push_size > 0)
+		add_cmd(Asm::inst_add, param_reg(TypePointer, Asm::RegEsp), param_const(TypeChar, (void*)push_size));
+
+	// return > 4b already got copied to [ret] by the function!
+	if (type != TypeVoid)
+		if (type->size <= PointerSize){
+			if (type == TypeFloat)
+				add_cmd(Asm::inst_fstp, CompilerFunctionReturn);
+			else if (type->size == 1){
+				add_cmd(Asm::inst_mov, CompilerFunctionReturn, p_al);
+				add_reg_channel(Asm::RegEax, cmd.num - 2, cmd.num - 1);
+			}else{
+				add_cmd(Asm::inst_mov, CompilerFunctionReturn, p_eax);
+				add_reg_channel(Asm::RegEax, cmd.num - 2, cmd.num - 1);
 			}
 		}
-		int n = 0;
-		int param_regs32[6] = {Asm::RegEdi, Asm::RegEsi, Asm::RegEdx, Asm::RegEcx, Asm::RegR9d, Asm::RegR8d};
-		int param_regs64[6] = {Asm::RegRdi, Asm::RegRsi, Asm::RegRdx, Asm::RegRcx, Asm::RegR9, Asm::RegR8};
-		foreachb(SerialCommandParam &p, CompilerFunctionParam){
-			if (p.type == TypeInt){
-				add_cmd(Asm::inst_mov, param_reg(TypeReg32, param_regs32[num_reg - n - 1]), p);
-				n ++;
-			}else if (p.type->is_pointer){
-				add_cmd(Asm::inst_mov, param_reg(TypeReg64, param_regs64[num_reg - n - 1]), p);
-				n ++;
-			}
+}
+
+void Serializer::add_function_call_amd64(void *func, int func_no)
+{
+	msg_db_f("AddFunctionCallAMD64", 4);
+	call_used = true;
+	Type *type = CompilerFunctionReturn.type;
+	if (!type)
+		type = TypeVoid;
+
+	// return data too big... push address
+	SerialCommandParam ret_temp, ret_ref;
+	if ((type->size > 4) && (!type->is_array)){
+		//add_temp(type, ret_temp);
+		AddReference(/*ret_temp*/ CompilerFunctionReturn, TypePointer, ret_ref);
+		//add_ref();
+		//add_cmd(Asm::inst_lea, KindRegister, (char*)RegEaxCompilerFunctionReturn.kind, CompilerFunctionReturn.param);
+	}
+
+	// grow stack (down) for local variables of the calling function
+//	add_cmd(- cur_func->_VarSize - LocalOffset - 8);
+	long push_size = 0;
+
+	// map params...
+	int num_reg = 0;
+	foreach(SerialCommandParam &p, CompilerFunctionParam){
+		if ((p.type == TypeInt) || (p.type == TypeChar) || (p.type == TypeBool) || (p.type->is_pointer)){
+			if (num_reg < 6)
+				num_reg ++;
+		}
+	}
+	int n = 0;
+	// rdi, rsi,rdx, rcx, r8, r9 
+	int param_regs_root[6] = {7, 6, 2, 1, 8, 9};
+	foreachb(SerialCommandParam &p, CompilerFunctionParam){
+		if ((p.type == TypeInt) || (p.type == TypeChar) || (p.type == TypeBool) || (p.type->is_pointer)){
+			add_cmd(Asm::inst_mov, param_reg(p.type, Asm::RegResize[param_regs_root[num_reg - n - 1]][p.type->size]), p);
+			n ++;
 		}
 	}
 	
@@ -443,6 +482,14 @@ void Serializer::AddFunctionCall(void *func, int func_no)
 				add_reg_channel(Asm::RegEax, cmd.num - 2, cmd.num - 1);
 			}
 		}
+}
+
+void Serializer::AddFunctionCall(void *func, int func_no)
+{
+	if (Asm::InstructionSet.set == Asm::InstructionSetAMD64)
+		add_function_call_amd64(func, func_no);
+	else if (Asm::InstructionSet.set == Asm::InstructionSetX86)
+		add_function_call_x86(func, func_no);
 
 	// clean up for next call
 	CompilerFunctionParam.clear();

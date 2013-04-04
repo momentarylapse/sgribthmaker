@@ -142,6 +142,8 @@ struct Serializer
 	void RemoveUnusedTempVars();
 
 	void AddFunctionCall(void *func, int func_no = -1);
+	void add_function_call_x86(void *func, int func_no = -1);
+	void add_function_call_amd64(void *func, int func_no = -1);
 	void AddReference(SerialCommandParam &param, Type *type, SerialCommandParam &ret);
 	void AddDereference(SerialCommandParam &param, SerialCommandParam &ret, Type *force_type = NULL);
 

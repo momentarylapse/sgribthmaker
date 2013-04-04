@@ -2768,33 +2768,36 @@ char GetModRMReg(Register *r)
 
 inline char CreatePartialModRMByte(InstructionParamFuzzy &pf, InstructionParam &p)
 {
+	int r = -1;
+	if (p.reg)
+		r = p.reg->id;
 	if (pf.mrm_mode == MRMReg){
-		if (p.reg == RegisterByID[RegEs])	return 0x00;
-		if (p.reg == RegisterByID[RegCs])	return 0x08;
-		if (p.reg == RegisterByID[RegSs])	return 0x10;
-		if (p.reg == RegisterByID[RegDs])	return 0x18;
-		if (p.reg == RegisterByID[RegFs])	return 0x20;
-		if (p.reg == RegisterByID[RegGs])	return 0x28;
-		if (p.reg == RegisterByID[RegCr0])	return 0x00;
-		if (p.reg == RegisterByID[RegCr1])	return 0x08;
-		if (p.reg == RegisterByID[RegCr2])	return 0x10;
-		if (p.reg == RegisterByID[RegCr3])	return 0x18;
+		if (r == RegEs)	return 0x00;
+		if (r == RegCs)	return 0x08;
+		if (r == RegSs)	return 0x10;
+		if (r == RegDs)	return 0x18;
+		if (r == RegFs)	return 0x20;
+		if (r == RegGs)	return 0x28;
+		if (r == RegCr0)	return 0x00;
+		if (r == RegCr1)	return 0x08;
+		if (r == RegCr2)	return 0x10;
+		if (r == RegCr3)	return 0x18;
 		return GetModRMReg(p.reg) << 3;
 	}else if (pf.mrm_mode == MRMModRM){
 		if (p.deref){
 			if (state.AddrSize == Size16){
 				if ((p.type == ParamTImmediate) && (p.deref))	return 0x06;
 			}else{
-				if (p.reg == RegisterByID[RegEax])	return (p.disp == DispModeNone) ? 0x00 : ((p.disp == DispMode8) ? 0x40 : 0x80); // default = DispMode32
-				if (p.reg == RegisterByID[RegEcx])	return (p.disp == DispModeNone) ? 0x01 : ((p.disp == DispMode8) ? 0x41 : 0x81);
-				if (p.reg == RegisterByID[RegEdx])	return (p.disp == DispModeNone) ? 0x02 : ((p.disp == DispMode8) ? 0x42 : 0x82);
-				if (p.reg == RegisterByID[RegEbx])	return (p.disp == DispModeNone) ? 0x03 : ((p.disp == DispMode8) ? 0x43 : 0x83);
+				if ((r == RegEax) || (r == RegRax))	return (p.disp == DispModeNone) ? 0x00 : ((p.disp == DispMode8) ? 0x40 : 0x80); // default = DispMode32
+				if ((r == RegEcx) || (r == RegRcx))	return (p.disp == DispModeNone) ? 0x01 : ((p.disp == DispMode8) ? 0x41 : 0x81);
+				if ((r == RegEdx) || (r == RegRdx))	return (p.disp == DispModeNone) ? 0x02 : ((p.disp == DispMode8) ? 0x42 : 0x82);
+				if ((r == RegEbx) || (r == RegRbx))	return (p.disp == DispModeNone) ? 0x03 : ((p.disp == DispMode8) ? 0x43 : 0x83);
 				// sib			return 4;
 				// disp32		return 5;
 				if ((p.type == ParamTImmediate) && (p.deref))	return 0x05;
-				if (p.reg == RegisterByID[RegEbp])	return (p.disp == DispMode8) ? 0x045 : 0x85;
-				if (p.reg == RegisterByID[RegEsi])	return (p.disp == DispModeNone) ? 0x06 : ((p.disp == DispMode8) ? 0x46 : 0x86);
-				if (p.reg == RegisterByID[RegEdi])	return (p.disp == DispModeNone) ? 0x07 : ((p.disp == DispMode8) ? 0x47 : 0x87);
+				if ((r == RegEbp) || (r == RegRbp))	return (p.disp == DispMode8) ? 0x45 : 0x85;
+				if ((r == RegEsi) || (r == RegRsi))	return (p.disp == DispModeNone) ? 0x06 : ((p.disp == DispMode8) ? 0x46 : 0x86);
+				if ((r == RegEdi) || (r == RegRdi))	return (p.disp == DispModeNone) ? 0x07 : ((p.disp == DispMode8) ? 0x47 : 0x87);
 			}
 		}else{
 			return GetModRMReg(p.reg) | 0xc0;
