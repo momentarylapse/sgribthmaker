@@ -74,7 +74,7 @@ struct Serializer
 	Array<SerialCommand> cmd;
 	int NumMarkers;
 	Script *script;
-	PreScript *pre_script;
+	SyntaxTree *pre_script;
 	Function *cur_func;
 	bool call_used;
 	int LastCommandSize;

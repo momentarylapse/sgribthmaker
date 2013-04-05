@@ -2417,9 +2417,11 @@ void InstructionWithParamsList::LinkWantedLabels(void *oc)
 	}
 }
 
-void InstructionWithParamsList::AppendFromSource(const char *code)
+void InstructionWithParamsList::AppendFromSource(const string &_code)
 {
 	msg_db_f("AppendFromSource", 1+ASM_DB_LEVEL);
+
+	const char *code = _code.c_str();
 
 	if (CurrentMetaInfo){
 		CurrentMetaInfo->PreInsertionLength = CurrentMetaInfo->CurrentOpcodePos; // position of the block withing (overall) opcode
@@ -2440,7 +2442,7 @@ void InstructionWithParamsList::AppendFromSource(const char *code)
 		if (CurrentMetaInfo->Mode16)
 			state.DefaultSize = Size16;
 	state.EndOfCode = false;
-	while((unsigned)pos < strlen(code) - 2){
+	while((unsigned)pos < _code.num - 2){
 
 		string cmd, param1, param2;
 

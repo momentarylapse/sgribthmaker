@@ -20,7 +20,7 @@ extern void script_db_left();
 #define left	script_db_left
 
 
-void PreScript::PreProcessCommand(Script *s, Command *c)
+void SyntaxTree::PreProcessCommand(Script *s, Command *c)
 {
 	msg_db_f("PreProcessCommand", 4);
 
@@ -112,10 +112,10 @@ void PreScript::PreProcessCommand(Script *s, Command *c)
 	}*/
 }
 
-string LinkNr2Str(PreScript *s,int kind,int nr);
+string LinkNr2Str(SyntaxTree *s,int kind,int nr);
 
 // may not use AddConstant()!!!
-void PreScript::PreProcessCommandAddresses(Script *s, Command *c)
+void SyntaxTree::PreProcessCommandAddresses(Script *s, Command *c)
 {
 	msg_db_f("PreProcessCommandAddr", 4);
 	/*msg_write(Kind2Str(c->Kind));
@@ -201,7 +201,7 @@ void PreScript::PreProcessCommandAddresses(Script *s, Command *c)
 	}
 }
 
-void PreScript::PreProcessor(Script *s)
+void SyntaxTree::PreProcessor(Script *s)
 {
 	msg_db_f("PreProcessor", 4);
 	foreach(Function *f, Functions){
@@ -212,7 +212,7 @@ void PreScript::PreProcessor(Script *s)
 	//Show();
 }
 
-void PreScript::PreProcessorAddresses(Script *s)
+void SyntaxTree::PreProcessorAddresses(Script *s)
 {
 	msg_db_f("PreProcessorAddr", 4);
 	foreach(Function *f, Functions){

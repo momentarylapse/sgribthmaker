@@ -17,7 +17,7 @@ class Script;
 #include "../types/types.h"
 #include "asm/asm.h"
 #include "lib/script_data.h"
-#include "syntax/pre_script.h"
+#include "syntax/syntax_tree.h"
 
 namespace Script{
 
@@ -82,7 +82,7 @@ public:
 
 // data
 
-	PreScript *pre_script;
+	SyntaxTree *syntax;
 
 	int ReferenceCounter;
 

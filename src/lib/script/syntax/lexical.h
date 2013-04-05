@@ -4,7 +4,7 @@
 
 namespace Script{
 
-class PreScript;
+class SyntaxTree;
 
 // character buffer and expressions (syntax analysis)
 
@@ -31,7 +31,7 @@ struct ExpressionBuffer
 	int cur_exp;
 	int comment_level;
 	string cur;
-	PreScript *pre_script;
+	SyntaxTree *syntax;
 
 	string get_name(int n);
 	void next();
@@ -53,7 +53,7 @@ struct ExpressionBuffer
 	void test_indent(int i);
 	void reset_indent();
 
-	void Analyse(PreScript *ps, const char *source);
+	void Analyse(SyntaxTree *ps, const char *source);
 	bool AnalyseExpression(const char *source, int &pos, ExpressionBuffer::Line *l, int &line_no);
 	bool AnalyseLine(const char *source, ExpressionBuffer::Line *l, int &line_no);
 	void AnalyseLogicalLine(const char *source, ExpressionBuffer::Line *l, int &line_no);

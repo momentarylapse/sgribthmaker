@@ -266,7 +266,7 @@ struct InstructionWithParamsList : public Array<InstructionWithParams>
 	void add_func_intro(int stack_alloc_size);
 	void add_func_return(int return_size);
 
-	void AppendFromSource(const char *code);
+	void AppendFromSource(const string &code);
 	void ShrinkJumps(void *oc, int ocs);
 	void Optimize(void *oc, int ocs);
 	void Compile(void *oc, int &ocs);

@@ -49,19 +49,19 @@ static void left()
 #endif
 }
 
-void SetImmortal(PreScript *ps)
+void SetImmortal(SyntaxTree *ps)
 {
 	ps->FlagImmortal = true;
 	for (int i=0;i<ps->Includes.num;i++)
-		SetImmortal(ps->Includes[i]->pre_script);
+		SetImmortal(ps->Includes[i]->syntax);
 }
 
 // import data from an included script file
-void PreScript::AddIncludeData(Script *s)
+void SyntaxTree::AddIncludeData(Script *s)
 {
 	msg_db_f("AddIncludeData",5);
 	Includes.add(s);
-	PreScript *ps = s->pre_script;
+	SyntaxTree *ps = s->syntax;
 	s->ReferenceCounter ++;
 	if (FlagImmortal)
 		SetImmortal(ps);
@@ -113,7 +113,7 @@ string MacroName[NumMacroNames] =
 	"#code_origin"
 };
 
-void PreScript::HandleMacro(ExpressionBuffer::Line *l, int &line_no, int &NumIfDefs, bool *IfDefed, bool just_analyse)
+void SyntaxTree::HandleMacro(ExpressionBuffer::Line *l, int &line_no, int &NumIfDefs, bool *IfDefed, bool just_analyse)
 {
 	msg_db_f("HandleMacro", 4);
 	Exp.cur_line = l;
@@ -199,7 +199,7 @@ void PreScript::HandleMacro(ExpressionBuffer::Line *l, int &line_no, int &NumIfD
 			break;
 		case MacroCodeOrigin:
 			Exp.next();
-			CreateAsmMetaInfo(this);
+			CreateAsmMetaInfo();
 			((Asm::MetaInfo*)AsmMetaInfo)->CodeOrigin = s2i2(Exp.cur);
 			break;
 		default:
@@ -212,7 +212,7 @@ void PreScript::HandleMacro(ExpressionBuffer::Line *l, int &line_no, int &NumIfD
 	line_no --;
 }
 
-inline void insert_into_buffer(PreScript *ps, const char *name, int pos, int index = -1)
+inline void insert_into_buffer(SyntaxTree *ps, const char *name, int pos, int index = -1)
 {
 	ExpressionBuffer::Expression e;
 	e.name = ps->Exp.buf_cur;
@@ -226,13 +226,13 @@ inline void insert_into_buffer(PreScript *ps, const char *name, int pos, int ind
 		ps->Exp.cur_line->exp.insert(e, index);
 }
 
-inline void remove_from_buffer(PreScript *ps, int index)
+inline void remove_from_buffer(SyntaxTree *ps, int index)
 {
 	ps->Exp.cur_line->exp.erase(index);
 }
 
 // ... maybe some time later
-void PreScript::PreCompiler(bool just_analyse)
+void SyntaxTree::PreCompiler(bool just_analyse)
 {
 	msg_db_f("PreCompiler", 4);
 

@@ -1,8 +1,9 @@
-#if !defined(PRESCRIPT_H__INCLUDED_)
-#define PRESCRIPT_H__INCLUDED_
+#if !defined(SYNTAX_TREE_H__INCLUDED_)
+#define SYNTAX_TREE_H__INCLUDED_
 
 
 #include "lexical.h"
+#include "type.h"
 
 namespace Asm{
 	struct MetaInfo;
@@ -11,8 +12,7 @@ namespace Asm{
 namespace Script{
 
 class Script;
-class PreScript;
-class Type;
+class SyntaxTree;
 
 #define SCRIPT_MAX_PARAMS				16		// number of possible parameters per function/command
 
@@ -26,7 +26,7 @@ struct Define
 // for any type of constant used in the script
 struct Constant
 {
-	PreScript *owner;
+	SyntaxTree *owner;
 	string name;
 	char *data;
 	Type *type;
@@ -125,7 +125,7 @@ struct Command
 
 struct AsmBlock
 {
-	char *block;
+	string block;
 	int line;
 };
 
@@ -133,11 +133,11 @@ class Script;
 
 
 // data structures (uncompiled)
-class PreScript
+class SyntaxTree
 {
 public:
-	PreScript(Script *_script);
-	~PreScript();
+	SyntaxTree(Script *_script);
+	~SyntaxTree();
 
 	void LoadAndParseFile(const string &filename, bool just_analyse);
 	void LoadToBuffer(const string &filename, bool just_analyse);
@@ -192,6 +192,8 @@ public:
 	bool GetSpecialFunctionCall(const string &f_name, Command *Operand, Function *f);
 	void CheckParamLink(Command *link, Type *type, const string &f_name = "", int param_no = -1);
 	void GetSpecialCommand(Block *block, Function *f);
+
+	void CreateAsmMetaInfo();
 
 	// neccessary conversions
 	void ConvertCallByReference();
@@ -255,7 +257,6 @@ public:
 };
 
 string Kind2Str(int kind);
-void CreateAsmMetaInfo(PreScript* ps);
 
 
 

@@ -888,12 +888,12 @@ void CompileAndRun(bool verbose)
 
 
 		float dt_execute = 0;
-		if (compile_script->pre_script->FlagCompileOS)
+		if (compile_script->syntax->FlagCompileOS)
 			HuiErrorBox(MainWin, _("Fehler"), _("Script nicht ausf&uhrbar. (#os)"));
 		else{
 			HuiPushMainLevel();
 			HuiGetTime(CompileTimer);
-			if (!compile_script->pre_script->FlagNoExecution){
+			if (!compile_script->syntax->FlagNoExecution){
 				typedef void void_func();
 				void_func *f = (void_func*)compile_script->MatchFunction("main", "void", 0);
 				if (f)

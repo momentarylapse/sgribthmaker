@@ -290,7 +290,7 @@ void Serializer::move_param(SerialCommandParam &p, int from, int to)
 			}
 		if (!found){
 			msg_error(format("move_param: no RegChannel...  reg_root=%d  from=%d", r, from));
-			msg_write(script->pre_script->Filename + " : " + cur_func->name);
+			msg_write(script->syntax->Filename + " : " + cur_func->name);
 		}
 	}
 }
@@ -1126,7 +1126,7 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 			is_class_function = true;
 	if (com->kind == KindFunction){
 		if (com->script){
-			if (com->script->pre_script->Functions[com->link_nr]->_class)
+			if (com->script->syntax->Functions[com->link_nr]->_class)
 				is_class_function = true;
 		}else{
 			if (pre_script->Functions[com->link_nr]->_class)
@@ -2368,7 +2368,7 @@ void Serializer::SerializeFunction(Function *f)
 
 	init_serializing();
 
-	CreateAsmMetaInfo(pre_script);
+	pre_script->CreateAsmMetaInfo();
 	pre_script->AsmMetaInfo->CurrentOpcodePos = script->OpcodeSize;
 	pre_script->AsmMetaInfo->PreInsertionLength = script->OpcodeSize;
 	pre_script->AsmMetaInfo->LineOffset = 0;
@@ -2519,10 +2519,9 @@ void AddAsmBlock(Asm::InstructionWithParamsList *list, Script *s)
 {
 	msg_db_f("AddAsmBlock", 4);
 	//msg_write(".------------------------------- asm");
-	PreScript *ps = s->pre_script;
+	SyntaxTree *ps = s->syntax;
 	ps->AsmMetaInfo->LineOffset = ps->AsmBlocks[0].line;
 	list->AppendFromSource(ps->AsmBlocks[0].block);
-	delete[](ps->AsmBlocks[0].block);
 	ps->AsmBlocks.erase(0);
 }
 
@@ -2591,7 +2590,7 @@ void do_func_align(char *Opcode, int &OpcodeSize)
 Serializer::Serializer(Script *s)
 {
 	script = s;
-	pre_script = s->pre_script;
+	pre_script = s->syntax;
 	list = new Asm::InstructionWithParamsList(0);
 }
 

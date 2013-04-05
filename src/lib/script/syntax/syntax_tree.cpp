@@ -23,14 +23,14 @@ inline void CommandMakeOperator(Command *cmd, Command *p1, Command *p2, int op);
 #define GetPointerType(sub)	CreateNewType(sub->name + "*", PointerSize, true, false, false, 0, sub)
 #define GetReferenceType(sub)	CreateNewType(sub->name + "*", PointerSize, true, true, false, 0, sub)
 
-inline Command *cp_command(PreScript *ps, Command *c)
+inline Command *cp_command(SyntaxTree *ps, Command *c)
 {
 	Command *cmd = ps->AddCommand();
 	*cmd = *c;
 	return cmd;
 }
 
-inline Command *cp_command_deep(PreScript *ps, Command *c)
+inline Command *cp_command_deep(SyntaxTree *ps, Command *c)
 {
 	Command *cmd = cp_command(ps, c);
 	for (int i=0;i<c->num_params;i++)
@@ -38,7 +38,7 @@ inline Command *cp_command_deep(PreScript *ps, Command *c)
 	return cmd;
 }
 
-inline void command_make_ref(PreScript *ps, Command *c, Command *param)
+inline void command_make_ref(SyntaxTree *ps, Command *c, Command *param)
 {
 	c->kind = KindReference;
 	c->num_params = 1;
@@ -46,13 +46,13 @@ inline void command_make_ref(PreScript *ps, Command *c, Command *param)
 	c->type = ps->GetPointerType(param->type);
 }
 
-inline void ref_command(PreScript *ps, Command *c)
+inline void ref_command(SyntaxTree *ps, Command *c)
 {
 	Command *t = cp_command(ps, c);
 	command_make_ref(ps, c, t);
 }
 
-inline void command_make_deref(PreScript *ps, Command *c, Command *param)
+inline void command_make_deref(SyntaxTree *ps, Command *c, Command *param)
 {
 	c->kind = KindDereference;
 	c->num_params = 1;
@@ -60,18 +60,18 @@ inline void command_make_deref(PreScript *ps, Command *c, Command *param)
 	c->type = param->type->parent;
 }
 
-inline void deref_command(PreScript *ps, Command *c)
+inline void deref_command(SyntaxTree *ps, Command *c)
 {
 	Command *t = cp_command(ps, c);
 	command_make_deref(ps, c, t);
 }
 
-void reset_pre_script(PreScript *ps)
+void reset_pre_script(SyntaxTree *ps)
 {
 	msg_db_f("reset_pre_script", 2);
 }
 
-PreScript::PreScript(Script *_script)
+SyntaxTree::SyntaxTree(Script *_script)
 {
 	Filename = "-empty script-";
 	Buffer = "";
@@ -98,7 +98,7 @@ PreScript::PreScript(Script *_script)
 }
 
 
-void PreScript::LoadAndParseFile(const string &filename, bool just_analyse)
+void SyntaxTree::LoadAndParseFile(const string &filename, bool just_analyse)
 {
 	msg_db_f("LoadAndParseFile",4);
 	
@@ -138,7 +138,7 @@ void PreScript::LoadAndParseFile(const string &filename, bool just_analyse)
 // ################################################################################################
 
 
-void line_out(PreScript *ps)
+void line_out(SyntaxTree *ps)
 {
 	char str[1024];
 	strcpy(str, ps->Exp.cur_line->exp[0].name);
@@ -254,7 +254,7 @@ string Kind2Str(int kind)
 	return format("UNKNOWN KIND: %d", kind);
 }
 
-string LinkNr2Str(PreScript *s,int kind,int nr)
+string LinkNr2Str(SyntaxTree *s,int kind,int nr)
 {
 	if (kind==KindVarLocal)			return s->cur_func->var[nr].name;
 	if (kind==KindVarGlobal)		return s->RootOfAllEvil.var[nr].name;
@@ -280,7 +280,7 @@ string LinkNr2Str(PreScript *s,int kind,int nr)
 	return "UNUSABLE KIND";
 }
 
-void PreScript::DoError(const string &str, int overwrite_line)
+void SyntaxTree::DoError(const string &str, int overwrite_line)
 {
 	// what data do we have?
 	int line = -1;
@@ -301,31 +301,22 @@ void PreScript::DoError(const string &str, int overwrite_line)
 	throw Exception(str, expr, line, pos, script);
 }
 
-
-bool IsIfDefed(int &num_ifdefs,bool *defed)
-{
-	for (int i=0;i<num_ifdefs;i++)
-		if (!defed[i])
-			return false;
-	return true;
-}
-
-void CreateAsmMetaInfo(PreScript* ps)
+void SyntaxTree::CreateAsmMetaInfo()
 {
 	msg_db_f("CreateAsmMetaInfo",5);
 	//msg_error("zu coden: CreateAsmMetaInfo");
-	if (!ps->AsmMetaInfo){
-		ps->AsmMetaInfo = new Asm::MetaInfo;
-		ps->AsmMetaInfo->Mode16 = ps->FlagCompileInitialRealMode;
-		ps->AsmMetaInfo->CodeOrigin = 0; // FIXME:  &Opcode[0] ????
+	if (!AsmMetaInfo){
+		AsmMetaInfo = new Asm::MetaInfo;
+		AsmMetaInfo->Mode16 = FlagCompileInitialRealMode;
+		AsmMetaInfo->CodeOrigin = 0; // FIXME:  &Opcode[0] ????
 	}
-	ps->AsmMetaInfo->Opcode = ps->script->Opcode;
-	ps->AsmMetaInfo->global_var.clear();
-	for (int i=0;i<ps->RootOfAllEvil.var.num;i++){
+	AsmMetaInfo->Opcode = script->Opcode;
+	AsmMetaInfo->global_var.clear();
+	for (int i=0;i<RootOfAllEvil.var.num;i++){
 		Asm::GlobalVar v;
-		v.Name = ps->RootOfAllEvil.var[i].name;
-		v.Pos = ps->script->g_var[i];
-		ps->AsmMetaInfo->global_var.add(v);
+		v.Name = RootOfAllEvil.var[i].name;
+		v.Pos = script->g_var[i];
+		AsmMetaInfo->global_var.add(v);
 	}
 }
 
@@ -334,7 +325,7 @@ void CreateAsmMetaInfo(PreScript* ps)
 bool next_extern = false;
 bool next_const = false;
 
-int PreScript::AddVar(const string &name, Type *type, Function *f)
+int SyntaxTree::AddVar(const string &name, Type *type, Function *f)
 {
 /*	// "extern" variable -> link to main program
 	if ((next_extern) && (f == &RootOfAllEvil)){
@@ -355,7 +346,7 @@ should be done somwhere else (ParseVariableDefSingle) */
 
 // constants
 
-int PreScript::AddConstant(Type *type)
+int SyntaxTree::AddConstant(Type *type)
 {
 	so("                                AddConstant");
 	Constants.resize(Constants.num + 1);
@@ -369,7 +360,7 @@ int PreScript::AddConstant(Type *type)
 	return Constants.num - 1;
 }
 
-Block *PreScript::AddBlock()
+Block *SyntaxTree::AddBlock()
 {
 	so("AddBlock");
 	Block *b = new Block;
@@ -381,7 +372,7 @@ Block *PreScript::AddBlock()
 
 // functions
 
-Function *PreScript::AddFunction(const string &name, Type *type)
+Function *SyntaxTree::AddFunction(const string &name, Type *type)
 {
 	so("AddFunction");
 	Function *f = new Function();
@@ -395,7 +386,7 @@ Function *PreScript::AddFunction(const string &name, Type *type)
 	f->_class = NULL;
 	return f;
 }
-Command *PreScript::AddCommand()
+Command *SyntaxTree::AddCommand()
 {
 	so("AddCommand");
 	Command *c = new Command;
@@ -409,14 +400,14 @@ Command *PreScript::AddCommand()
 }
 
 
-inline Command *add_command_compilerfunc(PreScript *ps, int cf)
+inline Command *add_command_compilerfunc(SyntaxTree *ps, int cf)
 {
 	Command *c = ps->AddCommand();
 	ps->CommandSetCompilerFunction(cf, c);
 	return c;
 }
 
-inline void CommandSetClassFunc(PreScript *ps, Type *class_type, Command *c, ClassFunction &f, Command *inst)
+inline void CommandSetClassFunc(SyntaxTree *ps, Type *class_type, Command *c, ClassFunction &f, Command *inst)
 {
 	c->kind = f.kind;
 	c->link_nr = f.nr;
@@ -431,14 +422,14 @@ inline void CommandSetClassFunc(PreScript *ps, Type *class_type, Command *c, Cla
 	}
 }
 
-inline Command *add_command_classfunc(PreScript *ps, Type *class_type, ClassFunction &f, Command *inst)
+inline Command *add_command_classfunc(SyntaxTree *ps, Type *class_type, ClassFunction &f, Command *inst)
 {
 	Command *c = ps->AddCommand();
 	CommandSetClassFunc(ps, class_type, c, f, inst);
 	return c;
 }
 
-inline void CommandSetConst(PreScript *ps, Command *c, int nc)
+inline void CommandSetConst(SyntaxTree *ps, Command *c, int nc)
 {
 	c->kind = KindConstant;
 	c->link_nr = nc;
@@ -446,14 +437,14 @@ inline void CommandSetConst(PreScript *ps, Command *c, int nc)
 	c->num_params = 0;
 }
 
-inline Command *add_command_const(PreScript *ps, int nc)
+inline Command *add_command_const(SyntaxTree *ps, int nc)
 {
 	Command *c = ps->AddCommand();
 	CommandSetConst(ps, c, nc);
 	return c;
 }
 
-int PreScript::WhichPrimitiveOperator(const string &name)
+int SyntaxTree::WhichPrimitiveOperator(const string &name)
 {
 	for (int i=0;i<NumPrimitiveOperators;i++)
 		if (name == PrimitiveOperators[i].name)
@@ -461,7 +452,7 @@ int PreScript::WhichPrimitiveOperator(const string &name)
 	return -1;
 }
 
-int PreScript::WhichExternalVariable(const string &name)
+int SyntaxTree::WhichExternalVariable(const string &name)
 {
 	// wrong order -> "extern" varbiables are dominant...
 	for (int i=PreExternalVars.num-1;i>=0;i--)
@@ -471,7 +462,7 @@ int PreScript::WhichExternalVariable(const string &name)
 	return -1;
 }
 
-int PreScript::WhichType(const string &name)
+int SyntaxTree::WhichType(const string &name)
 {
 	for (int i=0;i<Types.num;i++)
 		if (name == Types[i]->name)
@@ -482,7 +473,7 @@ int PreScript::WhichType(const string &name)
 
 Array<int> MultipleFunctionList;
 
-int PreScript::WhichCompilerFunction(const string &name)
+int SyntaxTree::WhichCompilerFunction(const string &name)
 {
 	MultipleFunctionList.clear();
 	for (int i=0;i<PreCommands.num;i++)
@@ -494,7 +485,7 @@ int PreScript::WhichCompilerFunction(const string &name)
 	return -1;
 }
 
-inline void exlink_make_var_local(PreScript *ps, Type *t, int var_no)
+inline void exlink_make_var_local(SyntaxTree *ps, Type *t, int var_no)
 {
 	ps->GetExistenceLink.type = t;
 	ps->GetExistenceLink.link_nr = var_no;
@@ -504,7 +495,7 @@ inline void exlink_make_var_local(PreScript *ps, Type *t, int var_no)
 	ps->GetExistenceLink.instance = NULL;
 }
 
-bool PreScript::GetExistence(const string &name, Function *f)
+bool SyntaxTree::GetExistence(const string &name, Function *f)
 {
 	msg_db_f("GetExistence", 3);
 	MultipleFunctionList.clear();
@@ -579,10 +570,10 @@ bool PreScript::GetExistence(const string &name, Function *f)
 
 	// in include files (only global)...
 	foreach(Script *i, Includes)
-		if (i->pre_script->GetExistence(name, NULL)){
-			if (i->pre_script->GetExistenceLink.script) // nicht rekursiv!!!
+		if (i->syntax->GetExistence(name, NULL)){
+			if (i->syntax->GetExistenceLink.script) // nicht rekursiv!!!
 				continue;
-			memcpy(&GetExistenceLink, &(i->pre_script->GetExistenceLink), sizeof(Command));
+			memcpy(&GetExistenceLink, &(i->syntax->GetExistenceLink), sizeof(Command));
 			GetExistenceLink.script = i;
 			//msg_error(string2("\"%s\" in Include gefunden!  %s", name, GetExistenceLink.Type->Name));
 			return true;
@@ -595,7 +586,7 @@ bool PreScript::GetExistence(const string &name, Function *f)
 	return false;
 }
 
-void PreScript::CommandSetCompilerFunction(int CF, Command *Com)
+void SyntaxTree::CommandSetCompilerFunction(int CF, Command *Com)
 {
 	msg_db_f("CommandSetCompilerFunction", 4);
 	if (FlagCompileOS)
@@ -616,7 +607,7 @@ void PreScript::CommandSetCompilerFunction(int CF, Command *Com)
 
 #define is_variable(kind)	(((kind) == KindVarLocal) || ((kind) == KindVarGlobal) || ((kind) == KindVarExternal))
 
-void PreScript::SetExternalVariable(int gv, Command *c)
+void SyntaxTree::SetExternalVariable(int gv, Command *c)
 {
 	c->num_params = 0;
 	c->kind = KindVarExternal;
@@ -626,7 +617,7 @@ void PreScript::SetExternalVariable(int gv, Command *c)
 
 // find the type of a (potential) constant
 //  "1.2" -> float
-Type *PreScript::GetConstantType()
+Type *SyntaxTree::GetConstantType()
 {
 	msg_db_f("GetConstantType", 4);
 	PreConstantNr = -1;
@@ -688,7 +679,7 @@ bool pre_const_is_ref(Type *type)
 	return ((type->size > 4) && (!type->is_pointer));
 }
 
-void *PreScript::GetConstantValue()
+void *SyntaxTree::GetConstantValue()
 {
 	Type *type = GetConstantType();
 // named constants
@@ -723,7 +714,7 @@ void *PreScript::GetConstantValue()
 }
 
 // expression naming a type
-Type *PreScript::GetType(const string &name,bool force)
+Type *SyntaxTree::GetType(const string &name,bool force)
 {
 	Type *type=NULL;
 	for (int i=0;i<Types.num;i++)
@@ -741,7 +732,7 @@ Type *PreScript::GetType(const string &name,bool force)
 }
 
 // create a new type?
-void PreScript::AddType(Type **type)
+void SyntaxTree::AddType(Type **type)
 {
 	for (int i=0;i<Types.num;i++)
 		if ((*type)->name == Types[i]->name){
@@ -761,7 +752,7 @@ void PreScript::AddType(Type **type)
 		script_make_super_array(t, this);
 }
 
-Type *PreScript::CreateNewType(const string &name, int size, bool is_pointer, bool is_silent, bool is_array, int array_size, Type *sub)
+Type *SyntaxTree::CreateNewType(const string &name, int size, bool is_pointer, bool is_silent, bool is_array, int array_size, Type *sub)
 {
 	Type nt, *pt = &nt;
 	nt.is_array = is_array && (array_size >= 0);
@@ -777,7 +768,7 @@ Type *PreScript::CreateNewType(const string &name, int size, bool is_pointer, bo
 }
 
 
-void DoClassFunction(PreScript *ps, Command *Operand, Type *t, int f_no, Function *f)
+void DoClassFunction(SyntaxTree *ps, Command *Operand, Type *t, int f_no, Function *f)
 {
 	msg_db_f("DoClassFunc", 1);
 #if 0
@@ -829,7 +820,7 @@ void DoClassFunction(PreScript *ps, Command *Operand, Type *t, int f_no, Functio
 }
 
 // find any ".", "->", or "[...]"'s    or operators?
-void PreScript::GetOperandExtension(Command *Operand, Function *f)
+void SyntaxTree::GetOperandExtension(Command *Operand, Function *f)
 {
 	msg_db_f("GetOperandExtension", 4);
 
@@ -971,7 +962,7 @@ inline bool direct_type_match(Type *a, Type *b)
 	return ( (a==b) || ( (a->is_pointer) && (b->is_pointer) ) );
 }
 
-bool PreScript::GetSpecialFunctionCall(const string &f_name, Command *Operand, Function *f)
+bool SyntaxTree::GetSpecialFunctionCall(const string &f_name, Command *Operand, Function *f)
 {
 	msg_db_f("GetSpecialFuncCall", 4);
 
@@ -1011,14 +1002,14 @@ bool PreScript::GetSpecialFunctionCall(const string &f_name, Command *Operand, F
 
 
 // cmd needs to have Param[]'s existing with correct Type!
-void PreScript::FindFunctionSingleParameter(int p, Type **WantedType, Function *f, Command *cmd)
+void SyntaxTree::FindFunctionSingleParameter(int p, Type **WantedType, Function *f, Command *cmd)
 {
 	msg_db_f("FindFuncSingleParam", 4);
 	Command *Param = GetCommand(f);
 
 	WantedType[p] = TypeUnknown;
 	if (cmd->kind == KindFunction){
-		Function *ff = cmd->script ? cmd->script->pre_script->Functions[cmd->link_nr] : Functions[cmd->link_nr];
+		Function *ff = cmd->script ? cmd->script->syntax->Functions[cmd->link_nr] : Functions[cmd->link_nr];
 		if (p < ff->num_params)
 			WantedType[p] = ff->literal_param_type[p];
 	}else if (cmd->kind == KindCompilerFunction){
@@ -1029,7 +1020,7 @@ void PreScript::FindFunctionSingleParameter(int p, Type **WantedType, Function *
 	cmd->param[p] = Param;
 }
 
-void PreScript::FindFunctionParameters(int &np, Type **WantedType, Function *f, Command *cmd)
+void SyntaxTree::FindFunctionParameters(int &np, Type **WantedType, Function *f, Command *cmd)
 {
 	if (Exp.cur != "(")
 		DoError("\"(\" expected in front of function parameter list");
@@ -1056,12 +1047,12 @@ void PreScript::FindFunctionParameters(int &np, Type **WantedType, Function *f, 
 	Exp.next(); // ')'
 }
 
-void apply_type_cast(PreScript *ps, int tc, Command *param);
+void apply_type_cast(SyntaxTree *ps, int tc, Command *param);
 
 
 // check, if the command <link> links to really has type <type>
 //   ...and try to cast, if not
-void PreScript::CheckParamLink(Command *link, Type *type, const string &f_name, int param_no)
+void SyntaxTree::CheckParamLink(Command *link, Type *type, const string &f_name, int param_no)
 {
 	msg_db_f("CheckParamLink", 4);
 	// type cast needed and possible?
@@ -1101,7 +1092,7 @@ void PreScript::CheckParamLink(Command *link, Type *type, const string &f_name, 
 
 // creates <Operand> to be the function call
 //  on entry <Operand> only contains information from GetExistence (Kind, Nr, Type, NumParams)
-void PreScript::GetFunctionCall(const string &f_name, Command *Operand, Function *f)
+void SyntaxTree::GetFunctionCall(const string &f_name, Command *Operand, Function *f)
 {
 	msg_db_f("GetFunctionCall", 4);
 	
@@ -1163,7 +1154,7 @@ void PreScript::GetFunctionCall(const string &f_name, Command *Operand, Function
 	}
 }
 
-Command *PreScript::GetOperand(Function *f)
+Command *SyntaxTree::GetOperand(Function *f)
 {
 	msg_db_f("GetOperand", 4);
 	Command *Operand = NULL;
@@ -1285,7 +1276,7 @@ Command *PreScript::GetOperand(Function *f)
 }
 
 // only "primitive" operator -> no type information
-Command *PreScript::GetOperator(Function *f)
+Command *SyntaxTree::GetOperator(Function *f)
 {
 	msg_db_f("GetOperator",4);
 	so(Exp.cur);
@@ -1356,7 +1347,7 @@ inline bool type_match_with_cast(Type *type, bool is_class, bool is_modifiable, 
 	return false;
 }
 
-void apply_type_cast(PreScript *ps, int tc, Command *param)
+void apply_type_cast(SyntaxTree *ps, int tc, Command *param)
 {
 	if (tc < 0)
 		return;
@@ -1386,7 +1377,7 @@ void apply_type_cast(PreScript *ps, int tc, Command *param)
 	}
 }
 
-bool PreScript::LinkOperator(int op_no, Command *param1, Command *param2, Command **cmd)
+bool SyntaxTree::LinkOperator(int op_no, Command *param1, Command *param2, Command **cmd)
 {
 	msg_db_f("LinkOp",4);
 	bool left_modifiable = PrimitiveOperators[op_no].left_modifiable;
@@ -1482,7 +1473,7 @@ bool PreScript::LinkOperator(int op_no, Command *param1, Command *param2, Comman
 	return false;
 }
 
-void PreScript::LinkMostImportantOperator(int &NumOperators, Command **Operand, Command **Operator, int *op_exp)
+void SyntaxTree::LinkMostImportantOperator(int &NumOperators, Command **Operand, Command **Operator, int *op_exp)
 {
 	msg_db_f("LinkMostImpOp",4);
 // find the most important operator (mio)
@@ -1513,7 +1504,7 @@ void PreScript::LinkMostImportantOperator(int &NumOperators, Command **Operand, 
 	NumOperators--;
 }
 
-Command *PreScript::GetCommand(Function *f)
+Command *SyntaxTree::GetCommand(Function *f)
 {
 	msg_db_f("GetCommand", 4);
 	int NumOperands = 0;
@@ -1563,9 +1554,9 @@ Command *PreScript::GetCommand(Function *f)
 	return ret;
 }
 
-void conv_cbr(PreScript *ps, Command *&c, int var);
+void conv_cbr(SyntaxTree *ps, Command *&c, int var);
 
-void PreScript::GetSpecialCommand(Block *block, Function *f)
+void SyntaxTree::GetSpecialCommand(Block *block, Function *f)
 {
 	msg_db_f("GetSpecialCommand", 4);
 
@@ -1817,7 +1808,7 @@ void PreScript::GetSpecialCommand(Block *block, Function *f)
 }*/
 
 // we already are in the line to analyse ...indentation for a new block should compare to the last line
-void PreScript::GetCompleteCommand(Block *block, Function *f)
+void SyntaxTree::GetCompleteCommand(Block *block, Function *f)
 {
 	msg_db_f("GetCompleteCommand", 4);
 	// cur_exp = 0!
@@ -1899,7 +1890,7 @@ void PreScript::GetCompleteCommand(Block *block, Function *f)
 }
 
 // look for array definitions and correct pointers
-void PreScript::TestArrayDefinition(Type **type, bool is_pointer)
+void SyntaxTree::TestArrayDefinition(Type **type, bool is_pointer)
 {
 	msg_db_f("TestArrayDef", 4);
 	if (is_pointer){
@@ -1953,7 +1944,7 @@ void PreScript::TestArrayDefinition(Type **type, bool is_pointer)
 
 
 // read the file and do a lexical analysis
-void PreScript::LoadToBuffer(const string &filename,bool just_analyse)
+void SyntaxTree::LoadToBuffer(const string &filename,bool just_analyse)
 {
 	msg_db_f("LoadToBuffer",4);
 
@@ -1973,7 +1964,7 @@ void PreScript::LoadToBuffer(const string &filename,bool just_analyse)
 }
 
 
-void PreScript::ParseEnum()
+void SyntaxTree::ParseEnum()
 {
 	msg_db_f("ParseEnum", 4);
 	Exp.next(); // 'enum'
@@ -2017,7 +2008,7 @@ void PreScript::ParseEnum()
 
 static int ExternalFuncPreCommandIndex;
 
-void PreScript::ParseClassFunction(Type *t, bool as_extern)
+void SyntaxTree::ParseClassFunction(Type *t, bool as_extern)
 {
 	ParseFunction(t, as_extern);
 
@@ -2049,7 +2040,7 @@ inline bool type_needs_alignment(Type *t)
 	return (t->size >= 4);
 }
 
-void PreScript::ParseClass()
+void SyntaxTree::ParseClass()
 {
 	msg_db_f("ParseClass", 4);
 
@@ -2160,19 +2151,19 @@ void PreScript::ParseClass()
 	Exp.cur_line --;
 }
 
-void PreScript::ExpectNoNewline()
+void SyntaxTree::ExpectNoNewline()
 {
 	if (Exp.end_of_line())
 		DoError("unexpected newline");
 }
 
-void PreScript::ExpectNewline()
+void SyntaxTree::ExpectNewline()
 {
 	if (!Exp.end_of_line())
 		DoError("newline expected");
 }
 
-void PreScript::ExpectIndent()
+void SyntaxTree::ExpectIndent()
 {
 	if (!Exp.indented)
 		DoError("additional indent expected");
@@ -2203,7 +2194,7 @@ void AddExternalVar(const string &name, Type *type)
 		}
 }
 
-void PreScript::ParseGlobalConst(const string &name, Type *type)
+void SyntaxTree::ParseGlobalConst(const string &name, Type *type)
 {
 	msg_db_f("ParseGlobalConst", 6);
 	if (Exp.cur != "=")
@@ -2222,7 +2213,7 @@ void PreScript::ParseGlobalConst(const string &name, Type *type)
 	c->name = name;
 }
 
-Type *PreScript::ParseVariableDefSingle(Type *type, Function *f, bool as_param)
+Type *SyntaxTree::ParseVariableDefSingle(Type *type, Function *f, bool as_param)
 {
 	msg_db_f("ParseVariableDefSingle", 6);
 	
@@ -2259,7 +2250,7 @@ Type *PreScript::ParseVariableDefSingle(Type *type, Function *f, bool as_param)
 	return type;
 }
 
-void PreScript::ParseVariableDef(bool single, Function *f)
+void SyntaxTree::ParseVariableDef(bool single, Function *f)
 {
 	msg_db_f("ParseVariableDef", 4);
 	Type *type = GetType(Exp.cur, true);
@@ -2293,7 +2284,7 @@ void CopyFuncDataToExternal(Function *f, PreCommand *c, bool is_class_func)
 	}
 }
 
-void AddExternalFunc(PreScript *ps, Function *f, Type *class_type)
+void AddExternalFunc(SyntaxTree *ps, Function *f, Type *class_type)
 {
 	so("extern");
 	
@@ -2325,7 +2316,7 @@ void AddExternalFunc(PreScript *ps, Function *f, Type *class_type)
 	ps->Functions.pop();
 }
 
-void PreScript::ParseFunction(Type *class_type, bool as_extern)
+void SyntaxTree::ParseFunction(Type *class_type, bool as_extern)
 {
 	msg_db_f("ParseFunction", 4);
 	
@@ -2416,7 +2407,7 @@ void PreScript::ParseFunction(Type *class_type, bool as_extern)
 }
 
 // convert text into script data
-void PreScript::Parser()
+void SyntaxTree::Parser()
 {
 	msg_db_f("Parser", 4);
 
@@ -2476,7 +2467,7 @@ void PreScript::Parser()
 	}
 }
 
-void conv_cbr(PreScript *ps, Command *&c, int var)
+void conv_cbr(SyntaxTree *ps, Command *&c, int var)
 {
 	msg_db_f("conv_cbr", 4);
 	//so(Kind2Str(c->Kind));
@@ -2503,7 +2494,7 @@ void conv_cbr(PreScript *ps, Command *&c, int var)
 }
 
 #if 0
-void conv_return(PreScript *ps, command *c)
+void conv_return(SyntaxTree *ps, command *c)
 {
 	// recursion...
 	for (int i=0;i<c->num_params;i++)
@@ -2518,7 +2509,7 @@ void conv_return(PreScript *ps, command *c)
 
 
 // remove &*x and (*x)[] and (*x).y
-void easyfy(PreScript *ps, Command *c, int l)
+void easyfy(SyntaxTree *ps, Command *c, int l)
 {
 	msg_db_f("easyfy", 4);
 	//msg_write(l);
@@ -2559,7 +2550,7 @@ void easyfy(PreScript *ps, Command *c, int l)
 // convert "source code"...
 //    call by ref params:  array, super array, class
 //    return by ref:       array
-void PreScript::ConvertCallByReference()
+void SyntaxTree::ConvertCallByReference()
 {
 	msg_db_f("ConvertCallByReference", 2);
 
@@ -2637,7 +2628,7 @@ void PreScript::ConvertCallByReference()
 }
 
 
-void PreScript::Simplify()
+void SyntaxTree::Simplify()
 {
 	msg_db_f("Simplify", 2);
 	
@@ -2648,7 +2639,7 @@ void PreScript::Simplify()
 }
 
 // split arrays and address shifts into simpler commands...
-void PreScript::BreakDownComplicatedCommands()
+void SyntaxTree::BreakDownComplicatedCommands()
 {
 	msg_db_f("BreakDownComplicatedCommands", 4);
 	
@@ -2766,7 +2757,7 @@ void PreScript::BreakDownComplicatedCommands()
 	}
 }
 
-void PreScript::MapLocalVariablesToStack()
+void SyntaxTree::MapLocalVariablesToStack()
 {
 	msg_db_f("MapLocalVariablesToStack", 1);
 	foreach(Function *f, Functions){
@@ -2812,7 +2803,7 @@ void PreScript::MapLocalVariablesToStack()
 	}
 }
 
-void CreateImplicitConstructor(PreScript *ps, Type *t)
+void CreateImplicitConstructor(SyntaxTree *ps, Type *t)
 {
 	// create function
 	Function *f = ps->AddFunction(t->name + ".__init__", TypeVoid);
@@ -2862,7 +2853,7 @@ void CreateImplicitConstructor(PreScript *ps, Type *t)
 	t->function.add(cf);
 }
 
-void CreateImplicitDestructor(PreScript *ps, Type *t)
+void CreateImplicitDestructor(SyntaxTree *ps, Type *t)
 {
 	// create function
 	Function *f = ps->AddFunction(t->name + ".__delete__", TypeVoid);
@@ -2908,7 +2899,7 @@ void CreateImplicitDestructor(PreScript *ps, Type *t)
 	t->function.add(cf);
 }
 
-void CreateImplicitAssign(PreScript *ps, Type *t)
+void CreateImplicitAssign(SyntaxTree *ps, Type *t)
 {
 	// create function
 	Function *f = ps->AddFunction(t->name + ".__assign__", TypeVoid);
@@ -3051,7 +3042,7 @@ void CreateImplicitAssign(PreScript *ps, Type *t)
 }
 
 
-void CreateImplicitArrayClear(PreScript *ps, Type *t)
+void CreateImplicitArrayClear(SyntaxTree *ps, Type *t)
 {
 	// create function
 	Function *f = ps->AddFunction(t->name + ".clear", TypeVoid);
@@ -3136,7 +3127,7 @@ void CreateImplicitArrayClear(PreScript *ps, Type *t)
 }
 
 
-void CreateImplicitArrayResize(PreScript *ps, Type *t)
+void CreateImplicitArrayResize(SyntaxTree *ps, Type *t)
 {
 	// create function
 	Function *f = ps->AddFunction(t->name + ".resize", TypeVoid);
@@ -3281,7 +3272,7 @@ void CreateImplicitArrayResize(PreScript *ps, Type *t)
 	t->function.add(cf);
 }
 
-void CreateImplicitArrayAdd(PreScript *ps, Type *t)
+void CreateImplicitArrayAdd(SyntaxTree *ps, Type *t)
 {
 	// create function
 	Function *f = ps->AddFunction(t->name + ".add", TypeVoid);
@@ -3353,7 +3344,7 @@ void CreateImplicitArrayAdd(PreScript *ps, Type *t)
 
 
 
-void PreScript::CreateImplicitFunctions(Type *t, bool relocate_last_function)
+void SyntaxTree::CreateImplicitFunctions(Type *t, bool relocate_last_function)
 {
 	int num_funcs = Functions.num;
 
@@ -3418,14 +3409,14 @@ void PreScript::CreateImplicitFunctions(Type *t, bool relocate_last_function)
 	}
 }
 
-void PreScript::CreateAllImplicitFunctions(bool relocate_last_function)
+void SyntaxTree::CreateAllImplicitFunctions(bool relocate_last_function)
 {
 	foreach(Type *t, Types)
 		CreateImplicitFunctions(t, relocate_last_function);
 }
 
 // no included scripts may be deleted before us!!!
-PreScript::~PreScript()
+SyntaxTree::~SyntaxTree()
 {
 	msg_db_f("~CPreScript", 4);
 	
@@ -3435,41 +3426,31 @@ PreScript::~PreScript()
 	for (int i=Types.num-NumOwnTypes;i<Types.num;i++)
 		if (Types[i]->owner == this) // redundant...
 			delete(Types[i]);
-	Types.clear();
-	
-	Defines.clear();
 
 	
 	msg_db_m("asm", 8);
 	if (AsmMetaInfo)
 		delete(AsmMetaInfo);
-	for (int i=0;i<AsmBlocks.num;i++)
-		delete[](AsmBlocks[i].block);
-	AsmBlocks.clear();
 	
 	msg_db_m("const", 8);
 	foreach(Constant &c, Constants)
 		if (c.owner == this)
 			delete[](c.data);
-	Constants.clear();
 
 	
 	msg_db_m("cmd", 8);
 	for (int i=0;i<Commands.num;i++)
 		delete(Commands[i]);
-	Commands.clear();
 
 	msg_db_m("rest", 8);
 
 	for (int i=0;i<Blocks.num;i++)
 		delete(Blocks[i]);
-	Blocks.clear();
 	for (int i=0;i<Functions.num;i++)
 		delete(Functions[i]);
-	Functions.clear();
 }
 
-void PreScript::ShowCommand(Command *c)
+void SyntaxTree::ShowCommand(Command *c)
 {
 	msg_write("[" + Kind2Str(c->kind) + "] " + c->type->name + " " + LinkNr2Str(this,c->kind,c->link_nr));
 	msg_right();
@@ -3480,7 +3461,7 @@ void PreScript::ShowCommand(Command *c)
 	msg_left();
 }
 
-void PreScript::ShowBlock(Block *b)
+void SyntaxTree::ShowBlock(Block *b)
 {
 	msg_write("block");
 	msg_right();
@@ -3494,14 +3475,14 @@ void PreScript::ShowBlock(Block *b)
 	msg_write("/block");
 }
 
-void PreScript::ShowFunction(Function *f)
+void SyntaxTree::ShowFunction(Function *f)
 {
 	msg_write("[function] " + f->return_type->name + " " + f->name);
 	cur_func = f;
 	ShowBlock(f->block);
 }
 
-void PreScript::Show()
+void SyntaxTree::Show()
 {
 	msg_write("--------- Syntax of " + Filename + " ---------");
 	msg_right();

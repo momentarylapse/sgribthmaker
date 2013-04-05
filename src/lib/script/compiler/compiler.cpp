@@ -61,7 +61,7 @@ void AddEspAdd(Asm::InstructionWithParamsList *list,int d)
 	}
 }
 
-void init_all_global_objects(PreScript *ps, Function *f, Array<char*> &g_var)
+void init_all_global_objects(SyntaxTree *ps, Function *f, Array<char*> &g_var)
 {
 	foreachi(LocalVariable &v, f->var, i){
 		foreach(ClassFunction &cf, v.type->function){
@@ -85,9 +85,9 @@ void Script::AllocateMemory()
 {
 	// get memory size needed
 	MemorySize = 0;
-	for (int i=0;i<pre_script->RootOfAllEvil.var.num;i++)
-		MemorySize += mem_align(pre_script->RootOfAllEvil.var[i].type->size);
-	foreachi(Constant &c, pre_script->Constants, i){
+	for (int i=0;i<syntax->RootOfAllEvil.var.num;i++)
+		MemorySize += mem_align(syntax->RootOfAllEvil.var[i].type->size);
+	foreachi(Constant &c, syntax->Constants, i){
 		int s = c.type->size;
 		if (c.type == TypeString){
 			// const string -> variable length   (+ super array frame)
@@ -105,7 +105,7 @@ void Script::AllocateStack()
 	// use your own stack if needed
 	//   wait() used -> needs to switch stacks ("tasks")
 	Stack = NULL;
-	foreach(Command *cmd, pre_script->Commands){
+	foreach(Command *cmd, syntax->Commands){
 		if (cmd->kind == KindCompilerFunction)
 			if ((cmd->link_nr == CommandWait) || (cmd->link_nr == CommandWaitRT) || (cmd->link_nr == CommandWaitOneFrame)){
 				Stack = new char[StackSize];
@@ -134,13 +134,13 @@ void Script::MapConstantsToMemory()
 {
 	// constants -> Memory
 	so("Konstanten");
-	cnst.resize(pre_script->Constants.num);
-	foreachi(Constant &c, pre_script->Constants, i){
+	cnst.resize(syntax->Constants.num);
+	foreachi(Constant &c, syntax->Constants, i){
 		cnst[i] = &Memory[MemorySize];
 		int s = c.type->size;
 		if (c.type == TypeString){
 			// const string -> variable length
-			s = strlen(pre_script->Constants[i].data) + 1;
+			s = strlen(syntax->Constants[i].data) + 1;
 
 			*(void**)&Memory[MemorySize] = &Memory[MemorySize + 16]; // .data
 			*(int*)&Memory[MemorySize + 4] = s - 1; // .num
@@ -157,14 +157,14 @@ void Script::MapGlobalVariablesToMemory()
 {
 	// global variables -> into Memory
 	so("glob.Var.");
-	g_var.resize(pre_script->RootOfAllEvil.var.num);
-	for (int i=0;i<pre_script->RootOfAllEvil.var.num;i++){
-		if (pre_script->FlagOverwriteVariablesOffset)
-			g_var[i] = (char*)(long)(MemorySize + pre_script->VariablesOffset);
+	g_var.resize(syntax->RootOfAllEvil.var.num);
+	for (int i=0;i<syntax->RootOfAllEvil.var.num;i++){
+		if (syntax->FlagOverwriteVariablesOffset)
+			g_var[i] = (char*)(long)(MemorySize + syntax->VariablesOffset);
 		else
 			g_var[i] = &Memory[MemorySize];
-		so(format("%d: %s", MemorySize, pre_script->RootOfAllEvil.var[i].name.c_str()));
-		MemorySize += mem_align(pre_script->RootOfAllEvil.var[i].type->size);
+		so(format("%d: %s", MemorySize, syntax->RootOfAllEvil.var[i].name.c_str()));
+		MemorySize += mem_align(syntax->RootOfAllEvil.var[i].type->size);
 	}
 	memset(Memory, 0, MemorySize); // reset all global variables to 0
 }
@@ -173,7 +173,7 @@ static int OCORA;
 void Script::CompileOsEntryPoint()
 {
 	int nf=-1;
-	foreachi(Function *ff, pre_script->Functions, index)
+	foreachi(Function *ff, syntax->Functions, index)
 		if (ff->name == "main")
 			nf = index;
 	// call
@@ -183,11 +183,11 @@ void Script::CompileOsEntryPoint()
 	OCORA = Asm::OCParam;
 
 	// put strings into Opcode!
-	foreachi(Constant &c, pre_script->Constants, i){
-		if ((pre_script->FlagCompileOS) || (c.type == TypeString)){
+	foreachi(Constant &c, syntax->Constants, i){
+		if ((syntax->FlagCompileOS) || (c.type == TypeString)){
 			int offset = 0;
-			if (pre_script->AsmMetaInfo)
-				offset = pre_script->AsmMetaInfo->CodeOrigin;
+			if (syntax->AsmMetaInfo)
+				offset = syntax->AsmMetaInfo->CodeOrigin;
 			cnst[i] = (char*)(long)(OpcodeSize + offset);
 			int s = c.type->size;
 			if (c.type == TypeString)
@@ -201,12 +201,12 @@ void Script::CompileOsEntryPoint()
 void Script::LinkOsEntryPoint()
 {
 	int nf=-1;
-	foreachi(Function *ff, pre_script->Functions, index)
+	foreachi(Function *ff, syntax->Functions, index)
 		if (ff->name == "main")
 			nf = index;
 	if (nf>=0){
 		int lll=((long)func[nf]-(long)&Opcode[TaskReturnOffset]);
-		if (pre_script->FlagCompileInitialRealMode)
+		if (syntax->FlagCompileInitialRealMode)
 			lll+=5;
 		else
 			lll+=3;
@@ -290,15 +290,15 @@ void Script::Compiler()
 {
 	msg_db_f("Compiler",2);
 
-	pre_script->MapLocalVariablesToStack();
+	syntax->MapLocalVariablesToStack();
 
-	pre_script->BreakDownComplicatedCommands();
+	syntax->BreakDownComplicatedCommands();
 #ifdef ScriptDebug
-	pre_script->Show();
+	syntax->Show();
 #endif
 
-	pre_script->Simplify();
-	pre_script->PreProcessor(this);
+	syntax->Simplify();
+	syntax->PreProcessor(this);
 
 
 	AllocateMemory();
@@ -311,38 +311,38 @@ void Script::Compiler()
 	AllocateOpcode();
 
 
-	pre_script->PreProcessorAddresses(this);
+	syntax->PreProcessorAddresses(this);
 
 
 
 // compiling an operating system?
 //   -> create an entry point for execution... so we can just call Opcode like a function
-	if ((pre_script->FlagCompileOS)||(pre_script->FlagCompileInitialRealMode))
+	if ((syntax->FlagCompileOS)||(syntax->FlagCompileInitialRealMode))
 		CompileOsEntryPoint();
 
 
 // compile functions into Opcode
 	so("Funktionen");
-	func.resize(pre_script->Functions.num);
-	foreachi(Function *f, pre_script->Functions, i){
+	func.resize(syntax->Functions.num);
+	foreachi(Function *f, syntax->Functions, i){
 		func[i] = (t_func*)&Opcode[OpcodeSize];
 		CompileFunction(f, Opcode, OpcodeSize);
 	}
 
 
 // "task" for the first execution of main() -> ThreadOpcode
-	if (!pre_script->FlagCompileOS)
+	if (!syntax->FlagCompileOS)
 		CompileTaskEntryPoint();
 
 
 
 
-	if (pre_script->FlagCompileOS)
+	if (syntax->FlagCompileOS)
 		LinkOsEntryPoint();
 
 
 	// initialize global super arrays and objects
-	init_all_global_objects(pre_script, &pre_script->RootOfAllEvil, g_var);
+	init_all_global_objects(syntax, &syntax->RootOfAllEvil, g_var);
 
 	//msg_db_out(1,GetAsm(Opcode,OpcodeSize));
 

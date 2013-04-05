@@ -1,7 +1,7 @@
 #include "../../base/base.h"
 #include "../../file/file.h"
 #include "lexical.h"
-#include "pre_script.h"
+#include "syntax_tree.h"
 #include <stdio.h>
 
 namespace Script{
@@ -152,10 +152,10 @@ int GetKind(char c)
 	return ExpKindLetter;
 }
 
-void ExpressionBuffer::Analyse(PreScript *ps, const char *source)
+void ExpressionBuffer::Analyse(SyntaxTree *ps, const char *source)
 {
 	msg_db_f("Analyse", 4);
-	pre_script = ps;
+	syntax = ps;
 	clear();
 	buffer = new char[strlen(source)*2];
 	buf_cur = buffer;
@@ -245,7 +245,7 @@ bool ExpressionBuffer::DoMultiLineComment(const char *source, int &pos)
 				return false;
 			}
 		}else if ((source[pos] == 0)){// || (BufferPos>=BufferLength)){
-			pre_script->DoError("comment exceeds end of file");
+			syntax->DoError("comment exceeds end of file");
 		}
 		pos ++;
 	}
@@ -261,7 +261,7 @@ void ExpressionBuffer::DoAsmBlock(const char *source, int &pos, int &line_no)
 		if (source[pos] == '{')
 			break;
 		if ((source[pos] != ' ') && (source[pos] != '\t') && (source[pos] != '\n'))
-			pre_script->DoError("'{' expected after \"asm\"");
+			syntax->DoError("'{' expected after \"asm\"");
 		if (source[pos] == '\n')
 			line_breaks ++;
 		pos ++;
@@ -274,7 +274,7 @@ void ExpressionBuffer::DoAsmBlock(const char *source, int &pos, int &line_no)
 		if (source[pos] == '}')
 			break;
 		if (source[pos] == 0)
-			pre_script->DoError("'}' expected to end \"asm\"");
+			syntax->DoError("'}' expected to end \"asm\"");
 		if (source[pos] == '\n')
 			line_breaks ++;
 		pos ++;
@@ -284,10 +284,8 @@ void ExpressionBuffer::DoAsmBlock(const char *source, int &pos, int &line_no)
 
 	AsmBlock a;
 	a.line = cur_line->physical_line;
-	a.block = new char[asm_end - asm_start + 1];
-	memcpy(a.block, &source[asm_start], asm_end - asm_start);
-	a.block[asm_end - asm_start] = 0;
-	pre_script->AsmBlocks.add(a);
+	a.block = string(&source[asm_start], asm_end - asm_start);
+	syntax->AsmBlocks.add(a);
 
 	line_no += line_breaks;
 }
@@ -349,7 +347,7 @@ bool ExpressionBuffer::AnalyseExpression(const char *source, int &pos, Expressio
 			if ((c == '\"') && (i > 0))
 				break;
 			else if ((c == '\n') || (c == 0)){
-				pre_script->DoError("string exceeds line");
+				syntax->DoError("string exceeds line");
 			}else{
 				// escape sequence
 				if (c == '\\'){
@@ -366,7 +364,7 @@ bool ExpressionBuffer::AnalyseExpression(const char *source, int &pos, Expressio
 					else if (source[pos] == '0')
 						Temp[TempLength - 1] = '\0';
 					else
-						pre_script->DoError("unknown escape in string");
+						syntax->DoError("unknown escape in string");
 					pos ++;
 				}
 				continue;
@@ -391,7 +389,7 @@ bool ExpressionBuffer::AnalyseExpression(const char *source, int &pos, Expressio
 		Temp[TempLength ++] = source[pos ++];
 		Temp[TempLength ++] = source[pos ++];
 		if (Temp[TempLength - 1] != '\'')
-			pre_script->DoError("character constant should end with '''");
+			syntax->DoError("character constant should end with '''");
 
 	// word
 	}else if (ExpKind == ExpKindLetter){

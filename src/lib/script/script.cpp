@@ -38,13 +38,13 @@ bool ShowCompilerStats = true;
 Exception::Exception(const string &_message, const string &_expression, int _line, int _column, Script *s) :
 	Asm::Exception(_message, _expression, _line, _column)
 {
-	message +=  ", " + s->pre_script->Filename;
+	message +=  ", " + s->syntax->Filename;
 }
 
 Exception::Exception(const Asm::Exception &e, Script *s) :
 	Asm::Exception(e)
 {
-	message = "assembler: " + message + ", " + s->pre_script->Filename;
+	message = "assembler: " + message + ", " + s->syntax->Filename;
 }
 
 
@@ -106,7 +106,7 @@ Script *Load(const string &filename, bool is_public, bool just_analyse)
 	// public und private aus dem Speicher versuchen zu laden
 	if (is_public){
 		for (int i=0;i<PublicScript.num;i++)
-			if (PublicScript[i]->pre_script->Filename == filename.sys_filename())
+			if (PublicScript[i]->syntax->Filename == filename.sys_filename())
 				return PublicScript[i];
 	}
 #if 0
@@ -196,8 +196,8 @@ void Remove(Script *s)
 {
 	msg_db_f("RemoveScript", 1);
 	// remove references
-	for (int i=0;i<s->pre_script->Includes.num;i++)
-		s->pre_script->Includes[i]->ReferenceCounter --;
+	for (int i=0;i<s->syntax->Includes.num;i++)
+		s->syntax->Includes[i]->ReferenceCounter --;
 
 	// put on to-delete-list
 	DeadScript.add(s);
@@ -227,10 +227,10 @@ void DeleteAllScripts(bool even_immortal, bool force)
 
 	// try to erase them...
 	foreachb(Script *s, PublicScript)
-		if ((!s->pre_script->FlagImmortal) || (even_immortal))
+		if ((!s->syntax->FlagImmortal) || (even_immortal))
 			Remove(s);
 	foreachb(Script *s, PrivateScript)
-		if ((!s->pre_script->FlagImmortal) || (even_immortal))
+		if ((!s->syntax->FlagImmortal) || (even_immortal))
 			Remove(s);
 
 	// undead... really KILL!
@@ -254,13 +254,13 @@ void Script::Load(const string &filename, bool just_analyse)
 {
 	msg_db_f("loading script", 1);
 	JustAnalyse = just_analyse;
-	pre_script->LoadAndParseFile(filename, just_analyse);
+	syntax->LoadAndParseFile(filename, just_analyse);
 
 	if (!JustAnalyse)
 		Compiler();
 	/*if (pre_script->FlagShow)
 		pre_script->Show();*/
-	if ((!JustAnalyse) && (pre_script->FlagDisassemble)){
+	if ((!JustAnalyse) && (syntax->FlagDisassemble)){
 		if (ThreadOpcodeSize > 0){
 			msg_write(format("ThreadOpcode: %d bytes", ThreadOpcodeSize));
 			msg_write(Asm::Disassemble(ThreadOpcode, ThreadOpcodeSize));
@@ -273,7 +273,7 @@ void Script::Load(const string &filename, bool just_analyse)
 
 void Script::DoError(const string &str, int overwrite_line)
 {
-	pre_script->DoError(str, overwrite_line);
+	syntax->DoError(str, overwrite_line);
 }
 
 void Script::DoErrorInternal(const string &str)
@@ -290,12 +290,12 @@ void Script::SetVariable(const string &name, void *data)
 {
 	msg_db_f("SetVariable", 4);
 	//msg_write(name);
-	for (int i=0;i<pre_script->RootOfAllEvil.var.num;i++)
-		if (pre_script->RootOfAllEvil.var[i].name == name){
+	for (int i=0;i<syntax->RootOfAllEvil.var.num;i++)
+		if (syntax->RootOfAllEvil.var[i].name == name){
 			/*msg_write("var");
 			msg_write(pre_script->RootOfAllEvil.Var[i].Type->Size);
 			msg_write((int)g_var[i]);*/
-			memcpy(g_var[i], data, pre_script->RootOfAllEvil.var[i].type->size);
+			memcpy(g_var[i], data, syntax->RootOfAllEvil.var[i].type->size);
 			return;
 		}
 	msg_error("CScript.SetVariable: variable " + name + " not found");
@@ -323,7 +323,7 @@ Script::Script()
 	MemoryUsed = 0;
 	Stack = NULL;
 
-	pre_script = new PreScript(this);
+	syntax = new SyntaxTree(this);
 }
 
 Script::~Script()
@@ -350,7 +350,7 @@ Script::~Script()
 	if (Stack)
 		delete[](Stack);
 	//msg_write(string2("-----------            Memory:         %p",Memory));
-	delete(pre_script);
+	delete(syntax);
 }
 
 
@@ -369,7 +369,7 @@ void ExecuteSingleScriptCommand(const string &cmd)
 
 	// empty script
 	Script *s = new Script();
-	PreScript *ps = s->pre_script;
+	SyntaxTree *ps = s->syntax;
 
 	try{
 
@@ -428,7 +428,7 @@ void *Script::MatchFunction(const string &name, const string &return_type, int n
 	va_end(marker);
 
 	// match
-	foreachi(Function *f, pre_script->Functions, i)
+	foreachi(Function *f, syntax->Functions, i)
 		if ((f->name == name) && (f->literal_return_type->name == return_type) && (num_params == f->num_params)){
 
 			bool params_ok = true;
@@ -454,7 +454,7 @@ void print_var(void *p, const string &name, Type *t)
 
 void Script::ShowVars(bool include_consts)
 {
-	foreachi(LocalVariable &v, pre_script->RootOfAllEvil.var, i)
+	foreachi(LocalVariable &v, syntax->RootOfAllEvil.var, i)
 		print_var((void*)g_var[i], v.name, v.type);
 	/*if (include_consts)
 		foreachi(LocalVariable &c, pre_script->Constant, i)
@@ -470,7 +470,7 @@ void Script::Execute()
 	shift_right=0;
 	//msg_db_f(string("Execute ",pre_script->Filename),1);
 	msg_db_f("Execute", 1);{
-	msg_db_f(pre_script->Filename.c_str(),1);
+	msg_db_f(syntax->Filename.c_str(),1);
 
 	// handle wait-commands
 	if (WaitingMode==WaitingModeFirst){
