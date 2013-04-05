@@ -2547,9 +2547,15 @@ void Serializer::Assemble(char *Opcode, int &OpcodeSize)
 				if (cmd[i].p1.kind == KindRegister)
 					cmd[i].p1.p = (char*)(long)Asm::RegResize[Asm::RegRoot[(long)cmd[i].p1.p]][PointerSize];
 
-			if (cmd[i].inst == Asm::inst_add)
-				if ((cmd[i].p1.kind == KindRegister) && (cmd[i].p1.type->size == 8) && ((cmd[i].p2.kind == KindConstant) || (cmd[i].p2.kind == KindRefToConst)) && (cmd[i].p2.type == TypeInt))
-					cmd[i].p1.p = (char*)(long)Asm::RegResize[Asm::RegRoot[(long)cmd[i].p1.p]][4];
+			// FIXME
+			// evil hack to allow inconsistent param types (in address shifts)
+			if ((cmd[i].inst == Asm::inst_add) || (cmd[i].inst == Asm::inst_mov))
+				if ((cmd[i].p1.type->size == 8) && (cmd[i].p2.type->size == 4))
+					if ((cmd[i].p1.kind == KindRegister) && ((cmd[i].p2.kind == KindRegister) || (cmd[i].p2.kind == KindConstant) || (cmd[i].p2.kind == KindRefToConst))){
+						//msg_error("----evil resize");
+						cmd[i].p1.type = cmd[i].p2.type;
+						cmd[i].p1.p = (char*)(long)Asm::RegResize[Asm::RegRoot[(long)cmd[i].p1.p]][cmd[i].p2.type->size];
+					}
 
 			assemble_cmd(list, cmd[i], script);
 		}
