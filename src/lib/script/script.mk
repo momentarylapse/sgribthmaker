@@ -4,7 +4,7 @@ SCRIPT_DIR = $(LIB_DIR)/script
 SCRIPT_BIN  = $(SCRIPT_DIR)/script.a
 SCRIPT_OBJ  = $(SCRIPT_DIR)/script.o \
  $(SCRIPT_DIR)/syntax/pre_script.o \
- $(SCRIPT_DIR)/syntax/pre_script_lexical.o \
+ $(SCRIPT_DIR)/syntax/lexical.o \
  $(SCRIPT_DIR)/syntax/pre_script_precompiler.o \
  $(SCRIPT_DIR)/syntax/pre_script_preprocessor.o \
  $(SCRIPT_DIR)/syntax/pre_script_parser.o \
@@ -34,8 +34,8 @@ $(SCRIPT_DIR)/script.o : $(SCRIPT_DIR)/script.cpp $(SCRIPT_DEP)
 $(SCRIPT_DIR)/pre_script.o : $(SCRIPT_DIR)/syntax/pre_script.cpp $(SCRIPT_DEP)
 	$(CPP) -c $(SCRIPT_DIR)/syntax/pre_script.cpp -o $@ $(SCRIPT_CXXFLAGS)
 
-$(SCRIPT_DIR)/syntax/pre_script_lexical.o : $(SCRIPT_DIR)/syntax/pre_script_lexical.cpp $(SCRIPT_DEP)
-	$(CPP) -c $(SCRIPT_DIR)/syntax/pre_script_lexical.cpp -o $@ $(SCRIPT_CXXFLAGS)
+$(SCRIPT_DIR)/syntax/lexical.o : $(SCRIPT_DIR)/syntax/lexical.cpp $(SCRIPT_DEP)
+	$(CPP) -c $(SCRIPT_DIR)/syntax/lexical.cpp -o $@ $(SCRIPT_CXXFLAGS)
 
 $(SCRIPT_DIR)/syntax/pre_script_parser.o : $(SCRIPT_DIR)/syntax/pre_script_parser.cpp $(SCRIPT_DEP)
 	$(CPP) -c $(SCRIPT_DIR)/syntax/pre_script_parser.cpp -o $@ $(SCRIPT_CXXFLAGS)

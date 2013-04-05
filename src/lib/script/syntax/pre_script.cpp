@@ -128,7 +128,7 @@ void PreScript::LoadAndParseFile(const string &filename, bool just_analyse)
 	if (FlagShow)
 		Show();
 
-	clear_exp_buffer(&Exp);
+	Exp.clear();
 }
 
 
@@ -137,21 +137,6 @@ void PreScript::LoadAndParseFile(const string &filename, bool just_analyse)
 //                                        Syntax-Analyse
 // ################################################################################################
 
-int indent_0;
-bool indented, unindented;
-inline void test_indent(int i)
-{
-	indented = (i > indent_0);
-	unindented = (i < indent_0);
-	indent_0 = i;
-		
-}
-
-inline void reset_indent()
-{
-	indented = unindented = false;
-	indent_0 = 0;
-}
 
 void line_out(PreScript *ps)
 {
@@ -304,7 +289,7 @@ void PreScript::DoError(const string &str, int overwrite_line)
 	if (Exp.cur_line){
 		line = Exp.cur_line->physical_line;
 		if (Exp.cur_exp >= 0){
-			expr = cur_name;
+			expr = Exp.cur;
 			pos = Exp.cur_line->exp[Exp.cur_exp].pos;
 		}
 	}
@@ -649,45 +634,45 @@ Type *PreScript::GetConstantType()
 
 	// predefined constants
 	foreachi(PreConstant &c, PreConstants, i)
-		if (cur_name == c.name){
+		if (Exp.cur == c.name){
 			PreConstantNr = i;
 			return c.type;
 		}
 
 	// named constants
 	foreachi(Constant &c, Constants, i)
-		if (cur_name == c.name){
+		if (Exp.cur == c.name){
 			NamedConstantNr = i;
 			return c.type;
 		}
 
 	// character "..."
-	if ((cur_name[0] == '\'') && (cur_name.back() == '\''))
+	if ((Exp.cur[0] == '\'') && (Exp.cur.back() == '\''))
 		return TypeChar;
 
 	// string "..."
-	if ((cur_name[0] == '"') && (cur_name.back() == '"'))
+	if ((Exp.cur[0] == '"') && (Exp.cur.back() == '"'))
 		return FlagCompileOS ? TypeCString : TypeString;
 
 	// numerical (int/float)
 	Type *type = TypeInt;
-	bool hex = (cur_name.num > 1) && (cur_name[0] == '0') && (cur_name[1] == 'x');
-	for (int c=0;c<cur_name.num;c++)
-		if ((cur_name[c] < '0') || (cur_name[c] > '9')){
+	bool hex = (Exp.cur.num > 1) && (Exp.cur[0] == '0') && (Exp.cur[1] == 'x');
+	for (int c=0;c<Exp.cur.num;c++)
+		if ((Exp.cur[c] < '0') || (Exp.cur[c] > '9')){
 			if (hex){
-				if ((c >= 2) && (cur_name[c] < 'a') && (cur_name[c] > 'f'))
+				if ((c >= 2) && (Exp.cur[c] < 'a') && (Exp.cur[c] > 'f'))
 					return TypeUnknown;
-			}else if (cur_name[c] == '.'){
+			}else if (Exp.cur[c] == '.'){
 				type = TypeFloat;
 			}else{
-				//if ((type != TypeFloat) || (cur_name[c] != 'f')) // f in floats erlauben
-					if ((c != 0) || (cur_name[c] != '-')) // Vorzeichen erlauben
+				//if ((type != TypeFloat) || (Exp.cur[c] != 'f')) // f in floats erlauben
+					if ((c != 0) || (Exp.cur[c] != '-')) // Vorzeichen erlauben
 						return TypeUnknown;
 			}
 		}
 
 	// super array [...]
-	if (cur_name == "["){
+	if (Exp.cur == "["){
 		//msg_error("super array constant");
 		DoError("super array constant");
 	}
@@ -717,21 +702,21 @@ void *PreScript::GetConstantValue()
 		return Constants[NamedConstantNr].data;
 // literal
 	if (type == TypeChar){
-		_some_int_ = cur_name[1];
+		_some_int_ = Exp.cur[1];
 		return &_some_int_;
 	}
 	if ((type == TypeString) || (type == TypeCString)){
-		for (int i=0;i<cur_name.num - 2;i++)
-			_some_string_[i] = cur_name[i+1];
-		_some_string_[cur_name.num - 2] = 0;
+		for (int i=0;i<Exp.cur.num - 2;i++)
+			_some_string_[i] = Exp.cur[i+1];
+		_some_string_[Exp.cur.num - 2] = 0;
 		return _some_string_;
 	}
 	if (type == TypeInt){
-		_some_int_ = s2i2(cur_name);
+		_some_int_ = s2i2(Exp.cur);
 		return &_some_int_;
 	}
 	if (type == TypeFloat){
-		_some_float_ = cur_name._float();
+		_some_float_ = Exp.cur._float();
 		return &_some_float_;
 	}
 	return NULL;
@@ -751,7 +736,7 @@ Type *PreScript::GetType(const string &name,bool force)
 		}
 	}
 	if (type)
-		next_exp();
+		Exp.next();
 	return type;
 }
 
@@ -849,15 +834,18 @@ void PreScript::GetOperandExtension(Command *Operand, Function *f)
 	msg_db_f("GetOperandExtension", 4);
 
 	// nothing?
-	int op = WhichPrimitiveOperator(cur_name);
-	if ((cur_name != ".") && (cur_name != "[") && (cur_name != "->") && (op < 0))
+	int op = WhichPrimitiveOperator(Exp.cur);
+	if ((Exp.cur != ".") && (Exp.cur != "[") && (Exp.cur != "->") && (op < 0))
 		return;
 	//sLinkData link, temp;
 
+	if (Exp.cur == "->")
+		DoError("\"->\" deprecated,  use \".\" instead");
+
 	// class element?
-	if ((cur_name == ".") || (cur_name == "->")){
+	if ((Exp.cur == ".") || (Exp.cur == "->")){
 		so("->Klasse");
-		next_exp();
+		Exp.next();
 		Type *type = Operand->type;
 
 		// pointer -> dereference
@@ -867,13 +855,10 @@ void PreScript::GetOperandExtension(Command *Operand, Function *f)
 			deref = true;
 		}
 
-		if (get_name(Exp.cur_exp - 1) == "->")
-			DoError("\"->\" deprecated,  use \".\" instead");
-
 		// find element
 		bool ok = false;
 		for (int e=0;e<type->element.num;e++)
-			if (cur_name == type->element[e].name){
+			if (Exp.cur == type->element[e].name){
 				Command *t = cp_command(this, Operand);
 				Operand->kind = deref ? KindDerefAddressShift : KindAddressShift;
 				Operand->link_nr = type->element[e].offset;
@@ -887,15 +872,15 @@ void PreScript::GetOperandExtension(Command *Operand, Function *f)
 		// class function?
 		if (!ok){
 			for (int e=0;e<type->function.num;e++)
-				if (cur_name == type->function[e].name){
+				if (Exp.cur == type->function[e].name){
 					if (!deref){
 						so("ref object");
 						ref_command(this, Operand);
 					}
-					next_exp();
+					Exp.next();
 					DoClassFunction(this, Operand, type, e, f);
 					ok = true;
-					rewind_exp();
+					Exp.rewind();
 					break;
 				}
 		}
@@ -903,10 +888,10 @@ void PreScript::GetOperandExtension(Command *Operand, Function *f)
 		if (!ok)
 			DoError("unknown element of " + type->name);
 
-		next_exp();
+		Exp.next();
 
 	// array?
-	}else if (cur_name == "["){
+	}else if (Exp.cur == "["){
 		so("->Array");
 
 		// allowed?
@@ -923,7 +908,7 @@ void PreScript::GetOperandExtension(Command *Operand, Function *f)
 			}
 		if (!allowed)
 			DoError(format("type \"%s\" is neither an array nor a pointer to an array", Operand->type->name.c_str()));
-		next_exp();
+		Exp.next();
 
 		Command *t = cp_command(this, Operand);
 		Operand->num_params = 2;
@@ -955,12 +940,12 @@ void PreScript::GetOperandExtension(Command *Operand, Function *f)
 		Command *index = GetCommand(f);
 		array->param[1] = index;
 		if (index->type != TypeInt){
-			rewind_exp();
+			Exp.rewind();
 			DoError(format("type of index for an array needs to be (int), not (%s)", index->type->name.c_str()));
 		}
-		if (cur_name != "]")
+		if (Exp.cur != "]")
 			DoError("\"]\" expected after array index");
-		next_exp();
+		Exp.next();
 
 	// unary operator?
 	}else if (op >= 0){
@@ -971,7 +956,7 @@ void PreScript::GetOperandExtension(Command *Operand, Function *f)
 					so(LinkNr2Str(this,KindOperator,i));
 					Command *t = cp_command(this, Operand);
 					CommandMakeOperator(Operand, t, NULL, i);
-					next_exp();
+					Exp.next();
 					return;
 				}
 		return;
@@ -994,24 +979,24 @@ bool PreScript::GetSpecialFunctionCall(const string &f_name, Command *Operand, F
 	if ((Operand->kind == KindCompilerFunction) && (Operand->link_nr == CommandSizeof)){
 
 		so("sizeof");
-		next_exp();
+		Exp.next();
 		int nc = AddConstant(TypeInt);
 		CommandSetConst(this, Operand, nc);
 		
-		int nt = WhichType(cur_name);
+		int nt = WhichType(Exp.cur);
 		Type *type;
 		if (nt >= 0)
 			(*(int*)(Constants[nc].data)) = Types[nt]->size;
-		else if ((GetExistence(cur_name, f)) && ((GetExistenceLink.kind == KindVarGlobal) || (GetExistenceLink.kind == KindVarLocal) || (GetExistenceLink.kind == KindVarExternal)))
+		else if ((GetExistence(Exp.cur, f)) && ((GetExistenceLink.kind == KindVarGlobal) || (GetExistenceLink.kind == KindVarLocal) || (GetExistenceLink.kind == KindVarExternal)))
 			(*(int*)(Constants[nc].data)) = GetExistenceLink.type->size;
 		else if (type == GetConstantType())
 			(*(int*)(Constants[nc].data)) = type->size;
 		else
 			DoError("type-name or variable name expected in sizeof(...)");
-		next_exp();
-		if (cur_name != ")")
+		Exp.next();
+		if (Exp.cur != ")")
 			DoError("\")\" expected after parameter list");
-		next_exp();
+		Exp.next();
 		
 		so(*(int*)(Constants[nc].data));
 		return true;
@@ -1046,29 +1031,29 @@ void PreScript::FindFunctionSingleParameter(int p, Type **WantedType, Function *
 
 void PreScript::FindFunctionParameters(int &np, Type **WantedType, Function *f, Command *cmd)
 {
-	if (cur_name != "(")
+	if (Exp.cur != "(")
 		DoError("\"(\" expected in front of function parameter list");
 	msg_db_f("FindFunctionParameters", 4);
-	next_exp();
+	Exp.next();
 		    
 	// list of parameters
 	np = 0;
 	for (int p=0;p<SCRIPT_MAX_PARAMS;p++){
-		if (cur_name == ")")
+		if (Exp.cur == ")")
 			break;
 		np ++;
 		// find parameter
 
 		FindFunctionSingleParameter(p, WantedType, f, cmd);
 
-		if (cur_name != ","){
-			if (cur_name == ")")
+		if (Exp.cur != ","){
+			if (Exp.cur == ")")
 				break;
 			DoError("\",\" or \")\" expected after parameter for function");
 		}
-		next_exp();
+		Exp.next();
 	}
-	next_exp(); // ')'
+	Exp.next(); // ')'
 }
 
 void apply_type_cast(PreScript *ps, int tc, Command *param);
@@ -1094,7 +1079,7 @@ void PreScript::CheckParamLink(Command *link, Type *type, const string &f_name, 
 
 			// no need to do anything...
 		}else{
-			rewind_exp();
+			Exp.rewind();
 			DoError(format("(c) parameter %d for function \"%s\" has type (%s), (%s) expected", param_no + 1, f_name.c_str(), pt->name.c_str(), wt->name.c_str()));
 		}
 
@@ -1122,7 +1107,7 @@ void PreScript::GetFunctionCall(const string &f_name, Command *Operand, Function
 	
 	// function as a variable?
 	if (Exp.cur_exp >= 2)
-	if ((get_name(Exp.cur_exp - 2) == "&") && (cur_name != "(")){
+	if ((Exp.get_name(Exp.cur_exp - 2) == "&") && (Exp.cur != "(")){
 		if (Operand->kind == KindFunction){
 			so("Funktion als Variable!");
 			Operand->kind = KindVarFunction;
@@ -1130,7 +1115,7 @@ void PreScript::GetFunctionCall(const string &f_name, Command *Operand, Function
 			Operand->num_params = 0;
 			return;
 		}else{
-			rewind_exp();
+			Exp.rewind();
 			//DoError("\"(\" expected in front of parameter list");
 			DoError("only script functions can be referenced");
 		}
@@ -1170,7 +1155,7 @@ void PreScript::GetFunctionCall(const string &f_name, Command *Operand, Function
 
 	// test compatibility
 	if (np != Operand->num_params){
-		rewind_exp();
+		Exp.rewind();
 		DoError(format("function \"%s\" expects %d parameters, %d were found",f_name.c_str(), Operand->num_params, np));
 	}
 	for (int p=0;p<np;p++){
@@ -1182,36 +1167,36 @@ Command *PreScript::GetOperand(Function *f)
 {
 	msg_db_f("GetOperand", 4);
 	Command *Operand = NULL;
-	so(cur_name);
+	so(Exp.cur);
 
 	// ( -> one level down and combine commands
-	if (cur_name == "("){
-		next_exp();
+	if (Exp.cur == "("){
+		Exp.next();
 		Operand = GetCommand(f);
-		if (cur_name != ")")
+		if (Exp.cur != ")")
 			DoError("\")\" expected");
-		next_exp();
-	}else if (cur_name == "&"){ // & -> address operator
+		Exp.next();
+	}else if (Exp.cur == "&"){ // & -> address operator
 		so("<Adress-Operator &>");
-		next_exp();
+		Exp.next();
 		Operand = GetOperand(f);
 		ref_command(this, Operand);
-	}else if (cur_name == "*"){ // * -> dereference
+	}else if (Exp.cur == "*"){ // * -> dereference
 		so("<Dereferenzierung *>");
-		next_exp();
+		Exp.next();
 		Operand = GetOperand(f);
 		if (!Operand->type->is_pointer){
-			rewind_exp();
+			Exp.rewind();
 			DoError("only pointers can be dereferenced using \"*\"");
 		}
 		deref_command(this, Operand);
 	}else{
 		// direct operand
-		if (GetExistence(cur_name, f)){
+		if (GetExistence(Exp.cur, f)){
 			Operand = cp_command(this, &GetExistenceLink);
-			string f_name =  cur_name;
+			string f_name =  Exp.cur;
 			so("=> " + Kind2Str(Operand->kind));
-			next_exp();
+			Exp.next();
 			// variables get linked directly...
 
 			// operand is executable
@@ -1283,7 +1268,7 @@ Command *PreScript::GetOperand(Function *f)
 				if (t == TypeString)
 					size = 256;
 				memcpy(Constants[Operand->link_nr].data, GetConstantValue(), size);
-				next_exp();
+				Exp.next();
 			}else{
 				//Operand.Kind=0;
 				DoError("unknown operand");
@@ -1295,7 +1280,7 @@ Command *PreScript::GetOperand(Function *f)
 	// Arrays, Strukturen aufloessen...
 	GetOperandExtension(Operand,f);
 
-	so("Operand endet mit " + get_name(Exp.cur_exp - 1));
+	so("Operand endet mit " + Exp.get_name(Exp.cur_exp - 1));
 	return Operand;
 }
 
@@ -1303,8 +1288,8 @@ Command *PreScript::GetOperand(Function *f)
 Command *PreScript::GetOperator(Function *f)
 {
 	msg_db_f("GetOperator",4);
-	so(cur_name);
-	int op = WhichPrimitiveOperator(cur_name);
+	so(Exp.cur);
+	int op = WhichPrimitiveOperator(Exp.cur);
 	if (op < 0)
 		return NULL;
 
@@ -1314,7 +1299,7 @@ Command *PreScript::GetOperator(Function *f)
 	cmd->link_nr = op;
 	// only provisional (only operator sign, parameters and their types by GetCommand!!!)
 
-	next_exp();
+	Exp.next();
 	return cmd;
 }
 
@@ -1546,15 +1531,15 @@ Command *PreScript::GetCommand(Function *f)
 		Command *op = GetOperator(f);
 		if (op){
 			Operator.add(op);
-			if (end_of_line()){
-				//rewind_exp();
+			if (Exp.end_of_line()){
+				//Exp.rewind();
 				DoError("unexpected end of line after operator");
 			}
 			Operand.add(GetOperand(f));
 			NumOperands++;
 		}else{
 			so("(kein weiterer Operator)");
-			so(cur_name);
+			so(Exp.cur);
 			break;
 		}
 	}
@@ -1574,7 +1559,7 @@ Command *PreScript::GetCommand(Function *f)
 	// complete command is now collected in Operand[0]
 
 	so("-fertig");
-	so("Command endet mit " + get_name(Exp.cur_exp - 1));
+	so("Command endet mit " + Exp.get_name(Exp.cur_exp - 1));
 	return ret;
 }
 
@@ -1585,44 +1570,44 @@ void PreScript::GetSpecialCommand(Block *block, Function *f)
 	msg_db_f("GetSpecialCommand", 4);
 
 	// special commands...
-	if (cur_name == "for"){
+	if (Exp.cur == "for"){
 		// variable
-		next_exp();
+		Exp.next();
 		Command *for_var;
 		// internally declared?
 		bool internally = false;
-		if ((cur_name == "int") || (cur_name == "float")){
-			Type *t = (cur_name == "int") ? TypeInt : TypeFloat;
+		if ((Exp.cur == "int") || (Exp.cur == "float")){
+			Type *t = (Exp.cur == "int") ? TypeInt : TypeFloat;
 			internally = true;
-			next_exp();
-			int var_no = AddVar(cur_name, t, f);
+			Exp.next();
+			int var_no = AddVar(Exp.cur, t, f);
 			exlink_make_var_local(this, t, var_no);
  			for_var = cp_command(this, &GetExistenceLink);
 		}else{
-			GetExistence(cur_name, f);
+			GetExistence(Exp.cur, f);
  			for_var = cp_command(this, &GetExistenceLink);
 			if ((!is_variable(for_var->kind)) || ((for_var->type != TypeInt) && (for_var->type != TypeFloat)))
 				DoError("int or float variable expected after \"for\"");
 		}
-		next_exp();
+		Exp.next();
 
 		// first value
-		if (cur_name != ",")
+		if (Exp.cur != ",")
 			DoError("\",\" expected after variable in for");
-		next_exp();
+		Exp.next();
 		Command *val0 = GetCommand(f);
 		if (val0->type != for_var->type){
-			rewind_exp();
+			Exp.rewind();
 			DoError(format("%s expected as first value of for", for_var->type->name.c_str()));
 		}
 
 		// last value
-		if (cur_name != ",")
+		if (Exp.cur != ",")
 			DoError("\",\" expected after variable in for");
-		next_exp();
+		Exp.next();
 		Command *val1 = GetCommand(f);
 		if (val1->type != for_var->type){
-			rewind_exp();
+			Exp.rewind();
 			DoError(format("%s expected as last value of for", for_var->type->name.c_str()));
 		}
 
@@ -1641,7 +1626,7 @@ void PreScript::GetSpecialCommand(Block *block, Function *f)
 		block->command.add(cmd_while);
 		ExpectNewline();
 		// ...block
-		next_line();
+		Exp.next_line();
 		ExpectIndent();
 		int loop_block_no = Blocks.num; // should get created...soon
 		GetCompleteCommand(block, f);
@@ -1664,26 +1649,26 @@ void PreScript::GetSpecialCommand(Block *block, Function *f)
 		if (internally)
 			f->var[for_var->link_nr].name = "-out-of-scope-";
 
-	}else if (cur_name == "forall"){
+	}else if (Exp.cur == "forall"){
 		// for index
 		int var_no_index = AddVar("-for_index-", TypeInt, f);
 		exlink_make_var_local(this, TypeInt, var_no_index);
  		Command *for_index = cp_command(this, &GetExistenceLink);
 		
 		// variable
-		next_exp();
-		string var_name = cur_name;
-		next_exp();
+		Exp.next();
+		string var_name = Exp.cur;
+		Exp.next();
 
 		// super array
-		if (cur_name != "in")
+		if (Exp.cur != "in")
 			DoError("\"in\" expected after variable in forall");
-		next_exp();
-		GetExistence(cur_name, f);
+		Exp.next();
+		GetExistence(Exp.cur, f);
 		Command *for_array = cp_command(this, &GetExistenceLink);
 		if ((!is_variable(for_array->kind)) || (!for_array->type->is_super_array))
 			DoError("list variable expected as second parameter in \"forall\"");
-		next_exp();
+		Exp.next();
 
 		// variable...
 		Type *var_type = for_array->type->parent;
@@ -1719,7 +1704,7 @@ void PreScript::GetSpecialCommand(Block *block, Function *f)
 		block->command.add(cmd_while);
 		ExpectNewline();
 		// ...block
-		next_line();
+		Exp.next_line();
 		ExpectIndent();
 		int loop_block_no = Blocks.num; // should get created...soon
 		GetCompleteCommand(block, f);
@@ -1758,8 +1743,8 @@ void PreScript::GetSpecialCommand(Block *block, Function *f)
 		f->var[for_var->link_nr].name = "-out-of-scope-";
 		f->var[for_index->link_nr].name = "-out-of-scope-";
 		
-	}else if (cur_name == "while"){
-		next_exp();
+	}else if (Exp.cur == "while"){
+		Exp.next();
 		Command *cmd_cmp = GetCommand(f);
 		CheckParamLink(cmd_cmp, TypeBool, "while", 0);
 		ExpectNewline();
@@ -1768,20 +1753,20 @@ void PreScript::GetSpecialCommand(Block *block, Function *f)
 		cmd_while->param[0] = cmd_cmp;
 		block->command.add(cmd_while);
 		// ...block
-		next_line();
+		Exp.next_line();
 		ExpectIndent();
 		GetCompleteCommand(block, f);
- 	}else if (cur_name == "break"){
-		next_exp();
+ 	}else if (Exp.cur == "break"){
+		Exp.next();
 		Command *cmd = add_command_compilerfunc(this, CommandBreak);
 		block->command.add(cmd);
-	}else if (cur_name == "continue"){
-		next_exp();
+	}else if (Exp.cur == "continue"){
+		Exp.next();
 		Command *cmd = add_command_compilerfunc(this, CommandContinue);
 		block->command.add(cmd);
-	}else if (cur_name == "if"){
+	}else if (Exp.cur == "if"){
 		int ind = Exp.cur_line->indent;
-		next_exp();
+		Exp.next();
 		Command *cmd_cmp = GetCommand(f);
 		CheckParamLink(cmd_cmp, TypeBool, "if", 0);
 		ExpectNewline();
@@ -1790,17 +1775,17 @@ void PreScript::GetSpecialCommand(Block *block, Function *f)
 		cmd_if->param[0] = cmd_cmp;
 		block->command.add(cmd_if);
 		// ...block
-		next_line();
+		Exp.next_line();
 		ExpectIndent();
 		GetCompleteCommand(block, f);
-		next_line();
+		Exp.next_line();
 
 		// else?
-		if ((!end_of_file()) && (cur_name == "else") && (Exp.cur_line->indent >= ind)){
+		if ((!Exp.end_of_file()) && (Exp.cur == "else") && (Exp.cur_line->indent >= ind)){
 			cmd_if->link_nr = CommandIfElse;
-			next_exp();
+			Exp.next();
 			// iterative if
-			if (cur_name == "if"){
+			if (Exp.cur == "if"){
 				// sub-if's in a new block
 				Block *new_block = AddBlock();
 				// parse the next if
@@ -1815,14 +1800,14 @@ void PreScript::GetSpecialCommand(Block *block, Function *f)
 			}
 			ExpectNewline();
 			// ...block
-			next_line();
+			Exp.next_line();
 			ExpectIndent();
 			GetCompleteCommand(block, f);
-			//next_line();
+			//Exp.next_line();
 		}else{
 			Exp.cur_line --;
 			Exp.cur_exp = Exp.cur_line->exp.num - 1;
-			Exp._cur_ = Exp.cur_line->exp[Exp.cur_exp].name;
+			Exp.cur = Exp.cur_line->exp[Exp.cur_exp].name;
 		}
 	}
 }
@@ -1837,14 +1822,14 @@ void PreScript::GetCompleteCommand(Block *block, Function *f)
 	msg_db_f("GetCompleteCommand", 4);
 	// cur_exp = 0!
 
-	Type *tType = GetType(cur_name, false);
-	int last_indent = indent_0;
+	Type *tType = GetType(Exp.cur, false);
+	int last_indent = Exp.indent_0;
 
 	// block?  <- indent
-	if (indented){
-		indented = false;
+	if (Exp.indented){
+		Exp.indented = false;
 		Exp.cur_exp = 0; // bad hack...
-		Exp._cur_ = Exp.cur_line->exp[Exp.cur_exp].name;
+		Exp.cur = Exp.cur_line->exp[Exp.cur_exp].name;
 		msg_db_f("Block", 4);
 		Block *new_block = AddBlock();
 		new_block->root = block->index;
@@ -1855,21 +1840,21 @@ void PreScript::GetCompleteCommand(Block *block, Function *f)
 		block->command.add(c);
 
 		for (int i=0;true;i++){
-			if (((i > 0) && (Exp.cur_line->indent < last_indent)) || (end_of_file()))
+			if (((i > 0) && (Exp.cur_line->indent < last_indent)) || (Exp.end_of_file()))
 				break;
 
 			GetCompleteCommand(new_block, f);
-			next_line();
+			Exp.next_line();
 		}
 		Exp.cur_line --;
-		indent_0 = Exp.cur_line->indent;
-		indented = false;
+		Exp.indent_0 = Exp.cur_line->indent;
+		Exp.indented = false;
 		Exp.cur_exp = Exp.cur_line->exp.num - 1;
-		Exp._cur_ = Exp.cur_line->exp[Exp.cur_exp].name;
+		Exp.cur = Exp.cur_line->exp[Exp.cur_exp].name;
 
 	// assembler block
-	}else if (cur_name == "-asm-"){
-		next_exp();
+	}else if (Exp.cur == "-asm-"){
+		Exp.next();
 		so("<Asm-Block>");
 		Command *c = add_command_compilerfunc(this, CommandAsm);
 		block->command.add(c);
@@ -1877,27 +1862,27 @@ void PreScript::GetCompleteCommand(Block *block, Function *f)
 	// local (variable) definitions...
 	// type of variable
 	}else if (tType){
-		for (int l=0;!end_of_line();l++){
+		for (int l=0;!Exp.end_of_line();l++){
 			ParseVariableDefSingle(tType, f);
 
 			// assignment?
-			if (cur_name == "="){
-				rewind_exp();
+			if (Exp.cur == "="){
+				Exp.rewind();
 				Command *c = GetCommand(f);
 				block->command.add(c);
 			}
-			if (end_of_line())
+			if (Exp.end_of_line())
 				break;
-			if ((cur_name != ",") && (!end_of_line()))
+			if ((Exp.cur != ",") && (!Exp.end_of_line()))
 				DoError("\",\", \"=\" or newline expected after definition of local variable");
-			next_exp();
+			Exp.next();
 		}
 		return;
 	}else{
 
 		
 	// commands (the actual code!)
-		if ((cur_name == "for") || (cur_name == "forall") || (cur_name == "while") || (cur_name == "break") || (cur_name == "continue") || (cur_name == "if")){
+		if ((Exp.cur == "for") || (Exp.cur == "forall") || (Exp.cur == "while") || (Exp.cur == "break") || (Exp.cur == "continue") || (Exp.cur == "if")){
 			GetSpecialCommand(block, f);
 
 		}else{
@@ -1920,16 +1905,16 @@ void PreScript::TestArrayDefinition(Type **type, bool is_pointer)
 	if (is_pointer){
 		(*type) = GetPointerType((*type));
 	}
-	if (cur_name == "["){
+	if (Exp.cur == "["){
 		Type nt;
 		int array_size;
 		string or_name = (*type)->name;
 		int or_name_length = or_name.num;
 		so("-Array-");
-		next_exp();
+		Exp.next();
 
 		// no index -> super array
-		if (cur_name == "]"){
+		if (Exp.cur == "]"){
 			array_size = -1;
 			
 		}else{
@@ -1941,11 +1926,11 @@ void PreScript::TestArrayDefinition(Type **type, bool is_pointer)
 			if ((c->kind != KindConstant) || (c->type != TypeInt))
 				DoError("only constants of type \"int\" allowed for size of arrays");
 			array_size = *(int*)Constants[c->link_nr].data;
-			//next_exp();
-			if (cur_name != "]")
+			//Exp.next();
+			if (Exp.cur != "]")
 				DoError("\"]\" expected after array size");
 		}
-		next_exp();
+		Exp.next();
 		// recursion
 		TestArrayDefinition(type, false); // is_pointer=false, since pointers have been handled
 
@@ -1958,9 +1943,9 @@ void PreScript::TestArrayDefinition(Type **type, bool is_pointer)
 			(*type) = CreateNewType(	or_name + format("[%d]", array_size) + (*type)->name.substr(or_name_length, -1),
 			                        	(*type)->size * array_size, false, false, true, array_size, (*type));
 		}
-		if (cur_name == "*"){
+		if (Exp.cur == "*"){
 			so("nachtraeglich Pointer");
-			next_exp();
+			Exp.next();
 			TestArrayDefinition(type, true);
 		}
 	}
@@ -1981,7 +1966,7 @@ void PreScript::LoadToBuffer(const string &filename,bool just_analyse)
 	Buffer = f->ReadComplete();
 	FileClose(f);
 
-	Analyse(Buffer.c_str(), just_analyse);
+	Exp.Analyse(this, Buffer.c_str());
 
 
 	Buffer.clear();
@@ -1991,40 +1976,40 @@ void PreScript::LoadToBuffer(const string &filename,bool just_analyse)
 void PreScript::ParseEnum()
 {
 	msg_db_f("ParseEnum", 4);
-	next_exp(); // 'enum'
+	Exp.next(); // 'enum'
 	ExpectNewline();
 	int value = 0;
-	next_line();
+	Exp.next_line();
 	ExpectIndent();
-	for (int i=0;!end_of_file();i++){
-		for (int j=0;!end_of_line();j++){
+	for (int i=0;!Exp.end_of_file();i++){
+		for (int j=0;!Exp.end_of_line();j++){
 			int nc = AddConstant(TypeInt);
 			Constant *c = &Constants[nc];
-			c->name = cur_name;
-			next_exp();
+			c->name = Exp.cur;
+			Exp.next();
 
 			// explicit value
-			if (cur_name == ":"){
-				next_exp();
+			if (Exp.cur == ":"){
+				Exp.next();
 				ExpectNoNewline();
 				Type *type = GetConstantType();
 				if (type == TypeInt)
 					value = *(int*)GetConstantValue();
 				else
 					DoError("integer constant expected after \":\" for explicit value of enum");
-				next_exp();
+				Exp.next();
 			}
 			*(int*)c->data = value ++;
 			
-			if (end_of_line())
+			if (Exp.end_of_line())
 				break;
-			if ((cur_name != ","))
+			if ((Exp.cur != ","))
 				DoError("\",\" or newline expected after enum definition");
-			next_exp();
+			Exp.next();
 			ExpectNoNewline();
 		}
-		next_line();
-		if (unindented)
+		Exp.next_line();
+		if (Exp.unindented)
 			break;
 	}
 	Exp.cur_line --;
@@ -2070,23 +2055,23 @@ void PreScript::ParseClass()
 
 	int indent0 = Exp.cur_line->indent;
 	int _offset = 0;
-	next_exp(); // 'class'
-	string name = cur_name;
-	next_exp();
+	Exp.next(); // 'class'
+	string name = Exp.cur;
+	Exp.next();
 
 	// create class and type
 	int nt0 = Types.num;
 	Type *t = CreateNewType(name, 0, false, false, false, 0, NULL);
 	if (nt0 == Types.num){
-		rewind_exp();
+		Exp.rewind();
 		DoError("class already exists");
 	}
 
 	// parent class
-	if (cur_name == ":"){
+	if (Exp.cur == ":"){
 		so("vererbung der struktur");
-		next_exp();
-		Type *ancestor = GetType(cur_name, true);
+		Exp.next();
+		Type *ancestor = GetType(Exp.cur, true);
 		bool found = false;
 		if (ancestor->element.num > 0){
 			// inheritance of elements
@@ -2108,43 +2093,43 @@ void PreScript::ParseClass()
 
 	// elements
 	for (int num=0;true;num++){
-		next_line();
+		Exp.next_line();
 		if (Exp.cur_line->indent <= indent0) //(unindented)
 			break;
-		if (end_of_file())
+		if (Exp.end_of_file())
 			break;
 
 		// extern?
 		next_extern = false;
-		if (cur_name == "extern"){
+		if (Exp.cur == "extern"){
 			next_extern = true;
-			next_exp();
+			Exp.next();
 		}
 		int ie = Exp.cur_exp;
 
-		Type *tType = GetType(cur_name, true);
-		for (int j=0;!end_of_line();j++){
+		Type *tType = GetType(Exp.cur, true);
+		for (int j=0;!Exp.end_of_line();j++){
 			//int indent = Exp.cur_line->indent;
 			
 			ClassElement el;
 			bool is_pointer = false;
 			Type *type = tType;
-			if (cur_name == "*"){
-				next_exp();
+			if (Exp.cur == "*"){
+				Exp.next();
 				is_pointer = true;
 			}
-			el.name = cur_name;
-			next_exp();
+			el.name = Exp.cur;
+			Exp.next();
 			TestArrayDefinition(&type, is_pointer);
 			el.type = type;
 
 			// is a function?
 			bool is_function = false;
-			if (cur_name == "(")
+			if (Exp.cur == "(")
 			    is_function = true;
 			if (is_function){
 				Exp.cur_exp = ie;
-				Exp._cur_ = Exp.cur_line->exp[Exp.cur_exp].name;
+				Exp.cur = Exp.cur_line->exp[Exp.cur_exp].name;
 				ParseClassFunction(t, next_extern);
 				
 				break;
@@ -2154,14 +2139,14 @@ void PreScript::ParseClass()
 			if (type_needs_alignment(type))
 				_offset = mem_align(_offset);
 			so(format("Class-Element: %s %s  Offset: %d", type->name.c_str(), el.name.c_str(), _offset));
-			if ((cur_name != ",") && (!end_of_line()))
+			if ((Exp.cur != ",") && (!Exp.end_of_line()))
 				DoError("\",\" or newline expected after class element");
 			el.offset = _offset;
 			_offset += type->size;
 			t->element.add(el);
-			if (end_of_line())
+			if (Exp.end_of_line())
 				break;
-			next_exp();
+			Exp.next();
 		}
 	}
 	foreach(ClassElement &e, t->element)
@@ -2177,19 +2162,19 @@ void PreScript::ParseClass()
 
 void PreScript::ExpectNoNewline()
 {
-	if (end_of_line())
+	if (Exp.end_of_line())
 		DoError("unexpected newline");
 }
 
 void PreScript::ExpectNewline()
 {
-	if (!end_of_line())
+	if (!Exp.end_of_line())
 		DoError("newline expected");
 }
 
 void PreScript::ExpectIndent()
 {
-	if (!indented)
+	if (!Exp.indented)
 		DoError("additional indent expected");
 }
 
@@ -2221,9 +2206,9 @@ void AddExternalVar(const string &name, Type *type)
 void PreScript::ParseGlobalConst(const string &name, Type *type)
 {
 	msg_db_f("ParseGlobalConst", 6);
-	if (cur_name != "=")
+	if (Exp.cur != "=")
 		DoError("\"=\" expected after const name");
-	next_exp();
+	Exp.next();
 
 	// find const value
 	Command *cv = GetCommand(&RootOfAllEvil);
@@ -2245,14 +2230,14 @@ Type *PreScript::ParseVariableDefSingle(Type *type, Function *f, bool as_param)
 	string name;
 
 	// pointer?
-	if (cur_name == "*"){
-		next_exp();
+	if (Exp.cur == "*"){
+		Exp.next();
 		is_pointer = true;
 	}
 
 	// name
-	name = cur_name;
-	next_exp();
+	name = Exp.cur;
+	Exp.next();
 	so("Variable: " + name);
 
 	// array?
@@ -2277,21 +2262,21 @@ Type *PreScript::ParseVariableDefSingle(Type *type, Function *f, bool as_param)
 void PreScript::ParseVariableDef(bool single, Function *f)
 {
 	msg_db_f("ParseVariableDef", 4);
-	Type *type = GetType(cur_name, true);
+	Type *type = GetType(Exp.cur, true);
 	
 	for (int j=0;true;j++){
 		ExpectNoNewline();
 
 		ParseVariableDefSingle(type, f);
 		
-		if ((cur_name != ",") && (!end_of_line()))
+		if ((Exp.cur != ",") && (!Exp.end_of_line()))
 			DoError("\",\" or newline expected after definition of a global variable");
 
 		// last one?
-		if (end_of_line())
+		if (Exp.end_of_line())
 			break;
 		
-		next_exp(); // ','
+		Exp.next(); // ','
 	}
 }
 
@@ -2345,49 +2330,49 @@ void PreScript::ParseFunction(Type *class_type, bool as_extern)
 	msg_db_f("ParseFunction", 4);
 	
 // return type
-	Type *type = GetType(cur_name, true);
+	Type *type = GetType(Exp.cur, true);
 
 	// pointer?
-	if (cur_name == "*"){
-		next_exp();
+	if (Exp.cur == "*"){
+		Exp.next();
 		type = GetPointerType(type);
 	}
 
-	so(cur_name);
-	Function *f = AddFunction(cur_name, type);
+	so(Exp.cur);
+	Function *f = AddFunction(Exp.cur, type);
 	cur_func = f;
 	next_extern = false;
 	
-	next_exp();
-	next_exp(); // '('
+	Exp.next();
+	Exp.next(); // '('
 
 // parameter list
 	
-	if (cur_name != ")")
+	if (Exp.cur != ")")
 		for (int k=0;k<SCRIPT_MAX_PARAMS;k++){
 			// like variable definitions
 
 			f->num_params ++;
 
 			// type of parameter variable
-			Type *param_type = GetType(cur_name, true);
+			Type *param_type = GetType(Exp.cur, true);
 			Type *pt = ParseVariableDefSingle(param_type, f, true);
 			f->var.back().type = pt;
 
-			if (cur_name == ")")
+			if (Exp.cur == ")")
 				break;
 
-			if (cur_name != ",")
+			if (Exp.cur != ",")
 				DoError("\",\" or \")\" expected after parameter");
-			next_exp(); // ','
+			Exp.next(); // ','
 		}
-	next_exp(); // ')'
+	Exp.next(); // ')'
 
 	// save "original" param types (Var[].Type gets altered for call by reference)
 	for (int i=0;i<f->num_params;i++)
 		f->literal_param_type[i] = f->var[i].type;
 
-	if (!end_of_line())
+	if (!Exp.end_of_line())
 		DoError("newline expected after parameter list");
 
 
@@ -2406,16 +2391,16 @@ void PreScript::ParseFunction(Type *class_type, bool as_extern)
 		return;
 	}
 
-	ps_line_t *this_line = Exp.cur_line;
+	ExpressionBuffer::Line *this_line = Exp.cur_line;
 	
 
 // instructions
 	while(true){
-		next_line();
-		indented = false;
+		Exp.next_line();
+		Exp.indented = false;
 
 		// end of file
-		if (end_of_file())
+		if (Exp.end_of_file())
 			break;
 
 		// end of function
@@ -2441,41 +2426,38 @@ void PreScript::Parser()
 	// syntax analysis
 	shift_right = 0;
 
-	Exp.cur_line = &Exp.line[0];
-	Exp.cur_exp = 0;
-	Exp._cur_ = Exp.cur_line->exp[Exp.cur_exp].name;
-	reset_indent();
+	Exp.reset_parser();
 
 	// global definitions (enum, class, variables and functions)
-	while (!end_of_file()){
+	while (!Exp.end_of_file()){
 		next_extern = false;
 		next_const = false;
 
 		// extern?
-		if (cur_name == "extern"){
+		if (Exp.cur == "extern"){
 			next_extern = true;
-			next_exp();
+			Exp.next();
 		}
 
 		// const?
-		if (cur_name == "const"){
+		if (Exp.cur == "const"){
 			next_const = true;
-			next_exp();
+			Exp.next();
 		}
 
 		// enum
-		if (cur_name == "enum"){
+		if (Exp.cur == "enum"){
 			ParseEnum();
 
 		// class
-		}else if ((cur_name == "struct") || (cur_name == "class")){
+		}else if ((Exp.cur == "struct") || (Exp.cur == "class")){
 			ParseClass();
 			
 		}else{
 
 			// type of definition
-			GetType(cur_name, true);
-			rewind_exp();
+			GetType(Exp.cur, true);
+			Exp.rewind();
 			bool is_function = false;
 			for (int j=1;j<Exp.cur_line->exp.num-1;j++)
 				if (strcmp(Exp.cur_line->exp[j].name, "(") == 0)
@@ -2490,7 +2472,7 @@ void PreScript::Parser()
 				ParseVariableDef(false, &RootOfAllEvil);
 			}
 		}
-		next_line();
+		Exp.next_line();
 	}
 }
 
@@ -3447,7 +3429,7 @@ PreScript::~PreScript()
 {
 	msg_db_f("~CPreScript", 4);
 	
-	clear_exp_buffer(&Exp);
+	Exp.clear();
 
 	// delete all types created by this script
 	for (int i=Types.num-NumOwnTypes;i<Types.num;i++)

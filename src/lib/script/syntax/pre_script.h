@@ -1,48 +1,20 @@
 #if !defined(PRESCRIPT_H__INCLUDED_)
 #define PRESCRIPT_H__INCLUDED_
 
+
+#include "lexical.h"
+
 namespace Asm{
 	struct MetaInfo;
 };
 
 namespace Script{
 
-// character buffer and expressions (syntax analysis)
+class Script;
+class PreScript;
+class Type;
 
-struct ps_exp_t
-{
-	char* name; // points into Exp.buffer
-	int pos;
-};
-
-struct ps_line_t
-{
-	int physical_line, length, indent;
-	Array<ps_exp_t> exp;
-};
-
-struct ps_exp_buffer_t
-{
-	char *buffer; // holds ALL expressions of the file (0 separated)
-	char *buf_cur; // pointer to the latest one
-	Array<ps_line_t> line;
-	ps_line_t temp_line;
-	ps_line_t *cur_line;
-	int cur_exp;
-	int comment_level;
-	string _cur_;
-};
-
-
-#define cur_name		Exp._cur_
-#define get_name(n)		string(Exp.cur_line->exp[n].name)
-#define next_exp()		{Exp.cur_exp ++; Exp._cur_ = Exp.cur_line->exp[Exp.cur_exp].name;}//;ExpectNoNewline()
-#define rewind_exp()	{Exp.cur_exp --; Exp._cur_ = Exp.cur_line->exp[Exp.cur_exp].name;}
-#define end_of_line()	(Exp.cur_exp >= Exp.cur_line->exp.num - 1) // the last entry is "-eol-"
-#define past_end_of_line()	(Exp.cur_exp >= Exp.cur_line->exp.num)
-#define next_line()		{Exp.cur_line ++; Exp.cur_exp = 0; test_indent(Exp.cur_line->indent);  Exp._cur_ = Exp.cur_line->exp[Exp.cur_exp].name;}
-#define end_of_file()	((long)Exp.cur_line >= (long)&Exp.line[Exp.line.num - 1]) // last line = "-eol-"
-
+#define SCRIPT_MAX_PARAMS				16		// number of possible parameters per function/command
 
 // macros
 struct Define
@@ -100,15 +72,6 @@ enum
 	KindDerefRegister,
 	KindMarker,
 	KindAsmBlock,
-};
-
-// type of expression (syntax)
-enum
-{
-	ExpKindNumber,
-	ExpKindLetter,
-	ExpKindSpacing,
-	ExpKindSign
 };
 
 struct Command;
@@ -184,15 +147,8 @@ public:
 	void ExpectNoNewline();
 	void ExpectNewline();
 	void ExpectIndent();
-
-	// lexical analysis
-	int GetKind(char c);
-	void Analyse(const char *buffer, bool just_analyse);
-	bool AnalyseExpression(const char *buffer, int &pos, ps_line_t *l, int &line_no, bool just_analyse);
-	bool AnalyseLine(const char *buffer, ps_line_t *l, int &line_no, bool just_analyse);
-	void AnalyseLogicalLine(const char *buffer, ps_line_t *l, int &line_no, bool just_analyse);
 	
-	// syntax analysis
+	// syntax parsing
 	void Parser();
 	void ParseEnum();
 	void ParseClass();
@@ -211,7 +167,7 @@ public:
 
 	// pre compiler
 	void PreCompiler(bool just_analyse);
-	void HandleMacro(ps_line_t *l, int &line_no, int &NumIfDefs, bool *IfDefed, bool just_analyse);
+	void HandleMacro(ExpressionBuffer::Line *l, int &line_no, int &NumIfDefs, bool *IfDefed, bool just_analyse);
 	void CreateImplicitFunctions(Type *t, bool relocate_last_function);
 	void CreateAllImplicitFunctions(bool relocate_last_function);
 
@@ -267,7 +223,7 @@ public:
 	string Filename;
 	string Buffer;
 	int BufferLength, BufferPos;
-	ps_exp_buffer_t Exp;
+	ExpressionBuffer Exp;
 	Command GetExistenceLink;
 
 	// compiler options
@@ -299,53 +255,10 @@ public:
 };
 
 string Kind2Str(int kind);
-void clear_exp_buffer(ps_exp_buffer_t *e);
 void CreateAsmMetaInfo(PreScript* ps);
 
 
 
-inline bool isNumber(char c)
-{
-	if ((c>=48)&&(c<=57))
-		return true;
-	return false;
-}
-
-inline bool isLetter(char c)
-{
-	if ((c>='a')&&(c<='z'))
-		return true;
-	if ((c>='A')&&(c<='Z'))
-		return true;
-	if ((c=='_'))
-		return true;
-	// Umlaute
-#ifdef OS_WINDOWS
-	// Windows-Zeichensatz
-	if ((c==-28)||(c==-10)||(c==-4)||(c==-33)||(c==-60)||(c==-42)||(c==-36))
-		return true;
-#endif
-#ifdef OS_LINUX
-	// Linux-Zeichensatz??? testen!!!!
-#endif
-	return false;
-}
-
-inline bool isSpacing(char c)
-{
-	if ((c==' ')||(c=='\t')||(c=='\n'))
-		return true;
-	return false;
-}
-
-inline bool isSign(char c)
-{
-	if ((c=='.')||(c==':')||(c==',')||(c==';')||(c=='+')||(c=='-')||(c=='*')||(c=='%')||(c=='/')||(c=='=')||(c=='<')||(c=='>')||(c=='\''))
-		return true;
-	if ((c=='(')||(c==')')||(c=='{')||(c=='}')||(c=='&')||(c=='|')||(c=='!')||(c=='[')||(c==']')||(c=='\"')||(c=='\\')||(c=='#')||(c=='?')||(c=='$'))
-		return true;
-	return false;
-}
 
 };
 

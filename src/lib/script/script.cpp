@@ -374,7 +374,7 @@ void ExecuteSingleScriptCommand(const string &cmd)
 	try{
 
 // find expressions
-	ps->Analyse(single_command.c_str(), false);
+	ps->Exp.Analyse(ps, single_command.c_str());
 	if (ps->Exp.line[0].exp.num < 1){
 		//clear_exp_buffer(&ps->Exp);
 		delete(s);
@@ -388,9 +388,7 @@ void ExecuteSingleScriptCommand(const string &cmd)
 	func->_var_size = 0; // set to -1...
 
 	// parse
-	ps->Exp.cur_line = &ps->Exp.line[0];
-	ps->Exp.cur_exp = 0;
-	ps->Exp._cur_ = ps->Exp.cur_line->exp[ps->Exp.cur_exp].name;
+	ps->Exp.reset_parser();
 	ps->GetCompleteCommand(func->block, func);
 	//pre_script->GetCompleteCommand((pre_script->Exp->ExpNr,0,0,&func);
 

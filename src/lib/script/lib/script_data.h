@@ -12,8 +12,6 @@
 namespace Script{
 
 
-#define SCRIPT_MAX_DEFINE_RECURSIONS	128
-#define SCRIPT_MAX_PARAMS				16		// number of possible parameters per function/command
 #define SCRIPT_MAX_OPCODE				(2*65536)	// max. amount of opcode
 #define SCRIPT_MAX_THREAD_OPCODE		1024
 #define SCRIPT_DEFAULT_STACK_SIZE		32768	// max. amount of stack memory
