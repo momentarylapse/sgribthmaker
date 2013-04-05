@@ -841,6 +841,7 @@ void Compile()
 		SetMessage(format(_("Script ist fehler-frei &ubersetzbar!        (in %s)"), get_time_str(dt).c_str()));
 
 	}catch(const Script::Exception &e){
+		e.print();
 		HuiErrorBox(MainWin, _("Fehler"), e.message);
 		MoveCursorTo(e.line, e.column);
 	}
@@ -915,6 +916,7 @@ void CompileAndRun(bool verbose)
 		}
 
 	}catch(const Script::Exception &e){
+		e.print();
 		HuiErrorBox(MainWin, _("Fehler"), e.message);
 		MoveCursorTo(e.line, e.column);
 	}
@@ -1182,6 +1184,23 @@ void SetTag(int i, const char *fg_color, const char *bg_color, bool bold, bool i
 		g_object_set(tag[i].tag, "style", PANGO_STYLE_ITALIC, NULL);
 }
 
+struct TT
+{
+	int ii[700];
+	int a, b, c, d;
+	TT f(int x)
+	{msg_write("a");}
+};
+
+TT tt;
+
+void _ff()
+{
+	//TT x = tt.f(7);
+	TT *x;
+	x->b = 7; 
+}
+
 int hui_main(Array<string> arg)
 {
 	msg_init(false);
@@ -1349,6 +1368,8 @@ int hui_main(Array<string> arg)
 	MainWin->Update();
 
 	Script::Init();
+
+	msg_write(Asm::Disassemble((void*)_ff, -1));
 
 	New();
 

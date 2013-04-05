@@ -1239,17 +1239,17 @@ string InstructionParam::str()
 			if (disp == DispModeNone)
 				return "[" + reg->name + "]";
 			else if (disp == DispMode8)
-				return format("[%s + 0x%2x]", reg->name.c_str(), value);
+				return format("[%s + 0x%02x]", reg->name.c_str(), value);
 			else if (disp == DispMode16)
-				return format("[%s + 0x%4x]", reg->name.c_str(), value);
+				return format("[%s + 0x%04x]", reg->name.c_str(), value);
 			else if (disp == DispMode32)
-				return format("[%s + 0x%8x]", reg->name.c_str(), value);
+				return format("[%s + 0x%08x]", reg->name.c_str(), value);
 			else if (disp == DispModeSIB)
 				return "SIB[...][...]";
 			else if (disp == DispMode8SIB)
-				return format("[SIB... + 0x%2x]", value);
+				return format("[SIB... + 0x%02x]", value);
 			else if (disp == DispMode8Reg2)
-				return format("[%s + %s + 0x%2x]", reg->name.c_str(), reg2->name.c_str(), value);
+				return format("[%s + %s + 0x%02x]", reg->name.c_str(), reg2->name.c_str(), value);
 			else if (disp == DispModeReg2)
 				return "[" + reg->name + " + " + reg2->name + "]";
 		}else

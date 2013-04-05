@@ -105,6 +105,7 @@ struct Serializer
 	SerialCommandParam SerializeCommand(Command *com, int level, int index);
 	void SerializeOperator(Command *com, SerialCommandParam *param, SerialCommandParam &ret);
 
+	void cmd_list_out();
 
 	void add_reg_channel(int reg, int first, int last);
 	void add_temp(Type *t, SerialCommandParam &param);

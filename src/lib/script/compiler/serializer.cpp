@@ -156,33 +156,31 @@ void cmd_out(int n, SerialCommand &c)
 {
 	//msg_db_f("cmd_out", 4);
 	if (c.inst == inst_marker)
-		so(format("%d: -- Marker %d --", n, c.p1.kind));
+		msg_write(format("%3d: -- Marker %d --", n, c.p1.kind));
 	else if (c.inst == inst_asm)
-		so(format("%d: -- Asm --", n));
+		msg_write(format("%3d: -- Asm --", n));
 	else{
 		string t = format("%3d:  ", n) + Asm::GetInstructionName(c.inst);
 		param_out(t, c.p1);
 		param_out(t, c.p2);
-		so(t);
+		msg_write(t);
 	}
 }
 
-void cmd_list_out()
+void Serializer::cmd_list_out()
 {
-#ifdef ScriptDebug
 	msg_db_f("cmd_list_out", 4);
 	so("--------------------------------");
 	for (int i=0;i<cmd.num;i++)
 		cmd_out(i, cmd[i]);
 	so("-----------");
 	for (int i=0;i<RegChannel.num;i++)
-		so(format("  %d   %d -> %d", RegChannel[i].reg, RegChannel[i].first, RegChannel[i].last));
+		so(format("  %d   %d -> %d", RegChannel[i].reg_root, RegChannel[i].first, RegChannel[i].last));
 	so("-----------");
 	if (TempVarRangesDefined)
 		for (int i=0;i<TempVar.num;i++)
 			so(format("  %d   %d -> %d", i, TempVar[i].first, TempVar[i].last));
 	so("--------------------------------");
-#endif
 }
 
 void Serializer::add_cmd(int inst, SerialCommandParam p1, SerialCommandParam p2)
@@ -1634,11 +1632,11 @@ void Serializer::solve_deref_temp_local(int c, int np, bool is_local)
 	p.shift = 0;
 	p.type = type_pointer;
 
-	int reg = find_unused_reg(c, c, PointerSize, true);
+	int reg = find_unused_reg(c, c, /*PointerSize*/ 4, true);
 	//so(reg);
 	if (reg < 0)
 		script->DoErrorInternal("solve_deref_temp_local... no registers available");
-	SerialCommandParam p_reg = param_reg(type_pointer, reg);
+	SerialCommandParam p_reg = param_reg(/*type_pointer*/TypeReg32, reg);
 	SerialCommandParam p_deref_reg;
 	p_deref_reg.kind = KindDerefRegister;
 	p_deref_reg.p = (char*)(long)reg;
@@ -1650,6 +1648,7 @@ void Serializer::solve_deref_temp_local(int c, int np, bool is_local)
 	add_cmd(Asm::inst_mov, p_reg, p);
 	move_last_cmd(c);
 	if (shift > 0){
+		msg_write("solve_deref_temp_local");
 		add_cmd(Asm::inst_add, p_reg, param_const(TypeInt, (void*)(long)shift));
 		move_last_cmd(c + 1);
 		add_reg_channel(reg, c, c + 2);
@@ -1788,8 +1787,8 @@ void Serializer::ResolveDerefTempAndLocal()
 			// inst [reg2], reg
 			SerialCommandParam p1 = cmd[i].p1;
 			SerialCommandParam p2 = cmd[i].p2;
-			int shift1 = p1.shift;
-			int shift2 = p2.shift;
+			long shift1 = p1.shift;
+			long shift2 = p2.shift;
 			p1.shift = p2.shift = 0;
 			
 			p1.kind = is_local1 ? KindVarLocal : KindVarTemp;
@@ -1805,7 +1804,8 @@ void Serializer::ResolveDerefTempAndLocal()
 			move_last_cmd(cmd_pos ++);
 
 			if (shift2 > 0){
-				add_cmd(Asm::inst_add, p_reg2, param_const(TypeInt, (void*)(long)shift2));
+				msg_write("resolve deref temp&loc 2");
+				add_cmd(Asm::inst_add, p_reg2, param_const(type_pointer, (void*)shift2));
 				move_last_cmd(cmd_pos ++);
 			}
 
@@ -1817,7 +1817,8 @@ void Serializer::ResolveDerefTempAndLocal()
 			move_last_cmd(cmd_pos ++);
 
 			if (shift1 > 0){
-				add_cmd(Asm::inst_add, p_reg2, param_const(TypeInt, (void*)(long)shift1));
+				msg_write("resolve deref temp&loc 1");
+				add_cmd(Asm::inst_add, p_reg2, param_const(type_pointer, (void*)shift1));
 				move_last_cmd(cmd_pos ++);
 			}
 
@@ -2317,6 +2318,7 @@ inline void _resolve_deref_reg_shift_(Serializer *_s, SerialCommandParam &p, int
 {
 	long s = p.shift;
 	p.shift = 0;
+	msg_write("_resolve_deref_reg_shift_");
 	int reg = Asm::RegResize[Asm::RegRoot[(long)p.p]][4];
 	_s->add_cmd(Asm::inst_add, param_reg(TypeReg32, reg), param_const(TypeInt, (void*)s));
 	_s->move_last_cmd(i);
@@ -2397,6 +2399,7 @@ void Serializer::SerializeFunction(Function *f)
 
 	// function
 	SerializeBlock(f->block, 0);
+	cmd_list_out();
 	
 	FillInDestructors(false);
 
@@ -2543,8 +2546,11 @@ void Serializer::Assemble(char *Opcode, int &OpcodeSize)
 			// push 8 bit -> push 32 bit
 			if (cmd[i].inst == Asm::inst_push)
 				if (cmd[i].p1.kind == KindRegister)
-					cmd[i].p1.p = (char*)(long)Asm::RegRoot[(long)cmd[i].p1.p];
-			
+					cmd[i].p1.p = (char*)(long)Asm::RegResize[Asm::RegRoot[(long)cmd[i].p1.p]][PointerSize];
+
+			if (cmd[i].inst == Asm::inst_add)
+				if ((cmd[i].p1.kind == KindRegister) && (cmd[i].p1.type->size == 8) && ((cmd[i].p2.kind == KindConstant) || (cmd[i].p2.kind == KindRefToConst)) && (cmd[i].p2.type == TypeInt))
+					cmd[i].p1.p = (char*)(long)Asm::RegResize[Asm::RegRoot[(long)cmd[i].p1.p]][4];
 
 			assemble_cmd(list, cmd[i], script);
 		}
