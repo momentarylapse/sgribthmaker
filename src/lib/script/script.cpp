@@ -449,42 +449,9 @@ void *Script::MatchFunction(const string &name, const string &return_type, int n
 	return NULL;
 }
 
-string var2str(void *p, Type *t)
-{
-	if (t == TypeInt)
-		return i2s(*(int*)p);
-	else if (t == TypeFloat)
-		return f2s(*(float*)p, 3);
-	else if (t == TypeBool)
-		return b2s(*(bool*)p);
-	else if (t->is_pointer)
-		return p2s(*(void**)p);
-	else if (t == TypeString)
-		return "\"" + *(string*)p + "\"";
-	else if (t->is_super_array){
-		string s;
-		DynamicArray *da = (DynamicArray*)p;
-		for (int i=0; i<da->num; i++){
-			if (i > 0)
-				s += ", ";
-			s += var2str(((char*)da->data) + i * da->element_size, t->parent);
-		}
-		return "[" + s + "]";
-	}else if (t->element.num > 0){
-		string s;
-		foreachi(ClassElement &e, t->element, i){
-			if (i > 0)
-				s += ", ";
-			s += var2str(((char*)p) + e.offset, e.type);
-		}
-		return "(" + s + ")";
-	}
-	return string((char*)p, t->size).hex();
-}
-
 void print_var(void *p, const string &name, Type *t)
 {
-	msg_write(t->name + " " + name + " = " + var2str(p, t));
+	msg_write(t->name + " " + name + " = " + t->var2str(p));
 }
 
 void Script::ShowVars(bool include_consts)

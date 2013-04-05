@@ -258,7 +258,7 @@ public:
 
 	// debug displaying
 	void ShowCommand(Command *c);
-	void ShowFunction(int f);
+	void ShowFunction(Function *f);
 	void ShowBlock(Block *b);
 	void Show();
 
@@ -299,7 +299,6 @@ public:
 };
 
 string Kind2Str(int kind);
-string Operator2Str(PreScript *s,int cmd);
 void clear_exp_buffer(ps_exp_buffer_t *e);
 void CreateAsmMetaInfo(PreScript* ps);
 

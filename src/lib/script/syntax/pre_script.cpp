@@ -232,22 +232,6 @@ int s2i2(const string &str)
 		return	str._int();
 }
 
-
-string Type2Str(PreScript *s, Type *type)
-{
-	string str;
-	if (type)
-		str = "UNKNOWN TYPE (" + type->name + ")";
-	else
-		str = "UNKNOWN TYPE (-nil-)";
-	for (int i=0;i<s->Types.num;i++)
-		if (type == s->Types[i])
-			str = s->Types[i]->name;
-	if (type == TypeUnknown)
-		str = "[deliberately unknown type]";
-	return str;
-}
-
 string Kind2Str(int kind)
 {
 	if (kind == KindVarLocal)			return "local variable";
@@ -285,30 +269,17 @@ string Kind2Str(int kind)
 	return format("UNKNOWN KIND: %d", kind);
 }
 
-string Operator2Str(PreScript *s,int cmd)
-{
-	//strcpy(str,string("UNBEKANNTER OPERATOR: ",i2s(cmd)));
-	return "(" + Type2Str(s,PreOperators[cmd].param_type_1) + ") " + PrimitiveOperators[PreOperators[cmd].primitive_id].name + " )"
-		+ Type2Str(s,PreOperators[cmd].param_type_2) + ")";
-}
-
-string PrimitiveOperator2Str(int cmd)
-{
-	//strcpy(str,string("UNBEKANNTER PRIMITIVER OPERATOR: ",i2s(cmd)));
-	return PrimitiveOperators[cmd].name;
-}
-
 string LinkNr2Str(PreScript *s,int kind,int nr)
 {
-	if (kind==KindVarLocal)			return i2s(nr);
-	if (kind==KindVarGlobal)		return i2s(nr);
-	if (kind==KindVarFunction)		return i2s(nr);
+	if (kind==KindVarLocal)			return s->cur_func->var[nr].name;
+	if (kind==KindVarGlobal)		return s->RootOfAllEvil.var[nr].name;
+	if (kind==KindVarFunction)		return s->Functions[nr]->name;
 	if (kind==KindVarExternal)		return PreExternalVars[nr].name;
-	if (kind==KindConstant)			return i2s(nr);
+	if (kind==KindConstant)			return s->Constants[nr].type->var2str(s->Constants[nr].data);
 	if (kind==KindFunction)			return s->Functions[nr]->name;
 	if (kind==KindCompilerFunction)	return PreCommands[nr].name;
-	if (kind==KindOperator)			return Operator2Str(s,nr);
-	if (kind==KindPrimitiveOperator)return PrimitiveOperator2Str(nr);
+	if (kind==KindOperator)			return PreOperators[nr].str();
+	if (kind==KindPrimitiveOperator)return PrimitiveOperators[nr].name;
 	if (kind==KindBlock)			return i2s(nr);
 	if (kind==KindAddressShift)		return i2s(nr);
 	if (kind==KindArray)			return "(no LinkNr)";
@@ -317,10 +288,10 @@ string LinkNr2Str(PreScript *s,int kind,int nr)
 	if (kind==KindDereference)		return "(no LinkNr)";
 	if (kind==KindDerefAddressShift)return i2s(nr);
 	if (kind==KindType)				return s->Types[nr]->name;
-	if (kind==KindAddress)			return d2h(&nr, 4);
-	if (kind==KindMemory)			return d2h(&nr, 4);
-	if (kind==KindLocalAddress)		return d2h(&nr, 4);
-	if (kind==KindLocalMemory)		return d2h(&nr, 4);
+	if (kind==KindAddress)			return d2h(&nr, PointerSize);
+	if (kind==KindMemory)			return d2h(&nr, PointerSize);
+	if (kind==KindLocalAddress)		return d2h(&nr, PointerSize);
+	if (kind==KindLocalMemory)		return d2h(&nr, PointerSize);
 	return "UNUSABLE KIND";
 }
 
@@ -930,7 +901,7 @@ void PreScript::GetOperandExtension(Command *Operand, Function *f)
 		}
 		
 		if (!ok)
-			DoError("unknown element of " + Type2Str(this,type));
+			DoError("unknown element of " + type->name);
 
 		next_exp();
 
@@ -1173,7 +1144,7 @@ void PreScript::GetFunctionCall(const string &f_name, Command *Operand, Function
 			return;
 	    }
 
-	so(Type2Str(this, Operand->type));
+	so(Operand->type->name);
 	// link operand onto this command
 //	so(cmd->NumParams);
 
@@ -1296,7 +1267,7 @@ Command *PreScript::GetOperand(Function *f)
 					DoError("unknown unitary operator  " + p2->name);
 				}
 				CommandMakeOperator(Operand, sub_command, NULL, o);
-				so(Operator2Str(this,o));
+				so(PreOperators[o].str());
 				return Operand;
 			}
 		}else{
@@ -1544,7 +1515,7 @@ void PreScript::LinkMostImportantOperator(int &NumOperators, Command **Operand, 
 	int op_no = Operator[mio]->link_nr;
 	if (!LinkOperator(op_no, param1, param2, &Operator[mio])){
 		Exp.cur_exp = op_exp[mio];
-		DoError(format("no operator found: (%s) %s (%s)", Type2Str(this, param1->type).c_str(), PrimitiveOperator2Str(op_no).c_str(), Type2Str(this, param2->type).c_str()));
+		DoError(format("no operator found: (%s) %s (%s)", param1->type->name.c_str(), PrimitiveOperators[op_no].name.c_str(), param2->type->name.c_str()));
 	}
 
 // remove from list
@@ -3518,54 +3489,41 @@ PreScript::~PreScript()
 
 void PreScript::ShowCommand(Command *c)
 {
-	msg_write(format("Command: %s, %s", Kind2Str(c->kind).c_str(), LinkNr2Str(this,c->kind,c->link_nr).c_str()));
+	msg_write("[" + Kind2Str(c->kind) + "] " + c->type->name + " " + LinkNr2Str(this,c->kind,c->link_nr));
 	msg_right();
-	msg_write("Type: " + Type2Str(this,c->type));
-	for (int p=0;p<c->num_params;p++){
-		msg_write("Parameter");
-		ShowCommand(c->param[p]);
-	}
-	if (c->instance){
-		msg_write("Object:");
+	if (c->instance)
 		ShowCommand(c->instance);
-	}
+	for (int p=0;p<c->num_params;p++)
+		ShowCommand(c->param[p]);
 	msg_left();
-	msg_write("");
 }
 
 void PreScript::ShowBlock(Block *b)
 {
-	msg_write("b");
+	msg_write("block");
 	msg_right();
-	for (int c=0;c<b->command.num;c++){
-		if (b->command[c]->kind == KindBlock)
-			ShowBlock(Blocks[b->command[c]->link_nr]);
+	foreach(Command *c, b->command){
+		if (c->kind == KindBlock)
+			ShowBlock(Blocks[c->link_nr]);
 		else
-			ShowCommand(b->command[c]);
+			ShowCommand(c);
 	}
 	msg_left();
-	msg_write("/b");
+	msg_write("/block");
 }
 
-void PreScript::ShowFunction(int f)
+void PreScript::ShowFunction(Function *f)
 {
-	msg_write(format("%d: %s --------------------------", f, Functions[f]->name.c_str()));
-	ShowBlock(Functions[f]->block);
+	msg_write("[function] " + f->return_type->name + " " + f->name);
+	cur_func = f;
+	ShowBlock(f->block);
 }
 
 void PreScript::Show()
 {
-	//if (Error)	return;
-	msg_write("\n\n\n################### Representation ######################\n\n\n");
-	msg_write(Filename);
-	/*msg_write("Befehle:\n");
+	msg_write("--------- Syntax of " + Filename + " ---------");
 	msg_right();
-	for (int c=0;c<NumCommands;c++)
-		ShowCommand(c);
-	msg_left();*/
-	msg_write("\nFunctions:\n");
-	msg_right();
-	for (int f=0;f<Functions.num;f++)
+	foreach(Function *f, Functions)
 		ShowFunction(f);
 	msg_left();
 	msg_write("\n\n");

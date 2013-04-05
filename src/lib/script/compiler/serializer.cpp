@@ -1100,7 +1100,7 @@ void Serializer::SerializeOperator(Command *com, SerialCommandParam *param, Seri
 			}
 			break;
 		default:
-			DoError("unimplemented operator: " + Operator2Str(pre_script, com->link_nr));
+			DoError("unimplemented operator: " + PreOperators[com->link_nr].str());
 	}
 }
 

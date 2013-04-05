@@ -73,15 +73,9 @@ struct Type{
 	PreScript *owner; // to share and be able to delete...
 
 	bool force_call_by_value;
-	bool UsesCallByReference()
-	{	return ((!force_call_by_value) && (!is_pointer)) || (is_array);	}
-	int GetFunc(const string &name)
-	{
-		foreachi(ClassFunction &f, function, i)
-			if (f.name == name)
-				return i;
-		return -1;
-	}
+	bool UsesCallByReference();
+	int GetFunc(const string &name);
+	string var2str(void *p);
 };
 extern Array<Type*> PreTypes;
 extern Type *TypeUnknown;
@@ -155,6 +149,7 @@ struct PreOperator{
 	int primitive_id;
 	Type *return_type, *param_type_1, *param_type_2;
 	void *func;
+	string str() const;
 };
 extern Array<PreOperator> PreOperators;
 
