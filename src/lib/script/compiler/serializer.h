@@ -8,7 +8,7 @@ namespace Script
 
 #define max_reg			8 // >= all RegXXX used...
 
-struct sRegChannel
+struct RegChannel
 {
 	int reg_root;
 	int first, last;
@@ -22,7 +22,7 @@ enum{
 	inst_func_outro,
 };
 
-struct sLoopData
+struct LoopData
 {
 	int marker_continue, marker_break;
 	int level, index;
@@ -47,7 +47,7 @@ struct SerialCommand
 	int pos;
 };
 
-struct sTempVar
+struct TempVar
 {
 	Type *type;
 	int first, last, count;
@@ -55,7 +55,7 @@ struct sTempVar
 	int entangled;
 };
 
-struct sStuffToAdd
+struct AddLaterData
 {
 	int kind, marker, level, index;
 };
@@ -74,7 +74,7 @@ struct Serializer
 	Array<SerialCommand> cmd;
 	int NumMarkers;
 	Script *script;
-	SyntaxTree *pre_script;
+	SyntaxTree *syntax_tree;
 	Function *cur_func;
 	bool call_used;
 	int LastCommandSize;
@@ -82,15 +82,15 @@ struct Serializer
 	bool TempVarRangesDefined;
 
 	Array<int> MapRegRoot;
-	Array<sRegChannel> RegChannel;
+	Array<RegChannel> reg_channel;
 
 	bool RegRootUsed[max_reg];
-	Array<sLoopData> LoopData;
+	Array<LoopData> loop;
 
 	int StackOffset, StackMaxSize;
-	Array<sTempVar> TempVar;
+	Array<TempVar> temp_var;
 
-	Array<sStuffToAdd> StuffToAdd;
+	Array<AddLaterData> add_later;
 
 	Asm::InstructionWithParamsList *list;
 
@@ -104,6 +104,7 @@ struct Serializer
 	void SerializeParameter(Command *link, int level, int index, SerialCommandParam &param);
 	SerialCommandParam SerializeCommand(Command *com, int level, int index);
 	void SerializeOperator(Command *com, SerialCommandParam *param, SerialCommandParam &ret);
+	void AddFunctionIntro(Function *f);
 
 	void cmd_list_out();
 

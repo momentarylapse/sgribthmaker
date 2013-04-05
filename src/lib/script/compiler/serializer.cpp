@@ -37,21 +37,21 @@ static const SerialCommandParam p_none = {-1, NULL, NULL, 0};
 
 void Serializer::add_reg_channel(int reg, int first, int last)
 {
-	sRegChannel c = {Asm::RegRoot[reg], first, last};
-	RegChannel.add(c);
+	RegChannel c = {Asm::RegRoot[reg], first, last};
+	reg_channel.add(c);
 }
 
 void Serializer::add_temp(Type *t, SerialCommandParam &param)
 {
 	if (t != TypeVoid){
-		sTempVar v;
+		TempVar v;
 		v.first = -1;
 		v.type = t;
 		v.referenced = (t->is_super_array);
 		v.entangled = 0;
-		TempVar.add(v);
+		temp_var.add(v);
 		param.kind = KindVarTemp;
-		param.p = (char*)(long)(TempVar.num - 1);
+		param.p = (char*)(long)(temp_var.num - 1);
 		param.type = t;
 		param.shift = 0;
 		
@@ -174,12 +174,12 @@ void Serializer::cmd_list_out()
 	for (int i=0;i<cmd.num;i++)
 		cmd_out(i, cmd[i]);
 	so("-----------");
-	for (int i=0;i<RegChannel.num;i++)
-		so(format("  %d   %d -> %d", RegChannel[i].reg_root, RegChannel[i].first, RegChannel[i].last));
+	for (int i=0;i<reg_channel.num;i++)
+		so(format("  %d   %d -> %d", reg_channel[i].reg_root, reg_channel[i].first, reg_channel[i].last));
 	so("-----------");
 	if (TempVarRangesDefined)
-		for (int i=0;i<TempVar.num;i++)
-			so(format("  %d   %d -> %d", i, TempVar[i].first, TempVar[i].last));
+		for (int i=0;i<temp_var.num;i++)
+			so(format("  %d   %d -> %d", i, temp_var[i].first, temp_var[i].last));
 	so("--------------------------------");
 }
 
@@ -216,7 +216,7 @@ void Serializer::move_last_cmd(int index)
 
 	// adjust temp vars
 	if (TempVarRangesDefined){
-		foreach(sTempVar &v, TempVar){
+		foreach(TempVar &v, temp_var){
 			if (v.first >= index)
 				v.first ++;
 			if (v.last >= index)
@@ -225,7 +225,7 @@ void Serializer::move_last_cmd(int index)
 	}
 
 	// adjust reg channels
-	foreach(sRegChannel &r, RegChannel){
+	foreach(RegChannel &r, reg_channel){
 		if (r.first >= index)
 			r.first ++;
 		if (r.last >= index)
@@ -238,7 +238,7 @@ void Serializer::remove_cmd(int index)
 	cmd.erase(index);
 
 	// adjust temp vars
-	foreach(sTempVar &v, TempVar){
+	foreach(TempVar &v, temp_var){
 		if (v.first >= index)
 			v.first --;
 		if (v.last >= index)
@@ -246,7 +246,7 @@ void Serializer::remove_cmd(int index)
 	}
 
 	// adjust reg channels
-	foreach(sRegChannel &r, RegChannel){
+	foreach(RegChannel &r, reg_channel){
 		if (r.first >= index)
 			r.first --;
 		if (r.last >= index)
@@ -264,7 +264,7 @@ void Serializer::remove_temp_var(int v)
 			if ((long)c.p2.p > v)
 				c.p2.p = (char*)((long)c.p2.p - 1);
 	}
-	TempVar.erase(v);
+	temp_var.erase(v);
 }
 
 void Serializer::move_param(SerialCommandParam &p, int from, int to)
@@ -272,15 +272,15 @@ void Serializer::move_param(SerialCommandParam &p, int from, int to)
 	if ((p.kind == KindVarTemp) || (p.kind == KindDerefVarTemp)){
 		so("move_param temp");
 		long v = (long)p.p;
-		if (TempVar[v].last < max(from, to))
-			TempVar[v].last = max(from, to);
-		if (TempVar[v].first > min(from, to))
-			TempVar[v].first = min(from, to);
+		if (temp_var[v].last < max(from, to))
+			temp_var[v].last = max(from, to);
+		if (temp_var[v].first > min(from, to))
+			temp_var[v].first = min(from, to);
 	}else if ((p.kind == KindRegister) || (p.kind == KindDerefRegister)){
 		so("move_param reg");
 		long r = Asm::RegRoot[(long)p.p];
 		bool found = false;
-		foreach(sRegChannel &rc, RegChannel)
+		foreach(RegChannel &rc, reg_channel)
 			if ((r == rc.reg_root) && (from >= rc.first) && (from >= rc.first)){
 				if (rc.last < max(from, to))
 					rc.last = max(from, to);
@@ -308,15 +308,15 @@ void Serializer::add_marker(int m)
 int Serializer::add_marker_after_command(int level, int index)
 {
 	int n = NumMarkers ++;
-	sStuffToAdd m = {StuffKindMarker, n, level, index};
-	StuffToAdd.add(m);
+	AddLaterData m = {StuffKindMarker, n, level, index};
+	add_later.add(m);
 	return n;
 }
 
 void Serializer::add_jump_after_command(int level, int index, int marker)
 {
-	sStuffToAdd j = {StuffKindJump, marker, level, index};
-	StuffToAdd.add(j);
+	AddLaterData j = {StuffKindJump, marker, level, index};
+	add_later.add(j);
 }
 
 inline int reg_smallify(int reg, int size)
@@ -570,8 +570,8 @@ void Serializer::SerializeParameter(Command *link, int level, int index, SerialC
 	//so(Kind2Str(link->Kind));
 	if (link->kind == KindVarFunction){
 		so(" -var-func");
-		if (pre_script->FlagCompileOS)
-			p.p = (char*)((long)script->func[link->link_nr] - (long)&script->Opcode[0] + (pre_script->AsmMetaInfo)->CodeOrigin);
+		if (syntax_tree->FlagCompileOS)
+			p.p = (char*)((long)script->func[link->link_nr] - (long)&script->Opcode[0] + (syntax_tree->AsmMetaInfo)->CodeOrigin);
 		else
 			p.p = (char*)script->func[link->link_nr];
 		p.kind = KindVarGlobal;
@@ -613,7 +613,7 @@ void Serializer::SerializeParameter(Command *link, int level, int index, SerialC
 			script->DoErrorLink(format("external variable is not linkable: %s",PreExternalVars[link->link_nr].name.c_str()));
 	}else if (link->kind == KindConstant){
 		so(" -const");
-		if ((UseConstAsGlobalVar) || (pre_script->FlagCompileOS))
+		if ((UseConstAsGlobalVar) || (syntax_tree->FlagCompileOS))
 			p.kind = KindVarGlobal;
 		else
 			p.kind = KindRefToConst;
@@ -1129,7 +1129,7 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 			if (com->script->syntax->Functions[com->link_nr]->_class)
 				is_class_function = true;
 		}else{
-			if (pre_script->Functions[com->link_nr]->_class)
+			if (syntax_tree->Functions[com->link_nr]->_class)
 				is_class_function = true;
 		}
 	}
@@ -1211,16 +1211,16 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 						// NextCommand is a block!
 						if (NextCommand->kind != KindBlock)
 							DoError("command block in \"for\" loop missing");
-						m_continue = add_marker_after_command(level + 1, pre_script->Blocks[NextCommand->link_nr]->command.num - 2);
+						m_continue = add_marker_after_command(level + 1, syntax_tree->Blocks[NextCommand->link_nr]->command.num - 2);
 					}
-					sLoopData l = {m_continue, m_after_while, level, index};
-					LoopData.add(l);
+					LoopData l = {m_continue, m_after_while, level, index};
+					loop.add(l);
 					}break;
 				case CommandBreak:
-					add_cmd(Asm::inst_jmp, param_marker(LoopData.back().marker_break));
+					add_cmd(Asm::inst_jmp, param_marker(loop.back().marker_break));
 					break;
 				case CommandContinue:
-					add_cmd(Asm::inst_jmp, param_marker(LoopData.back().marker_continue));
+					add_cmd(Asm::inst_jmp, param_marker(loop.back().marker_continue));
 					break;
 				case CommandReturn:
 					if (com->num_params > 0){
@@ -1385,7 +1385,7 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 		}
 	}else if (com->kind == KindBlock){
 		//so("---block");
-		SerializeBlock(pre_script->Blocks[com->link_nr], level + 1);
+		SerializeBlock(syntax_tree->Blocks[com->link_nr], level + 1);
 	}else{
 		//so("---???");
 		//DoError(string("type of command is unimplemented (call Michi!): ",Kind2Str(com->Kind)));
@@ -1411,19 +1411,19 @@ void Serializer::SerializeBlock(Block *block, int level)
 		FillInDestructors(true);
 
 		// any markers / jumps to add?
-		for (int j=StuffToAdd.num-1;j>=0;j--)
-			if ((level == StuffToAdd[j].level) && (i == StuffToAdd[j].index)){
-				if (StuffToAdd[j].kind == StuffKindMarker)
-					add_marker(StuffToAdd[j].marker);
-				else if (StuffToAdd[j].kind == StuffKindJump)
-					add_cmd(Asm::inst_jmp, param_marker(StuffToAdd[j].marker));
-				StuffToAdd.erase(j);
+		for (int j=add_later.num-1;j>=0;j--)
+			if ((level == add_later[j].level) && (i == add_later[j].index)){
+				if (add_later[j].kind == StuffKindMarker)
+					add_marker(add_later[j].marker);
+				else if (add_later[j].kind == StuffKindJump)
+					add_cmd(Asm::inst_jmp, param_marker(add_later[j].marker));
+				add_later.erase(j);
 			}
 
 		// end of loop?
-		if (LoopData.num > 0)
-			if ((LoopData.back().level == level) && (LoopData.back().index == i - 1))
-				LoopData.pop();
+		if (loop.num > 0)
+			if ((loop.back().level == level) && (loop.back().index == i - 1))
+				loop.pop();
 	}
 }
 
@@ -1516,7 +1516,7 @@ int Serializer::temp_in_cmd(int c, int v)
 void Serializer::ScanTempVarUsage()
 {
 	msg_db_f("ScanTempVarUsage", 4);
-	foreachi(sTempVar &v, TempVar, i){
+	foreachi(TempVar &v, temp_var, i){
 		v.first = -1;
 		v.last = -1;
 		v.count = 0;
@@ -1625,7 +1625,7 @@ void Serializer::solve_deref_temp_local(int c, int np, bool is_local)
 	SerialCommandParam p = *pp;
 	int shift = p.shift;
 
-	Type *type_pointer = is_local ? TypePointer : TempVar[(long)p.p].type;
+	Type *type_pointer = is_local ? TypePointer : temp_var[(long)p.p].type;
 	Type *type_data = p.type;
 	
 	p.kind = is_local ? KindVarLocal : KindVarTemp;
@@ -1695,7 +1695,7 @@ void ResolveDerefLocal()
 			p_deref_reg2.p = (char*)reg2;
 			p_deref_reg2.type = TypePointer;
 			p_deref_reg2.shift = 0;
-			RegChannel.resize(RegChannel.num - 1); // remove temp reg channel...
+			reg_channel.resize(reg_channel.num - 1); // remove temp reg channel...
 
 			// inst [l1] [l2]
 			// ->
@@ -1775,7 +1775,7 @@ void Serializer::ResolveDerefTempAndLocal()
 			p_deref_reg2.p = (char*)(long)reg2;
 			p_deref_reg2.type = type_data;
 			p_deref_reg2.shift = 0;
-			RegChannel.pop(); // remove temp reg channel...
+			reg_channel.pop(); // remove temp reg channel...
 
 			// inst [l1] [l2]
 			// ->
@@ -1868,8 +1868,8 @@ void Serializer::SimplifyFPUStack()
 
 // fstp temp
 // fld temp
-	for (int vi=TempVar.num-1;vi>=0;vi--){
-		sTempVar &v = TempVar[vi];
+	for (int vi=temp_var.num-1;vi>=0;vi--){
+		TempVar &v = temp_var[vi];
 		if (v.first < 0)
 			continue;
 
@@ -1903,8 +1903,8 @@ void Serializer::SimplifyFPUStack()
 
 // fstp temp
 // mov xxx, temp
-	for (int vi=TempVar.num-1;vi>=0;vi--){
-		sTempVar &v = TempVar[vi];
+	for (int vi=temp_var.num-1;vi>=0;vi--){
+		TempVar &v = temp_var[vi];
 		if (v.first < 0)
 			continue;
 
@@ -1947,8 +1947,8 @@ void Serializer::SimplifyMovs()
 	// should take care of fpu simplification (b)...
 
 	msg_db_f("SimplifyMovs", 3);
-	for (int vi=TempVar.num-1;vi>=0;vi--){
-		sTempVar &v = TempVar[vi];
+	for (int vi=temp_var.num-1;vi>=0;vi--){
+		TempVar &v = temp_var[vi];
 		if (v.first < 0)
 			continue;
 		
@@ -2003,8 +2003,8 @@ void Serializer::SimplifyMovs()
 void Serializer::RemoveUnusedTempVars()
 {
 	// unused temp vars...
-	for (int v=TempVar.num-1;v>=0;v--)
-		if (TempVar[v].first < 0){
+	for (int v=temp_var.num-1;v>=0;v--)
+		if (temp_var[v].first < 0){
 			remove_temp_var(v);
 		}
 }
@@ -2026,7 +2026,7 @@ void Serializer::RemoveUnusedTempVars()
 void Serializer::MapTempVarToReg(int vi, int reg)
 {
 	msg_db_f("reg", 4);
-	sTempVar &v = TempVar[vi];
+	TempVar &v = temp_var[vi];
 	so(format("temp=reg:  %d - %d:   tv %d := reg %d", v.first, v.last, vi, reg));
 	
 	SerialCommandParam p = param_reg(v.type, reg);
@@ -2072,7 +2072,7 @@ void Serializer::add_stack_var(Type *type, int first, int last, SerialCommandPar
 void Serializer::MapTempVarToStack(int vi)
 {
 	msg_db_f("stack", 4);
-	sTempVar &v = TempVar[vi];
+	TempVar &v = temp_var[vi];
 	so(format("temp=stack: %d   (%d - %d)", vi, v.first, v.last));
 
 	SerialCommandParam p;
@@ -2180,10 +2180,10 @@ void Serializer::MapTempVarToStack(int vi)
 bool Serializer::is_reg_root_used_in_interval(int reg_root, int first, int last)
 {
 	//so(string2("used?   %d: %d - %d", reg, first, last));
-	for (int i=0;i<RegChannel.num;i++)
-		if (RegChannel[i].reg_root == reg_root){
+	for (int i=0;i<reg_channel.num;i++)
+		if (reg_channel[i].reg_root == reg_root){
 			//so(string2("rc   %d: %d - %d", RegChannel[i].reg, RegChannel[i].first, RegChannel[i].last));
-			if ((RegChannel[i].first <= last) && (RegChannel[i].last >= first)){
+			if ((reg_channel[i].first <= last) && (reg_channel[i].last >= first)){
 				so(i);
 				return true;
 			}
@@ -2195,7 +2195,7 @@ bool Serializer::is_reg_root_used_in_interval(int reg_root, int first, int last)
 void Serializer::MapTempVar(int vi)
 {
 	msg_db_f("MapTempVar", 4);
-	sTempVar &v = TempVar[vi];
+	TempVar &v = temp_var[vi];
 	int first = v.first;
 	int last = v.last;
 	if (first < 0)
@@ -2215,9 +2215,9 @@ void Serializer::MapTempVar(int vi)
 		// any register not used in this interval?
 		for (int i=0;i<max_reg;i++)
 			RegRootUsed[i] = false;
-		for (int i=0;i<RegChannel.num;i++)
-			if ((RegChannel[i].first <= last) && (RegChannel[i].last >= first))
-				RegRootUsed[RegChannel[i].reg_root] = true;
+		for (int i=0;i<reg_channel.num;i++)
+			if ((reg_channel[i].first <= last) && (reg_channel[i].last >= first))
+				RegRootUsed[reg_channel[i].reg_root] = true;
 		for (int i=0;i<MapRegRoot.num;i++)
 			if (!RegRootUsed[MapRegRoot[i]]){
 				reg = Asm::RegResize[MapRegRoot[i]][v.type->size];
@@ -2235,7 +2235,7 @@ void Serializer::MapTempVars()
 {
 	msg_db_f("MapTempVars", 3);
 
-	for (int i=0;i<TempVar.num;i++)
+	for (int i=0;i<temp_var.num;i++)
 		MapTempVar(i);
 	
 	//cmd_list_out();
@@ -2256,13 +2256,13 @@ void Serializer::MapReferencedTempVars()
 	for (int i=0;i<cmd.num;i++)
 		if (cmd[i].inst == Asm::inst_lea)
 			if (cmd[i].p2.kind == KindVarTemp){
-				TempVar[(long)cmd[i].p2.p].referenced = true;
+				temp_var[(long)cmd[i].p2.p].referenced = true;
 			}
 
-	for (int i=TempVar.num-1;i>=0;i--)
-		if (TempVar[i].referenced){
+	for (int i=temp_var.num-1;i>=0;i--)
+		if (temp_var[i].referenced){
 			SerialCommandParam stackvar;
-			add_stack_var(TempVar[i].type, TempVar[i].first, TempVar[i].last, stackvar);
+			add_stack_var(temp_var[i].type, temp_var[i].first, temp_var[i].last, stackvar);
 			for (int j=0;j<cmd.num;j++){
 				try_map_param_to_stack(cmd[j].p1, i, stackvar);
 				try_map_param_to_stack(cmd[j].p2, i, stackvar);
@@ -2276,16 +2276,16 @@ void Serializer::DisentangleShiftedTempVars()
 	msg_db_f("DisentangleShiftedTempVars", 3);
 	for (int i=0;i<cmd.num;i++){
 		if ((cmd[i].p1.kind == KindVarTemp) && (cmd[i].p1.shift > 0)){
-			TempVar[(long)cmd[i].p1.p].entangled = max(TempVar[(long)cmd[i].p1.p].entangled, cmd[i].p1.shift);
+			temp_var[(long)cmd[i].p1.p].entangled = max(temp_var[(long)cmd[i].p1.p].entangled, cmd[i].p1.shift);
 		}
 		if ((cmd[i].p2.kind == KindVarTemp) && (cmd[i].p2.shift > 0)){
-			TempVar[(long)cmd[i].p2.p].entangled = max(TempVar[(long)cmd[i].p2.p].entangled, cmd[i].p2.shift);
+			temp_var[(long)cmd[i].p2.p].entangled = max(temp_var[(long)cmd[i].p2.p].entangled, cmd[i].p2.shift);
 		}
 	}
-	for (int i=TempVar.num-1;i>=0;i--)
-		if (TempVar[i].entangled > 0){
-			int n = TempVar[i].entangled / 4 + 1;
-			Type *t = TempVar[i].type;
+	for (int i=temp_var.num-1;i>=0;i--)
+		if (temp_var[i].entangled > 0){
+			int n = temp_var[i].entangled / 4 + 1;
+			Type *t = temp_var[i].type;
 			so("entangled");
 			so(n);
 			SerialCommandParam *p = new SerialCommandParam[n];
@@ -2342,6 +2342,41 @@ void Serializer::ResolveDerefRegShift()
 	}
 }
 
+void Serializer::AddFunctionIntro(Function *f)
+{
+	if (Asm::InstructionSet.set == Asm::InstructionSetAMD64){
+		int n = 0;
+		// rdi, rsi,rdx, rcx, r8, r9
+		int param_regs_root[6] = {7, 6, 2, 1, 8, 9};
+		Array<LocalVariable> param;
+		if (f->_class)
+			param.add(f->var[f->num_params]);
+		// TODO: instance..
+		for (int i=0;i<f->num_params;i++)
+			param.add(f->var[i]);
+
+
+		// map params...
+		int num_reg = 0;
+		foreach(LocalVariable &p, param){
+			if ((p.type == TypeInt) || (p.type == TypeChar) || (p.type == TypeBool) || (p.type->is_pointer)){
+				if (num_reg < 6)
+					num_reg ++;
+			}
+		}
+
+		foreachb(LocalVariable &p, param){
+			if ((p.type == TypeInt) || (p.type == TypeChar) || (p.type == TypeBool) || (p.type->is_pointer)){
+				int reg = Asm::RegResize[param_regs_root[num_reg - n - 1]][p.type->size];
+				add_cmd(Asm::inst_mov, param_local(p.type, p._offset), param_reg(p.type, reg));
+				add_reg_channel(reg, cmd.num - 1, cmd.num - 1);
+				n ++;
+			}
+		}
+	}
+
+}
+
 void init_serializing()
 {
 	p_eax = param_reg(TypeReg32, Asm::RegEax);
@@ -2368,11 +2403,11 @@ void Serializer::SerializeFunction(Function *f)
 
 	init_serializing();
 
-	pre_script->CreateAsmMetaInfo();
-	pre_script->AsmMetaInfo->CurrentOpcodePos = script->OpcodeSize;
-	pre_script->AsmMetaInfo->PreInsertionLength = script->OpcodeSize;
-	pre_script->AsmMetaInfo->LineOffset = 0;
-	Asm::CurrentMetaInfo = pre_script->AsmMetaInfo;
+	syntax_tree->CreateAsmMetaInfo();
+	syntax_tree->AsmMetaInfo->CurrentOpcodePos = script->OpcodeSize;
+	syntax_tree->AsmMetaInfo->PreInsertionLength = script->OpcodeSize;
+	syntax_tree->AsmMetaInfo->LineOffset = 0;
+	Asm::CurrentMetaInfo = syntax_tree->AsmMetaInfo;
 
 	cur_func = f;
 	NumMarkers = 0;
@@ -2395,6 +2430,8 @@ void Serializer::SerializeFunction(Function *f)
 
 // serialize
 
+	AddFunctionIntro(f);
+
 	FillInConstructorsFunc();
 
 	// function
@@ -2404,14 +2441,14 @@ void Serializer::SerializeFunction(Function *f)
 	FillInDestructors(false);
 
 
-	if (StuffToAdd.num > 0){
+	if (add_later.num > 0){
 		msg_write(f->name);
-		msg_write(StuffToAdd.num);
-		for (int i=0;i<StuffToAdd.num;i++){
-			msg_write(StuffToAdd[i].kind);
-			msg_write(StuffToAdd[i].marker);
-			msg_write(StuffToAdd[i].index);
-			msg_write(StuffToAdd[i].level);
+		msg_write(add_later.num);
+		for (int i=0;i<add_later.num;i++){
+			msg_write(add_later[i].kind);
+			msg_write(add_later[i].marker);
+			msg_write(add_later[i].index);
+			msg_write(add_later[i].level);
 		}
 		DoError("StuffToAdd");
 	}
@@ -2596,7 +2633,7 @@ void do_func_align(char *Opcode, int &OpcodeSize)
 Serializer::Serializer(Script *s)
 {
 	script = s;
-	pre_script = s->syntax;
+	syntax_tree = s->syntax;
 	list = new Asm::InstructionWithParamsList(0);
 }
 
