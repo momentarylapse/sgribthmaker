@@ -37,6 +37,7 @@ const int NUM_REG_ROOTS = 32;
 
 extern int RegRoot[];
 extern int RegResize[NUM_REG_ROOTS][9];
+string GetRegName(int reg);
 
 enum{
 	PKInvalid,

@@ -151,6 +151,11 @@ void add_reg(const string &name, int id, int group, int size, int root = -1)
 	RegResize[root][size] = id;
 }
 
+string GetRegName(int reg)
+{
+	return RegisterByID[reg]->name;
+}
+
 struct InstructionName{
 	int inst;
 	string name;

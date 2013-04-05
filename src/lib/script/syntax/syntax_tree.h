@@ -257,6 +257,7 @@ public:
 };
 
 string Kind2Str(int kind);
+string LinkNr2Str(SyntaxTree *s,int kind,int nr);
 
 
 

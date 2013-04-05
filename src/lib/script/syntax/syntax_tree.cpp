@@ -256,28 +256,29 @@ string Kind2Str(int kind)
 
 string LinkNr2Str(SyntaxTree *s,int kind,int nr)
 {
-	if (kind==KindVarLocal)			return s->cur_func->var[nr].name;
-	if (kind==KindVarGlobal)		return s->RootOfAllEvil.var[nr].name;
-	if (kind==KindVarFunction)		return s->Functions[nr]->name;
-	if (kind==KindVarExternal)		return PreExternalVars[nr].name;
-	if (kind==KindConstant)			return s->Constants[nr].type->var2str(s->Constants[nr].data);
-	if (kind==KindFunction)			return s->Functions[nr]->name;
-	if (kind==KindCompilerFunction)	return PreCommands[nr].name;
-	if (kind==KindOperator)			return PreOperators[nr].str();
-	if (kind==KindPrimitiveOperator)return PrimitiveOperators[nr].name;
-	if (kind==KindBlock)			return i2s(nr);
-	if (kind==KindAddressShift)		return i2s(nr);
-	if (kind==KindArray)			return "(no LinkNr)";
-	if (kind==KindPointerAsArray)	return "(no LinkNr)";
-	if (kind==KindReference)		return "(no LinkNr)";
-	if (kind==KindDereference)		return "(no LinkNr)";
-	if (kind==KindDerefAddressShift)return i2s(nr);
-	if (kind==KindType)				return s->Types[nr]->name;
-	if (kind==KindAddress)			return d2h(&nr, PointerSize);
-	if (kind==KindMemory)			return d2h(&nr, PointerSize);
-	if (kind==KindLocalAddress)		return d2h(&nr, PointerSize);
-	if (kind==KindLocalMemory)		return d2h(&nr, PointerSize);
-	return "UNUSABLE KIND";
+	if (kind == KindVarLocal)			return s->cur_func->var[nr].name;
+	if (kind == KindVarGlobal)			return s->RootOfAllEvil.var[nr].name;
+	if (kind == KindVarFunction)		return s->Functions[nr]->name;
+	if (kind == KindVarExternal)		return PreExternalVars[nr].name;
+	if (kind == KindConstant)			return s->Constants[nr].type->var2str(s->Constants[nr].data);
+	if (kind == KindFunction)			return s->Functions[nr]->name;
+	if (kind == KindCompilerFunction)	return PreCommands[nr].name;
+	if (kind == KindOperator)			return PreOperators[nr].str();
+	if (kind == KindPrimitiveOperator)	return PrimitiveOperators[nr].name;
+	if (kind == KindBlock)				return i2s(nr);
+	if (kind == KindAddressShift)		return i2s(nr);
+	if (kind == KindArray)				return "(no LinkNr)";
+	if (kind == KindPointerAsArray)		return "(no LinkNr)";
+	if (kind == KindReference)			return "(no LinkNr)";
+	if (kind == KindDereference)		return "(no LinkNr)";
+	if (kind == KindDerefAddressShift)	return i2s(nr);
+	if (kind == KindType)				return s->Types[nr]->name;
+	if (kind == KindRegister)			return Asm::GetRegName(nr);
+	if (kind == KindAddress)			return d2h(&nr, PointerSize);
+	if (kind == KindMemory)				return d2h(&nr, PointerSize);
+	if (kind == KindLocalAddress)		return d2h(&nr, PointerSize);
+	if (kind == KindLocalMemory)		return d2h(&nr, PointerSize);
+	return i2s(nr);
 }
 
 void SyntaxTree::DoError(const string &str, int overwrite_line)

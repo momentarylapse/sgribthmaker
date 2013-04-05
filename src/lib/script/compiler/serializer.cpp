@@ -142,14 +142,18 @@ inline SerialCommandParam param_reg(Type *type, int reg)
 	return p;
 }
 
-inline void param_out(string &str, SerialCommandParam &p)
+string param_out(SerialCommandParam &p)
 {
-	//msg_db_f("param_out", 4);
+	string str;
 	if (p.kind >= 0){
-		str += format("   %s %p (%s)", Kind2Str(p.kind).c_str(), p.p, p.type->name.c_str());
+		string n = p2s(p.p);
+		if (p.kind == KindRegister)
+			n = Asm::GetRegName((long)p.p);
+		str = "  " + Kind2Str(p.kind) + " " + n + " (" + p.type->name + ")";
 		if (p.shift > 0)
 			str += format(" + shift %d", p.shift);
 	}
+	return str;
 }
 
 void cmd_out(int n, SerialCommand &c)
@@ -161,8 +165,8 @@ void cmd_out(int n, SerialCommand &c)
 		msg_write(format("%3d: -- Asm --", n));
 	else{
 		string t = format("%3d:  ", n) + Asm::GetInstructionName(c.inst);
-		param_out(t, c.p1);
-		param_out(t, c.p2);
+		t += param_out(c.p1);
+		t += param_out(c.p2);
 		msg_write(t);
 	}
 }
@@ -2645,6 +2649,7 @@ Serializer::~Serializer()
 void Script::CompileFunction(Function *f, char *Opcode, int &OpcodeSize)
 {
 	msg_db_f("Compile Function", 2);
+	msg_write(f->name + " -------------------");
 
 	do_func_align(Opcode, OpcodeSize);
 
