@@ -396,7 +396,7 @@ Command *SyntaxTree::AddCommand()
 	c->kind = KindUnknown;
 	c->num_params = 0;
 	c->instance = NULL;
-	c->script = NULL;
+	c->script = script;
 	return c;
 }
 
@@ -417,8 +417,7 @@ inline void CommandSetClassFunc(SyntaxTree *ps, Type *class_type, Command *c, Cl
 		c->type = PreCommands[f.nr].return_type;
 		//c->NumParams = PreCommand[f.Nr].Param.num;
 	}else if (f.kind == KindFunction){
-		if (class_type->owner != ps)
-			c->script = class_type->owner->script;
+		c->script = class_type->owner->script;
 		c->type = class_type->owner->Functions[f.nr]->return_type;
 	}
 }
@@ -492,7 +491,7 @@ inline void exlink_make_var_local(SyntaxTree *ps, Type *t, int var_no)
 	ps->GetExistenceLink.link_nr = var_no;
 	ps->GetExistenceLink.kind = KindVarLocal;
 	ps->GetExistenceLink.num_params = 0;
-	ps->GetExistenceLink.script = NULL;
+	ps->GetExistenceLink.script = ps->script;
 	ps->GetExistenceLink.instance = NULL;
 }
 
@@ -503,7 +502,7 @@ bool SyntaxTree::GetExistence(const string &name, Function *f)
 	Function *lf=f;
 	GetExistenceLink.type = TypeUnknown;
 	GetExistenceLink.num_params = 0;
-	GetExistenceLink.script = NULL;
+	GetExistenceLink.script = script;
 	GetExistenceLink.instance = NULL;
 
 	// first test local variables
@@ -572,7 +571,7 @@ bool SyntaxTree::GetExistence(const string &name, Function *f)
 	// in include files (only global)...
 	foreach(Script *i, Includes)
 		if (i->syntax->GetExistence(name, NULL)){
-			if (i->syntax->GetExistenceLink.script) // nicht rekursiv!!!
+			if (i->syntax->GetExistenceLink.script != i) // nicht rekursiv!!!
 				continue;
 			memcpy(&GetExistenceLink, &(i->syntax->GetExistenceLink), sizeof(Command));
 			GetExistenceLink.script = i;
@@ -796,9 +795,7 @@ void DoClassFunction(SyntaxTree *ps, Command *Operand, Type *t, int f_no, Functi
 	//msg_write(LinkNr2Str(ps, Operand->Kind, Operand->Nr));
 
 	// the function
-	Operand->script = NULL;
-	if (t->owner)
-		Operand->script = t->owner->script;
+	Operand->script = t->owner->script;
     Operand->kind = t->function[f_no].kind;
 	Operand->link_nr = t->function[f_no].nr;
 	if (t->function[f_no].kind == KindCompilerFunction){
@@ -806,15 +803,9 @@ void DoClassFunction(SyntaxTree *ps, Command *Operand, Type *t, int f_no, Functi
 		Operand->num_params = PreCommands[t->function[f_no].nr].param.num;
 		ps->GetFunctionCall(PreCommands[t->function[f_no].nr].name, Operand, f);
 	}else if (t->function[f_no].kind == KindFunction){
-		if (t->owner){
-			Operand->type = t->owner->Functions[t->function[f_no].nr]->literal_return_type;
-			Operand->num_params = t->owner->Functions[t->function[f_no].nr]->num_params;
-			ps->GetFunctionCall(t->owner->Functions[t->function[f_no].nr]->name, Operand, f);
-		}else{
-			Operand->type = ps->Functions[t->function[f_no].nr]->literal_return_type;
-			Operand->num_params = ps->Functions[t->function[f_no].nr]->num_params;
-			ps->GetFunctionCall(ps->Functions[t->function[f_no].nr]->name, Operand, f);
-		}
+		Operand->type = t->owner->Functions[t->function[f_no].nr]->literal_return_type;
+		Operand->num_params = t->owner->Functions[t->function[f_no].nr]->num_params;
+		ps->GetFunctionCall(t->owner->Functions[t->function[f_no].nr]->name, Operand, f);
 		//ps->DoError("script member function call not implemented");
 	}
 	Operand->instance = ob;
@@ -1010,7 +1001,7 @@ void SyntaxTree::FindFunctionSingleParameter(int p, Type **WantedType, Function 
 
 	WantedType[p] = TypeUnknown;
 	if (cmd->kind == KindFunction){
-		Function *ff = cmd->script ? cmd->script->syntax->Functions[cmd->link_nr] : Functions[cmd->link_nr];
+		Function *ff = cmd->script->syntax->Functions[cmd->link_nr];
 		if (p < ff->num_params)
 			WantedType[p] = ff->literal_param_type[p];
 	}else if (cmd->kind == KindCompilerFunction){
@@ -3390,7 +3381,7 @@ void SyntaxTree::CreateImplicitFunctions(Type *t, bool relocate_last_function)
 		// relink commands
 		foreach(Command *c, Commands)
 			if (c->kind == KindFunction){
-				if (c->script)
+				if (c->script != script)
 					continue;
 				if (c->link_nr == num_funcs - 1)
 					c->link_nr = Functions.num - 1;
@@ -3419,7 +3410,7 @@ void SyntaxTree::CreateAllImplicitFunctions(bool relocate_last_function)
 // no included scripts may be deleted before us!!!
 SyntaxTree::~SyntaxTree()
 {
-	msg_db_f("~CPreScript", 4);
+	msg_db_f("~SyntaxTree", 4);
 	
 	Exp.clear();
 

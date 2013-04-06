@@ -32,6 +32,7 @@ string DataVersion = "0.10.5.1";
 int PointerSize;
 int StackSize = SCRIPT_DEFAULT_STACK_SIZE;
 
+Script *GlobalDummyScript = NULL;
 
 
 //------------------------------------------------------------------------------------------------//
@@ -104,6 +105,7 @@ Type *add_type(const string &name, int size, TypeFlag flag)
 {
 	msg_db_f("add_type", 4);
 	Type *t = new Type;
+	t->owner = GlobalDummyScript->syntax;
 	t->name = name;
 	t->size = size;
 	if ((flag & FLAG_CALL_BY_VALUE) > 0)
@@ -117,6 +119,7 @@ Type *add_type_p(const string &name, Type *sub_type, TypeFlag flag)
 {
 	msg_db_f("add_type_p", 4);
 	Type *t = new Type;
+	t->owner = GlobalDummyScript->syntax;
 	t->name = name;
 	t->size = PointerSize;
 	t->is_pointer = true;
@@ -132,6 +135,7 @@ Type *add_type_a(const string &name, Type *sub_type, int array_length)
 {
 	msg_db_f("add_type_a", 4);
 	Type *t = new Type;
+	t->owner = GlobalDummyScript->syntax;
 	t->name = name;
 	t->parent = sub_type;
 	if (array_length < 0){
@@ -1032,6 +1036,8 @@ void Init(int instruction_set)
 
 	Asm::Init(instruction_set);
 	PointerSize = Asm::InstructionSet.pointer_size;
+
+	GlobalDummyScript = new Script;
 
 	SIAddPackageBase();
 	SIAddBasicCommands();
