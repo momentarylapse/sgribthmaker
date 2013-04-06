@@ -23,14 +23,14 @@ inline void CommandMakeOperator(Command *cmd, Command *p1, Command *p2, int op);
 #define GetPointerType(sub)	CreateNewType(sub->name + "*", PointerSize, true, false, false, 0, sub)
 #define GetReferenceType(sub)	CreateNewType(sub->name + "*", PointerSize, true, true, false, 0, sub)
 
-inline Command *cp_command(SyntaxTree *ps, Command *c)
+Command *cp_command(SyntaxTree *ps, Command *c)
 {
 	Command *cmd = ps->AddCommand();
 	*cmd = *c;
 	return cmd;
 }
 
-inline Command *cp_command_deep(SyntaxTree *ps, Command *c)
+Command *cp_command_deep(SyntaxTree *ps, Command *c)
 {
 	Command *cmd = cp_command(ps, c);
 	for (int i=0;i<c->num_params;i++)
@@ -38,7 +38,7 @@ inline Command *cp_command_deep(SyntaxTree *ps, Command *c)
 	return cmd;
 }
 
-inline void command_make_ref(SyntaxTree *ps, Command *c, Command *param)
+void command_make_ref(SyntaxTree *ps, Command *c, Command *param)
 {
 	c->kind = KindReference;
 	c->num_params = 1;
@@ -46,13 +46,13 @@ inline void command_make_ref(SyntaxTree *ps, Command *c, Command *param)
 	c->type = ps->GetPointerType(param->type);
 }
 
-inline void ref_command(SyntaxTree *ps, Command *c)
+void ref_command(SyntaxTree *ps, Command *c)
 {
 	Command *t = cp_command(ps, c);
 	command_make_ref(ps, c, t);
 }
 
-inline void command_make_deref(SyntaxTree *ps, Command *c, Command *param)
+void command_make_deref(SyntaxTree *ps, Command *c, Command *param)
 {
 	c->kind = KindDereference;
 	c->num_params = 1;
@@ -60,10 +60,20 @@ inline void command_make_deref(SyntaxTree *ps, Command *c, Command *param)
 	c->type = param->type->parent;
 }
 
-inline void deref_command(SyntaxTree *ps, Command *c)
+void deref_command(SyntaxTree *ps, Command *c)
 {
 	Command *t = cp_command(ps, c);
 	command_make_deref(ps, c, t);
+}
+
+void shift_command(SyntaxTree *ps, Command *c, bool deref, int shift, Type *type)
+{
+	Command *sub = cp_command(ps, c);
+	c->kind = deref ? KindDerefAddressShift : KindAddressShift;
+	c->link_nr = shift;
+	c->type = type;
+	c->num_params = 1;
+	c->param[0] = sub;
 }
 
 void reset_pre_script(SyntaxTree *ps)
@@ -118,8 +128,6 @@ void SyntaxTree::LoadAndParseFile(const string &filename, bool just_analyse)
 
 	/*if (FlagShow)
 		Show();*/
-
-	/*BreakDownComplicatedCommands();*/
 
 	Simplify();
 	
@@ -260,7 +268,7 @@ string LinkNr2Str(SyntaxTree *s,int kind,int nr)
 	if (kind == KindVarGlobal)			return s->RootOfAllEvil.var[nr].name;
 	if (kind == KindVarFunction)		return s->Functions[nr]->name;
 	if (kind == KindVarExternal)		return PreExternalVars[nr].name;
-	if (kind == KindConstant)			return s->Constants[nr].type->var2str(s->Constants[nr].data);
+	if (kind == KindConstant)			return i2s(nr);//s->Constants[nr].type->var2str(s->Constants[nr].data);
 	if (kind == KindFunction)			return s->Functions[nr]->name;
 	if (kind == KindCompilerFunction)	return PreCommands[nr].name;
 	if (kind == KindOperator)			return PreOperators[nr].str();
@@ -811,6 +819,104 @@ void DoClassFunction(SyntaxTree *ps, Command *Operand, Type *t, int f_no, Functi
 	Operand->instance = ob;
 }
 
+void SyntaxTree::GetOperandExtensionElement(Command *Operand, Function *f)
+{
+	msg_db_f("GetOperandExtensionElement", 4);
+	Exp.next();
+	Type *type = Operand->type;
+
+	// pointer -> dereference
+	bool deref = false;
+	if (type->is_pointer){
+		type = type->parent;
+		deref = true;
+	}
+
+	// find element
+	bool ok = false;
+	for (int e=0;e<type->element.num;e++)
+		if (Exp.cur == type->element[e].name){
+			shift_command(this, Operand, deref, type->element[e].offset, type->element[e].type);
+			ok = true;
+			break;
+		}
+
+	// class function?
+	if (!ok){
+		for (int e=0;e<type->function.num;e++)
+			if (Exp.cur == type->function[e].name){
+				if (!deref)
+					ref_command(this, Operand);
+				Exp.next();
+				DoClassFunction(this, Operand, type, e, f);
+				ok = true;
+				Exp.rewind();
+				break;
+			}
+	}
+
+	if (!ok)
+		DoError("unknown element of " + type->name);
+
+	Exp.next();
+}
+
+void SyntaxTree::GetOperandExtensionArray(Command *Operand, Function *f)
+{
+	msg_db_f("GetOperandExtensionArray", 4);
+
+	// allowed?
+	bool allowed = ((Operand->type->is_array) || (Operand->type->is_super_array));
+	bool pparray = false;
+	if (!allowed)
+		if (Operand->type->is_pointer){
+			if ((!Operand->type->parent->is_array) && (!Operand->type->parent->is_super_array))
+				DoError(format("using pointer type \"%s\" as an array (like in C) is not allowed any more", Operand->type->name.c_str()));
+			allowed = true;
+			pparray = (Operand->type->parent->is_super_array);
+		}
+	if (!allowed)
+		DoError(format("type \"%s\" is neither an array nor a pointer to an array", Operand->type->name.c_str()));
+	Exp.next();
+
+	Command *t = cp_command(this, Operand);
+	Operand->num_params = 2;
+	Operand->param[0] = t;
+	Command *array = Operand;
+
+	// pointer?
+	so(Operand->type->name);
+	if (pparray){
+		DoError("test... anscheinend gibt es [] auf * super array");
+		//array = cp_command(this, Operand);
+		Operand->kind = KindPointerAsArray;
+		Operand->type = t->type->parent;
+		deref_command(this, Operand);
+		array = Operand->param[0];
+	}else if (Operand->type->is_super_array){
+		Operand->kind = KindPointerAsArray;
+		Operand->type = t->type->parent;
+		shift_command(this, t, false, 0, GetPointerType(t->type->parent));
+	}else if (Operand->type->is_pointer){
+		Operand->kind = KindPointerAsArray;
+		Operand->type = t->type->parent->parent;
+	}else{
+		Operand->kind = KindArray;
+		Operand->type = t->type->parent;
+	}
+
+	// array index...
+	Command *index = GetCommand(f);
+	array->param[1] = index;
+	if (index->type != TypeInt){
+		Exp.rewind();
+		DoError(format("type of index for an array needs to be (int), not (%s)", index->type->name.c_str()));
+	}
+	if (Exp.cur != "]")
+		DoError("\"]\" expected after array index");
+	Exp.next();
+}
+
 // find any ".", "->", or "[...]"'s    or operators?
 void SyntaxTree::GetOperandExtension(Command *Operand, Function *f)
 {
@@ -820,118 +926,24 @@ void SyntaxTree::GetOperandExtension(Command *Operand, Function *f)
 	int op = WhichPrimitiveOperator(Exp.cur);
 	if ((Exp.cur != ".") && (Exp.cur != "[") && (Exp.cur != "->") && (op < 0))
 		return;
-	//sLinkData link, temp;
 
 	if (Exp.cur == "->")
 		DoError("\"->\" deprecated,  use \".\" instead");
 
-	// class element?
-	if ((Exp.cur == ".") || (Exp.cur == "->")){
-		so("->Klasse");
-		Exp.next();
-		Type *type = Operand->type;
+	if (Exp.cur == "."){
+		// class element?
 
-		// pointer -> dereference
-		bool deref = false;
-		if (type->is_pointer){
-			type = type->parent;
-			deref = true;
-		}
+		GetOperandExtensionElement(Operand, f);
 
-		// find element
-		bool ok = false;
-		for (int e=0;e<type->element.num;e++)
-			if (Exp.cur == type->element[e].name){
-				Command *t = cp_command(this, Operand);
-				Operand->kind = deref ? KindDerefAddressShift : KindAddressShift;
-				Operand->link_nr = type->element[e].offset;
-				Operand->type = type->element[e].type;
-				Operand->num_params = 1;
-				Operand->param[0] = t;
-				ok = true;
-				break;
-			}
-		
-		// class function?
-		if (!ok){
-			for (int e=0;e<type->function.num;e++)
-				if (Exp.cur == type->function[e].name){
-					if (!deref){
-						so("ref object");
-						ref_command(this, Operand);
-					}
-					Exp.next();
-					DoClassFunction(this, Operand, type, e, f);
-					ok = true;
-					Exp.rewind();
-					break;
-				}
-		}
-		
-		if (!ok)
-			DoError("unknown element of " + type->name);
-
-		Exp.next();
-
-	// array?
 	}else if (Exp.cur == "["){
-		so("->Array");
+		// array?
 
-		// allowed?
-		bool allowed = ((Operand->type->is_array) || (Operand->type->is_super_array));
-		bool pparray = false;
-		if (!allowed)
-			if (Operand->type->is_pointer){
-				if ((Operand->type->parent->is_array) || (Operand->type->parent->is_super_array)){
-					allowed = true;
-					pparray = (Operand->type->parent->is_super_array);
-				}else{
-					DoError(format("using pointer type \"%s\" as an array (like in C) is not allowed any more", Operand->type->name.c_str()));
-				}
-			}
-		if (!allowed)
-			DoError(format("type \"%s\" is neither an array nor a pointer to an array", Operand->type->name.c_str()));
-		Exp.next();
+		GetOperandExtensionArray(Operand, f);
 
-		Command *t = cp_command(this, Operand);
-		Operand->num_params = 2;
-		Operand->param[0] = t;
-		Command *array = Operand;
 
-		// pointer?
-		so(Operand->type->name);
-		if (pparray){
-			so("  ->Pointer-Pointer-Array");
-			//array = cp_command(this, Operand);
-			Operand->kind = KindPointerAsArray;
-			Operand->type = t->type->parent;
-			deref_command(this, Operand);
-			array = Operand->param[0];
-		}else if ((Operand->type->is_pointer) || (Operand->type->is_super_array)){
-			Operand->kind = KindPointerAsArray;
-			if (Operand->type->is_pointer)
-				Operand->type = t->type->parent->parent;
-			else
-				Operand->type = t->type->parent;
-			so("  ->Pointer-Array");
-		}else{
-			Operand->kind = KindArray;
-			Operand->type = t->type->parent;
-		}
-
-		// array index...
-		Command *index = GetCommand(f);
-		array->param[1] = index;
-		if (index->type != TypeInt){
-			Exp.rewind();
-			DoError(format("type of index for an array needs to be (int), not (%s)", index->type->name.c_str()));
-		}
-		if (Exp.cur != "]")
-			DoError("\"]\" expected after array index");
-		Exp.next();
-
-	// unary operator?
 	}else if (op >= 0){
+		// unary operator?
+
 		for (int i=0;i<PreOperators.num;i++)
 			if (PreOperators[i].primitive_id == op)
 				if ((PreOperators[i].param_type_1 == Operand->type) && (PreOperators[i].param_type_2 == TypeVoid)){
@@ -2225,12 +2237,6 @@ Type *SyntaxTree::ParseVariableDefSingle(Type *type, Function *f, bool as_param)
 
 	// array?
 	TestArrayDefinition(&type, is_pointer);
-/*	if ((as_param) && ((type->IsArray) || (type->IsSuperArray))){
-		// function parameter:  array -> pointer
-
-		type = GetReferenceType(type);
-		so("C-Standart:   Array wurde in Referenz umgewandelt!!!!");
-	}*/
 
 	// add
 	if (next_extern)
@@ -3444,7 +3450,7 @@ SyntaxTree::~SyntaxTree()
 
 void SyntaxTree::ShowCommand(Command *c)
 {
-	msg_write("[" + Kind2Str(c->kind) + "] " + c->type->name + " " + LinkNr2Str(this,c->kind,c->link_nr));
+	msg_write("[" + Kind2Str(c->kind) + "] " + c->type->name + " " + LinkNr2Str(c->script->syntax,c->kind,c->link_nr));
 	msg_right();
 	if (c->instance)
 		ShowCommand(c->instance);

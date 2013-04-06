@@ -182,6 +182,8 @@ public:
 	void LinkMostImportantOperator(int &NumOperators, Command **Operand, Command **Operator, int *op_exp);
 	bool LinkOperator(int op_no, Command *param1, Command *param2, Command **cmd);
 	void GetOperandExtension(Command *Operand, Function *f);
+	void GetOperandExtensionElement(Command *Operand, Function *f);
+	void GetOperandExtensionArray(Command *Operand, Function *f);
 	Command *GetCommand(Function *f);
 	void GetCompleteCommand(Block *block, Function *f);
 	Command *GetOperand(Function *f);

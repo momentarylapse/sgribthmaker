@@ -300,6 +300,7 @@ void Script::Compiler()
 	syntax->Simplify();
 	syntax->PreProcessor(this);
 
+	syntax->Show();
 
 	AllocateMemory();
 	AllocateStack();

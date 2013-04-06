@@ -147,7 +147,7 @@ string param_out(SerialCommandParam &p)
 	string str;
 	if (p.kind >= 0){
 		string n = p2s(p.p);
-		if (p.kind == KindRegister)
+		if ((p.kind == KindRegister) || (p.kind == KindDerefRegister))
 			n = Asm::GetRegName((long)p.p);
 		str = "  " + Kind2Str(p.kind) + " " + n + " (" + p.type->name + ")";
 		if (p.shift > 0)
@@ -1391,6 +1391,7 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 		//so("---block");
 		SerializeBlock(syntax_tree->Blocks[com->link_nr], level + 1);
 	}else{
+		msg_write(Kind2Str(com->kind));
 		//so("---???");
 		//DoError(string("type of command is unimplemented (call Michi!): ",Kind2Str(com->Kind)));
 	}

@@ -51,7 +51,16 @@ string Type::var2str(void *p)
 			s += e.type->var2str(((char*)p) + e.offset);
 		}
 		return "(" + s + ")";
-	}
+
+	}else if (is_array){
+			string s;
+			for (int i=0; i<array_length; i++){
+				if (i > 0)
+					s += ", ";
+				s += parent->var2str(((char*)p) + i * parent->size);
+			}
+			return "[" + s + "]";
+		}
 	return string((char*)p, size).hex();
 }
 

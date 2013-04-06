@@ -38,7 +38,15 @@ void SyntaxTree::PreProcessCommand(Script *s, Command *c)
 	// process...
 	if (c->kind == KindOperator){
 		PreOperator *o = &PreOperators[c->link_nr];
-		if (o->func){
+		/*if (c->link_nr == OperatorIntAdd){
+			if (c->param[1]->kind == KindConstant){
+				int v = *(int*)Constants[c->param[1]->link_nr].data;
+				if (v == 0){
+					msg_error("addr + 0");
+					*c = *c->param[0];
+				}
+			}
+		}else*/ if (o->func){
 			bool all_const = true;
 			bool is_address = false;
 			bool is_local = false;
