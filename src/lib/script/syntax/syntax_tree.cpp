@@ -17,7 +17,6 @@ static int PreConstantNr, NamedConstantNr;
 
 inline bool type_match(Type *type, bool is_class, Type *wanted);
 inline bool type_match_with_cast(Type *type, bool is_class, bool is_modifiable, Type *wanted, int &penalty, int &cast);
-inline void CommandMakeOperator(Command *cmd, Command *p1, Command *p2, int op);
 
  
 #define GetPointerType(sub)	CreateNewType(sub->name + "*", PointerSize, true, false, false, 0, sub)
@@ -52,6 +51,13 @@ void ref_command(SyntaxTree *ps, Command *c)
 	command_make_ref(ps, c, t);
 }
 
+Command *ref_command2(SyntaxTree *ps, Command *sub)
+{
+	Command *c = ps->AddCommand();
+	command_make_ref(ps, c, sub);
+	return c;
+}
+
 void command_make_deref(SyntaxTree *ps, Command *c, Command *param)
 {
 	c->kind = KindDereference;
@@ -66,20 +72,28 @@ void deref_command(SyntaxTree *ps, Command *c)
 	command_make_deref(ps, c, t);
 }
 
-Command *shift_command(SyntaxTree *ps, Command *c, bool deref, int shift, Type *type)
+Command *shift_command(SyntaxTree *ps, Command *sub, bool deref, int shift, Type *type)
 {
-	Command *sub = ps->AddCommand();
-	sub->kind = deref ? KindDerefAddressShift : KindAddressShift;
-	sub->link_nr = shift;
-	sub->type = type;
-	sub->num_params = 1;
-	sub->param[0] = c;
-	return sub;
+	Command *c= ps->AddCommand();
+	c->kind = deref ? KindDerefAddressShift : KindAddressShift;
+	c->link_nr = shift;
+	c->type = type;
+	c->num_params = 1;
+	c->param[0] = sub;
+	return c;
 }
 
-void reset_pre_script(SyntaxTree *ps)
+
+Command *op_command(SyntaxTree *ps, Command *p1, Command *p2, int op)
 {
-	msg_db_f("reset_pre_script", 2);
+	Command *cmd = ps->AddCommand();
+	cmd->kind = KindOperator;
+	cmd->link_nr = op;
+	cmd->num_params = ((PreOperators[op].param_type_1 == TypeVoid) || (PreOperators[op].param_type_2 == TypeVoid)) ? 1 : 2; // unary / binary
+	cmd->param[0] = p1;
+	cmd->param[1] = p2;
+	cmd->type = PreOperators[op].return_type;
+	return cmd;
 }
 
 SyntaxTree::SyntaxTree(Script *_script)
@@ -410,15 +424,16 @@ Command *SyntaxTree::AddCommand()
 }
 
 
-inline Command *add_command_compilerfunc(SyntaxTree *ps, int cf)
+Command *add_command_compilerfunc(SyntaxTree *ps, int cf)
 {
 	Command *c = ps->AddCommand();
 	ps->CommandSetCompilerFunction(cf, c);
 	return c;
 }
 
-inline void CommandSetClassFunc(SyntaxTree *ps, Type *class_type, Command *c, ClassFunction &f, Command *inst)
+Command *add_command_classfunc(SyntaxTree *ps, Type *class_type, ClassFunction &f, Command *inst)
 {
+	Command *c = ps->AddCommand();
 	c->kind = f.kind;
 	c->link_nr = f.nr;
 	c->instance = inst;
@@ -429,12 +444,6 @@ inline void CommandSetClassFunc(SyntaxTree *ps, Type *class_type, Command *c, Cl
 		c->script = class_type->owner->script;
 		c->type = class_type->owner->Functions[f.nr]->return_type;
 	}
-}
-
-inline Command *add_command_classfunc(SyntaxTree *ps, Type *class_type, ClassFunction &f, Command *inst)
-{
-	Command *c = ps->AddCommand();
-	CommandSetClassFunc(ps, class_type, c, f, inst);
 	return c;
 }
 
@@ -449,7 +458,10 @@ inline void CommandSetConst(SyntaxTree *ps, Command *c, int nc)
 inline Command *add_command_const(SyntaxTree *ps, int nc)
 {
 	Command *c = ps->AddCommand();
-	CommandSetConst(ps, c, nc);
+	c->kind = KindConstant;
+	c->link_nr = nc;
+	c->type = ps->Constants[nc].type;
+	c->num_params = 0;
 	return c;
 }
 
@@ -936,11 +948,8 @@ Command *SyntaxTree::GetOperandExtension(Command *Operand, Function *f)
 			if (PreOperators[i].primitive_id == op)
 				if ((PreOperators[i].param_type_1 == Operand->type) && (PreOperators[i].param_type_2 == TypeVoid)){
 					so("  => unaerer Operator");
-					so(LinkNr2Str(this,KindOperator,i));
-					Command *t = cp_command(this, Operand);
-					CommandMakeOperator(Operand, t, NULL, i);
 					Exp.next();
-					return Operand;
+					return op_command(this, Operand, NULL, i);
 				}
 		return Operand;
 	}
@@ -1234,9 +1243,7 @@ Command *SyntaxTree::GetOperand(Function *f)
 					Exp.cur_exp = _ie;
 					DoError("unknown unitary operator  " + p2->name);
 				}
-				CommandMakeOperator(Operand, sub_command, NULL, o);
-				so(PreOperators[o].str());
-				return Operand;
+				return op_command(this, sub_command, NULL, o);
 			}
 		}else{
 			Type *t = GetConstantType();
@@ -1284,16 +1291,6 @@ Command *SyntaxTree::GetPrimitiveOperator(Function *f)
 
 	Exp.next();
 	return cmd;
-}
-
-inline void CommandMakeOperator(Command *cmd, Command *p1, Command *p2, int op)
-{
-	cmd->kind = KindOperator;
-	cmd->link_nr = op;
-	cmd->num_params = ((PreOperators[op].param_type_1 == TypeVoid) || (PreOperators[op].param_type_2 == TypeVoid)) ? 1 : 2; // unary / binary
-	cmd->param[0] = p1;
-	cmd->param[1] = p2;
-	cmd->type = PreOperators[op].return_type;
 }
 
 /*inline int find_operator(int primitive_id, Type *param_type1, Type *param_type2)
@@ -1374,7 +1371,7 @@ Command *SyntaxTree::LinkOperator(int op_no, Command *param1, Command *param2)
 	msg_db_f("LinkOp",4);
 	bool left_modifiable = PrimitiveOperators[op_no].left_modifiable;
 	string op_func_name = PrimitiveOperators[op_no].function_name;
-	Command *op = AddCommand();
+	Command *op = NULL;
 
 	Type *p1 = param1->type;
 	Type *p2 = param2->type;
@@ -1391,7 +1388,7 @@ Command *SyntaxTree::LinkOperator(int op_no, Command *param1, Command *param2)
 			if (type_match(p2, equal_classes, f.param_type[0])){
 				Command *inst = param1;
 				ref_command(this, inst);
-				CommandSetClassFunc(this, p1, op, f, inst);
+				op = add_command_classfunc(this, p1, f, inst);
 				op->num_params = 1;
 				op->param[0] = param2;
 				return op;
@@ -1402,8 +1399,7 @@ Command *SyntaxTree::LinkOperator(int op_no, Command *param1, Command *param2)
 	for (int i=0;i<PreOperators.num;i++)
 		if (op_no == PreOperators[i].primitive_id)
 			if (type_match(p1, equal_classes, PreOperators[i].param_type_1) && type_match(p2, equal_classes, PreOperators[i].param_type_2)){
-				CommandMakeOperator(op, param1, param2, i);
-				return op;
+				return op_command(this, param1, param2, i);
 			}
 
 	// exact match as class function but missing a "&"?
@@ -1413,7 +1409,7 @@ Command *SyntaxTree::LinkOperator(int op_no, Command *param1, Command *param2)
 				if (direct_type_match(p2, f.param_type[0]->parent)){
 					Command *inst = param1;
 					ref_command(this, inst);
-					CommandSetClassFunc(this, p1, op, f, inst);
+					op = add_command_classfunc(this, p1, f, inst);
 					op->num_params = 1;
 					op->param[0] = param2;
 					ref_command(this, op->param[0]);
@@ -1454,11 +1450,11 @@ Command *SyntaxTree::LinkOperator(int op_no, Command *param1, Command *param2)
 		if (op_is_class_func){
 			Command *inst = param1;
 			ref_command(this, inst);
-			CommandSetClassFunc(this, p1, op, p1->function[op_found], inst);
+			op = add_command_classfunc(this, p1, p1->function[op_found], inst);
 			op->num_params = 1;
 			op->param[0] = param2;
 		}else{
-			CommandMakeOperator(op, param1, param2, op_found);
+			return op_command(this, param1, param2, op_found);
 		}
 		return op;
 	}
@@ -1578,13 +1574,11 @@ void SyntaxTree::GetSpecialCommand(Block *block, Function *f)
 
 		// implement
 		// for_var = val0
-		Command *cmd_assign = AddCommand();
-		CommandMakeOperator(cmd_assign, for_var, val0, OperatorIntAssign);
+		Command *cmd_assign = op_command(this, for_var, val0, OperatorIntAssign);
 		block->command.add(cmd_assign);
 			
 		// while(for_var < val1)
-		Command *cmd_cmp = AddCommand();
-		CommandMakeOperator(cmd_cmp, for_var, val1, OperatorIntSmaller);
+		Command *cmd_cmp = op_command(this, for_var, val1, OperatorIntSmaller);
 			
 		Command *cmd_while = add_command_compilerfunc(this, CommandFor);
 		cmd_while->param[0] = cmd_cmp;
@@ -1597,14 +1591,14 @@ void SyntaxTree::GetSpecialCommand(Block *block, Function *f)
 		GetCompleteCommand(block, f);
 			
 		// ...for_var += 1
-		Command *cmd_inc = AddCommand();
+		Command *cmd_inc;
 		if (for_var->type == TypeInt){
-			CommandMakeOperator(cmd_inc, for_var, val1 /*dummy*/, OperatorIntIncrease);
+			cmd_inc = op_command(this, for_var, val1 /*dummy*/, OperatorIntIncrease);
 		}else{
 			int nc = AddConstant(TypeFloat);
 			*(float*)Constants[nc].data = 1.0;
 			Command *val_add = add_command_const(this, nc);
-			CommandMakeOperator(cmd_inc, for_var, val_add, OperatorFloatAddS);
+			cmd_inc = op_command(this, for_var, val_add, OperatorFloatAddS);
 		}
 		Block *loop_block = Blocks[loop_block_no];
 		loop_block->command.add(cmd_inc); // add to loop-block
@@ -1648,8 +1642,7 @@ void SyntaxTree::GetSpecialCommand(Block *block, Function *f)
 
 		// implement
 		// for_index = 0
-		Command *cmd_assign = AddCommand();
-		CommandMakeOperator(cmd_assign, for_index, val0, OperatorIntAssign);
+		Command *cmd_assign = op_command(this, for_index, val0, OperatorIntAssign);
 		block->command.add(cmd_assign);
 
 		// array.num
@@ -1661,8 +1654,7 @@ void SyntaxTree::GetSpecialCommand(Block *block, Function *f)
 		val1->param[0] = for_array;
 			
 		// while(for_index < val1)
-		Command *cmd_cmp = AddCommand();
-		CommandMakeOperator(cmd_cmp, for_index, val1, OperatorIntSmaller);
+		Command *cmd_cmp = op_command(this, for_index, val1, OperatorIntSmaller);
 			
 		Command *cmd_while = add_command_compilerfunc(this, CommandFor);
 		cmd_while->param[0] = cmd_cmp;
@@ -1675,8 +1667,7 @@ void SyntaxTree::GetSpecialCommand(Block *block, Function *f)
 		GetCompleteCommand(block, f);
 			
 		// ...for_index += 1
-		Command *cmd_inc = AddCommand();
-		CommandMakeOperator(cmd_inc, for_index, val1 /*dummy*/, OperatorIntIncrease);
+		Command *cmd_inc = op_command(this, for_index, val1 /*dummy*/, OperatorIntIncrease);
 		Block *loop_block = Blocks[loop_block_no];
 		loop_block->command.add(cmd_inc); // add to loop-block
 
@@ -1695,8 +1686,7 @@ void SyntaxTree::GetSpecialCommand(Block *block, Function *f)
 		command_make_ref(this, array_el_ref, array_el);
 
 		// &for_var = &array[for_index]
-		Command *cmd_var_assign = AddCommand();
-		CommandMakeOperator(cmd_var_assign, for_var_ref, array_el_ref, OperatorPointerAssign);
+		Command *cmd_var_assign = op_command(this, for_var_ref, array_el_ref, OperatorPointerAssign);
 		loop_block->command.insert(cmd_var_assign, 0);
 
 		// ref...
@@ -2634,12 +2624,10 @@ void SyntaxTree::BreakDownComplicatedCommands()
 			*(int*)Constants[nc].data = el_type->size;
 			Command *c_size = add_command_const(this, nc);
 			// offset = size * index
-			Command *c_offset = AddCommand();
-			CommandMakeOperator(c_offset, c_index, c_size, OperatorIntMultiply);
+			Command *c_offset = op_command(this, c_index, c_size, OperatorIntMultiply);
 			c_offset->type = TypeInt;//TypePointer;
 			// address = &array + offset
-			Command *c_address = AddCommand();
-			CommandMakeOperator(c_address, c_ref_array, c_offset, OperatorIntAdd);
+			Command *c_address = op_command(this, c_ref_array, c_offset, OperatorIntAdd);
 			c_address->type = GetPointerType(el_type);//TypePointer;
 			// c = * address
 			command_make_deref(this, c, c_address);
@@ -2663,12 +2651,10 @@ void SyntaxTree::BreakDownComplicatedCommands()
 			*(int*)Constants[nc].data = el_type->size;
 			Command *c_size = add_command_const(this, nc);
 			// offset = size * index
-			Command *c_offset = AddCommand();
-			CommandMakeOperator(c_offset, c_index, c_size, OperatorIntMultiply);
+			Command *c_offset = op_command(this, c_index, c_size, OperatorIntMultiply);
 			c_offset->type = TypeInt;
 			// address = &array + offset
-			Command *c_address = AddCommand();
-			CommandMakeOperator(c_address, c_ref_array, c_offset, OperatorIntAdd);
+			Command *c_address = op_command(this, c_ref_array, c_offset, OperatorIntAdd);
 			c_address->type = GetPointerType(el_type);//TypePointer;
 			// c = * address
 			command_make_deref(this, c, c_address);
@@ -2692,8 +2678,7 @@ void SyntaxTree::BreakDownComplicatedCommands()
 			*(int*)Constants[nc].data = c->link_nr;
 			Command *c_shift = add_command_const(this, nc);
 			// address = &struct + shift
-			Command *c_address = AddCommand();
-			CommandMakeOperator(c_address, c_ref_struct, c_shift, OperatorIntAdd);
+			Command *c_address = op_command(this, c_ref_struct, c_shift, OperatorIntAdd);
 			c_address->type = GetPointerType(el_type);//TypePointer;
 			// c = * address
 			command_make_deref(this, c, c_address);
@@ -2715,8 +2700,7 @@ void SyntaxTree::BreakDownComplicatedCommands()
 			*(int*)Constants[nc].data = c->link_nr;
 			Command *c_shift = add_command_const(this, nc);
 			// address = &struct + shift
-			Command *c_address = AddCommand();
-			CommandMakeOperator(c_address, c_ref_struct, c_shift, OperatorIntAdd);
+			Command *c_address = op_command(this, c_ref_struct, c_shift, OperatorIntAdd);
 			c_address->type = GetPointerType(el_type);//TypePointer;
 			// c = * address
 			command_make_deref(this, c, c_address);
@@ -2926,13 +2910,11 @@ void CreateImplicitAssign(SyntaxTree *ps, Type *t)
 		int nc = ps->AddConstant(TypeInt);
 		(*(int*)ps->Constants[nc].data) = 0;
 		Command *cmd_0 = add_command_const(ps, nc);
-		Command *cmd_assign0 = ps->AddCommand();
-		CommandMakeOperator(cmd_assign0, for_var, cmd_0, OperatorIntAssign);
+		Command *cmd_assign0 = op_command(ps, for_var, cmd_0, OperatorIntAssign);
 		f->block->command.add(cmd_assign0);
 
 		// while(for_var < self.num)
-		Command *cmd_cmp = ps->AddCommand();
-		CommandMakeOperator(cmd_cmp, for_var, cp_command_deep(ps, other_num), OperatorIntSmaller);
+		Command *cmd_cmp = op_command(ps, for_var, cp_command_deep(ps, other_num), OperatorIntSmaller);
 
 		Command *cmd_while = add_command_compilerfunc(ps, CommandFor);
 		cmd_while->param[0] = cmd_cmp;
@@ -2968,8 +2950,7 @@ void CreateImplicitAssign(SyntaxTree *ps, Type *t)
 		b->command.add(cmd_assign);
 
 		// ...for_var += 1
-		Command *cmd_inc = ps->AddCommand();
-		CommandMakeOperator(cmd_inc, for_var, cmd_0 /*dummy*/, OperatorIntIncrease);
+		Command *cmd_inc = op_command(ps, for_var, cmd_0 /*dummy*/, OperatorIntIncrease);
 		b->command.add(cmd_inc);
 		f->block->command.add(cb);
 	}else{
@@ -3038,13 +3019,11 @@ void CreateImplicitArrayClear(SyntaxTree *ps, Type *t)
 		int nc = ps->AddConstant(TypeInt);
 		(*(int*)ps->Constants[nc].data) = 0;
 		Command *cmd_0 = add_command_const(ps, nc);
-		Command *cmd_assign = ps->AddCommand();
-		CommandMakeOperator(cmd_assign, for_var, cmd_0, OperatorIntAssign);
+		Command *cmd_assign = op_command(ps, for_var, cmd_0, OperatorIntAssign);
 		f->block->command.add(cmd_assign);
 
 		// while(for_var < self.num)
-		Command *cmd_cmp = ps->AddCommand();
-		CommandMakeOperator(cmd_cmp, for_var, self_num, OperatorIntSmaller);
+		Command *cmd_cmp = op_command(ps, for_var, self_num, OperatorIntSmaller);
 
 		Command *cmd_while = add_command_compilerfunc(ps, CommandFor);
 		cmd_while->param[0] = cmd_cmp;
@@ -3071,8 +3050,7 @@ void CreateImplicitArrayClear(SyntaxTree *ps, Type *t)
 		b->command.add(cmd_delete);
 
 		// ...for_var += 1
-		Command *cmd_inc = ps->AddCommand();
-		CommandMakeOperator(cmd_inc, for_var, cmd_0 /*dummy*/, OperatorIntIncrease);
+		Command *cmd_inc = op_command(ps, for_var, cmd_0 /*dummy*/, OperatorIntIncrease);
 		b->command.add(cmd_inc);
 		f->block->command.add(cb);
 	}
@@ -3132,20 +3110,17 @@ void CreateImplicitArrayResize(SyntaxTree *ps, Type *t)
 	num_old->type = TypeInt;
 
 	// num_old = self.num
-	Command *cmd_copy_num = ps->AddCommand();
-	CommandMakeOperator(cmd_copy_num, num_old, self_num, OperatorIntAssign);
+	Command *cmd_copy_num = op_command(ps, num_old, self_num, OperatorIntAssign);
 	f->block->command.add(cmd_copy_num);
 
 // delete...
 	if (t->parent->GetFunc("__delete__") >= 0){
 		// for_var = num
-		Command *cmd_assign = ps->AddCommand();
-		CommandMakeOperator(cmd_assign, for_var, num, OperatorIntAssign);
+		Command *cmd_assign = op_command(ps, for_var, num, OperatorIntAssign);
 		f->block->command.add(cmd_assign);
 
 		// while(for_var < self.num)
-		Command *cmd_cmp = ps->AddCommand();
-		CommandMakeOperator(cmd_cmp, for_var, self_num, OperatorIntSmaller);
+		Command *cmd_cmp = op_command(ps, for_var, self_num, OperatorIntSmaller);
 
 		Command *cmd_while = add_command_compilerfunc(ps, CommandFor);
 		cmd_while->param[0] = cmd_cmp;
@@ -3172,8 +3147,7 @@ void CreateImplicitArrayResize(SyntaxTree *ps, Type *t)
 		b->command.add(cmd_delete);
 
 		// ...for_var += 1
-		Command *cmd_inc = ps->AddCommand();
-		CommandMakeOperator(cmd_inc, for_var, num /*dummy*/, OperatorIntIncrease);
+		Command *cmd_inc = op_command(ps, for_var, num /*dummy*/, OperatorIntIncrease);
 		b->command.add(cmd_inc);
 		f->block->command.add(cb);
 	}
@@ -3187,13 +3161,11 @@ void CreateImplicitArrayResize(SyntaxTree *ps, Type *t)
 	// new...
 	if (t->parent->GetFunc("__init__") >= 0){
 		// for_var = num_old
-		Command *cmd_assign = ps->AddCommand();
-		CommandMakeOperator(cmd_assign, for_var, num_old, OperatorIntAssign);
+		Command *cmd_assign = op_command(ps, for_var, num_old, OperatorIntAssign);
 		f->block->command.add(cmd_assign);
 
 		// while(for_var < self.num)
-		Command *cmd_cmp = ps->AddCommand();
-		CommandMakeOperator(cmd_cmp, for_var, self_num, OperatorIntSmaller);
+		Command *cmd_cmp = op_command(ps, for_var, self_num, OperatorIntSmaller);
 
 		Command *cmd_while = add_command_compilerfunc(ps, CommandFor);
 		cmd_while->param[0] = cmd_cmp;
@@ -3220,8 +3192,7 @@ void CreateImplicitArrayResize(SyntaxTree *ps, Type *t)
 		b->command.add(cmd_init);
 
 		// ...for_var += 1
-		Command *cmd_inc = ps->AddCommand();
-		CommandMakeOperator(cmd_inc, for_var, num /*dummy*/, OperatorIntIncrease);
+		Command *cmd_inc = op_command(ps, for_var, num /*dummy*/, OperatorIntIncrease);
 		b->command.add(cmd_inc);
 		f->block->command.add(cb);
 	}
@@ -3269,8 +3240,7 @@ void CreateImplicitArrayAdd(SyntaxTree *ps, Type *t)
 	int nc = ps->AddConstant(TypeInt);
 	(*(int*)ps->Constants[nc].data) = 1;
 	Command *cmd_1 = add_command_const(ps, nc);
-	Command *cmd_add = ps->AddCommand();
-	CommandMakeOperator(cmd_add, self_num, cmd_1, OperatorIntAdd);
+	Command *cmd_add = op_command(ps, self_num, cmd_1, OperatorIntAdd);
 	Command *cmd_resize = add_command_classfunc(ps, t, t->function[t->GetFunc("resize")], self);
 	cmd_resize->num_params = 1;
 	cmd_resize->param[0] = cmd_add;
@@ -3279,8 +3249,7 @@ void CreateImplicitArrayAdd(SyntaxTree *ps, Type *t)
 
 
 	// el := self[self.num - 1]
-	Command *cmd_sub = ps->AddCommand();
-	CommandMakeOperator(cmd_sub, cp_command(ps, self_num), cmd_1, OperatorIntSubtract);
+	Command *cmd_sub = op_command(ps, cp_command(ps, self_num), cmd_1, OperatorIntSubtract);
 	Command *deref_self = cp_command(ps, self);
 	deref_command(ps, deref_self);
 	Command *cmd_el = ps->AddCommand();
