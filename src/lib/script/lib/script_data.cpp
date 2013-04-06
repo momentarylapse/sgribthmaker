@@ -928,11 +928,6 @@ void SIAddOperators()
 	add_operator(OperatorDivideS,		TypeVoid,		TypeComplex,	TypeComplex);
 	add_operator(OperatorEqual,			TypeBool,		TypeComplex,	TypeComplex);
 	add_operator(OperatorSubtract,		TypeComplex,	TypeVoid,		TypeComplex);
-	add_operator(OperatorAssign,		TypeVoid,		TypeCString,	TypeCString);
-	add_operator(OperatorAdd,			TypeCString,	TypeCString,	TypeCString);
-	add_operator(OperatorAddS,			TypeVoid,		TypeCString,	TypeCString);
-	add_operator(OperatorEqual,			TypeBool,		TypeCString,	TypeCString);
-	add_operator(OperatorNotEqual,		TypeBool,		TypeCString,	TypeCString);
 	add_operator(OperatorAssign,		TypeVoid,		TypeClass,		TypeClass);
 	add_operator(OperatorEqual,			TypeBool,		TypeClass,		TypeClass);
 	add_operator(OperatorNotEqual,		TypeBool,		TypeClass,		TypeClass);

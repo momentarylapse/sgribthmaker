@@ -674,41 +674,6 @@ void Serializer::SerializeOperator(Command *com, SerialCommandParam *param, Seri
 			for (int i=4*signed(com->param[0]->type->size/4);i<signed(com->param[0]->type->size);i++)
 				add_cmd(Asm::inst_mov, param_shift(param[0], i, TypeChar), param_shift(param[1], i, TypeChar));
 			break;
-// string   TODO: create own code!
-		case OperatorCStringAssignAA:
-			AddFuncParam(param[0]);
-			AddFuncParam(param[1]);
-			AddFunctionCall((void*)&strcpy);
-			break;
-		case OperatorCStringAddAAS:
-			AddFuncParam(param[0]);
-			AddFuncParam(param[1]);
-			AddFunctionCall((void*)&strcat);
-			break;
-		case OperatorCStringAddAA:{
-			SerialCommandParam ret_ref;
-			AddReference(ret, TypePointer, ret_ref);
-			AddFuncParam(ret_ref);
-			AddFuncParam(param[0]);
-			AddFunctionCall((void*)&strcpy);
-			AddFuncParam(ret_ref);
-			AddFuncParam(param[1]);
-			AddFunctionCall((void*)&strcat);
-			}break;
-		case OperatorCStringEqualAA:
-		case OperatorCStringNotEqualAA:
-			AddFuncParam(param[0]);
-			AddFuncParam(param[1]);
-			AddFunctionCall((void*)&strcmp); // well... return in eax...
-
-			add_cmd(Asm::inst_cmp, p_eax_int, param_const(TypeInt, (void*)0x0));
-			if (com->link_nr == OperatorCStringEqualAA)
-				add_cmd(Asm::inst_setz, p_al_bool);
-			if (com->link_nr==OperatorCStringNotEqualAA)
-				add_cmd(Asm::inst_setnz, p_al_bool);
-			add_cmd(Asm::inst_mov, ret, p_al_bool);
-			add_reg_channel(Asm::RegEax, cmd.num - 3, cmd.num - 1);
-			break;
 // int
 		case OperatorIntAddS:
 			add_cmd(Asm::inst_add, param[0], param[1]);
