@@ -91,7 +91,7 @@ void Script::AllocateMemory()
 		int s = c.type->size;
 		if (c.type == TypeString){
 			// const string -> variable length   (+ super array frame)
-			s = strlen(c.data) + 1 + 16;
+			s = strlen(c.data) + 1 + SuperArraySize;
 		}
 		MemorySize += mem_align(s);
 	}
@@ -142,11 +142,11 @@ void Script::MapConstantsToMemory()
 			// const string -> variable length
 			s = strlen(syntax->Constants[i].data) + 1;
 
-			*(void**)&Memory[MemorySize] = &Memory[MemorySize + 16]; // .data
-			*(int*)&Memory[MemorySize + 4] = s - 1; // .num
-			*(int*)&Memory[MemorySize + 8] = 0; // .reserved
-			*(int*)&Memory[MemorySize + 12] = 1; // .item_size
-			MemorySize += 16;
+			*(void**)&Memory[MemorySize] = &Memory[MemorySize + SuperArraySize]; // .data
+			*(int*)&Memory[MemorySize + PointerSize    ] = s - 1; // .num
+			*(int*)&Memory[MemorySize + PointerSize + 4] = 0; // .reserved
+			*(int*)&Memory[MemorySize + PointerSize + 8] = 1; // .item_size
+			MemorySize += SuperArraySize;
 		}
 		memcpy(&Memory[MemorySize], (void*)c.data, s);
 		MemorySize += mem_align(s);
