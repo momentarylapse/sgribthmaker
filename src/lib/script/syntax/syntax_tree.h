@@ -179,7 +179,7 @@ public:
 	Type *CreateNewType(const string &name, int size, bool is_pointer, bool is_silent, bool is_array, int array_size, Type *sub);
 	void TestArrayDefinition(Type **type, bool is_pointer);
 	bool GetExistence(const string &name, Function *f);
-	void LinkMostImportantOperator(int &NumOperators, Command **Operand, Command **Operator, int *op_exp);
+	void LinkMostImportantOperator(Array<Command*> &Operand, Array<Command*> &Operator, Array<int> &op_exp);
 	bool LinkOperator(int op_no, Command *param1, Command *param2, Command **cmd);
 	void GetOperandExtension(Command *Operand, Function *f);
 	void GetOperandExtensionElement(Command *Operand, Function *f);
@@ -187,7 +187,7 @@ public:
 	Command *GetCommand(Function *f);
 	void GetCompleteCommand(Block *block, Function *f);
 	Command *GetOperand(Function *f);
-	Command *GetOperator(Function *f);
+	Command *GetPrimitiveOperator(Function *f);
 	void FindFunctionParameters(int &np, Type **WantedType, Function *f, Command *cmd);
 	void FindFunctionSingleParameter(int p, Type **WantedType, Function *f, Command *cmd);
 	void GetFunctionCall(const string &f_name, Command *Operand, Function *f);

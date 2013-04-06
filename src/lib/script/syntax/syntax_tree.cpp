@@ -724,16 +724,12 @@ void *SyntaxTree::GetConstantValue()
 // expression naming a type
 Type *SyntaxTree::GetType(const string &name,bool force)
 {
-	Type *type=NULL;
+	Type *type = NULL;
 	for (int i=0;i<Types.num;i++)
 		if (name == Types[i]->name)
 			type = Types[i];
-	if (force){
-		if (!type){
-			DoError("unknown type");
-			return NULL;
-		}
-	}
+	if ((force) && (!type))
+		DoError("unknown type");
 	if (type)
 		Exp.next();
 	return type;
@@ -1280,7 +1276,7 @@ Command *SyntaxTree::GetOperand(Function *f)
 }
 
 // only "primitive" operator -> no type information
-Command *SyntaxTree::GetOperator(Function *f)
+Command *SyntaxTree::GetPrimitiveOperator(Function *f)
 {
 	msg_db_f("GetOperator",4);
 	so(Exp.cur);
@@ -1477,15 +1473,15 @@ bool SyntaxTree::LinkOperator(int op_no, Command *param1, Command *param2, Comma
 	return false;
 }
 
-void SyntaxTree::LinkMostImportantOperator(int &NumOperators, Command **Operand, Command **Operator, int *op_exp)
+void SyntaxTree::LinkMostImportantOperator(Array<Command*> &Operand, Array<Command*> &Operator, Array<int> &op_exp)
 {
 	msg_db_f("LinkMostImpOp",4);
 // find the most important operator (mio)
-	int mio=0;
-	for (int i=0;i<NumOperators;i++){
+	int mio = 0;
+	for (int i=0;i<Operator.num;i++){
 		so(format("%d %d", Operator[i]->link_nr, Operator[i]->link_nr));
 		if (PrimitiveOperators[Operator[i]->link_nr].level > PrimitiveOperators[Operator[mio]->link_nr].level)
-			mio=i;
+			mio = i;
 	}
 	so(mio);
 
@@ -1499,63 +1495,43 @@ void SyntaxTree::LinkMostImportantOperator(int &NumOperators, Command **Operand,
 	}
 
 // remove from list
-	Operand[mio]=Operator[mio];
-	for (int i=mio;i<NumOperators-1;i++){
-		Operator[i]=Operator[i+1];
-		Operand[i+1]=Operand[i+2];
-		op_exp[i] = op_exp[i+1];
-	}
-	NumOperators--;
+	Operand[mio] = Operator[mio];
+	Operator.erase(mio);
+	op_exp.erase(mio);
+	Operand.erase(mio + 1);
 }
 
 Command *SyntaxTree::GetCommand(Function *f)
 {
 	msg_db_f("GetCommand", 4);
-	int NumOperands = 0;
 	Array<Command*> Operand;
 	Array<Command*> Operator;
 	Array<int> op_exp;
 
 	// find the first operand
 	Operand.add(GetOperand(f));
-	NumOperands ++;
 
 	// find pairs of operators and operands
 	for (int i=0;true;i++){
 		op_exp.add(Exp.cur_exp);
-		Command *op = GetOperator(f);
-		if (op){
-			Operator.add(op);
-			if (Exp.end_of_line()){
-				//Exp.rewind();
-				DoError("unexpected end of line after operator");
-			}
-			Operand.add(GetOperand(f));
-			NumOperands++;
-		}else{
-			so("(kein weiterer Operator)");
-			so(Exp.cur);
+		Command *op = GetPrimitiveOperator(f);
+		if (!op)
 			break;
+		Operator.add(op);
+		if (Exp.end_of_line()){
+			//Exp.rewind();
+			DoError("unexpected end of line after operator");
 		}
+		Operand.add(GetOperand(f));
 	}
 
 
 	// in each step remove/link the most important operator
-	int NumOperators=NumOperands-1;
-	for (int i=0;i<NumOperands-1;i++){
-		LinkMostImportantOperator(NumOperators, &Operand[0], &Operator[0], &op_exp[0]);
-	}
-
-	Command *ret = Operand[0];
-	Operand.clear();
-	Operator.clear();
-	op_exp.clear();
+	while(Operator.num > 0)
+		LinkMostImportantOperator(Operand, Operator, op_exp);
 
 	// complete command is now collected in Operand[0]
-
-	so("-fertig");
-	so("Command endet mit " + Exp.get_name(Exp.cur_exp - 1));
-	return ret;
+	return Operand[0];
 }
 
 void conv_cbr(SyntaxTree *ps, Command *&c, int var);
