@@ -1377,11 +1377,12 @@ void apply_type_cast(SyntaxTree *ps, int tc, Command *param)
 	}
 }
 
-bool SyntaxTree::LinkOperator(int op_no, Command *param1, Command *param2, Command **cmd)
+Command *SyntaxTree::LinkOperator(int op_no, Command *param1, Command *param2)
 {
 	msg_db_f("LinkOp",4);
 	bool left_modifiable = PrimitiveOperators[op_no].left_modifiable;
 	string op_func_name = PrimitiveOperators[op_no].function_name;
+	Command *op = AddCommand();
 
 	Type *p1 = param1->type;
 	Type *p2 = param2->type;
@@ -1398,10 +1399,10 @@ bool SyntaxTree::LinkOperator(int op_no, Command *param1, Command *param2, Comma
 			if (type_match(p2, equal_classes, f.param_type[0])){
 				Command *inst = param1;
 				ref_command(this, inst);
-				CommandSetClassFunc(this, p1, *cmd, f, inst);
-				(*cmd)->num_params = 1;
-				(*cmd)->param[0] = param2;
-				return true;
+				CommandSetClassFunc(this, p1, op, f, inst);
+				op->num_params = 1;
+				op->param[0] = param2;
+				return op;
 			}
 		}
 
@@ -1409,8 +1410,8 @@ bool SyntaxTree::LinkOperator(int op_no, Command *param1, Command *param2, Comma
 	for (int i=0;i<PreOperators.num;i++)
 		if (op_no == PreOperators[i].primitive_id)
 			if (type_match(p1, equal_classes, PreOperators[i].param_type_1) && type_match(p2, equal_classes, PreOperators[i].param_type_2)){
-				CommandMakeOperator(*cmd, param1, param2, i);
-				return true;
+				CommandMakeOperator(op, param1, param2, i);
+				return op;
 			}
 
 	// exact match as class function but missing a "&"?
@@ -1420,11 +1421,11 @@ bool SyntaxTree::LinkOperator(int op_no, Command *param1, Command *param2, Comma
 				if (direct_type_match(p2, f.param_type[0]->parent)){
 					Command *inst = param1;
 					ref_command(this, inst);
-					CommandSetClassFunc(this, p1, *cmd, f, inst);
-					(*cmd)->num_params = 1;
-					(*cmd)->param[0] = param2;
-					ref_command(this, (*cmd)->param[0]);
-					return true;
+					CommandSetClassFunc(this, p1, op, f, inst);
+					op->num_params = 1;
+					op->param[0] = param2;
+					ref_command(this, op->param[0]);
+					return op;
 				}
 		}
 
@@ -1461,16 +1462,16 @@ bool SyntaxTree::LinkOperator(int op_no, Command *param1, Command *param2, Comma
 		if (op_is_class_func){
 			Command *inst = param1;
 			ref_command(this, inst);
-			CommandSetClassFunc(this, p1, *cmd, p1->function[op_found], inst);
-			(*cmd)->num_params = 1;
-			(*cmd)->param[0] = param2;
+			CommandSetClassFunc(this, p1, op, p1->function[op_found], inst);
+			op->num_params = 1;
+			op->param[0] = param2;
 		}else{
-			CommandMakeOperator(*cmd, param1, param2, op_found);
+			CommandMakeOperator(op, param1, param2, op_found);
 		}
-		return true;
+		return op;
 	}
 
-	return false;
+	return NULL;
 }
 
 void SyntaxTree::LinkMostImportantOperator(Array<Command*> &Operand, Array<Command*> &Operator, Array<int> &op_exp)
@@ -1489,7 +1490,8 @@ void SyntaxTree::LinkMostImportantOperator(Array<Command*> &Operand, Array<Comma
 	Command *param1 = Operand[mio];
 	Command *param2 = Operand[mio + 1];
 	int op_no = Operator[mio]->link_nr;
-	if (!LinkOperator(op_no, param1, param2, &Operator[mio])){
+	Operator[mio] = LinkOperator(op_no, param1, param2);
+	if (!Operator[mio]){
 		Exp.cur_exp = op_exp[mio];
 		DoError(format("no operator found: (%s) %s (%s)", param1->type->name.c_str(), PrimitiveOperators[op_no].name.c_str(), param2->type->name.c_str()));
 	}
@@ -2968,11 +2970,9 @@ void CreateImplicitAssign(SyntaxTree *ps, Type *t)
 		cmd_el2->num_params = 2;
 
 
-		Command *cmd_assign = ps->AddCommand();
-		if (!ps->LinkOperator(OperatorAssign, cmd_el, cmd_el2, &cmd_assign)){
+		Command *cmd_assign = ps->LinkOperator(OperatorAssign, cmd_el, cmd_el2);
+		if (!cmd_assign)
 			ps->DoError(format("%s.__assign__(): no %s.__assign__() found", t->name.c_str(), t->parent->name.c_str()));
-			return;
-		}
 		b->command.add(cmd_assign);
 
 		// ...for_var += 1
@@ -2997,11 +2997,9 @@ void CreateImplicitAssign(SyntaxTree *ps, Type *t)
 			o->num_params = 1;
 			o->param[0] = cp_command(ps, other); // needed for call-by-ref conversion!
 
-			Command *cmd_assign = ps->AddCommand();
-			if (!ps->LinkOperator(OperatorAssign, p, o, &cmd_assign)){
+			Command *cmd_assign = ps->LinkOperator(OperatorAssign, p, o);
+			if (!cmd_assign)
 				ps->DoError(format("%s.__assign__(): no %s.__assign__ for element \"%s\"", t->name.c_str(), e.type->name.c_str(), e.name.c_str()));
-				return;
-			}
 			f->block->command.add(cmd_assign);
 		}
 	}
@@ -3300,11 +3298,9 @@ void CreateImplicitArrayAdd(SyntaxTree *ps, Type *t)
 	cmd_el->param[1] = cmd_sub;
 	cmd_el->num_params = 2;
 
-	Command *cmd_assign = ps->AddCommand();
-	if (!ps->LinkOperator(OperatorAssign, cmd_el, item, &cmd_assign)){
+	Command *cmd_assign = ps->LinkOperator(OperatorAssign, cmd_el, item);
+	if (!cmd_assign)
 		ps->DoError(format("%s.add(): no %s.__assign__ for elements", t->name.c_str(), t->parent->name.c_str()));
-		return;
-	}
 	f->block->command.add(cmd_assign);
 
 	ClassFunction cf;

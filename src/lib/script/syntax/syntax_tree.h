@@ -180,7 +180,7 @@ public:
 	void TestArrayDefinition(Type **type, bool is_pointer);
 	bool GetExistence(const string &name, Function *f);
 	void LinkMostImportantOperator(Array<Command*> &Operand, Array<Command*> &Operator, Array<int> &op_exp);
-	bool LinkOperator(int op_no, Command *param1, Command *param2, Command **cmd);
+	Command *LinkOperator(int op_no, Command *param1, Command *param2);
 	void GetOperandExtension(Command *Operand, Function *f);
 	void GetOperandExtensionElement(Command *Operand, Function *f);
 	void GetOperandExtensionArray(Command *Operand, Function *f);
