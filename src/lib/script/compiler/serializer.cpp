@@ -1609,11 +1609,11 @@ void Serializer::solve_deref_temp_local(int c, int np, bool is_local)
 	p.shift = 0;
 	p.type = type_pointer;
 
-	int reg = find_unused_reg(c, c, /*PointerSize*/ 4, true);
+	int reg = find_unused_reg(c, c, PointerSize, true);
 	//so(reg);
 	if (reg < 0)
 		script->DoErrorInternal("solve_deref_temp_local... no registers available");
-	SerialCommandParam p_reg = param_reg(/*type_pointer*/TypeReg32, reg);
+	SerialCommandParam p_reg = param_reg(type_pointer, reg);
 	SerialCommandParam p_deref_reg;
 	p_deref_reg.kind = KindDerefRegister;
 	p_deref_reg.p = (char*)(long)reg;
@@ -2494,7 +2494,10 @@ inline void get_param(int inst, SerialCommandParam &p, int &param_type, void *&p
 		param = p.p + p.shift;
 	}else if (p.kind == KindRefToConst){
 		bool imm_allowed = Asm::GetInstructionAllowConst(inst);
-		if ((p.type->size <= 4) && (imm_allowed)){
+		if ((imm_allowed) && (p.type->is_pointer)){
+			param_type = Asm::PKConstant32;
+			param = (char*)(long)*(int*)(p.p + p.shift);
+		}else if ((p.type->size <= 4) && (imm_allowed)){
 			param_type = (p.type->size == 1) ? Asm::PKConstant8 : Asm::PKConstant32;
 			param = (char*)(long)*(int*)(p.p + p.shift);
 		}else{
@@ -2563,13 +2566,37 @@ void Serializer::Assemble(char *Opcode, int &OpcodeSize)
 
 			// FIXME
 			// evil hack to allow inconsistent param types (in address shifts)
-			if ((cmd[i].inst == Asm::inst_add) || (cmd[i].inst == Asm::inst_mov))
-				if ((cmd[i].p1.type->size == 8) && (cmd[i].p2.type->size == 4))
+			if ((cmd[i].inst == Asm::inst_add) || (cmd[i].inst == Asm::inst_mov)){
+				msg_write("inst ok");
+				msg_write(cmd[i].p1.type->name + "  ->  " + cmd[i].p2.type->name);
+				msg_write(cmd[i].p1.type->size);
+				msg_write(cmd[i].p2.type->size);
+				if (Asm::InstructionSet.set == Asm::InstructionSetAMD64){
+					if ((cmd[i].p1.kind == KindRegister) && (cmd[i].p2.kind == KindRefToConst)){
+						if (cmd[i].p1.type->is_pointer){
+							msg_error("----evil resize 0");
+							cmd[i].p1.type = TypeReg32;
+							cmd[i].p1.p = (char*)(long)Asm::RegResize[Asm::RegRoot[(long)cmd[i].p1.p]][4];
+						}
+					}
+				}
+				/*if ((cmd[i].p1.type->size == 8) && (cmd[i].p2.type->size == 4)){
+					msg_write("size ok");
 					if ((cmd[i].p1.kind == KindRegister) && ((cmd[i].p2.kind == KindRegister) || (cmd[i].p2.kind == KindConstant) || (cmd[i].p2.kind == KindRefToConst))){
-						//msg_error("----evil resize");
+						msg_error("----evil resize");
 						cmd[i].p1.type = cmd[i].p2.type;
 						cmd[i].p1.p = (char*)(long)Asm::RegResize[Asm::RegRoot[(long)cmd[i].p1.p]][cmd[i].p2.type->size];
 					}
+				}*/
+				if (cmd[i].p1.type->size > cmd[i].p2.type->size){
+					msg_write("size ok");
+					if ((cmd[i].p1.kind == KindRegister) && ((cmd[i].p2.kind == KindRegister) || (cmd[i].p2.kind == KindConstant) || (cmd[i].p2.kind == KindRefToConst))){
+						msg_error("----evil resize");
+						cmd[i].p1.type = cmd[i].p2.type;
+						cmd[i].p1.p = (char*)(long)Asm::RegResize[Asm::RegRoot[(long)cmd[i].p1.p]][cmd[i].p2.type->size];
+					}
+				}
+			}
 
 			assemble_cmd(list, cmd[i], script);
 		}

@@ -1190,6 +1190,7 @@ struct TT
 	int a, b, c, d;
 	TT f(int x)
 	{msg_write("a");}
+	void g(){msg_write("b");}
 };
 
 TT tt;
@@ -1197,8 +1198,9 @@ TT tt;
 void _ff()
 {
 	//TT x = tt.f(7);
-	TT *x;
-	x->b = 7; 
+//	TT *x;
+//	x->b = 7;
+	tt.g();
 }
 
 int hui_main(Array<string> arg)
