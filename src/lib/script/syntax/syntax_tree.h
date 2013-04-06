@@ -181,9 +181,9 @@ public:
 	bool GetExistence(const string &name, Function *f);
 	void LinkMostImportantOperator(Array<Command*> &Operand, Array<Command*> &Operator, Array<int> &op_exp);
 	Command *LinkOperator(int op_no, Command *param1, Command *param2);
-	void GetOperandExtension(Command *Operand, Function *f);
-	void GetOperandExtensionElement(Command *Operand, Function *f);
-	void GetOperandExtensionArray(Command *Operand, Function *f);
+	Command *GetOperandExtension(Command *Operand, Function *f);
+	Command *GetOperandExtensionElement(Command *Operand, Function *f);
+	Command *GetOperandExtensionArray(Command *Operand, Function *f);
 	Command *GetCommand(Function *f);
 	void GetCompleteCommand(Block *block, Function *f);
 	Command *GetOperand(Function *f);

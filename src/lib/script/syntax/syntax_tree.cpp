@@ -66,14 +66,15 @@ void deref_command(SyntaxTree *ps, Command *c)
 	command_make_deref(ps, c, t);
 }
 
-void shift_command(SyntaxTree *ps, Command *c, bool deref, int shift, Type *type)
+Command *shift_command(SyntaxTree *ps, Command *c, bool deref, int shift, Type *type)
 {
-	Command *sub = cp_command(ps, c);
-	c->kind = deref ? KindDerefAddressShift : KindAddressShift;
-	c->link_nr = shift;
-	c->type = type;
-	c->num_params = 1;
-	c->param[0] = sub;
+	Command *sub = ps->AddCommand();
+	sub->kind = deref ? KindDerefAddressShift : KindAddressShift;
+	sub->link_nr = shift;
+	sub->type = type;
+	sub->num_params = 1;
+	sub->param[0] = c;
+	return sub;
 }
 
 void reset_pre_script(SyntaxTree *ps)
@@ -815,7 +816,7 @@ void DoClassFunction(SyntaxTree *ps, Command *Operand, Type *t, int f_no, Functi
 	Operand->instance = ob;
 }
 
-void SyntaxTree::GetOperandExtensionElement(Command *Operand, Function *f)
+Command *SyntaxTree::GetOperandExtensionElement(Command *Operand, Function *f)
 {
 	msg_db_f("GetOperandExtensionElement", 4);
 	Exp.next();
@@ -829,35 +830,26 @@ void SyntaxTree::GetOperandExtensionElement(Command *Operand, Function *f)
 	}
 
 	// find element
-	bool ok = false;
 	for (int e=0;e<type->element.num;e++)
 		if (Exp.cur == type->element[e].name){
-			shift_command(this, Operand, deref, type->element[e].offset, type->element[e].type);
-			ok = true;
-			break;
+			Exp.next();
+			return 	shift_command(this, Operand, deref, type->element[e].offset, type->element[e].type);
 		}
 
 	// class function?
-	if (!ok){
-		for (int e=0;e<type->function.num;e++)
-			if (Exp.cur == type->function[e].name){
-				if (!deref)
-					ref_command(this, Operand);
-				Exp.next();
-				DoClassFunction(this, Operand, type, e, f);
-				ok = true;
-				Exp.rewind();
-				break;
-			}
-	}
+	for (int e=0;e<type->function.num;e++)
+		if (Exp.cur == type->function[e].name){
+			if (!deref)
+				ref_command(this, Operand);
+			Exp.next();
+			DoClassFunction(this, Operand, type, e, f);
+			return Operand;
+		}
 
-	if (!ok)
-		DoError("unknown element of " + type->name);
-
-	Exp.next();
+	DoError("unknown element of " + type->name);
 }
 
-void SyntaxTree::GetOperandExtensionArray(Command *Operand, Function *f)
+Command *SyntaxTree::GetOperandExtensionArray(Command *Operand, Function *f)
 {
 	msg_db_f("GetOperandExtensionArray", 4);
 
@@ -875,30 +867,29 @@ void SyntaxTree::GetOperandExtensionArray(Command *Operand, Function *f)
 		DoError(format("type \"%s\" is neither an array nor a pointer to an array", Operand->type->name.c_str()));
 	Exp.next();
 
-	Command *t = cp_command(this, Operand);
-	Operand->num_params = 2;
-	Operand->param[0] = t;
-	Command *array = Operand;
+	Command *array = AddCommand();
+	array->num_params = 2;
+	array->param[0] = Operand;
 
 	// pointer?
 	so(Operand->type->name);
 	if (pparray){
 		DoError("test... anscheinend gibt es [] auf * super array");
 		//array = cp_command(this, Operand);
-		Operand->kind = KindPointerAsArray;
+/*		Operand->kind = KindPointerAsArray;
 		Operand->type = t->type->parent;
 		deref_command(this, Operand);
-		array = Operand->param[0];
+		array = Operand->param[0];*/
 	}else if (Operand->type->is_super_array){
-		Operand->kind = KindPointerAsArray;
-		Operand->type = t->type->parent;
-		shift_command(this, t, false, 0, GetPointerType(t->type->parent));
+		array->kind = KindPointerAsArray;
+		array->type = Operand->type->parent;
+		array->param[0] = shift_command(this, Operand, false, 0, GetPointerType(array->type));
 	}else if (Operand->type->is_pointer){
-		Operand->kind = KindPointerAsArray;
-		Operand->type = t->type->parent->parent;
+		array->kind = KindPointerAsArray;
+		array->type = Operand->type->parent->parent;
 	}else{
-		Operand->kind = KindArray;
-		Operand->type = t->type->parent;
+		array->kind = KindArray;
+		array->type = Operand->type->parent;
 	}
 
 	// array index...
@@ -911,17 +902,18 @@ void SyntaxTree::GetOperandExtensionArray(Command *Operand, Function *f)
 	if (Exp.cur != "]")
 		DoError("\"]\" expected after array index");
 	Exp.next();
+	return array;
 }
 
 // find any ".", "->", or "[...]"'s    or operators?
-void SyntaxTree::GetOperandExtension(Command *Operand, Function *f)
+Command *SyntaxTree::GetOperandExtension(Command *Operand, Function *f)
 {
 	msg_db_f("GetOperandExtension", 4);
 
 	// nothing?
 	int op = WhichPrimitiveOperator(Exp.cur);
 	if ((Exp.cur != ".") && (Exp.cur != "[") && (Exp.cur != "->") && (op < 0))
-		return;
+		return Operand;
 
 	if (Exp.cur == "->")
 		DoError("\"->\" deprecated,  use \".\" instead");
@@ -929,16 +921,16 @@ void SyntaxTree::GetOperandExtension(Command *Operand, Function *f)
 	if (Exp.cur == "."){
 		// class element?
 
-		GetOperandExtensionElement(Operand, f);
+		Operand = GetOperandExtensionElement(Operand, f);
 
 	}else if (Exp.cur == "["){
 		// array?
 
-		GetOperandExtensionArray(Operand, f);
+		Operand = GetOperandExtensionArray(Operand, f);
 
 
 	}else if (op >= 0){
-		// unary operator?
+		// unary operator? (++,--)
 
 		for (int i=0;i<PreOperators.num;i++)
 			if (PreOperators[i].primitive_id == op)
@@ -948,13 +940,13 @@ void SyntaxTree::GetOperandExtension(Command *Operand, Function *f)
 					Command *t = cp_command(this, Operand);
 					CommandMakeOperator(Operand, t, NULL, i);
 					Exp.next();
-					return;
+					return Operand;
 				}
-		return;
+		return Operand;
 	}
 
 	// recursion
-	GetOperandExtension(Operand, f);
+	return GetOperandExtension(Operand, f);
 }
 
 inline bool direct_type_match(Type *a, Type *b)
@@ -1269,7 +1261,7 @@ Command *SyntaxTree::GetOperand(Function *f)
 	}
 
 	// Arrays, Strukturen aufloessen...
-	GetOperandExtension(Operand,f);
+	Operand = GetOperandExtension(Operand,f);
 
 	so("Operand endet mit " + Exp.get_name(Exp.cur_exp - 1));
 	return Operand;
