@@ -450,6 +450,13 @@ void Serializer::add_function_call_amd64(void *func, int func_no)
 	if (CompilerFunctionInstance.type)
 		CompilerFunctionParam.insert(CompilerFunctionInstance, 0);
 
+	// return as _very_ first parameter
+	if ((type->size > PointerSize) && (!type->is_array)){
+		//add_temp(type, ret_temp);
+		AddReference(/*ret_temp*/ CompilerFunctionReturn, TypePointer, ret_ref);
+		CompilerFunctionParam.insert(ret_ref, 0);
+	}
+
 	// map params...
 	int num_reg = 0;
 	foreach(SerialCommandParam &p, CompilerFunctionParam){
