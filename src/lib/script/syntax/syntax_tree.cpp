@@ -1675,11 +1675,11 @@ void SyntaxTree::GetSpecialCommand(Block *block, Function *f)
 		Command *for_var_ref = AddCommand();
 		command_make_ref(this, for_var_ref, for_var);
 
-		// &array[for_index]
+		// &array.data[for_index]
 		Command *array_el = AddCommand();
 		array_el->kind = KindPointerAsArray;
 		array_el->num_params = 2;
-		array_el->param[0] = for_array;
+		array_el->param[0] = shift_command(this, for_array, false, 0, GetPointerType(var_type));
 		array_el->param[1] = for_index;
 		array_el->type = var_type;
 		Command *array_el_ref = AddCommand();
@@ -2883,12 +2883,7 @@ void CreateImplicitAssign(SyntaxTree *ps, Type *t)
 		}
 
 		// self.resize(other.num)
-		Command *other_num = ps->AddCommand();
-		other_num->kind = KindDerefAddressShift;
-		other_num->link_nr = PointerSize;
-		other_num->type = TypeInt;
-		other_num->num_params = 1;
-		other_num->param[0] = cp_command_deep(ps, other);
+		Command *other_num = shift_command(ps, other, false, PointerSize, TypeInt);
 
 		Command *cmd_resize = add_command_classfunc(ps, t, t->function[nf], cp_command(ps, self));
 		cmd_resize->num_params = 1;
@@ -2925,21 +2920,23 @@ void CreateImplicitAssign(SyntaxTree *ps, Type *t)
 		cb->kind = KindBlock;
 		cb->link_nr = b->index;
 
-		// el := self[for_var]
+		// el := self.data[for_var]
 		Command *deref_self = cp_command(ps, self);
 		deref_command(ps, deref_self);
+		Command *self_data = shift_command(ps, deref_self, false, 0, ps->GetPointerType(t->parent));
 		Command *cmd_el = ps->AddCommand();
 		cmd_el->kind = KindPointerAsArray;
 		cmd_el->type = t->parent;
-		cmd_el->param[0] = deref_self;
+		cmd_el->param[0] = self_data;
 		cmd_el->param[1] = for_var;
 		cmd_el->num_params = 2;
 
-		// el2 := other[for_var]
+		// el2 := other.data[for_var]
+		Command *other_data = shift_command(ps, deref_other, false, 0, ps->GetPointerType(t->parent));
 		Command *cmd_el2 = ps->AddCommand();
 		cmd_el2->kind = KindPointerAsArray;
 		cmd_el2->type = t->parent;
-		cmd_el2->param[0] = deref_other;
+		cmd_el2->param[0] = other_data;
 		cmd_el2->param[1] = for_var;
 		cmd_el2->num_params = 2;
 
@@ -2957,18 +2954,8 @@ void CreateImplicitAssign(SyntaxTree *ps, Type *t)
 
 		// call child assignment
 		foreach(ClassElement &e, t->element){
-			Command *p = ps->AddCommand();
-			p->kind = KindDerefAddressShift;
-			p->link_nr = e.offset;
-			p->type = e.type;
-			p->num_params = 1;
-			p->param[0] = self;
-			Command *o = ps->AddCommand();
-			o->kind = KindDerefAddressShift;
-			o->link_nr = e.offset;
-			o->type = e.type;
-			o->num_params = 1;
-			o->param[0] = cp_command(ps, other); // needed for call-by-ref conversion!
+			Command *p = shift_command(ps, self, true, e.offset, e.type);
+			Command *o = shift_command(ps, cp_command(ps, other), true, e.offset, e.type); // needed for call-by-ref conversion!
 
 			Command *cmd_assign = ps->LinkOperator(OperatorAssign, p, o);
 			if (!cmd_assign)
@@ -3034,13 +3021,14 @@ void CreateImplicitArrayClear(SyntaxTree *ps, Type *t)
 		cb->kind = KindBlock;
 		cb->link_nr = b->index;
 
-		// el := self[for_var]
+		// el := self.data[for_var]
 		Command *deref_self = cp_command(ps, self);
 		deref_command(ps, deref_self);
+		Command *self_data = shift_command(ps, deref_self, false, 0, ps->GetPointerType(t->parent));
 		Command *cmd_el = ps->AddCommand();
 		cmd_el->kind = KindPointerAsArray;
 		cmd_el->type = t->parent;
-		cmd_el->param[0] = deref_self;
+		cmd_el->param[0] = self_data;
 		cmd_el->param[1] = for_var;
 		cmd_el->num_params = 2;
 		ref_command(ps, cmd_el);
@@ -3131,13 +3119,14 @@ void CreateImplicitArrayResize(SyntaxTree *ps, Type *t)
 		cb->kind = KindBlock;
 		cb->link_nr = b->index;
 
-		// el := self[for_var]
+		// el := self.data[for_var]
 		Command *deref_self = cp_command(ps, self);
 		deref_command(ps, deref_self);
+		Command *self_data = shift_command(ps, deref_self, false, 0, ps->GetPointerType(t->parent));
 		Command *cmd_el = ps->AddCommand();
 		cmd_el->kind = KindPointerAsArray;
 		cmd_el->type = t->parent;
-		cmd_el->param[0] = deref_self;
+		cmd_el->param[0] = self_data;
 		cmd_el->param[1] = for_var;
 		cmd_el->num_params = 2;
 		ref_command(ps, cmd_el);
@@ -3176,13 +3165,14 @@ void CreateImplicitArrayResize(SyntaxTree *ps, Type *t)
 		cb->kind = KindBlock;
 		cb->link_nr = b->index;
 
-		// el := self[for_var]
+		// el := self.data[for_var]
 		Command *deref_self = cp_command(ps, self);
 		deref_command(ps, deref_self);
+		Command *self_data = shift_command(ps, deref_self, false, 0, ps->GetPointerType(t->parent));
 		Command *cmd_el = ps->AddCommand();
 		cmd_el->kind = KindPointerAsArray;
 		cmd_el->type = t->parent;
-		cmd_el->param[0] = deref_self;
+		cmd_el->param[0] = self_data;
 		cmd_el->param[1] = for_var;
 		cmd_el->num_params = 2;
 		ref_command(ps, cmd_el);
@@ -3248,14 +3238,15 @@ void CreateImplicitArrayAdd(SyntaxTree *ps, Type *t)
 
 
 
-	// el := self[self.num - 1]
+	// el := self.data[self.num - 1]
 	Command *cmd_sub = op_command(ps, cp_command(ps, self_num), cmd_1, OperatorIntSubtract);
 	Command *deref_self = cp_command(ps, self);
 	deref_command(ps, deref_self);
+	Command *self_data = shift_command(ps, deref_self, false, 0, ps->GetPointerType(t->parent));
 	Command *cmd_el = ps->AddCommand();
 	cmd_el->kind = KindPointerAsArray;
 	cmd_el->type = t->parent;
-	cmd_el->param[0] = deref_self;
+	cmd_el->param[0] = self_data;
 	cmd_el->param[1] = cmd_sub;
 	cmd_el->num_params = 2;
 
