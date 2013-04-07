@@ -187,6 +187,17 @@ void Serializer::cmd_list_out()
 	so("--------------------------------");
 }
 
+inline int get_reg(int root, int size)
+{
+#if 1
+	if ((size != 1) && (size != 4) && (size != 8)){
+		msg_write(msg_get_trace());
+		throw Asm::Exception("get_reg: bad reg size: " + i2s(size), "...", 0, 0);
+	}
+#endif
+	return Asm::RegResize[root][size];
+}
+
 void Serializer::add_cmd(int inst, SerialCommandParam p1, SerialCommandParam p2)
 {
 	SerialCommand c;
@@ -197,8 +208,9 @@ void Serializer::add_cmd(int inst, SerialCommandParam p1, SerialCommandParam p2)
 
 	// call violates all used registers...
 	if (inst == Asm::inst_call)
-		for (int i=0;i<MapRegRoot.num;i++)
-			add_reg_channel(Asm::RegResize[MapRegRoot[i]][4], cmd.num - 1, cmd.num - 1);
+		for (int i=0;i<MapRegRoot.num;i++){
+			add_reg_channel(get_reg(i, 4), cmd.num - 1, cmd.num - 1);
+		}
 }
 
 void Serializer::add_cmd(int inst, SerialCommandParam p)
@@ -323,9 +335,15 @@ void Serializer::add_jump_after_command(int level, int index, int marker)
 	add_later.add(j);
 }
 
-inline int reg_smallify(int reg, int size)
+inline int reg_resize(int reg, int size)
 {
-	return Asm::RegResize[Asm::RegRoot[reg]][size];
+	if (size == 2){
+		msg_error("size = 2");
+		msg_write(msg_get_trace());
+		throw Asm::Exception("size=2", "kjlkjl", 0, 0);
+		//Asm::DoError("size=2");
+	}
+	return get_reg(Asm::RegRoot[reg], size);
 }
 
 
@@ -463,6 +481,8 @@ void Serializer::add_function_call_amd64(void *func, int func_no)
 		if ((p.type == TypeInt) || (p.type == TypeChar) || (p.type == TypeBool) || (p.type->is_pointer)){
 			if (num_reg < 6)
 				num_reg ++;
+			else
+				DoError("more than 6 parameter currently not supported");
 		}
 	}
 	int n = 0;
@@ -470,7 +490,7 @@ void Serializer::add_function_call_amd64(void *func, int func_no)
 	int param_regs_root[6] = {7, 6, 2, 1, 8, 9};
 	foreachb(SerialCommandParam &p, CompilerFunctionParam){
 		if ((p.type == TypeInt) || (p.type == TypeChar) || (p.type == TypeBool) || (p.type->is_pointer)){
-			add_cmd(Asm::inst_mov, param_reg(p.type, Asm::RegResize[param_regs_root[num_reg - n - 1]][p.type->size]), p);
+			add_cmd(Asm::inst_mov, param_reg(p.type, get_reg(param_regs_root[num_reg - n - 1], p.type->size)), p);
 			n ++;
 		}
 	}
@@ -1574,7 +1594,9 @@ void Serializer::CorrectUnallowedParamCombis()
 		SerialCommandParam *pp = mov_first_param ? &cmd[i].p1 : &cmd[i].p2;
 		SerialCommandParam p = *pp;
 
-		*pp = param_reg(p.type, Asm::RegResize[0][p.type->size]);
+		msg_error("correct");
+		msg_write(p.type->name);
+		*pp = param_reg(p.type, get_reg(0, p.type->size));
 		add_cmd(Asm::inst_mov, *pp, p);
 		move_last_cmd(i);
 		//so("...ok");
@@ -1587,10 +1609,10 @@ int Serializer::find_unused_reg(int first, int last, int size, bool allow_eax)
 {
 	for (int r=0;r<MapRegRoot.num;r++)
 		if (!is_reg_root_used_in_interval(MapRegRoot[r], first, last))
-			return Asm::RegResize[MapRegRoot[r]][size];
+			return get_reg(MapRegRoot[r], size);
 	if (allow_eax)
 		if (!is_reg_root_used_in_interval(0, first, last))
-			return Asm::RegResize[0][size];
+			return get_reg(0, size);
 	return -1;
 }
 
@@ -2197,7 +2219,7 @@ void Serializer::MapTempVar(int vi)
 				RegRootUsed[reg_channel[i].reg_root] = true;
 		for (int i=0;i<MapRegRoot.num;i++)
 			if (!RegRootUsed[MapRegRoot[i]]){
-				reg = Asm::RegResize[MapRegRoot[i]][v.type->size];
+				reg = get_reg(MapRegRoot[i], v.type->size);
 				break;
 			}
 	}
@@ -2296,7 +2318,7 @@ inline void _resolve_deref_reg_shift_(Serializer *_s, SerialCommandParam &p, int
 	long s = p.shift;
 	p.shift = 0;
 	msg_write("_resolve_deref_reg_shift_");
-	int reg = Asm::RegResize[Asm::RegRoot[(long)p.p]][4];
+	int reg = reg_resize((long)p.p, 4);
 	_s->add_cmd(Asm::inst_add, param_reg(TypeReg32, reg), param_const(TypeInt, (void*)s));
 	_s->move_last_cmd(i);
 	_s->add_cmd(Asm::inst_sub, param_reg(TypeReg32, reg), param_const(TypeInt, (void*)s));
@@ -2344,7 +2366,7 @@ void Serializer::AddFunctionIntro(Function *f)
 
 		foreachb(LocalVariable &p, param){
 			if ((p.type == TypeInt) || (p.type == TypeChar) || (p.type == TypeBool) || (p.type->is_pointer)){
-				int reg = Asm::RegResize[param_regs_root[num_reg - n - 1]][p.type->size];
+				int reg = get_reg(param_regs_root[num_reg - n - 1], p.type->size);
 				add_cmd(Asm::inst_mov, param_local(p.type, p._offset), param_reg(p.type, reg));
 				add_reg_channel(reg, cmd.num - 1, cmd.num - 1);
 				n ++;
@@ -2562,39 +2584,49 @@ void Serializer::Assemble(char *Opcode, int &OpcodeSize)
 			// push 8 bit -> push 32 bit
 			if (cmd[i].inst == Asm::inst_push)
 				if (cmd[i].p1.kind == KindRegister)
-					cmd[i].p1.p = (char*)(long)Asm::RegResize[Asm::RegRoot[(long)cmd[i].p1.p]][PointerSize];
+					cmd[i].p1.p = (char*)(long)reg_resize((long)cmd[i].p1.p, PointerSize);
 
 			// FIXME
 			// evil hack to allow inconsistent param types (in address shifts)
-			if ((cmd[i].inst == Asm::inst_add) || (cmd[i].inst == Asm::inst_mov)){
-				msg_write("inst ok");
-				msg_write(cmd[i].p1.type->name + "  ->  " + cmd[i].p2.type->name);
-				msg_write(cmd[i].p1.type->size);
-				msg_write(cmd[i].p2.type->size);
-				if (Asm::InstructionSet.set == Asm::InstructionSetAMD64){
+			if (Asm::InstructionSet.set == Asm::InstructionSetAMD64){
+				if ((cmd[i].inst == Asm::inst_add) || (cmd[i].inst == Asm::inst_mov)){
+					msg_write("inst ok");
+					msg_write(cmd[i].p1.type->name + "  ->  " + cmd[i].p2.type->name);
+					msg_write(cmd[i].p1.type->size);
+					msg_write(cmd[i].p2.type->size);
 					if ((cmd[i].p1.kind == KindRegister) && (cmd[i].p2.kind == KindRefToConst)){
 						if (cmd[i].p1.type->is_pointer){
-							msg_error("----evil resize 0");
+							msg_write("----evil resize 0");
 							cmd[i].p1.type = TypeReg32;
-							cmd[i].p1.p = (char*)(long)Asm::RegResize[Asm::RegRoot[(long)cmd[i].p1.p]][4];
+							cmd[i].p1.p = (char*)(long)reg_resize((long)cmd[i].p1.p, 4);
 						}
 					}
-				}
-				/*if ((cmd[i].p1.type->size == 8) && (cmd[i].p2.type->size == 4)){
-					msg_write("size ok");
-					if ((cmd[i].p1.kind == KindRegister) && ((cmd[i].p2.kind == KindRegister) || (cmd[i].p2.kind == KindConstant) || (cmd[i].p2.kind == KindRefToConst))){
-						msg_error("----evil resize");
-						cmd[i].p1.type = cmd[i].p2.type;
-						cmd[i].p1.p = (char*)(long)Asm::RegResize[Asm::RegRoot[(long)cmd[i].p1.p]][cmd[i].p2.type->size];
+					if ((cmd[i].p1.type->size == 8) && (cmd[i].p2.type->size == 4)){
+						msg_write("size ok");
+						if ((cmd[i].p1.kind == KindRegister) && ((cmd[i].p2.kind == KindRegister) || (cmd[i].p2.kind == KindConstant) || (cmd[i].p2.kind == KindRefToConst))){
+							msg_write("----evil resize");
+							cmd[i].p1.type = cmd[i].p2.type;
+							cmd[i].p1.p = (char*)(long)reg_resize((long)cmd[i].p1.p, cmd[i].p2.type->size);
+						}
 					}
-				}*/
-				if (cmd[i].p1.type->size > cmd[i].p2.type->size){
-					msg_write("size ok");
-					if ((cmd[i].p1.kind == KindRegister) && ((cmd[i].p2.kind == KindRegister) || (cmd[i].p2.kind == KindConstant) || (cmd[i].p2.kind == KindRefToConst))){
-						msg_error("----evil resize");
-						cmd[i].p1.type = cmd[i].p2.type;
-						cmd[i].p1.p = (char*)(long)Asm::RegResize[Asm::RegRoot[(long)cmd[i].p1.p]][cmd[i].p2.type->size];
+					if ((cmd[i].p1.type->size < 8) && (cmd[i].p2.type->size == 8)){
+						msg_write("size ok");
+						if ((cmd[i].p1.kind == KindRegister) && ((cmd[i].p2.kind == KindRegister) || (cmd[i].p2.kind == KindDerefRegister))){
+							msg_error("----evil resize");
+							cmd[i].p1.type = cmd[i].p2.type;
+							
+							cmd[i].p1.p = (char*)(long)reg_resize((long)cmd[i].p1.p, cmd[i].p2.type->size);
+							msg_write(Asm::GetRegName((long)cmd[i].p1.p));
+						}
 					}
+					/*if (cmd[i].p1.type->size > cmd[i].p2.type->size){
+						msg_write("size ok");
+						if ((cmd[i].p1.kind == KindRegister) && ((cmd[i].p2.kind == KindRegister) || (cmd[i].p2.kind == KindConstant) || (cmd[i].p2.kind == KindRefToConst))){
+							msg_error("----evil resize");
+							cmd[i].p1.type = cmd[i].p2.type;
+							cmd[i].p1.p = (char*)(long)Asm::RegResize[Asm::RegRoot[(long)cmd[i].p1.p]][cmd[i].p2.type->size];
+						}
+					}*/
 				}
 			}
 
