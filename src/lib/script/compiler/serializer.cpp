@@ -25,9 +25,6 @@ extern float GlobalTimeToWait;
 #define FunctionAlign	8
 
 
-inline bool is_reg_used_in_interval(Serializer *d, int reg, int first, int last);
-
-
 static SerialCommandParam p_eax, p_eax_int, p_deref_eax;
 static SerialCommandParam p_rax;
 static SerialCommandParam p_ax, p_al, p_ah, p_al_bool, p_al_char;
@@ -47,16 +44,15 @@ void Serializer::add_temp(Type *t, SerialCommandParam &param)
 		TempVar v;
 		v.first = -1;
 		v.type = t;
-		v.referenced = (t->is_super_array);
+		v.force_stack = (t->size > PointerSize) || (t->is_super_array) || (t->is_array) || (t->element.num > 0);
 		v.entangled = 0;
 		temp_var.add(v);
 		param.kind = KindVarTemp;
 		param.p = (char*)(long)(temp_var.num - 1);
 		param.type = t;
 		param.shift = 0;
-		
 
-		if (t->element.num > 0)
+		//if (t->element.num > 0)
 			add_cmd_constructor(param, true);
 	}else{
 		param = p_none;
@@ -87,7 +83,7 @@ inline void deref_temp(SerialCommandParam &param, SerialCommandParam &deref)
 inline SerialCommandParam param_shift(SerialCommandParam &param, int shift, Type *t)
 {
 	SerialCommandParam p = param;
-	p.shift = shift;
+	p.shift += shift;
 	p.type = t;
 	return p;
 }
@@ -891,10 +887,10 @@ void Serializer::SerializeOperator(Command *com, SerialCommandParam *param, Seri
 		case OperatorComplexSubtractS:
 		//case OperatorComplexMultiplySCF:
 		//case OperatorComplexDivideS:
-			add_cmd(Asm::inst_fld, param[0]);
-			if (com->link_nr == OperatorComplexAddS)			add_cmd(Asm::inst_fadd, param[1]);
-			if (com->link_nr == OperatorComplexSubtractS)	add_cmd(Asm::inst_fsub, param[1]);
-			add_cmd(Asm::inst_fstp, param[0]);
+			add_cmd(Asm::inst_fld, param_shift(param[0], 0, TypeFloat));
+			if (com->link_nr == OperatorComplexAddS)			add_cmd(Asm::inst_fadd, param_shift(param[1], 0, TypeFloat));
+			if (com->link_nr == OperatorComplexSubtractS)	add_cmd(Asm::inst_fsub, param_shift(param[1], 0, TypeFloat));
+			add_cmd(Asm::inst_fstp, param_shift(param[0], 0, TypeFloat));
 			add_cmd(Asm::inst_fld, param_shift(param[0], 4, TypeFloat));
 			if (com->link_nr == OperatorComplexAddS)			add_cmd(Asm::inst_fadd, param_shift(param[1], 4, TypeFloat));
 			if (com->link_nr == OperatorComplexSubtractS)	add_cmd(Asm::inst_fsub, param_shift(param[1], 4, TypeFloat));
@@ -904,10 +900,10 @@ void Serializer::SerializeOperator(Command *com, SerialCommandParam *param, Seri
 		case OperatorComplexSubtract:
 //		case OperatorFloatMultiply:
 //		case OperatorFloatDivide:
-			add_cmd(Asm::inst_fld, param[0]);
-			if (com->link_nr == OperatorComplexAdd)		add_cmd(Asm::inst_fadd, param[1]);
-			if (com->link_nr == OperatorComplexSubtract)	add_cmd(Asm::inst_fsub, param[1]);
-			add_cmd(Asm::inst_fstp, ret);
+			add_cmd(Asm::inst_fld, param_shift(param[0], 0, TypeFloat));
+			if (com->link_nr == OperatorComplexAdd)		add_cmd(Asm::inst_fadd, param_shift(param[1], 0, TypeFloat));
+			if (com->link_nr == OperatorComplexSubtract)	add_cmd(Asm::inst_fsub, param_shift(param[1], 0, TypeFloat));
+			add_cmd(Asm::inst_fstp, param_shift(ret, 0, TypeFloat));
 			add_cmd(Asm::inst_fld, param_shift(param[0], 4, TypeFloat));
 			if (com->link_nr == OperatorComplexAdd)		add_cmd(Asm::inst_fadd, param_shift(param[1], 4, TypeFloat));
 			if (com->link_nr == OperatorComplexSubtract)	add_cmd(Asm::inst_fsub, param_shift(param[1], 4, TypeFloat));
@@ -917,41 +913,41 @@ void Serializer::SerializeOperator(Command *com, SerialCommandParam *param, Seri
 			// r.x = a.y * b.y
 			add_cmd(Asm::inst_fld, param_shift(param[0], 4, TypeFloat));
 			add_cmd(Asm::inst_fmul, param_shift(param[1], 4, TypeFloat));
-			add_cmd(Asm::inst_fstp, ret);
+			add_cmd(Asm::inst_fstp, param_shift(ret, 0, TypeFloat));
 			// r.x = a.x * b.x - r.x
-			add_cmd(Asm::inst_fld, param[0]);
-			add_cmd(Asm::inst_fmul, param[1]);
-			add_cmd(Asm::inst_fsub, ret);
-			add_cmd(Asm::inst_fstp, ret);
+			add_cmd(Asm::inst_fld, param_shift(param[0], 0, TypeFloat));
+			add_cmd(Asm::inst_fmul, param_shift(param[1], 0, TypeFloat));
+			add_cmd(Asm::inst_fsub, param_shift(ret, 0, TypeFloat));
+			add_cmd(Asm::inst_fstp, param_shift(ret, 0, TypeFloat));
 			// r.y = a.y * b.x
 			add_cmd(Asm::inst_fld, param_shift(param[0], 4, TypeFloat));
-			add_cmd(Asm::inst_fmul, param[1]);
+			add_cmd(Asm::inst_fmul, param_shift(param[1], 0, TypeFloat));
 			add_cmd(Asm::inst_fstp, param_shift(ret, 4, TypeFloat));
 			// r.y += a.x * b.y
-			add_cmd(Asm::inst_fld, param[0]);
+			add_cmd(Asm::inst_fld, param_shift(param[0], 0, TypeFloat));
 			add_cmd(Asm::inst_fmul, param_shift(param[1], 4, TypeFloat));
 			add_cmd(Asm::inst_fadd, param_shift(ret, 4, TypeFloat));
 			add_cmd(Asm::inst_fstp, param_shift(ret, 4, TypeFloat));
 			break;
 		case OperatorComplexMultiplyFC:
 			add_cmd(Asm::inst_fld, param[0]);
-			add_cmd(Asm::inst_fmul, param[1]);
-			add_cmd(Asm::inst_fstp, ret);
+			add_cmd(Asm::inst_fmul, param_shift(param[1], 0, TypeFloat));
+			add_cmd(Asm::inst_fstp, param_shift(ret, 0, TypeFloat));
 			add_cmd(Asm::inst_fld, param[0]);
 			add_cmd(Asm::inst_fmul, param_shift(param[1], 4, TypeFloat));
 			add_cmd(Asm::inst_fstp, param_shift(ret, 4, TypeFloat));
 			break;
 		case OperatorComplexMultiplyCF:
-			add_cmd(Asm::inst_fld, param[0]);
+			add_cmd(Asm::inst_fld, param_shift(param[0], 0, TypeFloat));
 			add_cmd(Asm::inst_fmul, param[1]);
-			add_cmd(Asm::inst_fstp, ret);
+			add_cmd(Asm::inst_fstp, param_shift(ret, 0, TypeFloat));
 			add_cmd(Asm::inst_fld, param_shift(param[0], 4, TypeFloat));
 			add_cmd(Asm::inst_fmul, param[1]);
 			add_cmd(Asm::inst_fstp, param_shift(ret, 4, TypeFloat));
 			break;
 		case OperatorComplexEqual:
-			add_cmd(Asm::inst_fld, param[0]);
-			add_cmd(Asm::inst_fld, param[1]);
+			add_cmd(Asm::inst_fld, param_shift(param[0], 0, TypeFloat));
+			add_cmd(Asm::inst_fld, param_shift(param[1], 0, TypeFloat));
 			add_cmd(Asm::inst_fucompp, p_st0, p_st1);
 			add_cmd(Asm::inst_fnstsw, p_ax);
 			add_cmd(Asm::inst_and, p_ah, param_const(TypeChar, (void*)0x45));
@@ -2243,9 +2239,11 @@ void Serializer::MapTempVars()
 inline void try_map_param_to_stack(SerialCommandParam &p, int v, SerialCommandParam &stackvar)
 {
 	if ((p.kind == KindVarTemp) && ((long)p.p == v)){
-		int shift = p.shift;
-		p = stackvar;
-		p.shift = shift;
+		p.kind = KindVarLocal;//stackvar.kind;
+		p.p = stackvar.p;
+	}else if ((p.kind == KindDerefVarTemp) && ((long)p.p == v)){
+		p.kind = KindDerefVarLocal;
+		p.p = stackvar.p;
 	}
 }
 
@@ -2255,11 +2253,11 @@ void Serializer::MapReferencedTempVars()
 	for (int i=0;i<cmd.num;i++)
 		if (cmd[i].inst == Asm::inst_lea)
 			if (cmd[i].p2.kind == KindVarTemp){
-				temp_var[(long)cmd[i].p2.p].referenced = true;
+				temp_var[(long)cmd[i].p2.p].force_stack = true;
 			}
 
 	for (int i=temp_var.num-1;i>=0;i--)
-		if (temp_var[i].referenced){
+		if (temp_var[i].force_stack){
 			SerialCommandParam stackvar;
 			add_stack_var(temp_var[i].type, temp_var[i].first, temp_var[i].last, stackvar);
 			for (int j=0;j<cmd.num;j++){
@@ -2453,10 +2451,53 @@ void Serializer::SerializeFunction(Function *f)
 	}
 
 	//cmd_list_out();
+}
 
-// do all the translations...
 
-	MapReferencedTempVars();
+void Serializer::FindReferencedTempVars()
+{
+	msg_db_f("MapRemainingTempVarsToStack", 3);
+	for (int i=0;i<cmd.num;i++)
+		if (cmd[i].inst == Asm::inst_lea)
+			if (cmd[i].p2.kind == KindVarTemp){
+				temp_var[(long)cmd[i].p2.p].force_stack = true;
+			}
+}
+void Serializer::TryMapTempVarsRegisters()
+{
+	msg_db_f("TryMapTempVarsRegisters", 3);
+	for (int i=temp_var.num-1;i>=0;i--){
+		if (temp_var[i].force_stack)
+			continue;
+	}
+}
+void Serializer::MapRemainingTempVarsToStack()
+{
+	msg_db_f("MapRemainingTempVarsToStack", 3);
+	for (int i=temp_var.num-1;i>=0;i--){
+		SerialCommandParam stackvar;
+		add_stack_var(temp_var[i].type, temp_var[i].first, temp_var[i].last, stackvar);
+		for (int j=0;j<cmd.num;j++){
+			try_map_param_to_stack(cmd[j].p1, i, stackvar);
+			try_map_param_to_stack(cmd[j].p2, i, stackvar);
+		}
+		remove_temp_var(i);
+	}
+}
+
+void Serializer::DoMapping()
+{
+	FindReferencedTempVars();
+
+	TryMapTempVarsRegisters();
+
+	MapRemainingTempVarsToStack();
+
+	ResolveDerefTempAndLocal();
+
+	CorrectUnallowedParamCombis();
+
+	/*MapReferencedTempVars();
 
 	//HandleDerefTemp();
 
@@ -2466,11 +2507,11 @@ void Serializer::SerializeFunction(Function *f)
 
 	RemoveUnusedTempVars();
 
-#ifdef allow_simplification
+	#ifdef allow_simplification
 	SimplifyMovs();
 
 	SimplifyFPUStack();
-#endif
+	#endif
 
 	MapTempVars();
 
@@ -2478,7 +2519,7 @@ void Serializer::SerializeFunction(Function *f)
 
 	//ResolveDerefLocal();
 
-	CorrectUnallowedParamCombis();
+	CorrectUnallowedParamCombis();*/
 
 
 	cmd_list_out();
@@ -2690,6 +2731,7 @@ void Script::CompileFunction(Function *f, char *Opcode, int &OpcodeSize)
 
 	try{
 		d.SerializeFunction(f);
+		d.DoMapping();
 		d.Assemble(Opcode, OpcodeSize);
 	}catch(Exception &e){
 		throw e;

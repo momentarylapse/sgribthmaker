@@ -51,7 +51,7 @@ struct TempVar
 {
 	Type *type;
 	int first, last, count;
-	bool referenced;
+	bool force_stack;
 	int entangled;
 };
 
@@ -123,6 +123,11 @@ struct Serializer
 
 	void add_cmd_constructor(SerialCommandParam &param, bool is_temp);
 	void add_cmd_destructor(SerialCommandParam &param);
+
+	void DoMapping();
+	void FindReferencedTempVars();
+	void TryMapTempVarsRegisters();
+	void MapRemainingTempVarsToStack();
 
 	bool is_reg_root_used_in_interval(int reg_root, int first, int last);
 	void MapTempVar(int vi);
