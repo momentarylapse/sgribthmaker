@@ -156,7 +156,7 @@ void cmd_out(int n, SerialCommand &c)
 {
 	//msg_db_f("cmd_out", 4);
 	if (c.inst == inst_marker)
-		msg_write(format("%3d: -- Marker %d --", n, c.p1.kind));
+		msg_write(format("%3d: -- Marker %d --", n, (long)c.p1.p));
 	else if (c.inst == inst_asm)
 		msg_write(format("%3d: -- Asm --", n));
 	else{
@@ -307,14 +307,15 @@ void Serializer::move_param(SerialCommandParam &p, int from, int to)
 	}
 }
 
-void Serializer::add_marker(int m)
+int Serializer::add_marker(int m)
 {
 	SerialCommandParam p = p_none;
 	if (m < 0)
-		p.kind = NumMarkers ++;
-	else
-		p.kind = m;
+		m = NumMarkers ++;
+	p.kind = KindMarker;
+	p.p = (char*)(long)m;
 	add_cmd(inst_marker, p);
+	return m;
 }
 
 int Serializer::add_marker_after_command(int level, int index)
@@ -1100,12 +1101,15 @@ void Serializer::SerializeOperator(Command *com, SerialCommandParam *param, Seri
 SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int index)
 {
 	msg_db_f("SerializeCommand", 4);
-	//so(Kind2Str(com->Kind));
+
+	// for/while need a marker to this point
+	int marker_before_params = -1;
+	if ((com->kind == KindCompilerFunction) && ((com->link_nr == CommandWhile) || (com->link_nr == CommandFor)))
+		marker_before_params = add_marker();
+
 	SerialCommandParam param[SCRIPT_MAX_PARAMS];
 	SerialCommandParam ret;// = (char*)( -add_temp_var(s) - cur_func->_VarSize);
 	add_temp(com->type, ret);
-	//so(d2h((char*)&ret,4,false));
-	//so(string2("return: %d/%d/%d", com->type->size, LocalOffset, LocalOffset));
 
 	// compile parameters
 	for (int p=0;p<com->num_params;p++)
@@ -1135,23 +1139,17 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 
 	    
 	if (com->kind == KindOperator){
-		//so("---operator");
 		SerializeOperator(com, param, ret);
 		
 	}else if ((com->kind == KindCompilerFunction) || (com->kind == KindFunction)){
-		//so("---func");
 		void *fp = NULL;
 		string name;
-		if (com->kind == KindFunction){ // own script Function
-			so("Funktion!!!");
+		if (com->kind == KindFunction){ // own script Function;
 			if (com->script){
-				//so(com->link_nr);
-				so("    extern!!!");
 				fp = (void*)com->script->func[com->link_nr];
 			}else{
 				fp = (void*)script->func[com->link_nr];
 			}
-			so("   -ok");
 		}else{ // compiler function
 			fp = PreCommands[com->link_nr].func;
 			name = PreCommands[com->link_nr].name;
@@ -1190,22 +1188,19 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 				case CommandFor:{
 					// m1;  cmp;  jz m2;  -block-             jmp m1;  m2;     (while)
 					// m1;  cmp;  jz m2;  -block-  m3;  i++;  jmp m1;  m2;     (for)
-					int m_before_while = NumMarkers ++;
-					add_marker(m_before_while);
-					move_last_cmd(LastCommandSize); // has to be before evaluating the parameter!
 					add_cmd(Asm::inst_cmp, param[0], param_const(TypeBool, (void*)0x0));
-					int m_after_while = add_marker_after_command(level, index + 1);
-					add_cmd(Asm::inst_jz, param_marker(m_after_while));
-					add_jump_after_command(level, index + 1, m_before_while); // insert before <m_after_while> is inserted!
+					int marker_after_while = add_marker_after_command(level, index + 1);
+					add_cmd(Asm::inst_jz, param_marker(marker_after_while));
+					add_jump_after_command(level, index + 1, marker_before_params); // insert before <marker_after_while> is inserted!
 
-					int m_continue = m_before_while;
+					int marker_continue = marker_before_params;
 					if (com->link_nr == CommandFor){
 						// NextCommand is a block!
 						if (NextCommand->kind != KindBlock)
 							DoError("command block in \"for\" loop missing");
-						m_continue = add_marker_after_command(level + 1, syntax_tree->Blocks[NextCommand->link_nr]->command.num - 2);
+						marker_continue = add_marker_after_command(level + 1, syntax_tree->Blocks[NextCommand->link_nr]->command.num - 2);
 					}
-					LoopData l = {m_continue, m_after_while, level, index};
+					LoopData l = {marker_continue, marker_after_while, level, index};
 					loop.add(l);
 					}break;
 				case CommandBreak:
@@ -1376,15 +1371,12 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 	 			DoError("compiler function not linkable: " + PreCommands[com->link_nr].name);
 		}
 	}else if (com->kind == KindBlock){
-		//so("---block");
 		SerializeBlock(syntax_tree->Blocks[com->link_nr], level + 1);
 	}else{
 		msg_write(Kind2Str(com->kind));
 		//so("---???");
 		//DoError(string("type of command is unimplemented (call Michi!): ",Kind2Str(com->Kind)));
 	}
-	//so(Kind2Str(com->Kind));
-	//msg_ok();
 	return ret;
 }
 
@@ -1394,7 +1386,6 @@ void Serializer::SerializeBlock(Block *block, int level)
 	for (int i=0;i<block->command.num;i++){
 		//so(string2("%d - %d",i,block->NumCommands));
 		StackOffset = cur_func->_var_size;
-		LastCommandSize = cmd.num;
 		if (block->command.num > i + 1)
 			NextCommand = block->command[i + 1];
 
@@ -2617,7 +2608,7 @@ void Serializer::Assemble(char *Opcode, int &OpcodeSize)
 
 		if (cmd[i].inst == inst_marker){
 			//msg_write("marker _kaba_" + i2s(cmd[i].p1.kind));
-			list->add_label("_kaba_" + i2s(cmd[i].p1.kind), true);
+			list->add_label("_kaba_" + i2s((long)cmd[i].p1.p), true);
 		}else if (cmd[i].inst == inst_asm){
 			AddAsmBlock(list, script);
 		}else{

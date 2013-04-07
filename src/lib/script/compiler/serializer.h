@@ -77,7 +77,6 @@ struct Serializer
 	SyntaxTree *syntax_tree;
 	Function *cur_func;
 	bool call_used;
-	int LastCommandSize;
 	Command *NextCommand;
 	bool TempVarRangesDefined;
 
@@ -117,7 +116,7 @@ struct Serializer
 	void remove_cmd(int index);
 	void remove_temp_var(int v);
 	void move_param(SerialCommandParam &p, int from, int to);
-	void add_marker(int m = -1);
+	int add_marker(int m = -1);
 	int add_marker_after_command(int level, int index);
 	void add_jump_after_command(int level, int index, int marker);
 
