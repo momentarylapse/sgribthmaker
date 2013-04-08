@@ -2850,19 +2850,18 @@ void CreateImplicitConstructor(SyntaxTree *ps, Type *t)
 	}else{
 
 		// call child constructors
-		foreach(ClassElement &e, t->element)
-			foreach(ClassFunction &ff, e.type->function)
-				if (ff.name == "__init__"){
-					Command *p = ps->AddCommand();
-					p->kind = KindDerefAddressShift;
-					p->link_nr = e.offset;
-					p->type = e.type;
-					p->num_params = 1;
-					p->param[0] = self;
-					ref_command(ps, p);
-					Command *c = add_command_classfunc(ps, t, ff, p);
-					f->block->command.add(c);
-				}
+		foreach(ClassElement &e, t->element){
+			ClassFunction *ff = e.type->GetConstructor();
+			Command *p = ps->AddCommand();
+			p->kind = KindDerefAddressShift;
+			p->link_nr = e.offset;
+			p->type = e.type;
+			p->num_params = 1;
+			p->param[0] = self;
+			ref_command(ps, p);
+			Command *c = add_command_classfunc(ps, t, *ff, p);
+			f->block->command.add(c);
+		}
 	}
 
 	ClassFunction cf;
@@ -2895,19 +2894,18 @@ void CreateImplicitDestructor(SyntaxTree *ps, Type *t)
 	}else{
 
 		// call child destructors
-		foreach(ClassElement &e, t->element)
-			foreach(ClassFunction &ff, e.type->function)
-				if (ff.name == "__delete__"){
-					Command *p = ps->AddCommand();
-					p->kind = KindDerefAddressShift;
-					p->link_nr = e.offset;
-					p->type = e.type;
-					p->num_params = 1;
-					p->param[0] = self;
-					ref_command(ps, p);
-					Command *c = add_command_classfunc(ps, t, ff, p);
-					f->block->command.add(c);
-				}
+		foreach(ClassElement &e, t->element){
+			ClassFunction *ff = e.type->GetDestructor();
+			Command *p = ps->AddCommand();
+			p->kind = KindDerefAddressShift;
+			p->link_nr = e.offset;
+			p->type = e.type;
+			p->num_params = 1;
+			p->param[0] = self;
+			ref_command(ps, p);
+			Command *c = add_command_classfunc(ps, t, *ff, p);
+			f->block->command.add(c);
+		}
 	}
 
 
@@ -3069,7 +3067,8 @@ void CreateImplicitArrayClear(SyntaxTree *ps, Type *t)
 	for_var->type = TypeInt;
 
 // delete...
-	if (t->parent->GetFunc("__delete__") >= 0){
+	ClassFunction *f_del = t->parent->GetDestructor();
+	if (f_del){
 		// for_var = 0
 		int nc = ps->AddConstant(TypeInt);
 		(*(int*)ps->Constants[nc].data) = 0;
@@ -3102,7 +3101,7 @@ void CreateImplicitArrayClear(SyntaxTree *ps, Type *t)
 		ref_command(ps, cmd_el);
 
 		// __delete__
-		Command *cmd_delete = add_command_classfunc(ps, t, t->parent->function[t->parent->GetFunc("__delete__")], cmd_el);
+		Command *cmd_delete = add_command_classfunc(ps, t, *f_del, cmd_el);
 		b->command.add(cmd_delete);
 
 		// ...for_var += 1
@@ -3170,7 +3169,8 @@ void CreateImplicitArrayResize(SyntaxTree *ps, Type *t)
 	f->block->command.add(cmd_copy_num);
 
 // delete...
-	if (t->parent->GetFunc("__delete__") >= 0){
+	ClassFunction *f_del = t->parent->GetDestructor();
+	if (f_del){
 		// for_var = num
 		Command *cmd_assign = op_command(ps, for_var, num, OperatorIntAssign);
 		f->block->command.add(cmd_assign);
@@ -3200,7 +3200,7 @@ void CreateImplicitArrayResize(SyntaxTree *ps, Type *t)
 		ref_command(ps, cmd_el);
 
 		// __delete__
-		Command *cmd_delete = add_command_classfunc(ps, t, t->parent->function[t->parent->GetFunc("__delete__")], cmd_el);
+		Command *cmd_delete = add_command_classfunc(ps, t, *f_del, cmd_el);
 		b->command.add(cmd_delete);
 
 		// ...for_var += 1
@@ -3216,7 +3216,8 @@ void CreateImplicitArrayResize(SyntaxTree *ps, Type *t)
 	f->block->command.add(c_resize);
 
 	// new...
-	if (t->parent->GetFunc("__init__") >= 0){
+	ClassFunction *f_init = t->parent->GetConstructor();
+	if (f_init){
 		// for_var = num_old
 		Command *cmd_assign = op_command(ps, for_var, num_old, OperatorIntAssign);
 		f->block->command.add(cmd_assign);
@@ -3246,7 +3247,7 @@ void CreateImplicitArrayResize(SyntaxTree *ps, Type *t)
 		ref_command(ps, cmd_el);
 
 		// __init__
-		Command *cmd_init = add_command_classfunc(ps, t, t->parent->function[t->parent->GetFunc("__init__")], cmd_el);
+		Command *cmd_init = add_command_classfunc(ps, t, *f_init, cmd_el);
 		b->command.add(cmd_init);
 
 		// ...for_var += 1
@@ -3361,9 +3362,9 @@ void SyntaxTree::CreateImplicitFunctions(Type *t, bool relocate_last_function)
 			CreateImplicitArrayAdd(this, t);
 	}
 	if (!type_is_simple_class(t)){//needs_init){
-		if (t->GetFunc("__init__") < 0)
+		if (!t->GetConstructor())
 			CreateImplicitConstructor(this, t);
-		if (t->GetFunc("__delete__") < 0)
+		if (!t->GetDestructor())
 			CreateImplicitDestructor(this, t);
 		if (t->GetFunc("__assign__") < 0)
 			CreateImplicitAssign(this, t);

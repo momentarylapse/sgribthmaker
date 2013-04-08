@@ -25,6 +25,22 @@ int Type::GetFunc(const string &name)
 	return -1;
 }
 
+ClassFunction *Type::GetConstructor()
+{
+	foreach(ClassFunction &f, function)
+		if ((f.name == "__init__") && (f.return_type == TypeVoid) && (f.param_type.num == 0))
+			return &f;
+	return NULL;
+}
+
+ClassFunction *Type::GetDestructor()
+{
+	foreach(ClassFunction &f, function)
+		if ((f.name == "__delete__") && (f.return_type == TypeVoid) && (f.param_type.num == 0))
+			return &f;
+	return NULL;
+}
+
 string Type::var2str(void *p)
 {
 	if (this == TypeInt)

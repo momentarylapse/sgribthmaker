@@ -47,6 +47,8 @@ struct Type{
 	bool UsesCallByReference();
 	bool UsesReturnByMemory();
 	int GetFunc(const string &name);
+	ClassFunction *GetConstructor();
+	ClassFunction *GetDestructor();
 	string var2str(void *p);
 };
 extern Array<Type*> PreTypes;

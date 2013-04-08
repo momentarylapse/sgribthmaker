@@ -1393,12 +1393,14 @@ void Serializer::SerializeBlock(Block *block, int level)
 	for (int i=0;i<block->command.num;i++){
 		//so(string2("%d - %d",i,block->NumCommands));
 		StackOffset = cur_func->_var_size;
+		NextCommand = NULL;
 		if (block->command.num > i + 1)
 			NextCommand = block->command[i + 1];
 
 		// serialize
 		SerializeCommand(block->command[i], level, i);
 		
+		// destruct new temp vars
 		FillInDestructors(true);
 
 		// any markers / jumps to add?
@@ -1425,52 +1427,47 @@ void Serializer::add_cmd_constructor(SerialCommandParam &param, int modus)
 	Type *class_type = param.type;
 	if (modus < 0)
 		class_type = class_type->parent;
-	foreach(ClassFunction &f, class_type->function){
-		if (f.name == "__init__"){ // TODO test signature "void __init__()"
-			if (modus < 0){
-				msg_error("constructor pointer");
-				AddFuncInstance(param);
-			}else{
-				msg_error("constructor no pointer -> ref");
-				SerialCommandParam inst;
-				AddReference(param, TypePointer, inst);
-				AddFuncInstance(inst);
-			}
-			void *fp = NULL;
-			if (f.kind == KindCompilerFunction)
-				fp = PreCommands[f.nr].func;
-			else if (f.kind == KindFunction)
-				fp = (void*)class_type->owner->script->func[f.nr];
-			if (!fp)
-				DoErrorLink(class_type->name + ".__init__() unlinkable function!");
-
-			AddFunctionCall(fp);
-			if (modus == KindVarTemp)
-				InsertedConstructorTemp.add(param);
-			else if (modus == KindVarLocal)
-				InsertedConstructorFunc.add(param);
-			return;
-		}
+	ClassFunction *f = class_type->GetConstructor();
+	if (!f)
+		return;
+	if (modus < 0){
+		AddFuncInstance(param);
+	}else{
+		SerialCommandParam inst;
+		AddReference(param, TypePointer, inst);
+		AddFuncInstance(inst);
 	}
+	void *fp = NULL;
+	if (f->kind == KindCompilerFunction)
+		fp = PreCommands[f->nr].func;
+	else if (f->kind == KindFunction)
+		fp = (void*)class_type->owner->script->func[f->nr];
+	if (!fp)
+		DoErrorLink(class_type->name + ".__init__() unlinkable!");
+
+	AddFunctionCall(fp);
+	if (modus == KindVarTemp)
+		InsertedConstructorTemp.add(param);
+	else if (modus == KindVarLocal)
+		InsertedConstructorFunc.add(param);
 }
 
 void Serializer::add_cmd_destructor(SerialCommandParam &param)
 {
-	foreach(ClassFunction &f, param.type->function)
-		if (f.name == "__delete__"){ // TODO test signature "void __delete__()"
-			SerialCommandParam inst;
-			AddReference(param, TypePointer, inst);
-			AddFuncInstance(inst);
-			void *fp;
-			if (f.kind == KindCompilerFunction)
-				fp = PreCommands[f.nr].func;
-			else if (f.kind == KindFunction){
-				fp = (void*)param.type->owner->script->func[f.nr];
-				if (!fp)
-					DoErrorLink(param.type->name + ".__delete__() unlinkable compiler function!");
-			}
-			AddFunctionCall(fp);
-		}
+	ClassFunction *f = param.type->GetDestructor();
+	if (!f)
+		return;
+	SerialCommandParam inst;
+	AddReference(param, TypePointer, inst);
+	AddFuncInstance(inst);
+	void *fp = NULL;
+	if (f->kind == KindCompilerFunction)
+		fp = PreCommands[f->nr].func;
+	else if (f->kind == KindFunction)
+		fp = (void*)param.type->owner->script->func[f->nr];
+	if (!fp)
+		DoErrorLink(param.type->name + ".__delete__() unlinkable!");
+	AddFunctionCall(fp);
 }
 
 void Serializer::FillInConstructorsFunc()
