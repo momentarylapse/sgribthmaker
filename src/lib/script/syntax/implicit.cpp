@@ -34,6 +34,8 @@ void CreateImplicitConstructor(SyntaxTree *ps, Type *t)
 		// call child constructors
 		foreach(ClassElement &e, t->element){
 			ClassFunction *ff = e.type->GetConstructor();
+			if (!ff)
+				continue;
 			Command *p = ps->AddCommand();
 			p->kind = KindDerefAddressShift;
 			p->link_nr = e.offset;
@@ -77,6 +79,8 @@ void CreateImplicitDestructor(SyntaxTree *ps, Type *t)
 		// call child destructors
 		foreach(ClassElement &e, t->element){
 			ClassFunction *ff = e.type->GetDestructor();
+			if (!ff)
+				continue;
 			Command *p = ps->AddCommand();
 			p->kind = KindDerefAddressShift;
 			p->link_nr = e.offset;
