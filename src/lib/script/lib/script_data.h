@@ -236,7 +236,9 @@ typedef void *t_cast_func(void*);
 struct TypeCast{
 	int penalty;
 	Type *source, *dest;
-	int command;
+	int kind;
+	int func_no;
+	Script *script;
 	t_cast_func *func;
 };
 extern Array<TypeCast> TypeCasts;

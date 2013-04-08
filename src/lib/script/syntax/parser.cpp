@@ -729,8 +729,18 @@ void apply_type_cast(SyntaxTree *ps, int tc, Command *param)
 		so("  ...Konstante wurde direkt gewandelt!");
 	}else{
 		Command *sub_cmd = ps->cp_command(param);
-		ps->CommandSetCompilerFunction(TypeCasts[tc].command, param);
-		param->param[0] = sub_cmd;
+		if (TypeCasts[tc].kind == KindFunction){
+			param->kind = KindFunction;
+			param->link_nr = TypeCasts[tc].func_no;
+			param->script = TypeCasts[tc].script;
+			param->num_params = 1;
+			param->param[0] = sub_cmd;
+			param->instance = NULL;
+			param->type = TypeCasts[tc].dest;
+		}else if (TypeCasts[tc].kind == KindCompilerFunction){
+			ps->CommandSetCompilerFunction(TypeCasts[tc].func_no, param);
+			param->param[0] = sub_cmd;
+		}
 		so("  ...keine Konstante: Wandel-Befehl wurde hinzugefuegt!");
 	}
 }

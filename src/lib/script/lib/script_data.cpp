@@ -533,16 +533,25 @@ char *CastComplex2StringP(complex *z)
 Array<TypeCast> TypeCasts;
 void add_type_cast(int penalty, Type *source, Type *dest, const string &cmd, void *func)
 {
-#if 0
 	TypeCast c;
 	c.penalty = penalty;
-	c.command = -1;
+	c.func_no = -1;
 	for (int i=0;i<PreCommands.num;i++)
 		if (PreCommands[i].name == cmd){
-			c.command = i;
+			c.kind = KindCompilerFunction;
+			c.func_no = i;
+			c.script = NULL;
 			break;
 		}
-	if (c.command < 0){
+	if (c.func_no < 0)
+	for (int i=0;i<GlobalDummyScript->syntax->Functions.num;i++)
+		if (GlobalDummyScript->syntax->Functions[i]->name == cmd){
+			c.kind = KindFunction;
+			c.func_no = i;
+			c.script = GlobalDummyScript;
+			break;
+		}
+	if (c.func_no < 0){
 #ifdef _X_USE_HUI_
 		HuiErrorBox(NULL, "", "add_type_cast (ScriptInit): " + string(cmd) + " not found");
 		HuiRaiseError("add_type_cast (ScriptInit): " + string(cmd) + " not found");
@@ -555,7 +564,6 @@ void add_type_cast(int penalty, Type *source, Type *dest, const string &cmd, voi
 	c.dest = dest;
 	c.func = (t_cast_func*) func;
 	TypeCasts.add(c);
-#endif
 }
 
 
