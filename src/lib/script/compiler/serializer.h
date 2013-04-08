@@ -108,7 +108,7 @@ struct Serializer
 	void cmd_list_out();
 
 	void add_reg_channel(int reg, int first, int last);
-	void add_temp(Type *t, SerialCommandParam &param);
+	void add_temp(Type *t, SerialCommandParam &param, bool add_constructor = true);
 	void add_cmd(int inst, SerialCommandParam p1, SerialCommandParam p2);
 	void add_cmd(int inst, SerialCommandParam p);
 	void add_cmd(int inst);

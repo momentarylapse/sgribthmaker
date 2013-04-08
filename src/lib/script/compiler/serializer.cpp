@@ -38,7 +38,7 @@ void Serializer::add_reg_channel(int reg, int first, int last)
 	reg_channel.add(c);
 }
 
-void Serializer::add_temp(Type *t, SerialCommandParam &param)
+void Serializer::add_temp(Type *t, SerialCommandParam &param, bool add_constructor)
 {
 	if (t != TypeVoid){
 		TempVar v;
@@ -52,7 +52,7 @@ void Serializer::add_temp(Type *t, SerialCommandParam &param)
 		param.type = t;
 		param.shift = 0;
 
-		//if (t->element.num > 0)
+		if (add_constructor) //&& (t->element.num > 0)
 			add_cmd_constructor(param, KindVarTemp);
 	}else{
 		param = p_none;
@@ -376,7 +376,7 @@ void Serializer::add_function_call_x86(void *func, int func_no)
 
 	// return data too big... push address
 	SerialCommandParam ret_temp, ret_ref;
-	if ((type->size > 4) && (!type->is_array)){
+	if (type->UsesReturnByMemory()){
 		//add_temp(type, ret_temp);
 		AddReference(/*ret_temp*/ CompilerFunctionReturn, TypePointer, ret_ref);
 		//add_ref();
@@ -399,7 +399,7 @@ void Serializer::add_function_call_x86(void *func, int func_no)
 
 #ifdef NIX_IDE_VCS
 	// more than 4 byte have to be returned -> give return address as very last parameter!
-	if (type->Size > 4)
+	if (type->UsesReturnByMemory())
 		add_cmd(Asm::inst_push, ret_ref; // nachtraegliche eSP-Korrektur macht die Funktion
 #endif
 	
@@ -411,7 +411,7 @@ void Serializer::add_function_call_x86(void *func, int func_no)
 	
 #ifndef NIX_IDE_VCS
 	// more than 4 byte have to be returned -> give return address as very first parameter!
-	if (type->size > PointerSize)
+	if (type->UsesReturnByMemory())
 		add_cmd(Asm::inst_push, ret_ref); // nachtraegliche eSP-Korrektur macht die Funktion
 #endif
 
@@ -425,18 +425,17 @@ void Serializer::add_function_call_x86(void *func, int func_no)
 		add_cmd(Asm::inst_add, param_reg(TypePointer, Asm::RegEsp), param_const(TypeChar, (void*)push_size));
 
 	// return > 4b already got copied to [ret] by the function!
-	if (type != TypeVoid)
-		if (type->size <= PointerSize){
-			if (type == TypeFloat)
-				add_cmd(Asm::inst_fstp, CompilerFunctionReturn);
-			else if (type->size == 1){
-				add_cmd(Asm::inst_mov, CompilerFunctionReturn, p_al);
-				add_reg_channel(Asm::RegEax, cmd.num - 2, cmd.num - 1);
-			}else{
-				add_cmd(Asm::inst_mov, CompilerFunctionReturn, p_eax);
-				add_reg_channel(Asm::RegEax, cmd.num - 2, cmd.num - 1);
-			}
+	if ((type != TypeVoid) && (!type->UsesReturnByMemory())){
+		if (type == TypeFloat)
+			add_cmd(Asm::inst_fstp, CompilerFunctionReturn);
+		else if (type->size == 1){
+			add_cmd(Asm::inst_mov, CompilerFunctionReturn, p_al);
+			add_reg_channel(Asm::RegEax, cmd.num - 2, cmd.num - 1);
+		}else{
+			add_cmd(Asm::inst_mov, CompilerFunctionReturn, p_eax);
+			add_reg_channel(Asm::RegEax, cmd.num - 2, cmd.num - 1);
 		}
+	}
 }
 
 void Serializer::add_function_call_amd64(void *func, int func_no)
@@ -449,7 +448,7 @@ void Serializer::add_function_call_amd64(void *func, int func_no)
 
 	// return data too big... push address
 	SerialCommandParam ret_temp, ret_ref;
-	if ((type->size > 4) && (!type->is_array)){
+	if (type->UsesReturnByMemory()){
 		//add_temp(type, ret_temp);
 		AddReference(/*ret_temp*/ CompilerFunctionReturn, TypePointer, ret_ref);
 		//add_ref();
@@ -466,7 +465,7 @@ void Serializer::add_function_call_amd64(void *func, int func_no)
 		CompilerFunctionParam.insert(CompilerFunctionInstance, 0);
 
 	// return as _very_ first parameter
-	if ((type->size > PointerSize) && (!type->is_array)){
+	if (type->UsesReturnByMemory()){
 		//add_temp(type, ret_temp);
 		AddReference(/*ret_temp*/ CompilerFunctionReturn, TypePointer, ret_ref);
 		CompilerFunctionParam.insert(ret_ref, 0);
@@ -501,18 +500,17 @@ void Serializer::add_function_call_amd64(void *func, int func_no)
 		add_cmd(Asm::inst_add, param_reg(TypePointer, Asm::RegEsp), param_const(TypeChar, (void*)push_size));
 
 	// return > 4b already got copied to [ret] by the function!
-	if (type != TypeVoid)
-		if (type->size <= PointerSize){
-			if (type == TypeFloat)
-				add_cmd(Asm::inst_fstp, CompilerFunctionReturn);
-			else if (type->size == 1){
-				add_cmd(Asm::inst_mov, CompilerFunctionReturn, p_al);
-				add_reg_channel(Asm::RegEax, cmd.num - 2, cmd.num - 1);
-			}else{
-				add_cmd(Asm::inst_mov, CompilerFunctionReturn, p_eax);
-				add_reg_channel(Asm::RegEax, cmd.num - 2, cmd.num - 1);
-			}
+	if ((type != TypeVoid) && (!type->UsesReturnByMemory())){
+		if (type == TypeFloat)
+			add_cmd(Asm::inst_fstp, CompilerFunctionReturn);
+		else if (type->size == 1){
+			add_cmd(Asm::inst_mov, CompilerFunctionReturn, p_al);
+			add_reg_channel(Asm::RegEax, cmd.num - 2, cmd.num - 1);
+		}else{
+			add_cmd(Asm::inst_mov, CompilerFunctionReturn, p_eax);
+			add_reg_channel(Asm::RegEax, cmd.num - 2, cmd.num - 1);
 		}
+	}
 }
 
 void Serializer::AddFunctionCall(void *func, int func_no)
@@ -1107,11 +1105,13 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 	if ((com->kind == KindCompilerFunction) && ((com->link_nr == CommandWhile) || (com->link_nr == CommandFor)))
 		marker_before_params = add_marker();
 
-	SerialCommandParam param[SCRIPT_MAX_PARAMS];
-	SerialCommandParam ret;// = (char*)( -add_temp_var(s) - cur_func->_VarSize);
-	add_temp(com->type, ret);
+	// return value
+	SerialCommandParam ret;
+	bool create_constructor_for_return = ((com->kind != KindCompilerFunction) && (com->kind != KindFunction));
+	add_temp(com->type, ret, create_constructor_for_return);
 
 	// compile parameters
+	SerialCommandParam param[SCRIPT_MAX_PARAMS];
 	for (int p=0;p<com->num_params;p++)
 		SerializeParameter(com->param[p], level, index, param[p]);
 
@@ -2435,7 +2435,21 @@ void Serializer::SerializeFunction(Function *f)
 	SerializeBlock(f->block, 0);
 	cmd_list_out();
 	
-	FillInDestructors(false);
+
+
+	// outro (if last command != return)
+	bool need_outro = true;
+	if (f->block->command.num > 0)
+		if ((f->block->command.back()->kind == KindCompilerFunction) && (f->block->command.back()->link_nr == CommandReturn))
+			need_outro = false;
+	if (need_outro){
+		FillInDestructors(false);
+		add_cmd(Asm::inst_leave);
+		if (f->return_type->UsesReturnByMemory())
+			add_cmd(Asm::inst_ret);//, param_const(TypeReg16, (void*)4));
+		else
+			add_cmd(Asm::inst_ret);
+	}
 
 
 	if (add_later.num > 0){
@@ -2674,14 +2688,6 @@ void Serializer::Assemble(char *Opcode, int &OpcodeSize)
 			assemble_cmd(list, cmd[i], script);
 		}
 	}
-
-	// outro (if last command != return)
-	bool need_outro = true;
-	if (cur_func->block->command.num > 0)
-		if ((cur_func->block->command.back()->kind == KindCompilerFunction) && (cur_func->block->command.back()->link_nr == CommandReturn))
-			need_outro = false;
-	if (need_outro)
-		list->add_func_return(cur_func->return_type->size);
 
 	//msg_write(Opcode2Asm(Opcode, OpcodeSize));
 
