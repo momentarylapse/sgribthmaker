@@ -131,8 +131,9 @@ inline void MarkWord(int line, int start, int end, int type, char *p0, char *p)
 			if (temp[0] == '#'){
 				type = InMacro;
 			}else if ((temp == "enum") ||
-			         //(temp == "struct") ||
 			         (temp == "class") ||
+			         (temp == "use") ||
+			         (temp == "import") ||
 			         (temp == "if") ||
 			         (temp == "else") ||
 			         (temp == "while") ||

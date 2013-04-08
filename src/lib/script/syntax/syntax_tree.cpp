@@ -484,6 +484,8 @@ bool SyntaxTree::GetExistence(const string &name, Function *f)
 	GetExistenceLink.script = script;
 	GetExistenceLink.instance = NULL;
 
+	msg_write("get ex " + name + " : " + Filename);
+
 	// first test local variables
 	if (lf){
 		foreachi(LocalVariable &v, f->var, i){

@@ -150,6 +150,7 @@ public:
 	
 	// syntax parsing
 	void Parser();
+	void ParseImport();
 	void ParseEnum();
 	void ParseClass();
 	void ParseFunction(Type *class_type, bool as_extern);

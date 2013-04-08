@@ -1287,6 +1287,33 @@ void SyntaxTree::TestArrayDefinition(Type **type, bool is_pointer)
 }
 
 
+void SyntaxTree::ParseImport()
+{
+	msg_db_f("ParseImport", 4);
+	Exp.next(); // 'use' / 'import'
+
+	string name = Exp.cur;
+	if (name.find(".kaba") >= 0){
+
+		string filename = Filename.dirname() + name.substr(1, name.num - 2); // remove "
+		filename = filename.no_recursion();
+
+		msg_right();
+		Script *include;
+		try{
+			include = Load(filename, true, script->JustAnalyse);
+		}catch(Exception &e){
+			string msg = "in imported file:\n\"" + e.message + "\"";
+			DoError(msg);
+		}
+
+		msg_left();
+		AddIncludeData(include);
+	}else{
+		DoError("can't import packages ,,,yet");
+	}
+}
+
 
 void SyntaxTree::ParseEnum()
 {
@@ -1758,8 +1785,12 @@ void SyntaxTree::Parser()
 			Exp.next();
 		}
 
+
+		if ((Exp.cur == "import") || (Exp.cur == "use")){
+			ParseImport();
+
 		// enum
-		if (Exp.cur == "enum"){
+		}else if (Exp.cur == "enum"){
 			ParseEnum();
 
 		// class
