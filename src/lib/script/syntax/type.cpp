@@ -17,6 +17,28 @@ bool Type::UsesCallByReference()
 bool Type::UsesReturnByMemory()
 {	return ((!force_call_by_value) && (!is_pointer)) || (is_array);	}
 
+
+
+bool Type::is_simple_class()
+{
+	if (!UsesCallByReference())
+		return true;
+	/*if (is_array)
+		return false;*/
+	if (is_super_array)
+		return false;
+	if (GetConstructor())
+		return false;
+	if (GetDestructor())
+		return false;
+	if (GetFunc("__assign__") >= 0)
+		return false;
+	foreach(ClassElement &e, element)
+		if (!e.type->is_simple_class())
+			return false;
+	return true;
+}
+
 int Type::GetFunc(const string &name)
 {
 	foreachi(ClassFunction &f, function, i)

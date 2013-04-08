@@ -9,6 +9,7 @@ SCRIPT_OBJ  = $(SCRIPT_DIR)/script.o \
  $(SCRIPT_DIR)/syntax/precompiler.o \
  $(SCRIPT_DIR)/syntax/preprocessor.o \
  $(SCRIPT_DIR)/syntax/parser.o \
+ $(SCRIPT_DIR)/syntax/implicit.o \
  $(SCRIPT_DIR)/lib/script_data.o \
  $(SCRIPT_DIR)/lib/script_data_file.o \
  $(SCRIPT_DIR)/lib/script_data_math.o \
@@ -48,6 +49,9 @@ $(SCRIPT_DIR)/syntax/lexical.o : $(SCRIPT_DIR)/syntax/lexical.cpp $(SCRIPT_DEP)
 
 $(SCRIPT_DIR)/syntax/parser.o : $(SCRIPT_DIR)/syntax/parser.cpp $(SCRIPT_DEP)
 	$(CPP) -c $(SCRIPT_DIR)/syntax/parser.cpp -o $@ $(SCRIPT_CXXFLAGS)
+
+$(SCRIPT_DIR)/syntax/implicit.o : $(SCRIPT_DIR)/syntax/implicit.cpp $(SCRIPT_DEP)
+	$(CPP) -c $(SCRIPT_DIR)/syntax/implicit.cpp -o $@ $(SCRIPT_CXXFLAGS)
 
 $(SCRIPT_DIR)/syntax/precompiler.o : $(SCRIPT_DIR)/syntax/precompiler.cpp $(SCRIPT_DEP)
 	$(CPP) -c $(SCRIPT_DIR)/syntax/precompiler.cpp -o $@ $(SCRIPT_CXXFLAGS)

@@ -365,27 +365,6 @@ void func_add_param(const string &name, Type *type)
 		cur_class_func->param_type.add(type);
 }
 
-
-bool type_is_simple_class(Type *t)
-{
-	if (!t->UsesCallByReference())
-		return true;
-	/*if (t->IsArray)
-		return false;*/
-	if (t->is_super_array)
-		return false;
-	if (t->GetFunc("__init__") >= 0)
-		return false;
-	if (t->GetFunc("__delete__") >= 0)
-		return false;
-	if (t->GetFunc("__assign__") >= 0)
-		return false;
-	foreach(ClassElement &e, t->element)
-		if (!type_is_simple_class(e.type))
-			return false;
-	return true;
-}
-
 void script_make_super_array(Type *t, SyntaxTree *ps)
 {
 	msg_db_f("make_super_array", 4);
@@ -406,7 +385,7 @@ void script_make_super_array(Type *t, SyntaxTree *ps)
 			func_add_param("start",		TypeInt);
 			func_add_param("num",		TypeInt);
 
-		if (type_is_simple_class(t->parent)){
+		if (t->parent->is_simple_class()){
 			if (!t->parent->UsesCallByReference()){
 				if (t->parent->size == 4){
 					class_add_func("__init__",	TypeVoid, mf((tmf)&Array<int>::__init__));

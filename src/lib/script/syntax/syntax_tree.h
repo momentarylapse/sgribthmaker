@@ -177,6 +177,7 @@ public:
 	Type *GetType(const string &name, bool force);
 	void AddType(Type **type);
 	Type *CreateNewType(const string &name, int size, bool is_pointer, bool is_silent, bool is_array, int array_size, Type *sub);
+	Type *GetPointerType(Type *sub);
 	void TestArrayDefinition(Type **type, bool is_pointer);
 	bool GetExistence(const string &name, Function *f);
 	void LinkMostImportantOperator(Array<Command*> &Operand, Array<Command*> &Operator, Array<int> &op_exp);
@@ -207,7 +208,18 @@ public:
 	int AddConstant(Type *type);
 	Block *AddBlock();
 	Function *AddFunction(const string &name, Type *type);
+
+	// command
 	Command *AddCommand();
+	Command *add_command_compilerfunc(int cf);
+	Command *add_command_classfunc(Type *class_type, ClassFunction &f, Command *inst);
+	Command *add_command_const(int nc);
+	Command *add_command_operator(Command *p1, Command *p2, int op);
+	Command *cp_command(Command *c);
+	Command *cp_command_deep(Command *c);
+	Command *ref_command(Command *sub);
+	Command *deref_command(Command *sub);
+	Command *shift_command(Command *sub, bool deref, int shift, Type *type);
 
 	// pre processor
 	void PreProcessCommand(Script *s, Command *c);

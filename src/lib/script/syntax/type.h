@@ -46,6 +46,7 @@ struct Type{
 	bool force_call_by_value;
 	bool UsesCallByReference();
 	bool UsesReturnByMemory();
+	bool is_simple_class();
 	int GetFunc(const string &name);
 	ClassFunction *GetConstructor();
 	ClassFunction *GetDestructor();
