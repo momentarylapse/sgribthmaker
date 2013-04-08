@@ -246,11 +246,12 @@ void class_add_func(const string &name, Type *return_type, void *func)
 				tname = t->name;
 	}
 	int cmd = add_func(tname + "." + name, return_type, func, true);
+	cur_func->_class = cur_class;
 	ClassFunction f;
 	f.name = name;
+	f.script = GlobalDummyScript;
 	f.nr = cmd;
 	f.return_type = return_type;
-	cur_cmd = NULL;
 	cur_class->function.add(f);
 	cur_class_func = &cur_class->function.back();
 }
@@ -540,7 +541,7 @@ void add_type_cast(int penalty, Type *source, Type *dest, const string &cmd, voi
 		if (PreCommands[i].name == cmd){
 			c.kind = KindCompilerFunction;
 			c.func_no = i;
-			c.script = NULL;
+			c.script = GlobalDummyScript;
 			break;
 		}
 	if (c.func_no < 0)

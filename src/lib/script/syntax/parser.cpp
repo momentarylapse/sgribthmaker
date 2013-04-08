@@ -193,7 +193,7 @@ void DoClassFunction(SyntaxTree *ps, Command *Operand, Type *t, int f_no, Functi
 	//msg_write(LinkNr2Str(ps, Operand->Kind, Operand->Nr));
 
 	// the function
-	Operand->script = t->owner->script;
+	Operand->script = t->function[f_no].script;
     Operand->kind = KindFunction;
 	Operand->link_nr = t->function[f_no].nr;
 	Operand->type = t->owner->Functions[t->function[f_no].nr]->literal_return_type;

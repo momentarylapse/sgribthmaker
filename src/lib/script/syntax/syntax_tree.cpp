@@ -98,13 +98,11 @@ Command *SyntaxTree::add_command_compilerfunc(int cf)
 Command *SyntaxTree::add_command_classfunc(Type *class_type, ClassFunction &f, Command *inst)
 {
 	Command *c = AddCommand();
+	c->kind = KindFunction;
 	c->link_nr = f.nr;
 	c->instance = inst;
-	c->script = class_type->owner->script;
-	msg_write("add_cmd_classfunc " + i2s(f.nr) + "  " + class_type->owner->Filename);
-	msg_write(class_type->name);
-	msg_write(f.name);
-	c->type = class_type->owner->Functions[f.nr]->return_type;
+	c->script = f.script;
+	c->type = f.return_type;
 	return c;
 }
 
@@ -471,8 +469,6 @@ bool SyntaxTree::GetExistence(const string &name, Function *func)
 	GetExistenceLink.script = script;
 	GetExistenceLink.instance = NULL;
 
-	msg_write("get ex " + name + " : " + Filename);
-
 	// first test local variables
 	if (func){
 		foreachi(LocalVariable &v, func->var, i){
@@ -555,6 +551,8 @@ void SyntaxTree::CommandSetCompilerFunction(int CF, Command *Com)
 // a function the compiler knows
 	Com->kind = KindCompilerFunction;
 	Com->link_nr = CF;
+	Com->script = GlobalDummyScript;
+	Com->instance = NULL;
 
 	Com->num_params = PreCommands[CF].param.num;
 	for (int p=0;p<Com->num_params;p++){

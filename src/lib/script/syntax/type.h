@@ -5,6 +5,7 @@
 
 namespace Script{
 
+class Script;
 class SyntaxTree;
 class Type;
 
@@ -15,6 +16,7 @@ struct ClassElement{
 };
 struct ClassFunction{
 	string name;
+	Script *script;
 	int nr; // index in Functions[]
 	// _func_(x)  ->  p.func(x)
 	Array<Type*> param_type;

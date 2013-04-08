@@ -51,6 +51,7 @@ void CreateImplicitConstructor(SyntaxTree *ps, Type *t)
 	cf.nr = fn;
 	cf.name = "__init__";
 	cf.return_type = TypeVoid;
+	cf.script = ps->script;
 	t->function.add(cf);
 }
 
@@ -96,6 +97,7 @@ void CreateImplicitDestructor(SyntaxTree *ps, Type *t)
 	cf.nr = fn;
 	cf.name = "__delete__";
 	cf.return_type = TypeVoid;
+	cf.script = ps->script;
 	t->function.add(cf);
 }
 
@@ -215,6 +217,7 @@ void CreateImplicitAssign(SyntaxTree *ps, Type *t)
 	cf.name = "__assign__";
 	cf.return_type = TypeVoid;
 	cf.param_type.add(t);
+	cf.script = ps->script;
 	t->function.add(cf);
 }
 
@@ -296,6 +299,7 @@ void CreateImplicitArrayClear(SyntaxTree *ps, Type *t)
 	cf.nr = fn;
 	cf.name = "clear";
 	cf.return_type = TypeVoid;
+	cf.script = ps->script;
 	t->function.add(cf);
 }
 
@@ -434,6 +438,7 @@ void CreateImplicitArrayResize(SyntaxTree *ps, Type *t)
 	cf.name = "resize";
 	cf.return_type = TypeVoid;
 	cf.param_type.add(TypeInt);
+	cf.script = ps->script;
 	t->function.add(cf);
 }
 
@@ -499,6 +504,7 @@ void CreateImplicitArrayAdd(SyntaxTree *ps, Type *t)
 	cf.name = "add";
 	cf.return_type = TypeVoid;
 	cf.param_type.add(t->parent);
+	cf.script = ps->script;
 	t->function.add(cf);
 }
 
