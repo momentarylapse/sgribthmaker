@@ -69,10 +69,7 @@ void init_all_global_objects(SyntaxTree *ps, Function *f, Array<char*> &g_var)
 			continue;
 		typedef void init_func(void *);
 		//msg_write("global init: " + v.type->name);
-		init_func *ff = NULL;
-		if (cf->kind == KindFunction){
-			ff = (init_func*)v.type->owner->script->func[cf->nr];
-		}
+		init_func *ff = (init_func*)v.type->owner->script->func[cf->nr];
 		if (ff)
 			ff(g_var[i]);
 	}

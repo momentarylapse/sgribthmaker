@@ -15,7 +15,7 @@ struct ClassElement{
 };
 struct ClassFunction{
 	string name;
-	int kind, nr; // PreCommand / Own Function?,  index
+	int nr; // index in Functions[]
 	// _func_(x)  ->  p.func(x)
 	Array<Type*> param_type;
 	Type *return_type;

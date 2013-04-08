@@ -48,7 +48,6 @@ void CreateImplicitConstructor(SyntaxTree *ps, Type *t)
 	}
 
 	ClassFunction cf;
-	cf.kind = KindFunction;
 	cf.nr = fn;
 	cf.name = "__init__";
 	cf.return_type = TypeVoid;
@@ -94,7 +93,6 @@ void CreateImplicitDestructor(SyntaxTree *ps, Type *t)
 
 
 	ClassFunction cf;
-	cf.kind = KindFunction;
 	cf.nr = fn;
 	cf.name = "__delete__";
 	cf.return_type = TypeVoid;
@@ -213,7 +211,6 @@ void CreateImplicitAssign(SyntaxTree *ps, Type *t)
 	}
 
 	ClassFunction cf;
-	cf.kind = KindFunction;
 	cf.nr = fn;
 	cf.name = "__assign__";
 	cf.return_type = TypeVoid;
@@ -296,7 +293,6 @@ void CreateImplicitArrayClear(SyntaxTree *ps, Type *t)
 
 
 	ClassFunction cf;
-	cf.kind = KindFunction;
 	cf.nr = fn;
 	cf.name = "clear";
 	cf.return_type = TypeVoid;
@@ -434,7 +430,6 @@ void CreateImplicitArrayResize(SyntaxTree *ps, Type *t)
 
 
 	ClassFunction cf;
-	cf.kind = KindFunction;
 	cf.nr = fn;
 	cf.name = "resize";
 	cf.return_type = TypeVoid;
@@ -500,7 +495,6 @@ void CreateImplicitArrayAdd(SyntaxTree *ps, Type *t)
 	f->block->command.add(cmd_assign);
 
 	ClassFunction cf;
-	cf.kind = KindFunction;
 	cf.nr = fn;
 	cf.name = "add";
 	cf.return_type = TypeVoid;
@@ -565,13 +559,12 @@ void SyntaxTree::CreateImplicitFunctions(Type *t, bool relocate_last_function)
 
 		// relink class functions
 		foreach(Type *t, Types)
-			foreach(ClassFunction &f, t->function)
-				if (f.kind == KindFunction){
-					if (f.nr == num_funcs - 1)
-						f.nr = Functions.num - 1;
-					else if (f.nr > num_funcs - 1)
-						f.nr --;
-				}
+			foreach(ClassFunction &f, t->function){
+				if (f.nr == num_funcs - 1)
+					f.nr = Functions.num - 1;
+				else if (f.nr > num_funcs - 1)
+					f.nr --;
+			}
 	}
 }
 

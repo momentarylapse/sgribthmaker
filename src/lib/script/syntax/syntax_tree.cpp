@@ -98,16 +98,13 @@ Command *SyntaxTree::add_command_compilerfunc(int cf)
 Command *SyntaxTree::add_command_classfunc(Type *class_type, ClassFunction &f, Command *inst)
 {
 	Command *c = AddCommand();
-	c->kind = f.kind;
 	c->link_nr = f.nr;
 	c->instance = inst;
-	if (f.kind == KindCompilerFunction){
-		c->type = PreCommands[f.nr].return_type;
-		//c->NumParams = PreCommand[f.Nr].Param.num;
-	}else if (f.kind == KindFunction){
-		c->script = class_type->owner->script;
-		c->type = class_type->owner->Functions[f.nr]->return_type;
-	}
+	c->script = class_type->owner->script;
+	msg_write("add_cmd_classfunc " + i2s(f.nr) + "  " + class_type->owner->Filename);
+	msg_write(class_type->name);
+	msg_write(f.name);
+	c->type = class_type->owner->Functions[f.nr]->return_type;
 	return c;
 }
 
@@ -593,6 +590,12 @@ void SyntaxTree::AddType(Type **type)
 			(*type)=Types[i];
 			return;
 		}
+	foreach(Script *inc, Includes)
+		for (int i=0;i<inc->syntax->Types.num;i++)
+			if ((*type)->name == inc->syntax->Types[i]->name){
+				(*type) = inc->syntax->Types[i];
+				return;
+			}
 	Type *t = new Type;
 	(*t) = (**type);
 	t->owner = this;

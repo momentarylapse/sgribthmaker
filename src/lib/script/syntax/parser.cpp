@@ -194,18 +194,11 @@ void DoClassFunction(SyntaxTree *ps, Command *Operand, Type *t, int f_no, Functi
 
 	// the function
 	Operand->script = t->owner->script;
-    Operand->kind = t->function[f_no].kind;
+    Operand->kind = KindFunction;
 	Operand->link_nr = t->function[f_no].nr;
-	if (t->function[f_no].kind == KindCompilerFunction){
-		Operand->type = PreCommands[t->function[f_no].nr].return_type;
-		Operand->num_params = PreCommands[t->function[f_no].nr].param.num;
-		ps->GetFunctionCall(PreCommands[t->function[f_no].nr].name, Operand, f);
-	}else if (t->function[f_no].kind == KindFunction){
-		Operand->type = t->owner->Functions[t->function[f_no].nr]->literal_return_type;
-		Operand->num_params = t->owner->Functions[t->function[f_no].nr]->num_params;
-		ps->GetFunctionCall(t->owner->Functions[t->function[f_no].nr]->name, Operand, f);
-		//ps->DoError("script member function call not implemented");
-	}
+	Operand->type = t->owner->Functions[t->function[f_no].nr]->literal_return_type;
+	Operand->num_params = t->owner->Functions[t->function[f_no].nr]->num_params;
+	ps->GetFunctionCall(t->owner->Functions[t->function[f_no].nr]->name, Operand, f);
 	Operand->instance = ob;
 }
 
@@ -1359,17 +1352,17 @@ void SyntaxTree::ParseClassFunction(Type *t, bool as_extern)
 
 	ClassFunction cf;
 	if (as_extern){
-		PreCommand *c = &PreCommands[ExternalFuncPreCommandIndex];
+		DoError("external class function... todo");
+		/*PreCommand *c = &PreCommands[ExternalFuncPreCommandIndex];
 		cf.name = c->name.substr(t->name.num + 1, -1);
 		cf.kind = KindCompilerFunction;
 		cf.nr = ExternalFuncPreCommandIndex;
 		cf.return_type = c->return_type;
 		foreach(PreCommandParam &p, c->param)
-			cf.param_type.add(p.type);
+			cf.param_type.add(p.type);*/
 	}else{
 		Function *f = Functions.back();
 		cf.name = f->name.substr(t->name.num + 1, -1);
-		cf.kind = KindFunction;
 		cf.nr = Functions.num - 1;
 		cf.return_type = f->return_type;
 		for (int i=0;i<f->num_params;i++)

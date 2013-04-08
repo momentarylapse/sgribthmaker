@@ -248,7 +248,6 @@ void class_add_func(const string &name, Type *return_type, void *func)
 	int cmd = add_func(tname + "." + name, return_type, func, true);
 	ClassFunction f;
 	f.name = name;
-	f.kind = KindFunction;
 	f.nr = cmd;
 	f.return_type = return_type;
 	cur_cmd = NULL;
@@ -316,6 +315,7 @@ int add_func(const string &name, Type *return_type, void *func, bool is_class)
 	f->return_type = return_type;
 	f->literal_return_type = return_type;
 	f->num_params = 0;
+	f->_class = NULL;
 	GlobalDummyScript->syntax->Functions.add(f);
 	GlobalDummyScript->func.add((void (*)())func);
 	cur_cmd = NULL;

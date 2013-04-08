@@ -1111,6 +1111,9 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 	// class function -> compile instance
 	bool is_class_function = false;
 	if (com->kind == KindFunction){
+		msg_error("func");
+		msg_write(com->link_nr);
+		msg_write(com->script->syntax->Functions.num);
 		if (com->script->syntax->Functions[com->link_nr]->_class)
 			is_class_function = true;
 	}
