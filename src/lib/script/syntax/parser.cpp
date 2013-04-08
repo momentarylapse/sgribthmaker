@@ -6,7 +6,8 @@
 namespace Script{
 
 
-static int PreConstantNr, NamedConstantNr;
+static int FoundConstantNr;
+static Script *FoundConstantScript;
 
 
 void ref_command_old(SyntaxTree *ps, Command *c);
@@ -20,7 +21,7 @@ extern bool next_extern;
 extern bool next_const;
 
 
-#define is_variable(kind)	(((kind) == KindVarLocal) || ((kind) == KindVarGlobal) || ((kind) == KindVarExternal))
+#define is_variable(kind)	(((kind) == KindVarLocal) || ((kind) == KindVarGlobal))
 
 inline bool type_match(Type *type, bool is_class, Type *wanted);
 inline bool direct_type_match(Type *a, Type *b)
@@ -78,22 +79,26 @@ int s2i2(const string &str)
 Type *SyntaxTree::GetConstantType()
 {
 	msg_db_f("GetConstantType", 4);
-	PreConstantNr = -1;
-	NamedConstantNr = -1;
-
-	// predefined constants
-	foreachi(PreConstant &c, PreConstants, i)
-		if (Exp.cur == c.name){
-			PreConstantNr = i;
-			return c.type;
-		}
+	FoundConstantNr = -1;
+	FoundConstantScript = NULL;
 
 	// named constants
 	foreachi(Constant &c, Constants, i)
 		if (Exp.cur == c.name){
-			NamedConstantNr = i;
+			FoundConstantNr = i;
+			FoundConstantScript = script;
 			return c.type;
 		}
+
+
+	// included named constants
+	foreach(Script *inc, Includes)
+		foreachi(Constant &c, inc->syntax->Constants, i)
+			if (Exp.cur == c.name){
+				FoundConstantNr = i;
+				FoundConstantScript = inc;
+				return c.type;
+			}
 
 	// character "..."
 	if ((Exp.cur[0] == '\'') && (Exp.cur.back() == '\''))
@@ -132,23 +137,12 @@ static int _some_int_;
 static float _some_float_;
 static char _some_string_[2048];
 
-bool pre_const_is_ref(Type *type)
-{
-	return ((type->size > 4) && (!type->is_pointer));
-}
-
 void *SyntaxTree::GetConstantValue()
 {
 	Type *type = GetConstantType();
 // named constants
-	if (PreConstantNr >= 0){
-		if (pre_const_is_ref(type))
-			return PreConstants[PreConstantNr].value;
-		else
-			return &PreConstants[PreConstantNr].value;
-	}
-	if (NamedConstantNr >= 0)
-		return Constants[NamedConstantNr].data;
+	if (FoundConstantNr >= 0)
+		return FoundConstantScript->syntax->Constants[FoundConstantNr].data;
 // literal
 	if (type == TypeChar){
 		_some_int_ = Exp.cur[1];
@@ -361,7 +355,7 @@ bool SyntaxTree::GetSpecialFunctionCall(const string &f_name, Command *Operand, 
 		Type *type;
 		if (nt >= 0)
 			(*(int*)(Constants[nc].data)) = Types[nt]->size;
-		else if ((GetExistence(Exp.cur, f)) && ((GetExistenceLink.kind == KindVarGlobal) || (GetExistenceLink.kind == KindVarLocal) || (GetExistenceLink.kind == KindVarExternal)))
+		else if ((GetExistence(Exp.cur, f)) && ((GetExistenceLink.kind == KindVarGlobal) || (GetExistenceLink.kind == KindVarLocal)))
 			(*(int*)(Constants[nc].data)) = GetExistenceLink.type->size;
 		else if (type == GetConstantType())
 			(*(int*)(Constants[nc].data)) = type->size;
@@ -1541,6 +1535,7 @@ void SyntaxTree::ParseGlobalConst(const string &name, Type *type)
 
 void AddExternalVar(const string &name, Type *type)
 {
+#if 0
 	so("extern");
 	// already existing?
 	bool found = false;
@@ -1562,10 +1557,12 @@ void AddExternalVar(const string &name, Type *type)
 			v.is_semi_external = true;
 			PreExternalVars.add(v);
 		}
+#endif
 }
 
 void CopyFuncDataToExternal(Function *f, PreCommand *c, bool is_class_func)
 {
+#if 0
 	c->is_class_function = is_class_func;
 	c->return_type = f->return_type;
 	c->param.clear();
@@ -1575,10 +1572,13 @@ void CopyFuncDataToExternal(Function *f, PreCommand *c, bool is_class_func)
 		p.type = f->var[j].type;
 		c->param.add(p);
 	}
+#endif
 }
 
 void AddExternalFunc(SyntaxTree *ps, Function *f, Type *class_type)
 {
+	ps->DoError("external function... todo");
+#if 0
 	so("extern");
 
 	string func_name = f->name;
@@ -1607,6 +1607,7 @@ void AddExternalFunc(SyntaxTree *ps, Function *f, Type *class_type)
 
 	// delete as function
 	ps->Functions.pop();
+#endif
 }
 
 Type *SyntaxTree::ParseVariableDefSingle(Type *type, Function *f, bool as_param)
@@ -1631,9 +1632,10 @@ Type *SyntaxTree::ParseVariableDefSingle(Type *type, Function *f, bool as_param)
 	TestArrayDefinition(&type, is_pointer);
 
 	// add
-	if (next_extern)
+	if (next_extern){
+		DoError("external vars not supported ...yet");
 		AddExternalVar(name, type);
-	else if (next_const){
+	}else if (next_const){
 		ParseGlobalConst(name, type);
 	}else
 		AddVar(name, type, f);

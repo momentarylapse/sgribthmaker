@@ -184,37 +184,6 @@ enum{
 
 
 //--------------------------------------------------------------------------------------------------
-// constants
-
-struct PreConstant{
-	string name;
-	Type *type;
-	void *value;
-	int package;
-};
-extern Array<PreConstant> PreConstants;
-
-
-
-
-//--------------------------------------------------------------------------------------------------
-// external variables (in the surrounding program...)
-
-struct PreExternalVar{
-	string name;
-	Type *type;
-	void *pointer;
-	bool is_semi_external;
-	int package;
-};
-extern Array<PreExternalVar> PreExternalVars;
-
-//--------------------------------------------------------------------------------------------------
-// semi external variables (in the surrounding program...but has to be defined "extern")
-
-
-
-//--------------------------------------------------------------------------------------------------
 // commands
 
 struct PreCommandParam{
@@ -223,11 +192,8 @@ struct PreCommandParam{
 };
 struct PreCommand{
 	string name;
-	void *func;
-	bool is_class_function, is_special;
 	Type *return_type;
 	Array<PreCommandParam> param;
-	bool is_semi_external;
 	int package;
 };
 extern Array<PreCommand> PreCommands;
@@ -294,8 +260,6 @@ void LinkSemiExternalClassFunc(const string &name, T pointer)
 {
 	_LinkSemiExternalClassFunc(name, (void(DummyClass::*)())pointer);
 }
-extern void AddPreGlobalVar(const string &name, Type *type);
-extern Type *GetPreType(const string &name);
 
 
 
@@ -306,11 +270,7 @@ extern Type *GetPreType(const string &name);
 struct Package
 {
 	string name;
-	Array<Type*> type;
-	Array<PreCommand> command;
-	Array<PreExternalVar> external_var;
-	Array<PreOperator> _operator;
-	Array<PreConstant> constant;
+	Script *script;
 };
 extern Array<Package> Packages;
 

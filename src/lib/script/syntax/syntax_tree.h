@@ -39,7 +39,6 @@ enum
 	KindVarLocal,
 	KindVarGlobal,
 	KindVarFunction,
-	KindVarExternal,		// = variable from surrounding program
 	KindEnum,				// = single enum entry
 	KindConstant,
 	// execution
@@ -161,9 +160,7 @@ public:
 	int WhichPrimitiveOperator(const string &name);
 	int WhichCompilerFunction(const string &name);
 	void CommandSetCompilerFunction(int CF,Command *Com);
-	int WhichExternalVariable(const string &name);
 	int WhichType(const string &name);
-	void SetExternalVariable(int gv, Command *c);
 	void AddType();
 
 	// pre compiler

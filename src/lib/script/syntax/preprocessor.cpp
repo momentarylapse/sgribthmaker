@@ -176,17 +176,12 @@ void SyntaxTree::PreProcessCommandAddresses(Script *s, Command *c)
 		}
 	}else if (c->kind == KindReference){
 		if (s){
-			if ((c->param[0]->kind == KindVarGlobal) || (c->param[0]->kind == KindVarLocal) || (c->param[0]->kind == KindVarExternal) || (c->param[0]->kind == KindConstant)){
+			if ((c->param[0]->kind == KindVarGlobal) || (c->param[0]->kind == KindVarLocal) || (c->param[0]->kind == KindConstant)){
 				so("pre process ref var");
 				c->kind = KindAddress;
 				c->num_params = 0;
 				if (c->param[0]->kind == KindVarGlobal){
-					if (c->param[0]->script)
-						c->link_nr = (long)c->param[0]->script->g_var[c->param[0]->link_nr];
-					else
-						c->link_nr = (long)s->g_var[c->param[0]->link_nr];
-				}else if (c->param[0]->kind == KindVarExternal){
-					c->link_nr = (long)PreExternalVars[c->param[0]->link_nr].pointer;
+					c->link_nr = (long)c->param[0]->script->g_var[c->param[0]->link_nr];
 				}else if (c->param[0]->kind == KindVarLocal){
 					c->link_nr = (long)cur_func->var[c->param[0]->link_nr]._offset;
 					c->kind = KindLocalAddress;

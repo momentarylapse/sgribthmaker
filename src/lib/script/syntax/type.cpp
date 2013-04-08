@@ -3,14 +3,6 @@
 
 namespace Script{
 
-Type *ScriptGetPreType(const string &name)
-{
-	for (int i=0;i<PreTypes.num;i++)
-		if (name == PreTypes[i]->name)
-			return PreTypes[i];
-	return TypeUnknown;
-}
-
 bool Type::UsesCallByReference()
 {	return ((!force_call_by_value) && (!is_pointer)) || (is_array);	}
 

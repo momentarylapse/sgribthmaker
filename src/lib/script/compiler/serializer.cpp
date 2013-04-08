@@ -611,10 +611,9 @@ void Serializer::SerializeParameter(Command *link, int level, int index, SerialC
 		p.kind = KindRefToConst;
 	}else if (link->kind == KindVarGlobal){
 		so(" -global");
-		if (link->script)
-			p.p = link->script->g_var[link->link_nr];
-		else
-			p.p = script->g_var[link->link_nr];
+		p.p = link->script->g_var[link->link_nr];
+		if (!p.p)
+			script->DoErrorLink("variable is not linkable: " + link->script->syntax->RootOfAllEvil.var[link->link_nr].name);
 	}else if (link->kind == KindVarLocal){
 		so(" -local");
 		p.p = (char*)(long)cur_func->var[link->link_nr]._offset;
@@ -631,12 +630,6 @@ void Serializer::SerializeParameter(Command *link, int level, int index, SerialC
 		param.shift = 0;
 
 		AddReference(param, link->type, p);
-	}else if (link->kind == KindVarExternal){
-		so(" -external-var");
-		p.p = (char*)PreExternalVars[link->link_nr].pointer;
-		p.kind = KindVarGlobal;
-		if (!p.p)
-			script->DoErrorLink(format("external variable is not linkable: %s",PreExternalVars[link->link_nr].name.c_str()));
 	}else if (link->kind == KindConstant){
 		so(" -const");
 		if ((UseConstAsGlobalVar) || (syntax_tree->FlagCompileOS))
@@ -1117,17 +1110,9 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 
 	// class function -> compile instance
 	bool is_class_function = false;
-	if (com->kind == KindCompilerFunction)
-		if (PreCommands[com->link_nr].is_class_function)
-			is_class_function = true;
 	if (com->kind == KindFunction){
-		if (com->script){
-			if (com->script->syntax->Functions[com->link_nr]->_class)
-				is_class_function = true;
-		}else{
-			if (syntax_tree->Functions[com->link_nr]->_class)
-				is_class_function = true;
-		}
+		if (com->script->syntax->Functions[com->link_nr]->_class)
+			is_class_function = true;
 	}
 	SerialCommandParam instance = {-1, NULL, NULL};
 	if (is_class_function){
@@ -1141,32 +1126,22 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 	if (com->kind == KindOperator){
 		SerializeOperator(com, param, ret);
 		
-	}else if ((com->kind == KindCompilerFunction) || (com->kind == KindFunction)){
-		void *fp = NULL;
+	}else if (com->kind == KindFunction){
 		string name;
-		if (com->kind == KindFunction){ // own script Function;
-			if (com->script){
-				fp = (void*)com->script->func[com->link_nr];
-			}else{
-				fp = (void*)script->func[com->link_nr];
-			}
-		}else{ // compiler function
-			fp = PreCommands[com->link_nr].func;
-			name = PreCommands[com->link_nr].name;
-		}
-		if (fp){ // a real function
+		void *fp = (void*)com->script->func[com->link_nr];
+		if (!fp)
+			DoErrorLink("could not link function: " + com->script->syntax->Functions[com->link_nr]->name);
 
-			for (int p=0;p<com->num_params;p++)
-				AddFuncParam(param[p]);
+		for (int p=0;p<com->num_params;p++)
+			AddFuncParam(param[p]);
 			
-			AddFuncReturn(ret);
+		AddFuncReturn(ret);
 			
-			if (is_class_function)
-				AddFuncInstance(instance);
+		if (is_class_function)
+			AddFuncInstance(instance);
 			
-			AddFunctionCall(fp);
-			
-		}else if (PreCommands[com->link_nr].is_special){
+		AddFunctionCall(fp);
+	}else if (com->kind == KindCompilerFunction){
 			switch(com->link_nr){
 				/*case CommandSine:
 					break;*/
@@ -1371,12 +1346,6 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 				default:
 					DoError("compiler function unimplemented: " + PreCommands[com->link_nr].name);
 			}
-		}else{
-			if (PreCommands[com->link_nr].is_semi_external)
-	 			DoErrorLink("external function not linkable: " + PreCommands[com->link_nr].name);
-			else
-	 			DoError("compiler function not linkable: " + PreCommands[com->link_nr].name);
-		}
 	}else if (com->kind == KindBlock){
 		SerializeBlock(syntax_tree->Blocks[com->link_nr], level + 1);
 	}else{
@@ -1437,11 +1406,7 @@ void Serializer::add_cmd_constructor(SerialCommandParam &param, int modus)
 		AddReference(param, TypePointer, inst);
 		AddFuncInstance(inst);
 	}
-	void *fp = NULL;
-	if (f->kind == KindCompilerFunction)
-		fp = PreCommands[f->nr].func;
-	else if (f->kind == KindFunction)
-		fp = (void*)class_type->owner->script->func[f->nr];
+	void *fp = (void*)class_type->owner->script->func[f->nr];
 	if (!fp)
 		DoErrorLink(class_type->name + ".__init__() unlinkable!");
 
@@ -1460,11 +1425,7 @@ void Serializer::add_cmd_destructor(SerialCommandParam &param)
 	SerialCommandParam inst;
 	AddReference(param, TypePointer, inst);
 	AddFuncInstance(inst);
-	void *fp = NULL;
-	if (f->kind == KindCompilerFunction)
-		fp = PreCommands[f->nr].func;
-	else if (f->kind == KindFunction)
-		fp = (void*)param.type->owner->script->func[f->nr];
+	void *fp = (void*)param.type->owner->script->func[f->nr];
 	if (!fp)
 		DoErrorLink(param.type->name + ".__delete__() unlinkable!");
 	AddFunctionCall(fp);

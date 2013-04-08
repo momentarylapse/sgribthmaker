@@ -26,7 +26,7 @@
 
 namespace Script{
 
-string DataVersion = "0.10.5.1";
+string DataVersion = "0.10.99.0";
 
 
 int PointerSize;
@@ -100,7 +100,6 @@ void set_cur_package(const string &name)
 	cur_package = &Packages.back();
 }
 
-Array<Type*> PreTypes;
 Type *add_type(const string &name, int size, TypeFlag flag)
 {
 	msg_db_f("add_type", 4);
@@ -110,9 +109,7 @@ Type *add_type(const string &name, int size, TypeFlag flag)
 	t->size = size;
 	if ((flag & FLAG_CALL_BY_VALUE) > 0)
 		t->force_call_by_value = true;
-	PreTypes.add(t);
-	if (cur_package)
-		cur_package->type.add(t);
+	GlobalDummyScript->syntax->Types.add(t);
 	return t;
 }
 Type *add_type_p(const string &name, Type *sub_type, TypeFlag flag)
@@ -126,9 +123,7 @@ Type *add_type_p(const string &name, Type *sub_type, TypeFlag flag)
 	if ((flag & FLAG_SILENT) > 0)
 		t->is_silent = true;
 	t->parent = sub_type;
-	PreTypes.add(t);
-	if (cur_package)
-		cur_package->type.add(t);
+	GlobalDummyScript->syntax->Types.add(t);
 	return t;
 }
 Type *add_type_a(const string &name, Type *sub_type, int array_length)
@@ -149,9 +144,7 @@ Type *add_type_a(const string &name, Type *sub_type, int array_length)
 		t->is_array = true;
 		t->array_length = array_length;
 	}
-	PreTypes.add(t);
-	if (cur_package)
-		cur_package->type.add(t);
+	GlobalDummyScript->syntax->Types.add(t);
 	return t;
 }
 
@@ -220,8 +213,10 @@ string PreOperator::str() const
 
 
 
-Type *cur_class;
-ClassFunction *cur_class_func = NULL;
+static PreCommand *cur_cmd = NULL;
+static Function *cur_func = NULL;
+static Type *cur_class;
+static ClassFunction *cur_class_func = NULL;
 
 void add_class(Type *root_type)//, PreScript *ps = NULL)
 {
@@ -245,16 +240,18 @@ void class_add_func(const string &name, Type *return_type, void *func)
 {
 	msg_db_f("add_class_func", 4);
 	string tname = cur_class->name;
-	if (tname[0] == '-')
-		for (int i=0;i<PreTypes.num;i++)
-			if ((PreTypes[i]->is_pointer) && (PreTypes[i]->parent == cur_class))
-				tname = PreTypes[i]->name;
+	if (tname[0] == '-'){
+		foreach(Type *t, GlobalDummyScript->syntax->Types)
+			if ((t->is_pointer) && (t->parent == cur_class))
+				tname = t->name;
+	}
 	int cmd = add_func(tname + "." + name, return_type, func, true);
 	ClassFunction f;
 	f.name = name;
-	f.kind = KindCompilerFunction;
+	f.kind = KindFunction;
 	f.nr = cmd;
 	f.return_type = return_type;
+	cur_cmd = NULL;
 	cur_class->function.add(f);
 	cur_class_func = &cur_class->function.back();
 }
@@ -264,33 +261,30 @@ void class_add_func(const string &name, Type *return_type, void *func)
 //                                           constants                                            //
 //------------------------------------------------------------------------------------------------//
 
-Array<PreConstant> PreConstants;
 void add_const(const string &name, Type *type, void *value)
 {
 	msg_db_f("add_const", 4);
-	PreConstant c;
+	Constant c;
 	c.name = name;
 	c.type = type;
-	c.value = value;
-	c.package = cur_package_index;
-	PreConstants.add(c);
+	c.data = new char[max(type->size, PointerSize)];
+	if ((type == TypeInt) || (type == TypeFloat) || (type == TypeChar)  || (type == TypeBool) || (type->is_pointer))
+		*(void**)c.data = value;
+	else
+		memcpy(c.data, value, type->size);
+	c.owner = GlobalDummyScript->syntax;
+	GlobalDummyScript->syntax->Constants.add(c);
 }
 
 //------------------------------------------------------------------------------------------------//
 //                                    environmental variables                                     //
 //------------------------------------------------------------------------------------------------//
 
-Array<PreExternalVar> PreExternalVars;
 
 void add_ext_var(const string &name, Type *type, void *var)
 {
-	PreExternalVar v;
-	v.name = name;
-	v.type = type;
-	v.pointer = var;
-	v.is_semi_external = false;
-	v.package = cur_package_index;
-	PreExternalVars.add(v);
+	GlobalDummyScript->syntax->AddVar(name, type, &GlobalDummyScript->syntax->RootOfAllEvil);
+	GlobalDummyScript->g_var.add((char*)var);
 };
 
 //------------------------------------------------------------------------------------------------//
@@ -313,56 +307,55 @@ string _cdecl fff2s(vector &x){	return x.str();	}
 string _cdecl ffff2s(quaternion &x){	return x.str();	}
 
 
-void *f_cp = (void*)1; // for fake (compiler-) functions
-
-
 Array<PreCommand> PreCommands;
-
-int cur_func;
 
 int add_func(const string &name, Type *return_type, void *func, bool is_class)
 {
-	PreCommand c;
-	c.name = name;
-	c.return_type = return_type;
-	c.func = func;
-	c.is_special = false;
-	c.is_class_function = is_class;
-	c.is_semi_external = false;
-	c.package = cur_package_index;
-	if (PreCommands.num < NUM_INTERN_PRE_COMMANDS)
-		PreCommands.resize(NUM_INTERN_PRE_COMMANDS);
-	PreCommands.add(c);
-	cur_func = PreCommands.num - 1;
-	return cur_func;
+	Function *f = new Function;
+	f->name = name;
+	f->return_type = return_type;
+	f->literal_return_type = return_type;
+	f->num_params = 0;
+	GlobalDummyScript->syntax->Functions.add(f);
+	GlobalDummyScript->func.add((void (*)())func);
+	cur_cmd = NULL;
+	cur_func = f;
+	cur_class_func = NULL;
+	return GlobalDummyScript->syntax->Functions.num - 1;
 }
 
-int add_func_special(const string &name, Type *return_type, int index)
+int add_compiler_func(const string &name, Type *return_type, int index)
 {
 	PreCommand c;
 	c.name = name;
 	c.return_type = return_type;
-	c.func = NULL;
-	c.is_special = true;
-	c.is_class_function = false;
-	c.is_semi_external = false;
 	c.package = cur_package_index;
 	if (PreCommands.num < NUM_INTERN_PRE_COMMANDS)
 		PreCommands.resize(NUM_INTERN_PRE_COMMANDS);
 	PreCommands[index] = c;
-	cur_func = index;
+	cur_func = NULL;
+	cur_cmd = &PreCommands[index];
 	cur_class_func = NULL;
-	return cur_func;
+	return index;
 }
 
 void func_add_param(const string &name, Type *type)
 {
-	PreCommandParam p;
-	p.name = name;
-	p.type = type;
-	PreCommands[cur_func].param.add(p);
-	if (cur_class_func)
-		cur_class_func->param_type.add(type);
+	if (cur_cmd){
+		PreCommandParam p;
+		p.name = name;
+		p.type = type;
+		cur_cmd->param.add(p);
+	}else if (cur_func){
+		LocalVariable v;
+		v.name = name;
+		v.type = type;
+		cur_func->var.add(v);
+		cur_func->literal_param_type[cur_func->num_params] = type;
+		cur_func->num_params ++;
+		if (cur_class_func)
+			cur_class_func->param_type.add(type);
+	}
 }
 
 void script_make_super_array(Type *t, SyntaxTree *ps)
@@ -540,6 +533,7 @@ char *CastComplex2StringP(complex *z)
 Array<TypeCast> TypeCasts;
 void add_type_cast(int penalty, Type *source, Type *dest, const string &cmd, void *func)
 {
+#if 0
 	TypeCast c;
 	c.penalty = penalty;
 	c.command = -1;
@@ -561,6 +555,7 @@ void add_type_cast(int penalty, Type *source, Type *dest, const string &cmd, voi
 	c.dest = dest;
 	c.func = (t_cast_func*) func;
 	TypeCasts.add(c);
+#endif
 }
 
 
@@ -765,38 +760,38 @@ void SIAddBasicCommands()
 
 
 // "intern" functions
-	add_func_special("return",		TypeVoid,	CommandReturn);
+	add_compiler_func("return",		TypeVoid,	CommandReturn);
 		func_add_param("return_value",	TypeVoid); // return: ParamType will be defined by the parser!
-	add_func_special("-if-",		TypeVoid,	CommandIf);
+	add_compiler_func("-if-",		TypeVoid,	CommandIf);
 		func_add_param("b",	TypeBool);
-	add_func_special("-if/else-",	TypeVoid,	CommandIfElse);
+	add_compiler_func("-if/else-",	TypeVoid,	CommandIfElse);
 		func_add_param("b",	TypeBool);
-	add_func_special("-while-",		TypeVoid,	CommandWhile);
+	add_compiler_func("-while-",		TypeVoid,	CommandWhile);
 		func_add_param("b",	TypeBool);
-	add_func_special("-for-",		TypeVoid,	CommandFor);
+	add_compiler_func("-for-",		TypeVoid,	CommandFor);
 		func_add_param("b",	TypeBool); // internally like a while-loop... but a bit different...
-	add_func_special("-break-",		TypeVoid,	CommandBreak);
-	add_func_special("-continue-",	TypeVoid,	CommandContinue);
-	add_func_special("sizeof",		TypeInt,	CommandSizeof);
+	add_compiler_func("-break-",		TypeVoid,	CommandBreak);
+	add_compiler_func("-continue-",	TypeVoid,	CommandContinue);
+	add_compiler_func("sizeof",		TypeInt,	CommandSizeof);
 		func_add_param("type",	TypeVoid);
 	
-	add_func_special("wait",		TypeVoid,	CommandWait);
+	add_compiler_func("wait",		TypeVoid,	CommandWait);
 		func_add_param("time",	TypeFloat);
-	add_func_special("wait_rt",		TypeVoid,	CommandWaitRT);
+	add_compiler_func("wait_rt",		TypeVoid,	CommandWaitRT);
 		func_add_param("time",	TypeFloat);
-	add_func_special("wait_of",		TypeVoid,	CommandWaitOneFrame);
+	add_compiler_func("wait_of",		TypeVoid,	CommandWaitOneFrame);
 //	add_func_special("f2i",			TypeInt,	(void*)&_Float2Int);
-	add_func_special("f2i",			TypeInt,	CommandFloatToInt);    // sometimes causes floating point exceptions...
+	add_compiler_func("f2i",			TypeInt,	CommandFloatToInt);    // sometimes causes floating point exceptions...
 		func_add_param("f",		TypeFloat);
-	add_func_special("i2f",			TypeFloat,	CommandIntToFloat);
+	add_compiler_func("i2f",			TypeFloat,	CommandIntToFloat);
 		func_add_param("i",		TypeInt);
-	add_func_special("i2c",			TypeChar,	CommandIntToChar);
+	add_compiler_func("i2c",			TypeChar,	CommandIntToChar);
 		func_add_param("i",		TypeInt);
-	add_func_special("c2i",			TypeInt,	CommandCharToInt);
+	add_compiler_func("c2i",			TypeInt,	CommandCharToInt);
 		func_add_param("c",		TypeChar);
-	add_func_special("p2b",			TypeBool,	CommandPointerToBool);
+	add_compiler_func("p2b",			TypeBool,	CommandPointerToBool);
 		func_add_param("p",		TypePointer);
-	add_func_special("-asm-",		TypeVoid,	CommandAsm);
+	add_compiler_func("-asm-",		TypeVoid,	CommandAsm);
 }
 
 
@@ -928,10 +923,10 @@ void SIAddSuperArrays()
 {
 	msg_db_f("SIAddSuperArrays", 3);
 
-	for (int i=0;i<PreTypes.num;i++)
-		if (PreTypes[i]->is_super_array){
-			//msg_error(string("super array:  ", PreType[i]->Name));
-			script_make_super_array(PreTypes[i]);
+	foreach(Type *t, GlobalDummyScript->syntax->Types)
+		if (t->is_super_array){
+			//msg_error(string("super array:  ", t->name));
+			script_make_super_array(t);
 		}
 }
 
@@ -1082,36 +1077,36 @@ void Init(int instruction_set)
 void ResetSemiExternalData()
 {
 	msg_db_f("ScriptResetSemiExternalData", 2);
-	for (int i=PreExternalVars.num-1;i>=0;i--)
+	/*for (int i=PreExternalVars.num-1;i>=0;i--)
 		if (PreExternalVars[i].is_semi_external)
 			PreExternalVars.erase(i);
 	for (int i=PreCommands.num-1;i>=0;i--)
 		if (PreCommands[i].is_semi_external)
-			PreCommands.erase(i);
+			PreCommands.erase(i);*/
 }
 
 // program variables - specific to the surrounding program, can't always be there...
 void LinkSemiExternalVar(const string &name, void *pointer)
 {
 	msg_db_f("ScriptLinkSemiExternalVar", 2);
-	PreExternalVar v;
+	/*PreExternalVar v;
 	v.name = name;
 	v.pointer = pointer;
 	v.type = TypeUnknown; // unusable until defined via "extern" in the script!
 	v.is_semi_external = true; // ???
-	PreExternalVars.add(v);
+	PreExternalVars.add(v);*/
 }
 
 // program functions - specific to the surrounding program, can't always be there...
 void LinkSemiExternalFunc(const string &name, void *pointer)
 {
-	PreCommand c;
+	/*PreCommand c;
 	c.name = name;
 	c.is_class_function = false;
 	c.func = pointer;
 	c.return_type = TypeUnknown; // unusable until defined via "extern" in the script!
 	c.is_semi_external = true;
-	PreCommands.add(c);
+	PreCommands.add(c);*/
 }
 
 void _LinkSemiExternalClassFunc(const string &name, void (DummyClass::*function)())
@@ -1124,16 +1119,16 @@ void End()
 	msg_db_f("ScriptEnd", 1);
 	DeleteAllScripts(true, true);
 
-	ResetSemiExternalData();
+	//ResetSemiExternalData();
 
 	PreOperators.clear();
 
-	for (int i=0;i<PreTypes.num;i++)
+	/*for (int i=0;i<PreTypes.num;i++)
 		delete(PreTypes[i]);
 	PreTypes.clear();
 
 	PreConstants.clear();
-	PreExternalVars.clear();
+	PreExternalVars.clear();*/
 }
 
 };

@@ -5,6 +5,8 @@
 
 namespace Script{
 
+extern Script *GlobalDummyScript;
+
 //#define ScriptDebug
 
 
@@ -142,10 +144,11 @@ SyntaxTree::SyntaxTree(Script *_script)
 	cur_func = NULL;
 	script = _script;
 
-	// "include" default stuff
 	NumOwnTypes = 0;
-	for (int i=0;i<PreTypes.num;i++)
-		Types.add(PreTypes[i]);
+
+	// "include" default stuff
+	if (GlobalDummyScript)
+		Includes.add(GlobalDummyScript);
 }
 
 
@@ -230,7 +233,6 @@ string Kind2Str(int kind)
 	if (kind == KindVarLocal)			return "local variable";
 	if (kind == KindVarGlobal)			return "global variable";
 	if (kind == KindVarFunction)		return "function as variable";
-	if (kind == KindVarExternal)		return "external program-variable";
 	if (kind == KindConstant)			return "constant";
 	if (kind == KindRefToConst)			return "reference to const";
 	if (kind == KindFunction)			return "function";
@@ -267,7 +269,6 @@ string LinkNr2Str(SyntaxTree *s,int kind,int nr)
 	if (kind == KindVarLocal)			return i2s(nr);//s->cur_func->var[nr].name;
 	if (kind == KindVarGlobal)			return s->RootOfAllEvil.var[nr].name;
 	if (kind == KindVarFunction)		return s->Functions[nr]->name;
-	if (kind == KindVarExternal)		return PreExternalVars[nr].name;
 	if (kind == KindConstant)			return i2s(nr);//s->Constants[nr].type->var2str(s->Constants[nr].data);
 	if (kind == KindFunction)			return s->Functions[nr]->name;
 	if (kind == KindCompilerFunction)	return PreCommands[nr].name;
@@ -431,16 +432,6 @@ int SyntaxTree::WhichPrimitiveOperator(const string &name)
 	return -1;
 }
 
-int SyntaxTree::WhichExternalVariable(const string &name)
-{
-	// wrong order -> "extern" varbiables are dominant...
-	for (int i=PreExternalVars.num-1;i>=0;i--)
-		if (name == PreExternalVars[i].name)
-			return i;
-
-	return -1;
-}
-
 int SyntaxTree::WhichType(const string &name)
 {
 	for (int i=0;i<Types.num;i++)
@@ -474,11 +465,10 @@ void exlink_make_var_local(SyntaxTree *ps, Type *t, int var_no)
 	ps->GetExistenceLink.instance = NULL;
 }
 
-bool SyntaxTree::GetExistence(const string &name, Function *f)
+bool SyntaxTree::GetExistence(const string &name, Function *func)
 {
 	msg_db_f("GetExistence", 3);
 	MultipleFunctionList.clear();
-	Function *lf=f;
 	GetExistenceLink.type = TypeUnknown;
 	GetExistenceLink.num_params = 0;
 	GetExistenceLink.script = script;
@@ -487,8 +477,8 @@ bool SyntaxTree::GetExistence(const string &name, Function *f)
 	msg_write("get ex " + name + " : " + Filename);
 
 	// first test local variables
-	if (lf){
-		foreachi(LocalVariable &v, f->var, i){
+	if (func){
+		foreachi(LocalVariable &v, func->var, i){
 			if (v.name == name){
 				exlink_make_var_local(this, v.type, i);
 				return true;
@@ -497,21 +487,13 @@ bool SyntaxTree::GetExistence(const string &name, Function *f)
 	}
 
 	// then global variables (=local variables in "RootOfAllEvil")
-	lf = &RootOfAllEvil;
-	foreachi(LocalVariable &v, lf->var, i)
+	foreachi(LocalVariable &v, RootOfAllEvil.var, i)
 		if (v.name == name){
 			GetExistenceLink.type = v.type;
 			GetExistenceLink.link_nr = i;
 			GetExistenceLink.kind = KindVarGlobal;
 			return true;
 		}
-
-	// at last the external variables
-	int w = WhichExternalVariable(name);
-	if (w >= 0){
-		SetExternalVariable(w, &GetExistenceLink);
-		return true;
-	}
 
 	// then the (self-coded) functions
 	foreachi(Function *f, Functions, i)
@@ -524,7 +506,7 @@ bool SyntaxTree::GetExistence(const string &name, Function *f)
 		}
 
 	// then the compiler functions
-	w = WhichCompilerFunction(name);
+	int w = WhichCompilerFunction(name);
 	if (w >= 0){
 		GetExistenceLink.kind = KindCompilerFunction;
 		GetExistenceLink.link_nr = w;
@@ -570,9 +552,8 @@ bool SyntaxTree::GetExistence(const string &name, Function *f)
 void SyntaxTree::CommandSetCompilerFunction(int CF, Command *Com)
 {
 	msg_db_f("CommandSetCompilerFunction", 4);
-	if (FlagCompileOS)
-		if (!PreCommands[CF].is_special)
-			DoError(format("external function call (%s) not allowed with #os", PreCommands[CF].name.c_str()));
+	//if (FlagCompileOS)
+	//	DoError(format("external function call (%s) not allowed with #os", PreCommands[CF].name.c_str()));
 	
 // a function the compiler knows
 	Com->kind = KindCompilerFunction;
@@ -586,14 +567,6 @@ void SyntaxTree::CommandSetCompilerFunction(int CF, Command *Com)
 	Com->type = PreCommands[CF].return_type;
 }
 
-void SyntaxTree::SetExternalVariable(int gv, Command *c)
-{
-	c->num_params = 0;
-	c->kind = KindVarExternal;
-	c->link_nr = gv;
-	c->type = PreExternalVars[gv].type;
-}
-
 // expression naming a type
 Type *SyntaxTree::GetType(const string &name,bool force)
 {
@@ -601,6 +574,10 @@ Type *SyntaxTree::GetType(const string &name,bool force)
 	for (int i=0;i<Types.num;i++)
 		if (name == Types[i]->name)
 			type = Types[i];
+	foreach(Script *inc, Includes)
+		for (int i=0;i<inc->syntax->Types.num;i++)
+			if (name == inc->syntax->Types[i]->name)
+				type = inc->syntax->Types[i];
 	if ((force) && (!type))
 		DoError("unknown type");
 	if (type)

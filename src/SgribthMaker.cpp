@@ -29,6 +29,10 @@ int timer, CompileTimer;
 #define COLORMODE		1
 
 
+namespace Script{
+extern Script *GlobalDummyScript;
+};
+
 
 //------------------------------------------------------------------------------
 // Undo/Redo
@@ -153,22 +157,22 @@ inline void MarkWord(int line, int start, int end, int type, char *p0, char *p)
 				type = InWordSpecial;
 			}else{
 				bool found = false;
-				for (int i=0;i<Script::PreTypes.num;i++)
-					if (temp == Script::PreTypes[i]->name){
+				for (int i=0;i<Script::GlobalDummyScript->syntax->Types.num;i++)
+					if (temp == Script::GlobalDummyScript->syntax->Types[i]->name){
 						type = InWordType;
 						found = true;
 						break;
 					}
 				if (!found)
-				for (int i=0;i<Script::PreExternalVars.num;i++)
-					if (temp == Script::PreExternalVars[i].name){
+				for (int i=0;i<Script::GlobalDummyScript->syntax->RootOfAllEvil.var.num;i++)
+					if (temp == Script::GlobalDummyScript->syntax->RootOfAllEvil.var[i].name){
 						type = InWordGameVariable;
 						found = true;
 						break;
 					}
 				if (!found)
-				for (int i=0;i<Script::PreConstants.num;i++)
-					if (temp == Script::PreConstants[i].name){
+				for (int i=0;i<Script::GlobalDummyScript->syntax->Constants.num;i++)
+					if (temp == Script::GlobalDummyScript->syntax->Constants[i].name){
 						type = InWordGameVariable;
 						found = true;
 						break;
