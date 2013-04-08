@@ -72,6 +72,13 @@ void deref_command(SyntaxTree *ps, Command *c)
 	command_make_deref(ps, c, t);
 }
 
+Command *deref_command2(SyntaxTree *ps, Command *sub)
+{
+	Command *c = ps->AddCommand();
+	command_make_deref(ps, c, sub);
+	return c;
+}
+
 Command *shift_command(SyntaxTree *ps, Command *sub, bool deref, int shift, Type *type)
 {
 	Command *c= ps->AddCommand();
@@ -279,7 +286,7 @@ string Kind2Str(int kind)
 
 string LinkNr2Str(SyntaxTree *s,int kind,int nr)
 {
-	if (kind == KindVarLocal)			return s->cur_func->var[nr].name;
+	if (kind == KindVarLocal)			return i2s(nr);//s->cur_func->var[nr].name;
 	if (kind == KindVarGlobal)			return s->RootOfAllEvil.var[nr].name;
 	if (kind == KindVarFunction)		return s->Functions[nr]->name;
 	if (kind == KindVarExternal)		return PreExternalVars[nr].name;
@@ -2279,19 +2286,19 @@ void SyntaxTree::ParseFunction(Type *class_type, bool as_extern)
 	msg_db_f("ParseFunction", 4);
 	
 // return type
-	Type *type = GetType(Exp.cur, true);
+	Type *return_type = GetType(Exp.cur, true);
 
 	// pointer?
 	if (Exp.cur == "*"){
 		Exp.next();
-		type = GetPointerType(type);
+		return_type = GetPointerType(return_type);
 	}
 
 	so(Exp.cur);
-	Function *f = AddFunction(Exp.cur, type);
+	Function *f = AddFunction(Exp.cur, return_type);
 	cur_func = f;
 	next_extern = false;
-	
+
 	Exp.next();
 	Exp.next(); // '('
 
@@ -2324,6 +2331,10 @@ void SyntaxTree::ParseFunction(Type *class_type, bool as_extern)
 	if (!Exp.end_of_line())
 		DoError("newline expected after parameter list");
 
+
+	// return by memory
+	if (return_type->UsesReturnByMemory())
+		AddVar("-return-", GetPointerType(return_type), f);
 
 	// class function
 	f->_class = class_type;
@@ -2505,6 +2516,44 @@ void easyfy(SyntaxTree *ps, Command *c, int l)
 	//msg_write("ok");
 }
 
+void convert_return_by_memory(SyntaxTree *ps, Block *b, Function *f)
+{
+	msg_db_f("convert_return_by_memory", 0);
+	ps->script->cur_func = f;
+
+	foreachib(Command *c, b->command, i){
+		// recursion...
+		if (c->kind == KindBlock)
+			convert_return_by_memory(ps, ps->Blocks[c->link_nr], f);
+		if ((c->kind != KindCompilerFunction) || (c->link_nr != CommandReturn))
+			continue;
+		msg_write("convert!!!");
+
+		// convert into   *-return- = param
+		Command *p_ret = NULL;
+		foreachi(LocalVariable &v, f->var, i)
+			if (v.name == "-return-"){
+				p_ret = ps->AddCommand();
+				p_ret->type = v.type;
+				p_ret->link_nr = i;
+				p_ret->kind = KindVarLocal;
+			}
+		if (!p_ret)
+			ps->DoError("-return- not found...");
+		Command *ret = deref_command2(ps, p_ret);
+		Command *op = ps->LinkOperator(OperatorAssign, ret, c->param[0]);
+		if (!op)
+			ps->DoError("no = operator for return from function found: " + f->name);
+		ps->ShowCommand(op);
+		b->command.insert(op, i);
+
+		c->num_params = 0;
+
+		_foreach_it_.update();
+		msg_write("aaaaa3");
+	}
+}
+
 // convert "source code"...
 //    call by ref params:  array, super array, class
 //    return by ref:       array
@@ -2527,15 +2576,23 @@ void SyntaxTree::ConvertCallByReference()
 			}
 
 		// return: array as reference
+#if 0
 		if ((f->return_type->is_array) /*|| (f->Type->IsSuperArray)*/){
 			f->return_type = GetPointerType(f->return_type);
 			/*for (int k=0;k<f->Block->Command.num;k++)
 				conv_return(this, f->Block->Command[k]);*/
 			// no need... return gets converted automatically (all calls...)
 		}
+#endif
 	}
 
 	msg_db_m("a", 3);
+
+
+	// convert return...
+	foreach(Function *f, Functions)
+		if (f->return_type->UsesReturnByMemory())
+			convert_return_by_memory(this, f->block, f);
 
 	// convert function calls
 	foreach(Command *ccc, Commands){
@@ -2704,8 +2761,8 @@ void SyntaxTree::BreakDownComplicatedCommands()
 			c_address->type = GetPointerType(el_type);//TypePointer;
 			// c = * address
 			command_make_deref(this, c, c_address);
-			c->type = el_type;			
-		}			
+			c->type = el_type;
+		}
 	}
 }
 
@@ -2715,9 +2772,18 @@ void SyntaxTree::MapLocalVariablesToStack()
 	foreach(Function *f, Functions){
 		f->_param_size = 2 * PointerSize; // space for return value and eBP
 		if (Asm::InstructionSet.set == Asm::InstructionSetX86){
-			if (f->return_type->size > 4)
-				f->_param_size += 4;
 			f->_var_size = 0;
+
+			// map "-return-" to the VERY first parameter
+			if (f->return_type->UsesReturnByMemory()){
+				foreachi(LocalVariable &v, f->var, i)
+					if (v.name == "-return-"){
+						//v._offset = 8;
+						int s = mem_align(v.type->size);
+						v._offset = f->_param_size;
+						f->_param_size += s;
+					}
+			}
 
 			// map "self" to the first parameter
 			if (f->_class){
@@ -2731,6 +2797,8 @@ void SyntaxTree::MapLocalVariablesToStack()
 
 			foreachi(LocalVariable &v, f->var, i){
 				if ((f->_class) && (v.name == "self"))
+					continue;
+				if (v.name == "-return-")
 					continue;
 				int s = mem_align(v.type->size);
 				if (i < f->num_params){

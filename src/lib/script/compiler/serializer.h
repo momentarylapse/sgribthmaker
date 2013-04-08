@@ -120,7 +120,10 @@ struct Serializer
 	int add_marker_after_command(int level, int index);
 	void add_jump_after_command(int level, int index, int marker);
 
-	void add_cmd_constructor(SerialCommandParam &param, bool is_temp);
+
+	Array<SerialCommandParam> InsertedConstructorFunc;
+	Array<SerialCommandParam> InsertedConstructorTemp;
+	void add_cmd_constructor(SerialCommandParam &param, int modus);
 	void add_cmd_destructor(SerialCommandParam &param);
 
 	void DoMapping();

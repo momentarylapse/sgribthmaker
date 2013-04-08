@@ -53,7 +53,7 @@ void Serializer::add_temp(Type *t, SerialCommandParam &param)
 		param.shift = 0;
 
 		//if (t->element.num > 0)
-			add_cmd_constructor(param, true);
+			add_cmd_constructor(param, KindVarTemp);
 	}else{
 		param = p_none;
 	}
@@ -1211,7 +1211,10 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 					break;
 				case CommandReturn:
 					if (com->num_params > 0){
-						if (cur_func->return_type->size > 4){ // we already got a return address in [ebp+0x08] (> 4 byte)
+						if (cur_func->return_type->UsesReturnByMemory()){ // we already got a return address in [ebp+0x08] (> 4 byte)
+							FillInDestructors(false);
+							// internally handled...
+#if 0
 							int s = mem_align(cur_func->return_type->size);
 
 							// slow
@@ -1239,7 +1242,9 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 							for (int j=0;j<s/4;j++)
 								add_cmd(Asm::inst_mov, param_shift(p_deref_edx, j * 4, TypeInt), param_shift(param[0], j * 4, TypeInt));
 							add_reg_channel(Asm::RegEdx, c_0, cmd.num - 1);
+#endif
 						}else{ // store return directly in eax / fpu stack (4 byte)
+							FillInDestructors(false);
 							if (cur_func->return_type == TypeFloat)
 								add_cmd(Asm::inst_fld, param[0]);
 							else if (cur_func->return_type->size == 1)
@@ -1247,10 +1252,12 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 							else
 								add_cmd(Asm::inst_mov, param_reg(cur_func->return_type, Asm::RegEax), param[0]);
 						}
+					}else{
+						FillInDestructors(false);
 					}
 					add_cmd(Asm::inst_leave);
-					if (cur_func->return_type->size > 4)
-						add_cmd(Asm::inst_ret, param_const(TypeReg16, (void*)4));
+					if (cur_func->return_type->UsesReturnByMemory())
+						add_cmd(Asm::inst_ret);//, param_const(TypeReg16, (void*)4));
 					else
 						add_cmd(Asm::inst_ret);
 					break;
@@ -1411,29 +1418,36 @@ void Serializer::SerializeBlock(Block *block, int level)
 	}
 }
 
-Array<SerialCommandParam> InsertedConstructorFunc;
-Array<SerialCommandParam> InsertedConstructorTemp;
-
-void Serializer::add_cmd_constructor(SerialCommandParam &param, bool is_temp)
+// modus: KindVarLocal/KindVarTemp
+//    -1: -return-   -> don't reference
+void Serializer::add_cmd_constructor(SerialCommandParam &param, int modus)
 {
-	foreach(ClassFunction &f, param.type->function){
+	Type *class_type = param.type;
+	if (modus < 0)
+		class_type = class_type->parent;
+	foreach(ClassFunction &f, class_type->function){
 		if (f.name == "__init__"){ // TODO test signature "void __init__()"
-			SerialCommandParam inst;
-			AddReference(param, TypePointer, inst);
-			AddFuncInstance(inst);
-			void *fp;
+			if (modus < 0){
+				msg_error("constructor pointer");
+				AddFuncInstance(param);
+			}else{
+				msg_error("constructor no pointer -> ref");
+				SerialCommandParam inst;
+				AddReference(param, TypePointer, inst);
+				AddFuncInstance(inst);
+			}
+			void *fp = NULL;
 			if (f.kind == KindCompilerFunction)
 				fp = PreCommands[f.nr].func;
-			else if (f.kind == KindFunction){
-				fp = (void*)param.type->owner->script->func[f.nr];
-				if (!fp)
-					DoErrorLink(param.type->name + ".__init__() unlinkable compiler function!");
-			}
+			else if (f.kind == KindFunction)
+				fp = (void*)class_type->owner->script->func[f.nr];
+			if (!fp)
+				DoErrorLink(class_type->name + ".__init__() unlinkable function!");
 
 			AddFunctionCall(fp);
-			if (is_temp)
+			if (modus == KindVarTemp)
 				InsertedConstructorTemp.add(param);
-			else
+			else if (modus == KindVarLocal)
 				InsertedConstructorFunc.add(param);
 			return;
 		}
@@ -1462,11 +1476,10 @@ void Serializer::add_cmd_destructor(SerialCommandParam &param)
 void Serializer::FillInConstructorsFunc()
 {
 	msg_db_f("FillInConstructorsFunc", 4);
-	for (int i=0;i<cur_func->var.num;i++)
-		/*if (cur_func->Var[i].Type->Element.num > 0)*/{
-			SerialCommandParam param = param_local(cur_func->var[i].type, cur_func->var[i]._offset);
-			add_cmd_constructor(param, false);
-		}
+	foreach(LocalVariable &v, cur_func->var){
+		SerialCommandParam param = param_local(v.type, v._offset);
+		add_cmd_constructor(param, (v.name == "-return-") ? -1 : KindVarLocal);
+	}
 }
 
 void Serializer::FillInDestructors(bool from_temp)
@@ -1479,7 +1492,6 @@ void Serializer::FillInDestructors(bool from_temp)
 	}else{
 		for (int i=0;i<InsertedConstructorFunc.num;i++)
 			add_cmd_destructor(InsertedConstructorFunc[i]);
-		InsertedConstructorFunc.clear();
 	}
 }
 
@@ -2403,9 +2415,6 @@ void Serializer::SerializeFunction(Function *f)
 	StackOffset = f->_var_size;
 	StackMaxSize = f->_var_size;
 	TempVarRangesDefined = false;
-
-	InsertedConstructorTemp.clear();
-	InsertedConstructorFunc.clear();
 	
 #ifdef allow_registers
 //	MapRegRoot.add(0); // eax

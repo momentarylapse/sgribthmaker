@@ -45,6 +45,7 @@ struct Type{
 
 	bool force_call_by_value;
 	bool UsesCallByReference();
+	bool UsesReturnByMemory();
 	int GetFunc(const string &name);
 	string var2str(void *p);
 };

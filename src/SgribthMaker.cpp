@@ -898,6 +898,13 @@ void CompileAndRun(bool verbose)
 				void_func *f = (void_func*)compile_script->MatchFunction("main", "void", 0);
 				if (f)
 					f();
+				typedef string string_func();
+				string_func *sf = (string_func*)compile_script->MatchFunction("getstring", "string", 0);
+				if (sf){
+					string t = sf();
+					msg_write(string((char*)&t, sizeof(t)).hex());
+					msg_write(t);
+				}
 				compile_script->ShowVars(false);
 			}
 			dt_execute = HuiGetTime(CompileTimer);
@@ -1188,19 +1195,32 @@ struct TT
 {
 	int ii[700];
 	int a, b, c, d;
-	TT f(int x)
+	string s;
+	TT(int x){a=x;}
+	~TT(){a=0;};
+	void operator=(const TT &o)
+	{	s = o.s; a = o.a;	}
+	/*TT f(int x)
 	{msg_write("a");}
-	void g(){msg_write("b");}
+	void g(){msg_write("b");}*/
 };
 
-TT tt;
+TT sf()
+{
+	//TT r = TT(7);
+	return TT(7);
+}
+
+string ssss;
 
 void _ff()
 {
+	TT x = sf();
+	//ssss = sf();
 	//TT x = tt.f(7);
 //	TT *x;
 //	x->b = 7;
-	tt.g();
+	//tt.g();
 }
 
 int hui_main(Array<string> arg)
@@ -1371,6 +1391,7 @@ int hui_main(Array<string> arg)
 
 	Script::Init();
 
+	msg_write(Asm::Disassemble((void*)sf, -1));
 	msg_write(Asm::Disassemble((void*)_ff, -1));
 
 	New();

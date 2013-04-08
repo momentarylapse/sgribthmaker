@@ -14,6 +14,9 @@ Type *ScriptGetPreType(const string &name)
 bool Type::UsesCallByReference()
 {	return ((!force_call_by_value) && (!is_pointer)) || (is_array);	}
 
+bool Type::UsesReturnByMemory()
+{	return ((!force_call_by_value) && (!is_pointer)) || (is_array);	}
+
 int Type::GetFunc(const string &name)
 {
 	foreachi(ClassFunction &f, function, i)
