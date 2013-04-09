@@ -119,15 +119,13 @@ Type *SyntaxTree::GetConstantType()
 			}else if (Exp.cur[c] == '.'){
 				type = TypeFloat;
 			}else{
-				//if ((type != TypeFloat) || (Exp.cur[c] != 'f')) // f in floats erlauben
-					if ((c != 0) || (Exp.cur[c] != '-')) // Vorzeichen erlauben
-						return TypeUnknown;
+				if ((c != 0) || (Exp.cur[c] != '-')) // allow sign
+					return TypeUnknown;
 			}
 		}
 
 	// super array [...]
 	if (Exp.cur == "["){
-		//msg_error("super array constant");
 		DoError("super array constant");
 	}
 	return type;

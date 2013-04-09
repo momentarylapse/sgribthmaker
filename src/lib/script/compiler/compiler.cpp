@@ -237,12 +237,12 @@ void Script::CompileTaskEntryPoint()
 	// intro
 	list->add_easy(Asm::inst_push, Asm::PKRegister, (void*)Asm::RegEbp); // within the actual program
 	list->add_easy(Asm::inst_mov, Asm::PKRegister, (void*)Asm::RegEbp, Asm::PKRegister, (void*)Asm::RegEsp);
-	list->add_easy(Asm::inst_mov, Asm::PKRegister, (void*)Asm::RegEsp, Asm::PKDerefConstant, (void*)&Stack[StackSize]); // start of the script stack
+	list->add_easy(Asm::inst_mov, Asm::PKRegister, (void*)Asm::RegEsp, Asm::PKDerefConstant32, (void*)&Stack[StackSize]); // start of the script stack
 	list->add_easy(Asm::inst_push, Asm::PKRegister, (void*)Asm::RegEbp); // address of the old stack
 	AddEspAdd(list, -12); // space for wait() task data
 	list->add_easy(Asm::inst_mov, Asm::PKRegister, (void*)Asm::RegEbp, Asm::PKRegister, (void*)Asm::RegEsp);
 	list->add_easy(Asm::inst_mov, Asm::PKRegister, (void*)Asm::RegEax, Asm::PKConstant32, (void*)WaitingModeNone); // "reset"
-	list->add_easy(Asm::inst_mov, Asm::PKDerefConstant, (void*)&WaitingMode, Asm::PKRegister, (void*)Asm::RegEax);
+	list->add_easy(Asm::inst_mov, Asm::PKDerefConstant32, (void*)&WaitingMode, Asm::PKRegister, (void*)Asm::RegEax);
 
 	// call main()
 	list->add_easy(Asm::inst_call, Asm::PKConstant32, _main_);
@@ -260,8 +260,8 @@ void Script::CompileTaskEntryPoint()
 	// Intro
 	list->add_easy(Asm::inst_push, Asm::PKRegister, (void*)Asm::RegEbp); // within the external program
 	list->add_easy(Asm::inst_mov, Asm::PKRegister, (void*)Asm::RegEbp, Asm::PKRegister, (void*)Asm::RegEsp);
-	list->add_easy(Asm::inst_mov, Asm::PKDerefConstant, &Stack[StackSize - 4], Asm::PKRegister, (void*)Asm::RegEbp); // save the external ebp
-	list->add_easy(Asm::inst_mov, Asm::PKRegister, (void*)Asm::RegEsp, Asm::PKDerefConstant, &Stack[StackSize - 16]); // to the eIP of the script
+	list->add_easy(Asm::inst_mov, Asm::PKDerefConstant32, &Stack[StackSize - 4], Asm::PKRegister, (void*)Asm::RegEbp); // save the external ebp
+	list->add_easy(Asm::inst_mov, Asm::PKRegister, (void*)Asm::RegEsp, Asm::PKDerefConstant32, &Stack[StackSize - 16]); // to the eIP of the script
 	list->add_easy(Asm::inst_pop, Asm::PKRegister, (void*)Asm::RegEax);
 	list->add_easy(Asm::inst_add, Asm::PKRegister, (void*)Asm::RegEax, Asm::PKConstant32, (void*)AfterWaitOCSize);
 	list->add_easy(Asm::inst_jmp, Asm::PKRegister, (void*)Asm::RegEax);

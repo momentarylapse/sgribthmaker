@@ -43,14 +43,20 @@ enum{
 	PKInvalid,
 	PKNone,
 	PKRegister,			// eAX
-	PKDerefRegister,	// [eAX]
-	PKLocal,			// [ebp + 0x0000]
+	PKDerefRegister8,	// byte  [eAX]
+	PKDerefRegister32,	// dword [eAX]
+	PKDerefRegister64,	// qword [eAX]
+	PKLocal8,			// byte  [ebp + 0x0000]
+	PKLocal32,			// dword [ebp + 0x0000]
+	PKLocal64,			// qword [ebp + 0x0000]
 	PKEdxRel,			// [edx + 0x0000]
 	PKConstant32,		// 0x00000000
 	PKConstant16,		// 0x0000
 	PKConstant8,		// 0x00
 	PKConstantDouble,   // 0x00:0x0000   ...
-	PKDerefConstant,	// [0x0000]
+	PKDerefConstant8,	// byte  [0x0000]
+	PKDerefConstant32,	// dword [0x0000]
+	PKDerefConstant64,	// qword [0x0000]
 	PKLabel				// _label
 };
 
@@ -205,6 +211,7 @@ struct GlobalVar
 {
 	string Name;
 	void *Pos; // points into the memory of a script
+	int Size;
 };
 
 struct Label

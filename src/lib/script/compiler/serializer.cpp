@@ -1118,9 +1118,6 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 	// class function -> compile instance
 	bool is_class_function = false;
 	if (com->kind == KindFunction){
-		msg_error("func");
-		msg_write(com->link_nr);
-		msg_write(com->script->syntax->Functions.num);
 		if (com->script->syntax->Functions[com->link_nr]->_class)
 			is_class_function = true;
 	}
@@ -2506,7 +2503,6 @@ inline void get_param(int inst, SerialCommandParam &p, int &param_type, void *&p
 		param_type = Asm::PKNone;
 		param = NULL;
 	}else if (p.kind == KindMarker){
-		//msg_error("marker");
 		param_type = Asm::PKLabel;
 		param = (void*)(long)list->add_label("_kaba_" + i2s((int)(long)p.p), false);
 	}else if (p.kind == KindRegister){
@@ -2515,7 +2511,9 @@ inline void get_param(int inst, SerialCommandParam &p, int &param_type, void *&p
 		if (p.shift > 0)
 			s->DoErrorInternal("get_param: reg + shift");
 	}else if (p.kind == KindDerefRegister){
-		param_type = Asm::PKDerefRegister;
+		if (p.type->size == 1)		param_type = Asm::PKDerefRegister8;
+		if (p.type->size == 4)		param_type = Asm::PKDerefRegister32;
+		if (p.type->size == 8)		param_type = Asm::PKDerefRegister64;
 		param = p.p;
 		if (p.shift > 0){
 			if ((long)p.p == Asm::RegEdx){
@@ -2525,10 +2523,14 @@ inline void get_param(int inst, SerialCommandParam &p, int &param_type, void *&p
 				s->DoErrorInternal("get_param: [reg] + shift");
 		}
 	}else if (p.kind == KindVarGlobal){
-		param_type = Asm::PKDerefConstant;
+		if (p.type->size == 1)		param_type = Asm::PKDerefConstant8;
+		if (p.type->size == 4)		param_type = Asm::PKDerefConstant32;
+		if (p.type->size == 8)		param_type = Asm::PKDerefConstant64;
 		param = p.p + p.shift;
 	}else if (p.kind == KindVarLocal){
-		param_type = Asm::PKLocal;
+		if (p.type->size == 1)		param_type = Asm::PKLocal8;
+		if (p.type->size == 4)		param_type = Asm::PKLocal32;
+		if (p.type->size == 8)		param_type = Asm::PKLocal64;
 		param = p.p + p.shift;
 	}else if (p.kind == KindRefToConst){
 		bool imm_allowed = Asm::GetInstructionAllowConst(inst);
@@ -2536,10 +2538,11 @@ inline void get_param(int inst, SerialCommandParam &p, int &param_type, void *&p
 			param_type = Asm::PKConstant32;
 			param = (char*)(long)*(int*)(p.p + p.shift);
 		}else if ((p.type->size <= 4) && (imm_allowed)){
-			param_type = (p.type->size == 1) ? Asm::PKConstant8 : Asm::PKConstant32;
+			if (p.type->size == 1)		param_type = Asm::PKConstant8;
+			else						param_type = Asm::PKConstant32;
 			param = (char*)(long)*(int*)(p.p + p.shift);
 		}else{
-			param_type = Asm::PKDerefConstant;
+			param_type = Asm::PKDerefConstant32;
 			param = p.p + p.shift;
 		}
 	}else if (p.kind == KindConstant){
@@ -2567,7 +2570,6 @@ void assemble_cmd(Asm::InstructionWithParamsList *list, SerialCommand &c, Script
 	// assemble instruction
 	//list->current_line = c.
 	list->add_easy(c.inst, param1_type, param1, param2_type, param2);
-	//printf("%s", Opcode2Asm(oc, ocs));
 }
 
 void AddAsmBlock(Asm::InstructionWithParamsList *list, Script *s)

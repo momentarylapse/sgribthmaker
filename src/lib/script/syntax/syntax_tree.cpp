@@ -320,6 +320,7 @@ void SyntaxTree::CreateAsmMetaInfo()
 	for (int i=0;i<RootOfAllEvil.var.num;i++){
 		Asm::GlobalVar v;
 		v.Name = RootOfAllEvil.var[i].name;
+		v.Size = RootOfAllEvil.var[i].type->size;
 		v.Pos = script->g_var[i];
 		AsmMetaInfo->global_var.add(v);
 	}
