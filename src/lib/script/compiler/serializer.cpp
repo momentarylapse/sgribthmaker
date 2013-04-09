@@ -366,7 +366,7 @@ void AddFuncInstance(SerialCommandParam &inst)
 void AddReference(Serializer *d, SerialCommandParam &param, Type *type, SerialCommandParam &ret);
 
 
-void Serializer::add_function_call_x86(void *func, int func_no)
+void Serializer::add_function_call_x86(Script *script, int func_no)
 {
 	msg_db_f("AddFunctionCallX86", 4);
 	call_used = true;
@@ -415,7 +415,9 @@ void Serializer::add_function_call_x86(void *func, int func_no)
 		add_cmd(Asm::inst_push, ret_ref); // nachtraegliche eSP-Korrektur macht die Funktion
 #endif
 
-	
+	void *func = (void*)script->func[func_no];
+	if (!func)
+		DoErrorLink("could not link function " + script->syntax->Functions[func_no]->name);
 	add_cmd(Asm::inst_call, param_const(TypePointer, func)); // the actual call
 	// function pointer will be shifted later...
 
@@ -438,7 +440,7 @@ void Serializer::add_function_call_x86(void *func, int func_no)
 	}
 }
 
-void Serializer::add_function_call_amd64(void *func, int func_no)
+void Serializer::add_function_call_amd64(Script *script, int func_no)
 {
 	msg_db_f("AddFunctionCallAMD64", 4);
 	call_used = true;
@@ -490,7 +492,10 @@ void Serializer::add_function_call_amd64(void *func, int func_no)
 			n ++;
 		}
 	}
-	
+
+	void *func = (void*)script->func[func_no];
+	if (!func)
+		DoErrorLink("could not link function " + script->syntax->Functions[func_no]->name);
 	add_cmd(Asm::inst_call, param_const(TypePointer, func)); // the actual call
 	// function pointer will be shifted later...
 
@@ -513,12 +518,12 @@ void Serializer::add_function_call_amd64(void *func, int func_no)
 	}
 }
 
-void Serializer::AddFunctionCall(void *func, int func_no)
+void Serializer::AddFunctionCall(Script *script, int func_no)
 {
 	if (Asm::InstructionSet.set == Asm::InstructionSetAMD64)
-		add_function_call_amd64(func, func_no);
+		add_function_call_amd64(script, func_no);
 	else if (Asm::InstructionSet.set == Asm::InstructionSetX86)
-		add_function_call_x86(func, func_no);
+		add_function_call_x86(script, func_no);
 
 	// clean up for next call
 	CompilerFunctionParam.clear();
@@ -1130,10 +1135,6 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 		SerializeOperator(com, param, ret);
 		
 	}else if (com->kind == KindFunction){
-		string name;
-		void *fp = (void*)com->script->func[com->link_nr];
-		if (!fp)
-			DoErrorLink("could not link function: " + com->script->syntax->Functions[com->link_nr]->name);
 
 		for (int p=0;p<com->num_params;p++)
 			AddFuncParam(param[p]);
@@ -1143,7 +1144,7 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 		if (is_class_function)
 			AddFuncInstance(instance);
 			
-		AddFunctionCall(fp);
+		AddFunctionCall(com->script, com->link_nr);
 	}else if (com->kind == KindCompilerFunction){
 			switch(com->link_nr){
 				/*case CommandSine:
@@ -1235,7 +1236,7 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 					}
 					add_cmd(Asm::inst_leave);
 					if (cur_func->return_type->UsesReturnByMemory())
-						add_cmd(Asm::inst_ret);//, param_const(TypeReg16, (void*)4));
+						add_cmd(Asm::inst_ret, param_const(TypeReg16, (void*)4));
 					else
 						add_cmd(Asm::inst_ret);
 					break;
@@ -1393,28 +1394,26 @@ void Serializer::SerializeBlock(Block *block, int level)
 }
 
 // modus: KindVarLocal/KindVarTemp
-//    -1: -return-   -> don't reference
+//    -1: -return-   -> don't destruct
+//    -2: return from func   -> only destruct
 void Serializer::add_cmd_constructor(SerialCommandParam &param, int modus)
 {
 	Type *class_type = param.type;
-	if (modus < 0)
+	if (modus == -1)
 		class_type = class_type->parent;
 	ClassFunction *f = class_type->GetConstructor();
 	if (!f)
 		return;
-	if (modus < 0){
+	if (modus == -1){
 		AddFuncInstance(param);
 	}else{
 		SerialCommandParam inst;
 		AddReference(param, TypePointer, inst);
 		AddFuncInstance(inst);
 	}
-	void *fp = (void*)class_type->owner->script->func[f->nr];
-	if (!fp)
-		DoErrorLink(class_type->name + ".__init__() unlinkable!");
 
-	AddFunctionCall(fp);
-	if (modus == KindVarTemp)
+	AddFunctionCall(class_type->owner->script, f->nr);
+	if ((modus == KindVarTemp) || (modus == -2))
 		InsertedConstructorTemp.add(param);
 	else if (modus == KindVarLocal)
 		InsertedConstructorFunc.add(param);
@@ -1428,10 +1427,7 @@ void Serializer::add_cmd_destructor(SerialCommandParam &param)
 	SerialCommandParam inst;
 	AddReference(param, TypePointer, inst);
 	AddFuncInstance(inst);
-	void *fp = (void*)param.type->owner->script->func[f->nr];
-	if (!fp)
-		DoErrorLink(param.type->name + ".__delete__() unlinkable!");
-	AddFunctionCall(fp);
+	AddFunctionCall(param.type->owner->script, f->nr);
 }
 
 void Serializer::FillInConstructorsFunc()
@@ -2407,7 +2403,7 @@ void Serializer::SerializeFunction(Function *f)
 		FillInDestructors(false);
 		add_cmd(Asm::inst_leave);
 		if (f->return_type->UsesReturnByMemory())
-			add_cmd(Asm::inst_ret);//, param_const(TypeReg16, (void*)4));
+			add_cmd(Asm::inst_ret, param_const(TypeReg16, (void*)4));
 		else
 			add_cmd(Asm::inst_ret);
 	}

@@ -150,9 +150,9 @@ struct Serializer
 	void SimplifyMovs();
 	void RemoveUnusedTempVars();
 
-	void AddFunctionCall(void *func, int func_no = -1);
-	void add_function_call_x86(void *func, int func_no = -1);
-	void add_function_call_amd64(void *func, int func_no = -1);
+	void AddFunctionCall(Script *script, int func_no);
+	void add_function_call_x86(Script *script, int func_no);
+	void add_function_call_amd64(Script *script, int func_no);
 	void AddReference(SerialCommandParam &param, Type *type, SerialCommandParam &ret);
 	void AddDereference(SerialCommandParam &param, SerialCommandParam &ret, Type *force_type = NULL);
 
