@@ -1375,6 +1375,7 @@ void SyntaxTree::ParseClassFunction(Type *t, bool as_extern)
 		cf.name = f->name.substr(t->name.num + 1, -1);
 		cf.nr = Functions.num - 1;
 		cf.return_type = f->return_type;
+		cf.script = script;
 		for (int i=0;i<f->num_params;i++)
 			cf.param_type.add(f->var[i].type);
 	}
