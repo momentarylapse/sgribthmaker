@@ -526,7 +526,13 @@ bool CPUInstruction::match(InstructionWithParams &iwp)
 	if (inst != iwp.inst)
 		return false;
 
-	return (param1.match(iwp.p1)) && (param2.match(iwp.p2));
+	//return (param1.match(iwp.p1)) && (param2.match(iwp.p2));
+	bool b = (param1.match(iwp.p1)) && (param2.match(iwp.p2));
+	/*if (b){
+		msg_write("source: " + iwp.p1.str() + " " + iwp.p2.str());
+		print();
+	}*/
+	return b;
 }
 
 // expands the short instruction parameters
@@ -689,6 +695,8 @@ void add_inst(int inst, int code, int code_size, int cap, int param1, int param2
 	i.has_small_addr = (opt == OptSmallAddr);
 	i.has_big_param = (opt == OptBigParam);
 	i.has_big_addr = (opt == OptBigAddr);
+	if ((i.has_big_param) && (InstructionSet.set != InstructionSetAMD64))
+		return;
 	
 	i.name = InstructionNames[NUM_INSTRUCTION_NAMES].name;
 	for (int j=0;j<NUM_INSTRUCTION_NAMES;j++)
@@ -1496,7 +1504,7 @@ string InstructionParam::str()
 	}else if (type == ParamTImmediate){
 		//msg_write("im");
 		if (deref)
-			return format("[%s]", d2h(&value, state.AddrSize).c_str());
+			return format("[%s].%d", d2h(&value, state.AddrSize).c_str(), size);
 		return d2h(&value, size);
 	}/*else if (type == ParamTImmediateDouble){
 		//msg_write("im");
@@ -2849,6 +2857,10 @@ bool InstructionParamFuzzy::match(InstructionParam &wanted_p)
 	if ((wanted_p.type == ParamTNone) || (!used))
 		return (wanted_p.type == ParamTNone) && (!used);
 
+	if ((size != SizeUnknown) && (wanted_p.size != SizeUnknown))
+		if (size != wanted_p.size)
+			return false;
+
 	// immediate
 	if (wanted_p.type == ParamTImmediate){
 		if ((allow_memory_address) && (wanted_p.deref))
@@ -3108,7 +3120,8 @@ void InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)
 			}
 		}
 
-	// try again with REX prefix?
+/*	// try again with REX prefix?
+ // now done automatically...!
 	if ((ninst < 0) && (InstructionSet.set == InstructionSetAMD64)){
 		state.ParamSize = Size64;
 
@@ -3120,7 +3133,7 @@ void InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)
 				}
 			}
 
-	}
+	}*/
 
 	// none found?
 	if (ninst < 0){

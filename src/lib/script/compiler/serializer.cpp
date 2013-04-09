@@ -2511,9 +2511,14 @@ inline void get_param(int inst, SerialCommandParam &p, int &param_type, void *&p
 		if (p.shift > 0)
 			s->DoErrorInternal("get_param: reg + shift");
 	}else if (p.kind == KindDerefRegister){
-		if (p.type->size == 1)		param_type = Asm::PKDerefRegister8;
-		if (p.type->size == 4)		param_type = Asm::PKDerefRegister32;
-		if (p.type->size == 8)		param_type = Asm::PKDerefRegister64;
+		if (p.type->size == 1)
+			param_type = Asm::PKDerefRegister8;
+		else if (p.type->size == 4)
+			param_type = Asm::PKDerefRegister32;
+		else if (p.type->size == 8)
+			param_type = Asm::PKDerefRegister64;
+		else
+			s->DoErrorInternal("get_param: evil deref reg of type " + p.type->name);
 		param = p.p;
 		if (p.shift > 0){
 			if ((long)p.p == Asm::RegEdx){
@@ -2523,14 +2528,25 @@ inline void get_param(int inst, SerialCommandParam &p, int &param_type, void *&p
 				s->DoErrorInternal("get_param: [reg] + shift");
 		}
 	}else if (p.kind == KindVarGlobal){
-		if (p.type->size == 1)		param_type = Asm::PKDerefConstant8;
-		if (p.type->size == 4)		param_type = Asm::PKDerefConstant32;
-		if (p.type->size == 8)		param_type = Asm::PKDerefConstant64;
+		if (p.type->size == 1)
+			param_type = Asm::PKDerefConstant8;
+		else if (p.type->size == 4)
+			param_type = Asm::PKDerefConstant32;
+		else if (p.type->size == 8)
+			param_type = Asm::PKDerefConstant64;
+		else
+			s->DoErrorInternal("get_param: evil global of type " + p.type->name);
 		param = p.p + p.shift;
 	}else if (p.kind == KindVarLocal){
-		if (p.type->size == 1)		param_type = Asm::PKLocal8;
-		if (p.type->size == 4)		param_type = Asm::PKLocal32;
-		if (p.type->size == 8)		param_type = Asm::PKLocal64;
+		if (p.type->size == 1)
+			param_type = Asm::PKLocal8;
+		else if (p.type->size == 4)
+			param_type = Asm::PKLocal32;
+		else if (p.type->size == 8)
+			param_type = Asm::PKLocal64;
+		else
+			param_type = Asm::PKLocal32; // leax [local] ...needs some size
+			//s->DoErrorInternal("get_param: evil local of type " + p.type->name);
 		param = p.p + p.shift;
 	}else if (p.kind == KindRefToConst){
 		bool imm_allowed = Asm::GetInstructionAllowConst(inst);
