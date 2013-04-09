@@ -52,8 +52,10 @@ void Serializer::add_temp(Type *t, SerialCommandParam &param, bool add_construct
 		param.type = t;
 		param.shift = 0;
 
-		if (add_constructor) //&& (t->element.num > 0)
+		if (add_constructor)
 			add_cmd_constructor(param, KindVarTemp);
+		else
+			InsertedConstructorTemp.add(param);
 	}else{
 		param = p_none;
 	}
@@ -1395,7 +1397,6 @@ void Serializer::SerializeBlock(Block *block, int level)
 
 // modus: KindVarLocal/KindVarTemp
 //    -1: -return-   -> don't destruct
-//    -2: return from func   -> only destruct
 void Serializer::add_cmd_constructor(SerialCommandParam &param, int modus)
 {
 	Type *class_type = param.type;
@@ -1413,7 +1414,7 @@ void Serializer::add_cmd_constructor(SerialCommandParam &param, int modus)
 	}
 
 	AddFunctionCall(class_type->owner->script, f->nr);
-	if ((modus == KindVarTemp) || (modus == -2))
+	if (modus == KindVarTemp)
 		InsertedConstructorTemp.add(param);
 	else if (modus == KindVarLocal)
 		InsertedConstructorFunc.add(param);
