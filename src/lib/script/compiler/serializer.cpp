@@ -1225,13 +1225,16 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 							add_reg_channel(Asm::RegEdx, c_0, cmd.num - 1);
 #endif
 						}else{ // store return directly in eax / fpu stack (4 byte)
+							SerialCommandParam t;
+							add_temp(cur_func->return_type, t);
+							add_cmd(Asm::inst_mov, t, param[0]);
 							FillInDestructors(false);
 							if (cur_func->return_type == TypeFloat)
-								add_cmd(Asm::inst_fld, param[0]);
+								add_cmd(Asm::inst_fld, t);
 							else if (cur_func->return_type->size == 1)
-								add_cmd(Asm::inst_mov, param_reg(cur_func->return_type, Asm::RegAl), param[0]);
+								add_cmd(Asm::inst_mov, param_reg(cur_func->return_type, Asm::RegAl), t);
 							else
-								add_cmd(Asm::inst_mov, param_reg(cur_func->return_type, Asm::RegEax), param[0]);
+								add_cmd(Asm::inst_mov, param_reg(cur_func->return_type, Asm::RegEax), t);
 						}
 					}else{
 						FillInDestructors(false);
