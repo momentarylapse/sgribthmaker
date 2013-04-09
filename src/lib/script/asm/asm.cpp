@@ -697,6 +697,9 @@ void add_inst(int inst, int code, int code_size, int cap, int param1, int param2
 	i.has_big_addr = (opt == OptBigAddr);
 	if ((i.has_big_param) && (InstructionSet.set != InstructionSetAMD64))
 		return;
+
+	if (inst == inst_lea)
+		i.param2.size = SizeUnknown;
 	
 	i.name = InstructionNames[NUM_INSTRUCTION_NAMES].name;
 	for (int j=0;j<NUM_INSTRUCTION_NAMES;j++)
@@ -1275,14 +1278,14 @@ void Init(int set)
 	add_inst(inst_mov		,0xbd	,1	,-1	,RegBp	,Iw, OptSmallParam);
 	add_inst(inst_mov		,0xbe	,1	,-1	,RegSi	,Iw, OptSmallParam);
 	add_inst(inst_mov		,0xbf	,1	,-1	,RegDi	,Iw, OptSmallParam);
-	add_inst(inst_mov		,0xb8	,1	,-1	,RegRax	,Id, OptBigParam);
-	add_inst(inst_mov		,0xb9	,1	,-1	,RegRcx	,Id, OptBigParam);
-	add_inst(inst_mov		,0xba	,1	,-1	,RegRdx	,Id, OptBigParam);
-	add_inst(inst_mov		,0xbb	,1	,-1	,RegRbx	,Id, OptBigParam);
-	add_inst(inst_mov		,0xbc	,1	,-1	,RegRsp	,Id, OptBigParam);
-	add_inst(inst_mov		,0xbd	,1	,-1	,RegRbp	,Id, OptBigParam);
-	add_inst(inst_mov		,0xbe	,1	,-1	,RegRsi	,Id, OptBigParam);
-	add_inst(inst_mov		,0xbf	,1	,-1	,RegRdi	,Id, OptBigParam);
+	add_inst(inst_mov		,0xb8	,1	,-1	,RegRax	,Iq, OptBigParam);
+	add_inst(inst_mov		,0xb9	,1	,-1	,RegRcx	,Iq, OptBigParam);
+	add_inst(inst_mov		,0xba	,1	,-1	,RegRdx	,Iq, OptBigParam);
+	add_inst(inst_mov		,0xbb	,1	,-1	,RegRbx	,Iq, OptBigParam);
+	add_inst(inst_mov		,0xbc	,1	,-1	,RegRsp	,Iq, OptBigParam);
+	add_inst(inst_mov		,0xbd	,1	,-1	,RegRbp	,Iq, OptBigParam);
+	add_inst(inst_mov		,0xbe	,1	,-1	,RegRsi	,Iq, OptBigParam);
+	add_inst(inst_mov		,0xbf	,1	,-1	,RegRdi	,Iq, OptBigParam);
 	// Shift Group 2
 	add_inst(inst_rol		,0xc0	,1	,0	,Eb	,Ib	);
 	add_inst(inst_ror		,0xc0	,1	,1	,Eb	,Ib	);
@@ -1484,13 +1487,13 @@ string InstructionParam::str()
 		if (deref){
 			//msg_write("deref");
 			if (disp == DispModeNone)
-				return "[" + reg->name + "]";
+				return "[" + reg->name + "]." + i2s(size);
 			else if (disp == DispMode8)
-				return format("[%s + 0x%02x]", reg->name.c_str(), value);
+				return format("[%s + 0x%02x].%d", reg->name.c_str(), value, size);
 			else if (disp == DispMode16)
-				return format("[%s + 0x%04x]", reg->name.c_str(), value);
+				return format("[%s + 0x%04x].%d", reg->name.c_str(), value, size);
 			else if (disp == DispMode32)
-				return format("[%s + 0x%08x]", reg->name.c_str(), value);
+				return format("[%s + 0x%08x].%d", reg->name.c_str(), value, size);
 			else if (disp == DispModeSIB)
 				return "SIB[...][...]";
 			else if (disp == DispMode8SIB)

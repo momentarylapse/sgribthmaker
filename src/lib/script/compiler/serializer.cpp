@@ -2641,6 +2641,9 @@ void Serializer::Assemble(char *Opcode, int &OpcodeSize)
 							msg_write("----evil resize");
 							cmd[i].p1.type = cmd[i].p2.type;
 							cmd[i].p1.p = (char*)(long)reg_resize((long)cmd[i].p1.p, cmd[i].p2.type->size);
+						}else if (cmd[i].p2.kind == KindRegister){							
+							cmd[i].p2.type = cmd[i].p1.type;
+							cmd[i].p2.p = (char*)(long)reg_resize((long)cmd[i].p2.p, cmd[i].p1.type->size);
 						}
 					}
 					if ((cmd[i].p1.type->size < 8) && (cmd[i].p2.type->size == 8)){
