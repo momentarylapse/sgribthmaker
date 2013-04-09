@@ -153,6 +153,8 @@ void add_reg(const string &name, int id, int group, int size, int root = -1)
 
 string GetRegName(int reg)
 {
+	if ((reg < 0) || (reg >= NUM_REGISTERS))
+		return "INVALID REG: " + i2s(reg);
 	return RegisterByID[reg]->name;
 }
 
@@ -801,12 +803,15 @@ void Init(int set)
 	if (set == InstructionSetAMD64)
 		InstructionSet.pointer_size = 8;
 
+	for (int i=0;i<NUM_REG_ROOTS;i++)
+		for (int j=0;j<9;j++)
+			RegResize[i][j] = -1;
 
 	Registers.clear();
 	add_reg("rax",	RegRax,	RegGroupGeneral,	Size64,	0);
 	add_reg("eax",	RegEax,	RegGroupGeneral,	Size32,	0);
 	add_reg("ax",	RegAx,	RegGroupGeneral,	Size16,	0);
-	add_reg("ah",	RegAh,	RegGroupGeneral,	Size8,	0);
+	add_reg("ah",	RegAh,	RegGroupGeneral,	Size8,	0); // RegResize[] will be overwritten by al
 	add_reg("al",	RegAl,	RegGroupGeneral,	Size8,	0);
 	add_reg("rcx",	RegRcx,	RegGroupGeneral,	Size64,	1);
 	add_reg("ecx",	RegEcx,	RegGroupGeneral,	Size32,	1);
@@ -874,6 +879,9 @@ void Init(int set)
 	add_reg("st5",	RegSt5,	-1,	Size32,	21);
 	add_reg("st6",	RegSt6,	-1,	Size32,	22);
 	add_reg("st7",	RegSt7,	-1,	Size32,	23);
+
+	for (int i=0;i<20;i++)
+		msg_write(RegResize[i][1]);
 
 	// create easy to access array
 	RegisterByID.clear();

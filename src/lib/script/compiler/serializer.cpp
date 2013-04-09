@@ -490,7 +490,15 @@ void Serializer::add_function_call_amd64(Script *script, int func_no)
 	int param_regs_root[6] = {7, 6, 2, 1, 8, 9};
 	foreachb(SerialCommandParam &p, CompilerFunctionParam){
 		if ((p.type == TypeInt) || (p.type == TypeChar) || (p.type == TypeBool) || (p.type->is_pointer)){
-			add_cmd(Asm::inst_mov, param_reg(p.type, get_reg(param_regs_root[num_reg - n - 1], p.type->size)), p);
+			int root = param_regs_root[num_reg - n - 1];
+			int reg = get_reg(root, p.type->size);
+			if (reg >= 0){
+				add_cmd(Asm::inst_mov, param_reg(p.type, reg), p);
+			}else{
+				// some registers are not 8bit'able
+				add_cmd(Asm::inst_mov, p_al, p);
+				add_cmd(Asm::inst_mov, param_reg(TypeReg32, get_reg(root, 4)), p_eax);
+			}
 			n ++;
 		}
 	}
@@ -2325,9 +2333,18 @@ void Serializer::AddFunctionIntro(Function *f)
 
 		foreachb(LocalVariable &p, param){
 			if ((p.type == TypeInt) || (p.type == TypeChar) || (p.type == TypeBool) || (p.type->is_pointer)){
-				int reg = get_reg(param_regs_root[num_reg - n - 1], p.type->size);
-				add_cmd(Asm::inst_mov, param_local(p.type, p._offset), param_reg(p.type, reg));
-				add_reg_channel(reg, cmd.num - 1, cmd.num - 1);
+				int root = param_regs_root[num_reg - n - 1];
+				int reg = get_reg(root, p.type->size);
+				if (reg >= 0){
+					add_cmd(Asm::inst_mov, param_local(p.type, p._offset), param_reg(p.type, reg));
+					add_reg_channel(reg, cmd.num - 1, cmd.num - 1);
+				}else{
+					// some registers are not 8bit'able
+					add_cmd(Asm::inst_mov, p_eax, param_reg(TypeReg32, get_reg(root, 4)));
+					add_cmd(Asm::inst_mov, param_local(p.type, p._offset), param_reg(p.type, get_reg(0, p.type->size)));
+					add_reg_channel(reg, cmd.num - 2, cmd.num - 2);
+					add_reg_channel(Asm::RegEax, cmd.num - 2, cmd.num - 1);
+				}
 				n ++;
 			}
 		}
