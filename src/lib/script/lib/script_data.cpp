@@ -1033,7 +1033,8 @@ void Init(int instruction_set, int abi)
 		}
 	}
 	config.PointerSize = Asm::InstructionSet.pointer_size;
-	config.SuperArraySize = config.PointerSize + 3 * sizeof(int); //(sizeof(DynamicArray))
+	//config.SuperArraySize = config.PointerSize + 3 * sizeof(int);
+	config.SuperArraySize = sizeof(DynamicArray);
 	config.StackSize = SCRIPT_DEFAULT_STACK_SIZE;
 
 	config.allow_simplification = true;
