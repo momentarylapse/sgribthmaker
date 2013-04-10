@@ -476,30 +476,38 @@ void Serializer::add_function_call_amd64(Script *script, int func_no)
 	}
 
 	// map params...
-	int num_reg = 0;
+	Array<SerialCommandParam> reg_param;
+	Array<SerialCommandParam> stack_param;
 	foreach(SerialCommandParam &p, CompilerFunctionParam){
 		if ((p.type == TypeInt) || (p.type == TypeChar) || (p.type == TypeBool) || (p.type->is_pointer)){
-			if (num_reg < 6)
-				num_reg ++;
-			else
-				DoError("more than 6 parameter currently not supported");
-		}
+			if (reg_param.num < 6){
+				reg_param.add(p);
+			}else{
+				stack_param.add(p);
+			}
+		}else
+			DoError("parameter type currently not supported: " + p.type->name);
 	}
+	
+	// push parameters onto stack
+	foreachb(SerialCommandParam &p, stack_param){
+		int s = 8;
+		add_cmd(Asm::inst_push, p);
+		push_size += s;
+	}
+	
 	int n = 0;
 	// rdi, rsi,rdx, rcx, r8, r9 
 	int param_regs_root[6] = {7, 6, 2, 1, 8, 9};
-	foreachb(SerialCommandParam &p, CompilerFunctionParam){
-		if ((p.type == TypeInt) || (p.type == TypeChar) || (p.type == TypeBool) || (p.type->is_pointer)){
-			int root = param_regs_root[num_reg - n - 1];
-			int reg = get_reg(root, p.type->size);
-			if (reg >= 0){
-				add_cmd(Asm::inst_mov, param_reg(p.type, reg), p);
-			}else{
-				// some registers are not 8bit'able
-				add_cmd(Asm::inst_mov, p_al, p);
-				add_cmd(Asm::inst_mov, param_reg(TypeReg32, get_reg(root, 4)), p_eax);
-			}
-			n ++;
+	foreachib(SerialCommandParam &p, reg_param, i){
+		int root = param_regs_root[i];
+		int reg = get_reg(root, p.type->size);
+		if (reg >= 0){
+			add_cmd(Asm::inst_mov, param_reg(p.type, reg), p);
+		}else{
+			// some registers are not 8bit'able
+			add_cmd(Asm::inst_mov, p_al, p);
+			add_cmd(Asm::inst_mov, param_reg(TypeReg32, get_reg(root, 4)), p_eax);
 		}
 	}
 

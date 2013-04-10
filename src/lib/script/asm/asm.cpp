@@ -1797,15 +1797,16 @@ inline void TryGetSIB(InstructionParam &p, char *&cur)
 	}
 }
 
-inline void ReadParamData(char *&cur, InstructionParam &p)
+inline void ReadParamData(char *&cur, InstructionParam &p, bool has_modrm)
 {
 	msg_db_f("ReadParamData", 2+ASM_DB_LEVEL);
 	//char *o = cur;
 	p.value = 0;
 	if (p.type == ParamTImmediate){
 		if (p.deref){
-			memcpy(&p.value, cur, state.AddrSize);
-			cur += state.AddrSize;
+			int size = has_modrm ? state.AddrSize : Size64;
+			memcpy(&p.value, cur, size);
+			cur += size;
 		}else{
 			memcpy(&p.value, cur, p.size);
 			cur += p.size;
@@ -1980,8 +1981,8 @@ string Disassemble(void *_code_,int length,bool allow_comments)
 			}
 
 			// immediate...
-			ReadParamData(cur, p1);
-			ReadParamData(cur, p2);
+			ReadParamData(cur, p1, inst->has_modrm);
+			ReadParamData(cur, p2, inst->has_modrm);
 
 
 
@@ -2574,7 +2575,7 @@ void OpcodeAddImmideate(char *oc, int &ocs, InstructionParam &p, CPUInstruction 
 	if (p.type == ParamTImmediate){
 		size = p.size;
 		if (p.deref){
-			size = state.AddrSize;
+			size = state.AddrSize; // inst.has_big_addr
 			if (InstructionSet.set == InstructionSetAMD64){
 				if (inst.has_modrm)
 					value -= (long)oc + ocs + size + next_param_size; // amd64 uses RIP-relative addressing!
