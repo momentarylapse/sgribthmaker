@@ -43,20 +43,11 @@ enum{
 	PKInvalid,
 	PKNone,
 	PKRegister,			// eAX
-	PKDerefRegister8,	// byte  [eAX]
-	PKDerefRegister32,	// dword [eAX]
-	PKDerefRegister64,	// qword [eAX]
-	PKLocal8,			// byte  [ebp + 0x0000]
-	PKLocal32,			// dword [ebp + 0x0000]
-	PKLocal64,			// qword [ebp + 0x0000]
+	PKDerefRegister,	// [eAX]
+	PKLocal,			// [ebp + 0x0000]
 	PKEdxRel,			// [edx + 0x0000]
-	PKConstant32,		// 0x00000000
-	PKConstant16,		// 0x0000
-	PKConstant8,		// 0x00
-	PKConstantDouble,   // 0x00:0x0000   ...
-	PKDerefConstant8,	// byte  [0x0000]
-	PKDerefConstant32,	// dword [0x0000]
-	PKDerefConstant64,	// qword [0x0000]
+	PKConstant,			// 0x00000000
+	PKDerefConstant,	// [0x00000000]
 	PKLabel				// _label
 };
 
@@ -268,7 +259,7 @@ struct InstructionWithParamsList : public Array<InstructionWithParams>
 	InstructionWithParamsList(int line_offset);
 	~InstructionWithParamsList();
 
-	void add_easy(int inst, int param1_type = PKNone, void *param1 = NULL, int param2_type = PKNone, void *param2 = NULL);
+	void add_easy(int inst, int param1_type = PKNone, int param1_size = -1, void *param1 = NULL, int param2_type = PKNone, int param2_size = -1, void *param2 = NULL);
 	int add_label(const string &name, bool declaring);
 
 	void add_func_intro(int stack_alloc_size);
@@ -302,7 +293,7 @@ public:
 	int line, column;
 };
 
-void AddInstruction(char *oc, int &ocs, int inst, int param1_type = PKNone, void *param1 = NULL, int param2_type = PKNone, void *param2 = NULL);
+void AddInstruction(char *oc, int &ocs, int inst, int param1_type = PKNone, int param1_size = -1, void *param1 = NULL, int param2_type = PKNone, int param2_size = -1, void *param2 = NULL);
 void SetInstructionSet(int set);
 bool ImmediateAllowed(int inst);
 extern int OCParam;

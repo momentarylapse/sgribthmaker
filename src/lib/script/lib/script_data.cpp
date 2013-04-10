@@ -28,9 +28,7 @@ namespace Script{
 
 string DataVersion = "0.10.99.0";
 
-
-int PointerSize;
-int StackSize = SCRIPT_DEFAULT_STACK_SIZE;
+CompilerConfiguration config;
 
 Script *GlobalDummyScript = NULL;
 
@@ -118,7 +116,7 @@ Type *add_type_p(const string &name, Type *sub_type, TypeFlag flag)
 	Type *t = new Type;
 	t->owner = GlobalDummyScript->syntax;
 	t->name = name;
-	t->size = PointerSize;
+	t->size = config.PointerSize;
 	t->is_pointer = true;
 	if ((flag & FLAG_SILENT) > 0)
 		t->is_silent = true;
@@ -135,7 +133,7 @@ Type *add_type_a(const string &name, Type *sub_type, int array_length)
 	t->parent = sub_type;
 	if (array_length < 0){
 		// super array
-		t->size = SuperArraySize;
+		t->size = config.SuperArraySize;
 		t->is_super_array = true;
 		//script_make_super_array(t); // do it later !!!
 	}else{
@@ -267,7 +265,7 @@ void add_const(const string &name, Type *type, void *value)
 	Constant c;
 	c.name = name;
 	c.type = type;
-	c.data = new char[max(type->size, PointerSize)];
+	c.data = new char[max(type->size, config.PointerSize)];
 	if ((type == TypeInt) || (type == TypeFloat) || (type == TypeChar)  || (type == TypeBool) || (type->is_pointer))
 		*(void**)c.data = value;
 	else
@@ -363,7 +361,7 @@ void script_make_super_array(Type *t, SyntaxTree *ps)
 {
 	msg_db_f("make_super_array", 4);
 	add_class(t);
-		class_add_element("num", TypeInt, PointerSize);
+		class_add_element("num", TypeInt, config.PointerSize);
 
 		// always usable operations
 		class_add_func("swap", TypeVoid, mf((tmf)&DynamicArray::swap));
@@ -612,6 +610,11 @@ public:
 	string str(){	return p2s(p);	}
 };
 
+string debug_get_str()
+{
+	return "kleiner Test";
+}
+
 void SIAddPackageBase()
 {
 	msg_db_f("SIAddPackageBase", 3);
@@ -650,6 +653,7 @@ void SIAddPackageBase()
 	TypeString			= add_type_a("string",		TypeChar, -1);	// string := char[]
 	TypeStringList		= add_type_a("string[]",	TypeString, -1);
 
+	add_func("debug_get_str", TypeString, (void*)&debug_get_str);
 	
 	add_class(TypeInt);
 		class_add_func("str", TypeString, mf((tmf)&IntClass::str));
@@ -1008,12 +1012,39 @@ void SIAddPackageImage();
 void SIAddPackageSound();
 void SIAddPackageX();
 
-void Init(int instruction_set)
+void Init(int instruction_set, int abi)
 {
 	msg_db_f("ScriptInit", 1);
 
 	Asm::Init(instruction_set);
-	PointerSize = Asm::InstructionSet.pointer_size;
+	config.instruction_set = Asm::InstructionSet.set;
+	config.abi = abi;
+	if (abi < 0){
+		if (config.instruction_set == Asm::InstructionSetAMD64){
+			config.abi = AbiGnu64;
+#ifdef WIN64
+			config.abi = AbiWindows64;
+#endif
+		}else if (config.instruction_set == Asm::InstructionSetX86){
+			config.abi = AbiGnu32;
+#ifdef WIN32
+			config.abi = AbiWindows32;
+#endif
+		}
+	}
+	config.PointerSize = Asm::InstructionSet.pointer_size;
+	config.SuperArraySize = config.PointerSize + 3 * sizeof(int); //(sizeof(DynamicArray))
+	config.StackSize = SCRIPT_DEFAULT_STACK_SIZE;
+
+	config.allow_simplification = true;
+	config.allow_registers = true;
+	config.UseConstAsGlobalVar = false;
+	config.StackMemAlign = 8;
+	config.FunctionAlign = 2 * config.PointerSize;
+	config.StackFrameAlign = 2 * config.PointerSize;
+
+	config.CompileSilently = false;
+	config.ShowCompilerStats = true;
 
 	GlobalDummyScript = new Script;
 

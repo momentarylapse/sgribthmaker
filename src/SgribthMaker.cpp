@@ -834,7 +834,7 @@ void Compile()
 
 	HuiGetTime(CompileTimer);
 
-	Script::CompileSilently = true;
+	Script::config.CompileSilently = true;
 
 	try{
 		Script::Script *compile_script = Script::Load(Filename, true, true);
@@ -877,7 +877,7 @@ void CompileAndRun(bool verbose)
 
 	// compile
 	HuiGetTime(CompileTimer);
-	Script::CompileSilently = true;
+	Script::config.CompileSilently = true;
 
 	try{
 		Script::Script *compile_script = Script::Load(Filename);
@@ -1218,9 +1218,17 @@ TT sf()
 
 string ssss;
 
-void _ff()
+bool bbb[8];
+
+void _ff(bool a, bool b, bool c, bool d, bool e, bool f)
 {
-	TT x = sf();
+	bbb[0] = a;
+	bbb[1] = b;
+	bbb[2] = c;
+	bbb[3] = d;
+	bbb[4] = e;
+	bbb[5] = f;
+//	TT x = sf();
 	//ssss = sf();
 	//TT x = tt.f(7);
 //	TT *x;

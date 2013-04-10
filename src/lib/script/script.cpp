@@ -31,9 +31,6 @@ string Version = "0.10.11.0";
 int GlobalWaitingMode;
 float GlobalTimeToWait;
 
-bool CompileSilently = false;
-bool ShowCompilerStats = true;
-
 
 Exception::Exception(const string &_message, const string &_expression, int _line, int _column, Script *s) :
 	Asm::Exception(_message, _expression, _line, _column)
@@ -92,8 +89,6 @@ Array<Script*> PublicScript;
 Array<Script*> PrivateScript;
 Array<Script*> DeadScript;
 
-
-string Directory = "";
 
 
 
@@ -312,7 +307,7 @@ Script::Script()
 	cur_func = NULL;
 	WaitingMode = WaitingModeFirst;
 	TimeToWait = 0;
-	ShowCompilerStats = (!CompileSilently) && ShowCompilerStats;
+	ShowCompilerStats = (!config.CompileSilently) && ShowCompilerStats;
 
 	Opcode = NULL;
 	OpcodeSize = 0;

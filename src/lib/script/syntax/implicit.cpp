@@ -132,7 +132,7 @@ void CreateImplicitAssign(SyntaxTree *ps, Type *t)
 		}
 
 		// self.resize(other.num)
-		Command *other_num = ps->shift_command(other, false, PointerSize, TypeInt);
+		Command *other_num = ps->shift_command(other, false, config.PointerSize, TypeInt);
 
 		Command *cmd_resize = ps->add_command_classfunc(t, t->function[nf], ps->cp_command(self));
 		cmd_resize->num_params = 1;
@@ -238,7 +238,7 @@ void CreateImplicitArrayClear(SyntaxTree *ps, Type *t)
 
 	Command *self_num = ps->AddCommand();
 	self_num->kind = KindDerefAddressShift;
-	self_num->link_nr = PointerSize;
+	self_num->link_nr = config.PointerSize;
 	self_num->type = TypeInt;
 	self_num->num_params = 1;
 	self_num->param[0] = ps->cp_command(self);
@@ -329,7 +329,7 @@ void CreateImplicitArrayResize(SyntaxTree *ps, Type *t)
 
 	Command *self_num = ps->AddCommand();
 	self_num->kind = KindDerefAddressShift;
-	self_num->link_nr = PointerSize;
+	self_num->link_nr = config.PointerSize;
 	self_num->type = TypeInt;
 	self_num->num_params = 1;
 	self_num->param[0] = ps->cp_command(self);
@@ -465,7 +465,7 @@ void CreateImplicitArrayAdd(SyntaxTree *ps, Type *t)
 
 	Command *self_num = ps->AddCommand();
 	self_num->kind = KindDerefAddressShift;
-	self_num->link_nr = PointerSize;
+	self_num->link_nr = config.PointerSize;
 	self_num->type = TypeInt;
 	self_num->num_params = 1;
 	self_num->param[0] = ps->cp_command(self);

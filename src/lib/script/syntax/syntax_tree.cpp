@@ -153,7 +153,7 @@ void SyntaxTree::LoadAndParseFile(const string &filename, bool just_analyse)
 	
 	Filename = filename.sys_filename();
 
-	LoadToBuffer(Directory + Filename, just_analyse);
+	LoadToBuffer(config.Directory + Filename, just_analyse);
 
 	
 	PreCompiler(just_analyse);
@@ -176,12 +176,6 @@ void SyntaxTree::LoadAndParseFile(const string &filename, bool just_analyse)
 		Show();
 
 	Exp.clear();
-}
-
-
-static void stringout(const string &str)
-{
-	msg_write(str);
 }
 
 static void so(const char *str)
@@ -278,10 +272,10 @@ string LinkNr2Str(SyntaxTree *s,int kind,int nr)
 	if (kind == KindDerefAddressShift)	return i2s(nr);
 	if (kind == KindType)				return s->Types[nr]->name;
 	if (kind == KindRegister)			return Asm::GetRegName(nr);
-	if (kind == KindAddress)			return d2h(&nr, PointerSize);
-	if (kind == KindMemory)				return d2h(&nr, PointerSize);
-	if (kind == KindLocalAddress)		return d2h(&nr, PointerSize);
-	if (kind == KindLocalMemory)		return d2h(&nr, PointerSize);
+	if (kind == KindAddress)			return d2h(&nr, config.PointerSize);
+	if (kind == KindMemory)				return d2h(&nr, config.PointerSize);
+	if (kind == KindLocalAddress)		return d2h(&nr, config.PointerSize);
+	if (kind == KindLocalMemory)		return d2h(&nr, config.PointerSize);
 	return i2s(nr);
 }
 
@@ -355,7 +349,7 @@ int SyntaxTree::AddConstant(Type *type)
 	Constant *c = &Constants.back();
 	c->name = "-none-";
 	c->type = type;
-	int s = max(type->size, (int)PointerSize);
+	int s = max(type->size, config.PointerSize);
 	if (type == TypeString)
 		s = 256;
 	c->data = new char[s];
@@ -625,7 +619,7 @@ Type *SyntaxTree::CreateNewType(const string &name, int size, bool is_pointer, b
 
 Type *SyntaxTree::GetPointerType(Type *sub)
 {
-	return CreateNewType(sub->name + "*", PointerSize, true, false, false, 0, sub);
+	return CreateNewType(sub->name + "*", config.PointerSize, true, false, false, 0, sub);
 }
 
 
@@ -984,18 +978,16 @@ void SyntaxTree::MapLocalVariablesToStack()
 {
 	msg_db_f("MapLocalVariablesToStack", 1);
 	foreach(Function *f, Functions){
-		f->_param_size = 2 * PointerSize; // space for return value and eBP
-		if (Asm::InstructionSet.set == Asm::InstructionSetX86){
+		f->_param_size = 2 * config.PointerSize; // space for return value and eBP
+		if (config.instruction_set == Asm::InstructionSetX86){
 			f->_var_size = 0;
 
 			// map "-return-" to the VERY first parameter
 			if (f->return_type->UsesReturnByMemory()){
 				foreachi(LocalVariable &v, f->var, i)
 					if (v.name == "-return-"){
-						//v._offset = 8;
-						int s = mem_align(v.type->size);
 						v._offset = f->_param_size;
-						f->_param_size += s;
+						f->_param_size += 8;
 					}
 			}
 
@@ -1003,9 +995,8 @@ void SyntaxTree::MapLocalVariablesToStack()
 			if (f->_class){
 				foreachi(LocalVariable &v, f->var, i)
 					if (v.name == "self"){
-						int s = mem_align(v.type->size);
 						v._offset = f->_param_size;
-						f->_param_size += s;
+						f->_param_size += 8;
 					}
 			}
 
@@ -1014,7 +1005,7 @@ void SyntaxTree::MapLocalVariablesToStack()
 					continue;
 				if (v.name == "-return-")
 					continue;
-				int s = mem_align(v.type->size);
+				int s = mem_align(v.type->size, 4);
 				if (i < f->num_params){
 					// parameters
 					v._offset = f->_param_size;
@@ -1025,11 +1016,11 @@ void SyntaxTree::MapLocalVariablesToStack()
 					f->_var_size += s;
 				}				
 			}
-		}else if (Asm::InstructionSet.set == Asm::InstructionSetAMD64){
+		}else if (config.instruction_set == Asm::InstructionSetAMD64){
 			f->_var_size = 0;
 			
 			foreachi(LocalVariable &v, f->var, i){
-				int s = mem_align(v.type->size);
+				int s = mem_align(v.type->size, 4);
 				v._offset = - f->_var_size - s;
 				f->_var_size += s;
 			}
