@@ -506,7 +506,8 @@ void Serializer::add_function_call_amd64(Script *script, int func_no)
 	void *func = (void*)script->func[func_no];
 	if (!func)
 		DoErrorLink("could not link function " + script->syntax->Functions[func_no]->name);
-	add_cmd(Asm::inst_call, param_const(TypePointer, func)); // the actual call
+	//add_cmd(Asm::inst_call, param_const(TypePointer, func)); // the actual call
+	add_cmd(Asm::inst_call, param_const(TypeReg32, func)); // the actual call
 	// function pointer will be shifted later...
 
 	if (push_size > 127)
