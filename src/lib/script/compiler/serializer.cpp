@@ -509,7 +509,7 @@ void Serializer::add_function_call_amd64(Script *script, int func_no)
 	// xmm0-7 
 	foreachib(SerialCommandParam &p, xmm_param, i){
 		int reg = Asm::RegXmm0 + i;
-		add_cmd(Asm::inst_movss, param_reg(p.type, reg), p);
+		add_cmd(Asm::inst_movss, param_reg(TypeReg128, reg), p);
 	}
 
 	void *func = (void*)script->func[func_no];
@@ -527,7 +527,7 @@ void Serializer::add_function_call_amd64(Script *script, int func_no)
 	// return > 4b already got copied to [ret] by the function!
 	if ((type != TypeVoid) && (!type->UsesReturnByMemory())){
 		if (type == TypeFloat)
-			add_cmd(Asm::inst_movss, CompilerFunctionReturn, param_reg(TypeFloat, Asm::RegXmm0));
+			add_cmd(Asm::inst_movss, CompilerFunctionReturn, param_reg(TypeReg128, Asm::RegXmm0));
 		else if (type->size == 1){
 			add_cmd(Asm::inst_mov, CompilerFunctionReturn, p_al);
 			add_reg_channel(Asm::RegEax, cmd.num - 2, cmd.num - 1);
@@ -1255,7 +1255,7 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 							FillInDestructors(false);
 							if (cur_func->return_type == TypeFloat){
 								if (config.instruction_set == Asm::InstructionSetAMD64)
-									add_cmd(Asm::inst_movss, param_reg(TypeFloat, Asm::RegXmm0), t);
+									add_cmd(Asm::inst_movss, param_reg(TypeReg128, Asm::RegXmm0), t);
 								else
 									add_cmd(Asm::inst_fld, t);
 							}else if (cur_func->return_type->size == 1)

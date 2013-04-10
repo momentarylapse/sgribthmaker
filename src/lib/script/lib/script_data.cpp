@@ -38,6 +38,7 @@ Script *GlobalDummyScript = NULL;
 //------------------------------------------------------------------------------------------------//
 
 Type *TypeUnknown;
+Type *TypeReg128;
 Type *TypeReg64;
 Type *TypeReg32;
 Type *TypeReg16;
@@ -623,7 +624,8 @@ void SIAddPackageBase()
 
 	// internal
 	TypeUnknown			= add_type  ("-unknown-",	0); // should not appear anywhere....or else we're screwed up!
-	TypeReg64			= add_type  ("-reg32-",		8, FLAG_CALL_BY_VALUE);
+	TypeReg128			= add_type  ("-reg128-",		16, FLAG_CALL_BY_VALUE);
+	TypeReg64			= add_type  ("-reg64-",		8, FLAG_CALL_BY_VALUE);
 	TypeReg32			= add_type  ("-reg32-",		4, FLAG_CALL_BY_VALUE);
 	TypeReg16			= add_type  ("-reg16-",		2, FLAG_CALL_BY_VALUE);
 	TypeReg8			= add_type  ("-reg8-",		1, FLAG_CALL_BY_VALUE);

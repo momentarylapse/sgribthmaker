@@ -55,6 +55,7 @@ struct Type{
 	string var2str(void *p);
 };
 extern Type *TypeUnknown;
+extern Type *TypeReg128; // dummy for compilation
 extern Type *TypeReg64; // dummy for compilation
 extern Type *TypeReg32; // dummy for compilation
 extern Type *TypeReg16; // dummy for compilation
