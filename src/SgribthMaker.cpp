@@ -100,12 +100,12 @@ struct TagType
 TagType tag[NumTagTypes];
 
 
-struct sScriptFunction
+struct ScriptFunction
 {
 	string name;
 	int line;
 };
-Array<sScriptFunction> ScriptFunction;
+Array<ScriptFunction> ScriptFunctions;
 
 
 
@@ -120,6 +120,49 @@ inline int char_type(char c)
 	return CharSign;
 }
 
+inline int WordType(const string &name)
+{
+	if (name[0] == '#')
+		return InMacro;
+	if ((name == "enum") ||
+	    (name == "class") ||
+		(name == "use") ||
+		(name == "import") ||
+		(name == "if") ||
+		(name == "else") ||
+		(name == "while") ||
+		(name == "for") ||
+		(name == "forall") ||
+		(name == "in") ||
+		(name == "return") ||
+		(name == "break") ||
+		(name == "continue") ||
+		(name == "and") ||
+		(name == "or") ||
+		(name == "extern") ||
+		(name == "const") ||
+		(name == "this") ||
+		(name == "self") ||
+		(name == "asm"))
+		return InWordSpecial;
+	for (int i=0;i<Script::GlobalDummyScript->syntax->Types.num;i++)
+		if (name == Script::GlobalDummyScript->syntax->Types[i]->name)
+			return InWordType;
+	for (int i=0;i<Script::GlobalDummyScript->syntax->RootOfAllEvil.var.num;i++)
+		if (name == Script::GlobalDummyScript->syntax->RootOfAllEvil.var[i].name)
+			return InWordGameVariable;
+	for (int i=0;i<Script::GlobalDummyScript->syntax->Constants.num;i++)
+		if (name == Script::GlobalDummyScript->syntax->Constants[i].name)
+			return InWordGameVariable;
+	for (int i=0;i<Script::GlobalDummyScript->syntax->Functions.num;i++)
+		if (name == Script::GlobalDummyScript->syntax->Functions[i]->name)
+			return InWordCompilerFunction;
+	for (int i=0;i<Script::PreCommands.num;i++)
+		if (name == Script::PreCommands[i].name)
+			return InWordCompilerFunction;
+	return -1;
+}
+
 inline void MarkWord(int line, int start, int end, int type, char *p0, char *p)
 {
 	if (start == end)
@@ -128,63 +171,10 @@ inline void MarkWord(int line, int start, int end, int type, char *p0, char *p)
 	if (type == InWord)
 		if ((start == 0) || (p0[-1] != '.'))
 		if ((long)p - (long)p0 < 64){
-			string temp;
-			for (int i=0;i<(long)p - (long)p0;i++)
-				temp.add(p0[i]);
-			//msg_write(temp);
-			if (temp[0] == '#'){
-				type = InMacro;
-			}else if ((temp == "enum") ||
-			         (temp == "class") ||
-			         (temp == "use") ||
-			         (temp == "import") ||
-			         (temp == "if") ||
-			         (temp == "else") ||
-			         (temp == "while") ||
-			         (temp == "for") ||
-			         (temp == "forall") ||
-			         (temp == "in") ||
-			         (temp == "return") ||
-			         (temp == "break") ||
-			         (temp == "continue") ||
-			         (temp == "and") ||
-			         (temp == "or") ||
-			         (temp == "extern") ||
-			         (temp == "const") ||
-			         (temp == "this") ||
-			         (temp == "self") ||
-			         (temp == "asm")){
-				type = InWordSpecial;
-			}else{
-				bool found = false;
-				for (int i=0;i<Script::GlobalDummyScript->syntax->Types.num;i++)
-					if (temp == Script::GlobalDummyScript->syntax->Types[i]->name){
-						type = InWordType;
-						found = true;
-						break;
-					}
-				if (!found)
-				for (int i=0;i<Script::GlobalDummyScript->syntax->RootOfAllEvil.var.num;i++)
-					if (temp == Script::GlobalDummyScript->syntax->RootOfAllEvil.var[i].name){
-						type = InWordGameVariable;
-						found = true;
-						break;
-					}
-				if (!found)
-				for (int i=0;i<Script::GlobalDummyScript->syntax->Constants.num;i++)
-					if (temp == Script::GlobalDummyScript->syntax->Constants[i].name){
-						type = InWordGameVariable;
-						found = true;
-						break;
-					}
-				if (!found)
-				for (int i=0;i<Script::PreCommands.num;i++)
-					if (temp == Script::PreCommands[i].name){
-						type = InWordCompilerFunction;
-						found = true;
-						break;
-					}
-			}
+			string temp = string(p0, (long)p - (long)p0);
+			int type2 = WordType(temp);
+			if (type2 >= 0)
+				type = type2;
 		}
 	GtkTextIter _start, _end;
 	gtk_text_buffer_get_iter_at_line_offset(tb, &_start, line, start);
@@ -333,7 +323,7 @@ void CreateTextColors(int first_line = -1, int last_line = -1)
 void FindScriptFunctions()
 {
 	msg_db_r("FindScriptFunctions", 1);
-	ScriptFunction.clear();
+	ScriptFunctions.clear();
 	GtkTextIter start, end;
 	int num_lines = gtk_text_buffer_get_line_count(tb);
 	for (int l=0;l<num_lines;l++){
@@ -349,11 +339,11 @@ void FindScriptFunctions()
 		if (char_type(s[0]) == CharLetter){
 			for (int i=0;i<ll;i++)
 				if (s[i]=='('){
-					sScriptFunction f;
+					ScriptFunction f;
 					f.name.resize(ll);
 					memcpy(f.name.data, s, ll);
 					f.line = l;
-					ScriptFunction.add(f);
+					ScriptFunctions.add(f);
 					break;
 				}
 		}
@@ -1130,13 +1120,13 @@ void populate_popup(GtkTextView *text_view, GtkMenu *menu, gpointer user_data)
 	GtkWidget *m = gtk_separator_menu_item_new();
 	gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), m);
 	gtk_widget_show(m);
-	if (ScriptFunction.num == 0){
+	if (ScriptFunctions.num == 0){
 		m = gtk_menu_item_new_with_label(_("- Keine Funktionen -").c_str());
 		gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), m);
 		gtk_widget_set_sensitive(m, false);
 		gtk_widget_show(m);
 	}
-	foreachb(sScriptFunction &f, ScriptFunction){
+	foreachb(ScriptFunction &f, ScriptFunctions){
 		m = gtk_menu_item_new_with_label(f.name.c_str());
 		gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), m);
 		gtk_widget_show(m);
@@ -1216,17 +1206,17 @@ TT sf()
 	return TT(7);
 }
 
-string ssss, ssss2;
+float gff1, gff2;
 
-string ffss()
+void fff(float f, float g)
 {
-	return ssss2;
+	gff1 = f;
+	gff2 = g;
 }
 
 void _ff()
 {
-	ssss = ffss();
-	ssss = ffss();
+	fff(1.0f, 2.0f);
 //	TT x = sf();
 	//ssss = sf();
 	//TT x = tt.f(7);
@@ -1403,7 +1393,7 @@ int hui_main(Array<string> arg)
 
 	Script::Init();
 
-	msg_write(Asm::Disassemble((void*)ffss, -1));
+	msg_write(Asm::Disassemble((void*)fff, -1));
 	msg_write(Asm::Disassemble((void*)_ff, -1));
 
 	New();
