@@ -294,7 +294,8 @@ void Script::Compiler()
 	syntax->Simplify();
 	syntax->PreProcessor(this);
 
-	syntax->Show();
+	if (syntax->FlagShow)
+		syntax->Show();
 
 	AllocateMemory();
 	AllocateStack();

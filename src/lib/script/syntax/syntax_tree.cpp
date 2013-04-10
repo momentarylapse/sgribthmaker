@@ -735,7 +735,7 @@ void convert_return_by_memory(SyntaxTree *ps, Block *b, Function *f)
 			convert_return_by_memory(ps, ps->Blocks[c->link_nr], f);
 		if ((c->kind != KindCompilerFunction) || (c->link_nr != CommandReturn))
 			continue;
-		msg_write("convert!!!");
+		so("convert return by mem");
 
 		// convert into   *-return- = param
 		Command *p_ret = NULL;
@@ -752,13 +752,11 @@ void convert_return_by_memory(SyntaxTree *ps, Block *b, Function *f)
 		Command *op = ps->LinkOperator(OperatorAssign, ret, c->param[0]);
 		if (!op)
 			ps->DoError("no = operator for return from function found: " + f->name);
-		ps->ShowCommand(op);
 		b->command.insert(op, i);
 
 		c->num_params = 0;
 
 		_foreach_it_.update();
-		msg_write("aaaaa3");
 	}
 }
 

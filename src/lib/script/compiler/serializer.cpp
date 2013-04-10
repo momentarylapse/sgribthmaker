@@ -146,27 +146,25 @@ string param_out(SerialCommandParam &p)
 	return str;
 }
 
-void cmd_out(int n, SerialCommand &c)
+string cmd2str(SerialCommand &c)
 {
 	//msg_db_f("cmd_out", 4);
 	if (c.inst == inst_marker)
-		msg_write(format("%3d: -- Marker %d --", n, (long)c.p1.p));
-	else if (c.inst == inst_asm)
-		msg_write(format("%3d: -- Asm --", n));
-	else{
-		string t = format("%3d:  ", n) + Asm::GetInstructionName(c.inst);
-		t += param_out(c.p1);
-		t += param_out(c.p2);
-		msg_write(t);
-	}
+		return format("-- Marker %d --", (long)c.p1.p);
+	if (c.inst == inst_asm)
+		return "-- Asm --";
+	string t = Asm::GetInstructionName(c.inst);
+	t += param_out(c.p1);
+	t += param_out(c.p2);
+	return t;
 }
 
 void Serializer::cmd_list_out()
 {
 	msg_db_f("cmd_list_out", 4);
-	so("--------------------------------");
+	msg_write("--------------------------------");
 	for (int i=0;i<cmd.num;i++)
-		cmd_out(i, cmd[i]);
+		msg_write(format("%3d: ", i) + cmd2str(cmd[i]));
 	so("-----------");
 	for (int i=0;i<reg_channel.num;i++)
 		so(format("  %d   %d -> %d", reg_channel[i].reg_root, reg_channel[i].first, reg_channel[i].last));
@@ -1568,8 +1566,8 @@ void Serializer::CorrectUnallowedParamCombis()
 		SerialCommandParam *pp = mov_first_param ? &cmd[i].p1 : &cmd[i].p2;
 		SerialCommandParam p = *pp;
 
-		msg_error("correct");
-		msg_write(p.type->name);
+		//msg_error("correct");
+		//msg_write(p.type->name);
 		*pp = param_reg(p.type, get_reg(0, p.type->size));
 		add_cmd(Asm::inst_mov, *pp, p);
 		move_last_cmd(i);
@@ -2437,7 +2435,8 @@ void Serializer::SerializeFunction(Function *f)
 
 	// function
 	SerializeBlock(f->block, 0);
-	cmd_list_out();
+	if (script->syntax->FlagShow)
+		cmd_list_out();
 	
 
 
@@ -2540,7 +2539,8 @@ void Serializer::DoMapping()
 	CorrectUnallowedParamCombis();*/
 
 
-	cmd_list_out();
+	if (script->syntax->FlagShow)
+		cmd_list_out();
 }
 
 inline void get_param(int inst, SerialCommandParam &p, int &param_type, int &param_size, void *&param, Asm::InstructionWithParamsList *list, Script *s)
@@ -2661,36 +2661,37 @@ void Serializer::Assemble(char *Opcode, int &OpcodeSize)
 			// evil hack to allow inconsistent param types (in address shifts)
 			if (config.instruction_set == Asm::InstructionSetAMD64){
 				if ((cmd[i].inst == Asm::inst_add) || (cmd[i].inst == Asm::inst_mov)){
-					msg_write("inst ok");
-					msg_write(cmd[i].p1.type->name + "  ->  " + cmd[i].p2.type->name);
-					msg_write(cmd[i].p1.type->size);
-					msg_write(cmd[i].p2.type->size);
 					if ((cmd[i].p1.kind == KindRegister) && (cmd[i].p2.kind == KindRefToConst)){
 						if (cmd[i].p1.type->is_pointer){
-							msg_write("----evil resize 0");
+							msg_write("----evil resize a");
+							msg_write(cmd2str(cmd[i]));
 							cmd[i].p1.type = TypeReg32;
 							cmd[i].p1.p = (char*)(long)reg_resize((long)cmd[i].p1.p, 4);
+							msg_write(cmd2str(cmd[i]));
 						}
 					}
 					if ((cmd[i].p1.type->size == 8) && (cmd[i].p2.type->size == 4)){
-						msg_write("size ok");
 						if ((cmd[i].p1.kind == KindRegister) && ((cmd[i].p2.kind == KindRegister) || (cmd[i].p2.kind == KindConstant) || (cmd[i].p2.kind == KindRefToConst))){
-							msg_write("----evil resize");
+							msg_write("----evil resize b");
+							msg_write(cmd2str(cmd[i]));
 							cmd[i].p1.type = cmd[i].p2.type;
 							cmd[i].p1.p = (char*)(long)reg_resize((long)cmd[i].p1.p, cmd[i].p2.type->size);
-						}else if (cmd[i].p2.kind == KindRegister){							
+							msg_write(cmd2str(cmd[i]));
+						}else if (cmd[i].p2.kind == KindRegister){
+							msg_write("----evil resize c");
+							msg_write(cmd2str(cmd[i]));
 							cmd[i].p2.type = cmd[i].p1.type;
 							cmd[i].p2.p = (char*)(long)reg_resize((long)cmd[i].p2.p, cmd[i].p1.type->size);
+							msg_write(cmd2str(cmd[i]));
 						}
 					}
 					if ((cmd[i].p1.type->size < 8) && (cmd[i].p2.type->size == 8)){
-						msg_write("size ok");
 						if ((cmd[i].p1.kind == KindRegister) && ((cmd[i].p2.kind == KindRegister) || (cmd[i].p2.kind == KindDerefRegister))){
-							msg_error("----evil resize");
+							msg_write("----evil resize d");
+							msg_write(cmd2str(cmd[i]));
 							cmd[i].p1.type = cmd[i].p2.type;
-							
 							cmd[i].p1.p = (char*)(long)reg_resize((long)cmd[i].p1.p, cmd[i].p2.type->size);
-							msg_write(Asm::GetRegName((long)cmd[i].p1.p));
+							msg_write(cmd2str(cmd[i]));
 						}
 					}
 					/*if (cmd[i].p1.type->size > cmd[i].p2.type->size){
@@ -2747,7 +2748,9 @@ Serializer::~Serializer()
 void Script::CompileFunction(Function *f, char *Opcode, int &OpcodeSize)
 {
 	msg_db_f("Compile Function", 2);
-	msg_write(f->name + " -------------------");
+
+	if (syntax->FlagShow)
+		msg_write("serializing " + f->name + " -------------------");
 
 	do_func_align(Opcode, OpcodeSize);
 
