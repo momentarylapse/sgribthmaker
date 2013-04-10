@@ -30,13 +30,15 @@ enum{
 	RegRax, RegRcx, RegRdx, RegRbx, RegRsp, RegRsi, RegRdi, RegRbp, // 8 byte
 	RegR8, RegR9, RegR10, RegR11, RegR12, RegR13, RegR14, RegR15,
 	RegR8d, RegR9d, RegR10d, RegR11d, RegR12d, RegR13d, RegR14d, RegR15d,
+	RegXmm0, RegXmm1, RegXmm2, RegXmm3, RegXmm4, RegXmm5, RegXmm6, RegXmm7, // 16 byte
 	NUM_REGISTERS
 };
 
 const int NUM_REG_ROOTS = 32;
+const int MAX_REG_SIZE = 16;
 
 extern int RegRoot[];
-extern int RegResize[NUM_REG_ROOTS][9];
+extern int RegResize[NUM_REG_ROOTS][MAX_REG_SIZE + 1];
 string GetRegName(int reg);
 
 enum{
@@ -192,6 +194,9 @@ enum{
 	inst_sti,
 	inst_cld,
 	inst_std,
+
+	inst_movss,
+	inst_movsd,
 	
 	NUM_INSTRUCTION_NAMES
 };

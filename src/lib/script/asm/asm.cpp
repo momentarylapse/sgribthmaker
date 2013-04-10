@@ -17,6 +17,7 @@ enum{
 	Size32 = 4,
 	Size48 = 6,
 	Size64 = 8,
+	Size128 = 16,
 	/*SizeVariable = -5,
 	Size32or48 = -6,*/
 	SizeUnknown = -7
@@ -118,7 +119,9 @@ enum{
 	RegGroupGeneral2,
 	RegGroupSegment,
 	RegGroupFlags,
-	RegGroupControl
+	RegGroupControl,
+	RegGroupX87,
+	RegGroupXmm,
 };
 
 
@@ -130,7 +133,7 @@ struct Register{
 Array<Register> Registers;
 Array<Register*> RegisterByID;
 int RegRoot[NUM_REGISTERS];
-int RegResize[NUM_REG_ROOTS][9];
+int RegResize[NUM_REG_ROOTS][MAX_REG_SIZE + 1];
 
 void add_reg(const string &name, int id, int group, int size, int root = -1)
 {
@@ -304,6 +307,9 @@ InstructionName InstructionNames[NUM_INSTRUCTION_NAMES + 1] = {
 	{inst_sti,		"sti"},
 	{inst_cld,		"cld"},
 	{inst_std,		"std"},
+
+	{inst_movss,		"movss"},
+	{inst_movsd,		"movsd"},
 	
 	{-1,			"???"}
 };
@@ -332,7 +338,7 @@ enum{
 	Cb,Cw,Cd,Cq,
 	Mb,Mw,Md,Mq,
 	Jb,Jw,Jd,Jq,
-	Sw,
+	Sw,Xx,
 };
 
 // displacement for registers
@@ -457,6 +463,7 @@ string SizeOut(int size)
 	if (size == Size32)		return "32";
 	if (size == Size48)		return "48";
 	if (size == Size64)		return "64";
+	if (size == Size128)		return "128";
 	return "???";
 }
 
@@ -469,8 +476,10 @@ string get_size_name(int size)
 		return "word";
 	if (size == Size32)
 		return "dword";
-	if (size == Size48)
+	if (size == Size64)
 		return "qword";
+	if (size == Size128)
+		return "dqword";
 	return "";
 }
 
@@ -682,6 +691,15 @@ bool _get_inst_param_(int param, InstructionParamFuzzy &ip)
 		ip.size = Size16;
 		return true;
 	}
+	// xmm reg (reg)
+	if (param == Xx){
+		ip._type_ = ParamTRegister;
+		ip.allow_register = true;
+		ip.reg_group = RegGroupXmm;
+		ip.mrm_mode = MRMReg;
+		ip.size = Size128;
+		return true;
+	}
 	msg_error("asm: unknown instparam (call Michi!)");
 	msg_write(param);
 	exit(0);
@@ -819,7 +837,7 @@ void Init(int set)
 		InstructionSet.pointer_size = 8;
 
 	for (int i=0;i<NUM_REG_ROOTS;i++)
-		for (int j=0;j<9;j++)
+		for (int j=0;j<=MAX_REG_SIZE;j++)
 			RegResize[i][j] = -1;
 
 	Registers.clear();
@@ -886,17 +904,23 @@ void Init(int set)
 	add_reg("cr2",	RegCr2,	RegGroupControl,	Size32);
 	add_reg("cr3",	RegCr3,	RegGroupControl,	Size32);
 
-	add_reg("st0",	RegSt0,	-1,	Size32,	16); // ??? 32
-	add_reg("st1",	RegSt1,	-1,	Size32,	17);
-	add_reg("st2",	RegSt2,	-1,	Size32,	18);
-	add_reg("st3",	RegSt3,	-1,	Size32,	19);
-	add_reg("st4",	RegSt4,	-1,	Size32,	20);
-	add_reg("st5",	RegSt5,	-1,	Size32,	21);
-	add_reg("st6",	RegSt6,	-1,	Size32,	22);
-	add_reg("st7",	RegSt7,	-1,	Size32,	23);
+	add_reg("st0",	RegSt0,	RegGroupX87,	Size32,	16); // ??? 32
+	add_reg("st1",	RegSt1,	RegGroupX87,	Size32,	17);
+	add_reg("st2",	RegSt2,	RegGroupX87,	Size32,	18);
+	add_reg("st3",	RegSt3,	RegGroupX87,	Size32,	19);
+	add_reg("st4",	RegSt4,	RegGroupX87,	Size32,	20);
+	add_reg("st5",	RegSt5,	RegGroupX87,	Size32,	21);
+	add_reg("st6",	RegSt6,	RegGroupX87,	Size32,	22);
+	add_reg("st7",	RegSt7,	RegGroupX87,	Size32,	23);
 
-	for (int i=0;i<20;i++)
-		msg_write(RegResize[i][1]);
+	add_reg("xmm0",	RegXmm0,	RegGroupXmm,	Size128);
+	add_reg("xmm1",	RegXmm1,	RegGroupXmm,	Size128);
+	add_reg("xmm2",	RegXmm2,	RegGroupXmm,	Size128);
+	add_reg("xmm3",	RegXmm3,	RegGroupXmm,	Size128);
+	add_reg("xmm4",	RegXmm4,	RegGroupXmm,	Size128);
+	add_reg("xmm5",	RegXmm5,	RegGroupXmm,	Size128);
+	add_reg("xmm6",	RegXmm6,	RegGroupXmm,	Size128);
+	add_reg("xmm7",	RegXmm7,	RegGroupXmm,	Size128);
 
 	// create easy to access array
 	RegisterByID.clear();
@@ -1416,8 +1440,8 @@ void Init(int set)
 	add_inst(inst_out		,0xee	,1	,-1	,RegDx	,RegAl	);
 	add_inst(inst_out		,0xef	,1	,-1	,RegDx	,RegEax);
 	add_inst(inst_lock		,0xf0	,1	,-1	,-1	,-1	);
-	add_inst(inst_repne		,0xf2	,1	,-1	,-1	,-1	);
-	add_inst(inst_rep		,0xf3	,1	,-1	,-1	,-1	);
+	/*add_inst(inst_repne		,0xf2	,1	,-1	,-1	,-1	);
+	add_inst(inst_rep		,0xf3	,1	,-1	,-1	,-1	);*/
 	add_inst(inst_hlt		,0xf4	,1	,-1	,-1	,-1	);
 	add_inst(inst_cmc		,0xf5	,1	,-1	,-1	,-1	);
 	// Unary Group 3
@@ -1476,6 +1500,12 @@ void Init(int set)
 	add_inst(inst_push,	0xff,	1,	6,	Ew,	-1, OptSmallParam);
 	add_inst(inst_push,	0xff,	1,	6,	Ed,	-1);
 	add_inst(inst_push,	0xff,	1,	6,	Eq,	-1, OptBigParam);
+
+	// sse
+	add_inst(inst_movss,	0x100ff3,	3,	-1,	Xx, Ed);
+	add_inst(inst_movss,	0x110ff3,	3,	-1,	Ed, Xx);
+	add_inst(inst_movsd,	0x100ff2,	3,	-1,	Xx, Eq);
+	add_inst(inst_movsd,	0x110ff2,	3,	-1,	Eq, Xx);
 }
 
 // convert an asm parameter into a human readable expression
@@ -1691,6 +1721,8 @@ inline void GetFromModRM(InstructionParam &p, InstructionParamFuzzy &pf, unsigne
 			if (reg == 0x08)	p.reg = RegisterByID[RegCr1];
 			if (reg == 0x10)	p.reg = RegisterByID[RegCr2];
 			if (reg == 0x18)	p.reg = RegisterByID[RegCr3];
+		}else if (pf.reg_group == RegGroupXmm){
+			p.reg = RegisterByID[RegXmm0 + (reg >> 3)];
 		}else{
 			reg = (reg >> 3) | (state.ExtendModRMReg ? 0x08 : 0x00);
 			p.reg = RegisterByID[GetModRMRegister(reg, p.size)];
@@ -2979,6 +3011,7 @@ char GetModRMReg(Register *r)
 	if ((id == RegR13) || (id == RegR13d) || (id == RegRbp) || (id == RegEbp) || (id == RegBp) || (id == RegCh))	return 0x05;
 	if ((id == RegR14) || (id == RegR14d) || (id == RegRsi) || (id == RegEsi) || (id == RegSi) || (id == RegDh))	return 0x06;
 	if ((id == RegR15) || (id == RegR15d) || (id == RegRdi) || (id == RegEdi) || (id == RegDi) || (id == RegBh))	return 0x07;
+	if ((id >= RegXmm0) && (id <= RegXmm7))	return (id - RegXmm0);
 	SetError("GetModRMReg: register not allowed: " + r->name);
 	return 0;
 }
