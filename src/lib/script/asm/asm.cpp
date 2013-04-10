@@ -371,7 +371,7 @@ struct InstructionWithParams{
 };
 
 
-InstructionParam _make_param_(int type, long long param);
+InstructionParam _make_param_(int type, int size, long long param);
 
 InstructionWithParamsList::InstructionWithParamsList(int line_no)
 {
@@ -382,12 +382,12 @@ InstructionWithParamsList::InstructionWithParamsList(int line_no)
 InstructionWithParamsList::~InstructionWithParamsList()
 {}
 
-void InstructionWithParamsList::add_easy(int inst, int param1_type, void *param1, int param2_type, void *param2)
+void InstructionWithParamsList::add_easy(int inst, int param1_type, int param1_size, void *param1, int param2_type, int param2_size, void *param2)
 {
 	InstructionWithParams i;
 	i.inst = inst;
-	i.p1 = _make_param_(param1_type, (long)param1);
-	i.p2 = _make_param_(param2_type, (long)param2);
+	i.p1 = _make_param_(param1_type, param1_size, (long)param1);
+	i.p2 = _make_param_(param2_type, param2_size, (long)param2);
 	i.line = current_line;
 	i.col = current_col;
 	add(i);
@@ -424,12 +424,13 @@ void InstructionWithParamsList::add_func_intro(int stack_alloc_size)
 {
 	long reg_bp = (InstructionSet.set == InstructionSetAMD64) ? RegRbp : RegEbp;
 	long reg_sp = (InstructionSet.set == InstructionSetAMD64) ? RegRsp : RegEsp;
-	add_easy(inst_push, PKRegister, (void*)reg_bp);
-	add_easy(inst_mov, PKRegister, (void*)reg_bp, PKRegister, (void*)reg_sp);
+	int s = InstructionSet.pointer_size;
+	add_easy(inst_push, PKRegister, s, (void*)reg_bp);
+	add_easy(inst_mov, PKRegister, s, (void*)reg_bp, PKRegister, s, (void*)reg_sp);
 	if (stack_alloc_size > 127){
-		add_easy(inst_sub, PKRegister, (void*)reg_sp, PKConstant32, (void*)(long)stack_alloc_size);
+		add_easy(inst_sub, PKRegister, s, (void*)reg_sp, PKConstant, Size32, (void*)(long)stack_alloc_size);
 	}else if (stack_alloc_size > 0){
-		add_easy(inst_sub, PKRegister, (void*)reg_sp, PKConstant8, (void*)(long)stack_alloc_size);
+		add_easy(inst_sub, PKRegister, s, (void*)reg_sp, PKConstant, Size8, (void*)(long)stack_alloc_size);
 	}
 }
 
@@ -437,7 +438,7 @@ void InstructionWithParamsList::add_func_return(int return_size)
 {
 	add_easy(inst_leave);
 	if (return_size > 4)
-		add_easy(inst_ret, PKConstant16, (void*)4);
+		add_easy(inst_ret, PKConstant, Size16, (void*)4);
 	else
 		add_easy(inst_ret);
 }
@@ -457,6 +458,20 @@ string SizeOut(int size)
 	if (size == Size48)		return "48";
 	if (size == Size64)		return "64";
 	return "???";
+}
+
+
+string get_size_name(int size)
+{
+	if (size == Size8)
+		return "byte";
+	if (size == Size16)
+		return "word";
+	if (size == Size32)
+		return "dword";
+	if (size == Size48)
+		return "qword";
+	return "";
 }
 
 // parameter definition (filter for real parameters)
@@ -1355,35 +1370,19 @@ void Init(int set)
 	add_inst(inst_sar,	0xd3,	1,	7,	Ew,	RegCl, OptSmallParam);
 	add_inst(inst_sar,	0xd3,	1,	7,	Ed,	RegCl);
 	add_inst(inst_sar,	0xd3,	1,	7,	Eq,	RegCl, OptBigParam);
-	add_inst(inst_fadd,	0xd8,	1,	0,	Ew,	-1, OptSmallParam);
 	add_inst(inst_fadd,	0xd8,	1,	0,	Ed,	-1);
-	add_inst(inst_fadd,	0xd8,	1,	0,	Eq,	-1, OptBigParam);
-	add_inst(inst_fmul,	0xd8,	1,	1,	Ew,	-1, OptSmallParam);
 	add_inst(inst_fmul,	0xd8,	1,	1,	Ed,	-1);
-	add_inst(inst_fmul,	0xd8,	1,	1,	Eq,	-1, OptBigParam);
-	add_inst(inst_fsub,	0xd8,	1,	4,	Ew,	-1, OptSmallParam);
 	add_inst(inst_fsub,	0xd8,	1,	4,	Ed,	-1);
-	add_inst(inst_fsub,	0xd8,	1,	4,	Eq,	-1, OptBigParam);
-	add_inst(inst_fdiv,	0xd8,	1,	6,	Ew,	-1, OptSmallParam);
 	add_inst(inst_fdiv,	0xd8,	1,	6,	Ed,	-1);
-	add_inst(inst_fdiv,	0xd8,	1,	6,	Eq,	-1, OptBigParam);
-	add_inst(inst_fld,	0xd9,	1,	0,	Mw,	-1, OptSmallParam);
 	add_inst(inst_fld,	0xd9,	1,	0,	Md,	-1);
-	add_inst(inst_fld,	0xd9,	1,	0,	Mq,	-1, OptBigParam);
-	add_inst(inst_fst,	0xd9,	1,	2,	Mw,	-1, OptSmallParam);
 	add_inst(inst_fst,	0xd9,	1,	2,	Md,	-1);
-	add_inst(inst_fst,	0xd9,	1,	2,	Mq,	-1, OptBigParam);
-	add_inst(inst_fstp,	0xd9,	1,	3,	Mw,	-1, OptSmallParam);
 	add_inst(inst_fstp,	0xd9,	1,	3,	Md,	-1);
-	add_inst(inst_fstp,	0xd9,	1,	3,	Mq,	-1, OptBigParam);
+	add_inst(inst_fldcw,	0xd9,	1,	5,	Mw,	-1);
+	add_inst(inst_fnstcw,	0xd9,	1,	7,	Mw,	-1);
 	add_inst(inst_fxch		,0xc9d9	,2	,-1	,RegSt0	,RegSt1	);
 	add_inst(inst_fucompp	,0xe9da	,2	,-1	,RegSt0	,RegSt1	);
 	add_inst(inst_fistp		,0xdb	,1	,3	,Md	,-1	);
-
-//	FNSTCW
-	add_inst(inst_fild,	0xdb,	1,	0,	Ew,	-1, OptSmallParam);
 	add_inst(inst_fild,	0xdb,	1,	0,	Ed,	-1);
-	add_inst(inst_fild,	0xdb,	1,	0,	Eq,	-1, OptBigParam);
 	add_inst(inst_faddp,	0xde,	1,	0,	Ew,	-1, OptSmallParam);
 	add_inst(inst_faddp,	0xde,	1,	0,	Ed,	-1);
 	add_inst(inst_faddp,	0xde,	1,	0,	Eq,	-1, OptBigParam);
@@ -1494,28 +1493,29 @@ string InstructionParam::str()
 			//msg_write((long)disp);
 		if (deref){
 			//msg_write("deref");
+			string ss = get_size_name(size);
 			if (disp == DispModeNone)
-				return "[" + reg->name + "]." + i2s(size);
+				return ss + " [" + reg->name + "]";
 			else if (disp == DispMode8)
-				return format("[%s + 0x%02x].%d", reg->name.c_str(), value, size);
+				return ss + format(" [%s + 0x%02x]", reg->name.c_str(), value);
 			else if (disp == DispMode16)
-				return format("[%s + 0x%04x].%d", reg->name.c_str(), value, size);
+				return ss + format(" [%s + 0x%04x]", reg->name.c_str(), value);
 			else if (disp == DispMode32)
-				return format("[%s + 0x%08x].%d", reg->name.c_str(), value, size);
+				return ss + format(" [%s + 0x%08x]", reg->name.c_str(), value);
 			else if (disp == DispModeSIB)
 				return "SIB[...][...]";
 			else if (disp == DispMode8SIB)
-				return format("[SIB... + 0x%02x]", value);
+				return ss + format(" [SIB... + 0x%02x]", value);
 			else if (disp == DispMode8Reg2)
-				return format("[%s + %s + 0x%02x]", reg->name.c_str(), reg2->name.c_str(), value);
+				return ss + format(" [%s + %s + 0x%02x]", reg->name.c_str(), reg2->name.c_str(), value);
 			else if (disp == DispModeReg2)
-				return "[" + reg->name + " + " + reg2->name + "]";
+				return ss + " [" + reg->name + " + " + reg2->name + "]";
 		}else
 			return reg->name;
 	}else if (type == ParamTImmediate){
 		//msg_write("im");
 		if (deref)
-			return format("[%s].%d", d2h(&value, state.AddrSize).c_str(), size);
+			return format(" [%s]", d2h(&value, state.AddrSize).c_str());
 		return d2h(&value, size);
 	}/*else if (type == ParamTImmediateDouble){
 		//msg_write("im");
@@ -2916,7 +2916,7 @@ bool InstructionParamFuzzy::match(InstructionParam &wanted_p)
 }
 
 // translate from easy parameters to assembler usable parameters
-InstructionParam _make_param_(int type, long long param)
+InstructionParam _make_param_(int type, int size, long long param)
 {
 	InstructionParam i;
 	i.reg = NULL;
@@ -2927,37 +2927,19 @@ InstructionParam _make_param_(int type, long long param)
 	i.is_label = false;
 	if (type == PKNone){
 		i.type = ParamTNone;
-	}else if (type == PKConstant8){
+	}else if (type == PKConstant){
 		i.type = ParamTImmediate;
-		i.size = Size8;
-		i.value = param;
-	}else if (type == PKConstant16){
-		i.type = ParamTImmediate;
-		i.size = Size16;
-		i.value = param;
-	}else if (type == PKConstant32){
-		i.type = ParamTImmediate;
-		i.size = Size32;
+		i.size = size;
 		i.value = param;
 	}else if (type == PKLabel){
 		i.type = ParamTImmediate;
 		i.size = Size32;
 		i.value = param;
 		i.is_label = true;
-	}else if (type == PKDerefConstant8){
+	}else if (type == PKDerefConstant){
 		i.type = ParamTImmediate;
 		i.deref = true;
-		i.size = Size8;
-		i.value = param;
-	}else if (type == PKDerefConstant32){
-		i.type = ParamTImmediate;
-		i.deref = true;
-		i.size = Size32;
-		i.value = param;
-	}else if (type == PKDerefConstant64){
-		i.type = ParamTImmediate;
-		i.deref = true;
-		i.size = Size64;
+		i.size = size;
 		i.value = param;
 	}else if (type == PKEdxRel){
 		i.type = ParamTRegister;
@@ -2965,45 +2947,21 @@ InstructionParam _make_param_(int type, long long param)
 		i.deref = true;
 		i.disp = ((param < 120) && (param > -120)) ? DispMode8 : DispMode32;
 		i.value = param;
-	}else if (type == PKLocal8){
+	}else if (type == PKLocal){
 		i.type = ParamTRegister;
 		i.reg = RegisterByID[RegEbp];
 		i.deref = true;
-		i.size = Size8;
-		i.disp = ((param < 120) && (param > -120)) ? DispMode8 : DispMode32;
-		i.value = param;
-	}else if (type == PKLocal32){
-		i.type = ParamTRegister;
-		i.reg = RegisterByID[RegEbp];
-		i.deref = true;
-		i.size = Size32;
-		i.disp = ((param < 120) && (param > -120)) ? DispMode8 : DispMode32;
-		i.value = param;
-	}else if (type == PKLocal64){
-		i.type = ParamTRegister;
-		i.reg = RegisterByID[RegEbp];
-		i.deref = true;
-		i.size = Size64;
+		i.size = size;
 		i.disp = ((param < 120) && (param > -120)) ? DispMode8 : DispMode32;
 		i.value = param;
 	}else if (type == PKRegister){
 		i.type = ParamTRegister;
 		i.reg = RegisterByID[(long)param];
 		i.size = i.reg->size;
-	}else if (type == PKDerefRegister8){
+	}else if (type == PKDerefRegister){
 		i.type = ParamTRegister;
 		i.reg = RegisterByID[(long)param];
-		i.size = Size8;
-		i.deref = true;
-	}else if (type == PKDerefRegister32){
-		i.type = ParamTRegister;
-		i.reg = RegisterByID[(long)param];
-		i.size = Size32;
-		i.deref = true;
-	}else if (type == PKDerefRegister64){
-		i.type = ParamTRegister;
-		i.reg = RegisterByID[(long)param];
-		i.size = Size64;
+		i.size = size;
 		i.deref = true;
 	}
 	return i;
@@ -3230,7 +3188,7 @@ void InstructionWithParamsList::Compile(void *oc, int &ocs)
 }
 
 // only used for error messages
-void param2str(string &str, int type, void *param)
+void param2str(string &str, int type, int size, void *param)
 {
 	switch(type){
 		case PKNone:
@@ -3246,12 +3204,8 @@ void param2str(string &str, int type, void *param)
 			}else
 				str += "-----evil----";
 			break;
-		case PKDerefRegister8:
-		case PKDerefRegister32:
-		case PKDerefRegister64:
-			if (type == PKDerefRegister8)	str = "byte deref reg ";
-			if (type == PKDerefRegister32)	str = "dword deref reg ";
-			if (type == PKDerefRegister64)	str = "qword deref reg ";
+		case PKDerefRegister:
+			str = get_size_name(size) + " deref reg ";
 			if (((long)param >= 0) && ((long)param < RegisterByID.num)){
 				if (RegisterByID[(long)param])
 					str += RegisterByID[(long)param]->name;
@@ -3260,38 +3214,20 @@ void param2str(string &str, int type, void *param)
 			}else
 				str += "-----evil----";
 			break;
-		case PKLocal8:
-			str = "byte local " + d2h(&param, 4);
-			break;
-		case PKLocal32:
-			str = "dword local " + d2h(&param, 4);
-			break;
-		case PKLocal64:
-			str = "qword local " + d2h(&param, 4);
+		case PKLocal:
+			str = get_size_name(size) + " local " + d2h(&param, 4);
 			break;
 		case PKEdxRel:
 			str = "edx rel " + d2h(&param, 4);
 			break;
-		case PKConstant32:
-			str = "const32 " + d2h(&param, 4);
+		case PKConstant:
+			str = "const " + d2h(&param, size);
 			break;
-		case PKConstant16:
-			str = "const16 " + d2h(&param, 2);
-			break;
-		case PKConstant8:
-			str = "const8 " + d2h(&param, 1);
-			break;
-		case PKConstantDouble:
+		/*case PKConstantDouble:
 			str = "const 2x " + d2h(&param, 6);
-			break;
-		case PKDerefConstant8:
-			str = "byte deref const [" + d2h(&param, 4) + "]";
-			break;
-		case PKDerefConstant32:
-			str = "dword deref const [" + d2h(&param, 4) + "]";
-			break;
-		case PKDerefConstant64:
-			str = "qword deref const [" + d2h(&param, 4) + "]";
+			break;*/
+		case PKDerefConstant:
+			str = get_size_name(size) + "deref const [" + d2h(&param, 4) + "]";
 			break;
 		default:
 			str = format("??? (%d)", type);
@@ -3299,7 +3235,7 @@ void param2str(string &str, int type, void *param)
 	}
 }
 
-void AddInstruction(char *oc, int &ocs, int inst, int param1_type, void *param1, int param2_type, void *param2)
+void AddInstruction(char *oc, int &ocs, int inst, int param1_type, int param1_size, void *param1, int param2_type, int param2_size, void *param2)
 {
 	msg_db_f("AsmAddInstruction", 1+ASM_DB_LEVEL);
 	/*if (!CPUInstructions)
@@ -3311,8 +3247,8 @@ void AddInstruction(char *oc, int &ocs, int inst, int param1_type, void *param1,
 		if (InstructionName[i].inst == inst)
 			printf("%s\n", InstructionName[i].name);*/
 
-	InstructionParam wp1 = _make_param_(param1_type, (long)param1);
-	InstructionParam wp2 = _make_param_(param2_type, (long)param2);
+	InstructionParam wp1 = _make_param_(param1_type, param1_size, (long)param1);
+	InstructionParam wp2 = _make_param_(param2_type, param2_size, (long)param2);
 
 	OCParam = ocs;
 	InstructionWithParamsList list = InstructionWithParamsList(0);

@@ -23,9 +23,6 @@ namespace Script{
 
 extern string Version;
 
-
-extern bool UseConstAsGlobalVar;
-
 class Exception : public Asm::Exception
 {
 public:
@@ -107,14 +104,11 @@ public:
 	int MemoryUsed;
 };
 
-extern Script *Load(const string &filename, bool is_public = true, bool just_analyse = false);
-extern void Remove(Script *s);
-extern string Directory;
-extern bool CompileSilently;
-extern bool ShowCompilerStats;
-extern void ExecutePublicScripts();
-extern void DeleteAllScripts(bool even_immortal = false, bool force = false);
-extern void ExecuteSingleScriptCommand(const string &cmd);
+Script *Load(const string &filename, bool is_public = true, bool just_analyse = false);
+void Remove(Script *s);
+void ExecutePublicScripts();
+void DeleteAllScripts(bool even_immortal = false, bool force = false);
+void ExecuteSingleScriptCommand(const string &cmd);
 
 };
 

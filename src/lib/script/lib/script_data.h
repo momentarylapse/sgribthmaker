@@ -15,14 +15,10 @@ namespace Script{
 #define SCRIPT_MAX_OPCODE				(2*65536)	// max. amount of opcode
 #define SCRIPT_MAX_THREAD_OPCODE		1024
 #define SCRIPT_DEFAULT_STACK_SIZE		32768	// max. amount of stack memory
-extern int StackSize;
-
-extern int PointerSize;
-#define SuperArraySize	(PointerSize + 3 * sizeof(int))//(sizeof(DynamicArray))
 
 
 //#define mem_align(x)	((x) + (4 - (x) % 4) % 4)
-#define mem_align(x)	((((x) + 3) / 4 ) * 4)
+#define mem_align(x, n)		((((x) + (n) - 1) / (n) ) * (n))
 
 extern string DataVersion;
 
@@ -251,12 +247,45 @@ public:
 	void func(){}
 };
 
-extern void Init(int instruction_set = -1);
-extern void End();
-extern void ResetSemiExternalData();
-extern void LinkSemiExternalVar(const string &name, void *pointer);
-extern void LinkSemiExternalFunc(const string &name, void *pointer);
-extern void _LinkSemiExternalClassFunc(const string &name, void (DummyClass::*function)());
+enum
+{
+	AbiGnu32,
+	AbiGnu64,
+	AbiWindows32,
+	AbiWindows64,
+};
+
+struct CompilerConfiguration
+{
+	int instruction_set;
+	int abi;
+
+	int StackSize;
+	int PointerSize;
+	int SuperArraySize;
+
+	bool allow_simplification;
+	bool allow_registers;
+
+	string Directory;
+	bool CompileSilently;
+	bool ShowCompilerStats;
+	bool UseConstAsGlobalVar;
+
+	int StackMemAlign;
+	int FunctionAlign;
+	int StackFrameAlign;
+
+};
+
+extern CompilerConfiguration config;
+
+void Init(int instruction_set = -1, int abi = -1);
+void End();
+void ResetSemiExternalData();
+void LinkSemiExternalVar(const string &name, void *pointer);
+void LinkSemiExternalFunc(const string &name, void *pointer);
+void _LinkSemiExternalClassFunc(const string &name, void (DummyClass::*function)());
 template<typename T>
 void LinkSemiExternalClassFunc(const string &name, T pointer)
 {

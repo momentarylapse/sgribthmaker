@@ -1023,7 +1023,7 @@ void SyntaxTree::GetSpecialCommand(Block *block, Function *f)
 		// array.num
 		Command *val1 = AddCommand();
 		val1->kind = KindAddressShift;
-		val1->link_nr = PointerSize;
+		val1->link_nr = config.PointerSize;
 		val1->type = TypeInt;
 		val1->num_params = 1;
 		val1->param[0] = for_array;
@@ -1266,12 +1266,12 @@ void SyntaxTree::TestArrayDefinition(Type **type, bool is_pointer)
 
 		// create array       (complicated name necessary to get correct ordering   int a[2][4] = (int[4])[2])
 		if (array_size < 0){
-			(*type) = CreateNewType(	or_name + "[]" +  (*type)->name.substr(or_name_length, -1),
-			                        	SuperArraySize, false, false, true, array_size, (*type));
+			(*type) = CreateNewType(or_name + "[]" +  (*type)->name.substr(or_name_length, -1),
+			                        config.SuperArraySize, false, false, true, array_size, (*type));
 			CreateImplicitFunctions((*type), cur_func);
 		}else{
-			(*type) = CreateNewType(	or_name + format("[%d]", array_size) + (*type)->name.substr(or_name_length, -1),
-			                        	(*type)->size * array_size, false, false, true, array_size, (*type));
+			(*type) = CreateNewType(or_name + format("[%d]", array_size) + (*type)->name.substr(or_name_length, -1),
+			                        (*type)->size * array_size, false, false, true, array_size, (*type));
 		}
 		if (Exp.cur == "*"){
 			so("nachtraeglich Pointer");
@@ -1475,7 +1475,7 @@ void SyntaxTree::ParseClass()
 
 
 			if (type_needs_alignment(type))
-				_offset = mem_align(_offset);
+				_offset = mem_align(_offset, 4);
 			so(format("Class-Element: %s %s  Offset: %d", type->name.c_str(), el.name.c_str(), _offset));
 			if ((Exp.cur != ",") && (!Exp.end_of_line()))
 				DoError("\",\" or newline expected after class element");
@@ -1489,7 +1489,7 @@ void SyntaxTree::ParseClass()
 	}
 	foreach(ClassElement &e, t->element)
 		if (type_needs_alignment(e.type))
-			_offset = mem_align(_offset);
+			_offset = mem_align(_offset, 4);
 	t->size = _offset;
 
 
