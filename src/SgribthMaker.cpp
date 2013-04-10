@@ -1216,18 +1216,17 @@ TT sf()
 	return TT(7);
 }
 
-string ssss;
+string ssss, ssss2;
 
-bool bbb[8];
-
-void _ff(bool a, bool b, bool c, bool d, bool e, bool f)
+string ffss()
 {
-	bbb[0] = a;
-	bbb[1] = b;
-	bbb[2] = c;
-	bbb[3] = d;
-	bbb[4] = e;
-	bbb[5] = f;
+	return ssss2;
+}
+
+void _ff()
+{
+	ssss = ffss();
+	ssss = ffss();
 //	TT x = sf();
 	//ssss = sf();
 	//TT x = tt.f(7);
@@ -1404,7 +1403,7 @@ int hui_main(Array<string> arg)
 
 	Script::Init();
 
-	msg_write(Asm::Disassemble((void*)sf, -1));
+	msg_write(Asm::Disassemble((void*)ffss, -1));
 	msg_write(Asm::Disassemble((void*)_ff, -1));
 
 	New();

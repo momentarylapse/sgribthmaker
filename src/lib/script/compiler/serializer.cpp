@@ -522,8 +522,11 @@ void Serializer::add_function_call_amd64(Script *script, int func_no)
 		else if (type->size == 1){
 			add_cmd(Asm::inst_mov, CompilerFunctionReturn, p_al);
 			add_reg_channel(Asm::RegEax, cmd.num - 2, cmd.num - 1);
-		}else{
+		}else if (type->size == 4){
 			add_cmd(Asm::inst_mov, CompilerFunctionReturn, p_eax);
+			add_reg_channel(Asm::RegEax, cmd.num - 2, cmd.num - 1);
+		}else{
+			add_cmd(Asm::inst_mov, CompilerFunctionReturn, p_rax);
 			add_reg_channel(Asm::RegEax, cmd.num - 2, cmd.num - 1);
 		}
 	}
@@ -2317,42 +2320,62 @@ void Serializer::ResolveDerefRegShift()
 void Serializer::AddFunctionIntro(Function *f)
 {
 	if (config.instruction_set == Asm::InstructionSetAMD64){
-		int n = 0;
-		// rdi, rsi,rdx, rcx, r8, r9
-		int param_regs_root[6] = {7, 6, 2, 1, 8, 9};
+		// return, instance, params
 		Array<LocalVariable> param;
-		if (f->_class)
-			param.add(f->var[f->num_params]);
-		// TODO: instance..
+		if (f->return_type->UsesReturnByMemory()){
+			foreach(LocalVariable &v, f->var)
+				if (v.name == "-return-"){
+					param.add(v);
+					break;
+				}
+		}
+		if (f->_class){
+			foreach(LocalVariable &v, f->var)
+				if (v.name == "self"){
+					param.add(v);
+					break;
+				}
+		}
 		for (int i=0;i<f->num_params;i++)
 			param.add(f->var[i]);
 
-
 		// map params...
-		int num_reg = 0;
+		Array<LocalVariable> reg_param;
+		Array<LocalVariable> stack_param;
 		foreach(LocalVariable &p, param){
 			if ((p.type == TypeInt) || (p.type == TypeChar) || (p.type == TypeBool) || (p.type->is_pointer)){
-				if (num_reg < 6)
-					num_reg ++;
+				if (reg_param.num < 6){
+					reg_param.add(p);
+				}else{
+					stack_param.add(p);
+				}
+			}else
+				DoError("parameter type currently not supported: " + p.type->name);
+		}
+	
+		// rdi, rsi,rdx, rcx, r8, r9 
+		int param_regs_root[6] = {7, 6, 2, 1, 8, 9};
+		foreachib(LocalVariable &p, reg_param, i){
+			int root = param_regs_root[i];
+			int reg = get_reg(root, p.type->size);
+			if (reg >= 0){
+				add_cmd(Asm::inst_mov, param_local(p.type, p._offset), param_reg(p.type, reg));
+				add_reg_channel(reg, cmd.num - 1, cmd.num - 1);
+			}else{
+				// some registers are not 8bit'able
+				add_cmd(Asm::inst_mov, p_eax, param_reg(TypeReg32, get_reg(root, 4)));
+				add_cmd(Asm::inst_mov, param_local(p.type, p._offset), param_reg(p.type, get_reg(0, p.type->size)));
+				add_reg_channel(reg, cmd.num - 2, cmd.num - 2);
+				add_reg_channel(Asm::RegEax, cmd.num - 2, cmd.num - 1);
 			}
 		}
-
-		foreachb(LocalVariable &p, param){
-			if ((p.type == TypeInt) || (p.type == TypeChar) || (p.type == TypeBool) || (p.type->is_pointer)){
-				int root = param_regs_root[num_reg - n - 1];
-				int reg = get_reg(root, p.type->size);
-				if (reg >= 0){
-					add_cmd(Asm::inst_mov, param_local(p.type, p._offset), param_reg(p.type, reg));
-					add_reg_channel(reg, cmd.num - 1, cmd.num - 1);
-				}else{
-					// some registers are not 8bit'able
-					add_cmd(Asm::inst_mov, p_eax, param_reg(TypeReg32, get_reg(root, 4)));
-					add_cmd(Asm::inst_mov, param_local(p.type, p._offset), param_reg(p.type, get_reg(0, p.type->size)));
-					add_reg_channel(reg, cmd.num - 2, cmd.num - 2);
-					add_reg_channel(Asm::RegEax, cmd.num - 2, cmd.num - 1);
-				}
-				n ++;
-			}
+		
+		// get parameters from stack
+		foreachb(LocalVariable &p, stack_param){
+			DoError("func with stack...");
+			/*int s = 8;
+			add_cmd(Asm::inst_push, p);
+			push_size += s;*/
 		}
 	}
 
