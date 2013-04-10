@@ -468,10 +468,17 @@ void Serializer::add_function_call_amd64(Script *script, int func_no)
 	// map params...
 	Array<SerialCommandParam> reg_param;
 	Array<SerialCommandParam> stack_param;
+	Array<SerialCommandParam> xmm_param;
 	foreach(SerialCommandParam &p, CompilerFunctionParam){
 		if ((p.type == TypeInt) || (p.type == TypeChar) || (p.type == TypeBool) || (p.type->is_pointer)){
 			if (reg_param.num < 6){
 				reg_param.add(p);
+			}else{
+				stack_param.add(p);
+			}
+		}else if (p.type == TypeFloat){
+			if (xmm_param.num < 8){
+				xmm_param.add(p);
 			}else{
 				stack_param.add(p);
 			}
@@ -486,7 +493,6 @@ void Serializer::add_function_call_amd64(Script *script, int func_no)
 		push_size += s;
 	}
 	
-	int n = 0;
 	// rdi, rsi,rdx, rcx, r8, r9 
 	int param_regs_root[6] = {7, 6, 2, 1, 8, 9};
 	foreachib(SerialCommandParam &p, reg_param, i){
@@ -499,6 +505,11 @@ void Serializer::add_function_call_amd64(Script *script, int func_no)
 			add_cmd(Asm::inst_mov, p_al, p);
 			add_cmd(Asm::inst_mov, param_reg(TypeReg32, get_reg(root, 4)), p_eax);
 		}
+	}
+	// xmm0-7 
+	foreachib(SerialCommandParam &p, xmm_param, i){
+		int reg = Asm::RegXmm0 + i;
+		add_cmd(Asm::inst_movss, param_reg(p.type, reg), p);
 	}
 
 	void *func = (void*)script->func[func_no];
@@ -516,7 +527,7 @@ void Serializer::add_function_call_amd64(Script *script, int func_no)
 	// return > 4b already got copied to [ret] by the function!
 	if ((type != TypeVoid) && (!type->UsesReturnByMemory())){
 		if (type == TypeFloat)
-			add_cmd(Asm::inst_fstp, CompilerFunctionReturn);
+			add_cmd(Asm::inst_movss, CompilerFunctionReturn, param_reg(TypeFloat, Asm::RegXmm0));
 		else if (type->size == 1){
 			add_cmd(Asm::inst_mov, CompilerFunctionReturn, p_al);
 			add_reg_channel(Asm::RegEax, cmd.num - 2, cmd.num - 1);
@@ -1242,9 +1253,12 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 							add_temp(cur_func->return_type, t);
 							add_cmd(Asm::inst_mov, t, param[0]);
 							FillInDestructors(false);
-							if (cur_func->return_type == TypeFloat)
-								add_cmd(Asm::inst_fld, t);
-							else if (cur_func->return_type->size == 1)
+							if (cur_func->return_type == TypeFloat){
+								if (config.instruction_set == Asm::InstructionSetAMD64)
+									add_cmd(Asm::inst_movss, param_reg(TypeFloat, Asm::RegXmm0), t);
+								else
+									add_cmd(Asm::inst_fld, t);
+							}else if (cur_func->return_type->size == 1)
 								add_cmd(Asm::inst_mov, param_reg(cur_func->return_type, Asm::RegAl), t);
 							else
 								add_cmd(Asm::inst_mov, param_reg(cur_func->return_type, Asm::RegEax), t);
@@ -2340,6 +2354,7 @@ void Serializer::AddFunctionIntro(Function *f)
 		// map params...
 		Array<LocalVariable> reg_param;
 		Array<LocalVariable> stack_param;
+		Array<LocalVariable> xmm_param;
 		foreach(LocalVariable &p, param){
 			if ((p.type == TypeInt) || (p.type == TypeChar) || (p.type == TypeBool) || (p.type->is_pointer)){
 				if (reg_param.num < 6){
@@ -2347,8 +2362,20 @@ void Serializer::AddFunctionIntro(Function *f)
 				}else{
 					stack_param.add(p);
 				}
+			}else if (p.type == TypeFloat){
+				if (xmm_param.num < 8){
+					xmm_param.add(p);
+				}else{
+					stack_param.add(p);
+				}
 			}else
 				DoError("parameter type currently not supported: " + p.type->name);
+		}
+	
+		// xmm0-7
+		foreachib(LocalVariable &p, xmm_param, i){
+			int reg = Asm::RegXmm0 + i;
+			add_cmd(Asm::inst_movss, param_local(p.type, p._offset), param_reg(p.type, reg));
 		}
 	
 		// rdi, rsi,rdx, rcx, r8, r9 

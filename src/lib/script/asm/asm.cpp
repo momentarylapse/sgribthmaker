@@ -764,7 +764,7 @@ void GetInstructionParamFlags(int inst, bool &p1_read, bool &p1_write, bool &p2_
 
 bool GetInstructionAllowConst(int inst)
 {
-	if ((inst == inst_div) || (inst == inst_idiv))
+	if ((inst == inst_div) || (inst == inst_idiv) || (inst == inst_movss))
 		return false;
 	for (int i=0;i<NUM_INSTRUCTION_NAMES;i++)
 		if (InstructionNames[i].inst == inst)
