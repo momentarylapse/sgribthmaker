@@ -86,7 +86,7 @@ struct Serializer
 	bool RegRootUsed[max_reg];
 	Array<LoopData> loop;
 
-	int StackOffset, StackMaxSize;
+	int StackOffset, StackMaxSize, MaxPushSize;
 	Array<TempVar> temp_var;
 
 	Array<AddLaterData> add_later;

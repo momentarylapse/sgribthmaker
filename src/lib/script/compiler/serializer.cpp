@@ -487,11 +487,14 @@ void Serializer::add_function_call_amd64(Script *script, int func_no)
 	}
 	
 	// push parameters onto stack
-	foreachb(SerialCommandParam &p, stack_param){
-		int s = 8;
+	push_size = 8 * stack_param.num;
+	if (push_size > 127)
+		add_cmd(Asm::inst_add, param_reg(TypePointer, Asm::RegRsp), param_const(TypeInt, (void*)push_size));
+	else if (push_size > 0)
+		add_cmd(Asm::inst_add, param_reg(TypePointer, Asm::RegRsp), param_const(TypeChar, (void*)push_size));
+	foreachb(SerialCommandParam &p, stack_param)
 		add_cmd(Asm::inst_push, p);
-		push_size += s;
-	}
+	MaxPushSize = max(MaxPushSize, push_size);
 	
 	// rdi, rsi,rdx, rcx, r8, r9 
 	int param_regs_root[6] = {7, 6, 2, 1, 8, 9};
@@ -518,11 +521,6 @@ void Serializer::add_function_call_amd64(Script *script, int func_no)
 	//add_cmd(Asm::inst_call, param_const(TypePointer, func)); // the actual call
 	add_cmd(Asm::inst_call, param_const(TypeReg32, func)); // the actual call
 	// function pointer will be shifted later...
-
-	if (push_size > 127)
-		add_cmd(Asm::inst_add, param_reg(TypePointer, Asm::RegRsp), param_const(TypeInt, (void*)push_size));
-	else if (push_size > 0)
-		add_cmd(Asm::inst_add, param_reg(TypePointer, Asm::RegRsp), param_const(TypeChar, (void*)push_size));
 
 	// return > 4b already got copied to [ret] by the function!
 	if ((type != TypeVoid) && (!type->UsesReturnByMemory())){
@@ -2667,6 +2665,7 @@ void Serializer::Assemble(char *Opcode, int &OpcodeSize)
 	msg_db_f("Serializer.Assemble", 2);
 
 	// intro + allocate stack memory
+	StackMaxSize += MaxPushSize;
 	StackMaxSize = mem_align(StackMaxSize, config.StackFrameAlign);
 	list->add_func_intro(StackMaxSize);
 
@@ -2765,6 +2764,7 @@ Serializer::Serializer(Script *s)
 	script = s;
 	syntax_tree = s->syntax;
 	list = new Asm::InstructionWithParamsList(0);
+	MaxPushSize = 0;
 }
 
 Serializer::~Serializer()
