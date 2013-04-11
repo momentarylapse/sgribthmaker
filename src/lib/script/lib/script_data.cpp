@@ -32,6 +32,8 @@ CompilerConfiguration config;
 
 Script *GlobalDummyScript = NULL;
 
+Array<ExternalLinkData> ExternalLinks;
+
 
 //------------------------------------------------------------------------------------------------//
 //                                             types                                              //
@@ -611,11 +613,6 @@ public:
 	string str(){	return p2s(p);	}
 };
 
-string debug_get_str()
-{
-	return "kleiner Test";
-}
-
 void SIAddPackageBase()
 {
 	msg_db_f("SIAddPackageBase", 3);
@@ -654,8 +651,6 @@ void SIAddPackageBase()
 	TypeCString			= add_type_a("cstring",		TypeChar, 256);	// cstring := char[256]
 	TypeString			= add_type_a("string",		TypeChar, -1);	// string := char[]
 	TypeStringList		= add_type_a("string[]",	TypeString, -1);
-
-	add_func("debug_get_str", TypeString, (void*)&debug_get_str);
 	
 	add_class(TypeInt);
 		class_add_func("str", TypeString, mf((tmf)&IntClass::str));
@@ -1117,44 +1112,31 @@ void Init(int instruction_set, int abi)
 	}*/
 }
 
-void ResetSemiExternalData()
+void ResetExternalLinkData()
 {
-	msg_db_f("ScriptResetSemiExternalData", 2);
-	/*for (int i=PreExternalVars.num-1;i>=0;i--)
-		if (PreExternalVars[i].is_semi_external)
-			PreExternalVars.erase(i);
-	for (int i=PreCommands.num-1;i>=0;i--)
-		if (PreCommands[i].is_semi_external)
-			PreCommands.erase(i);*/
+	ExternalLinks.clear();
 }
 
 // program variables - specific to the surrounding program, can't always be there...
-void LinkSemiExternalVar(const string &name, void *pointer)
+void LinkExternal(const string &name, void *pointer)
 {
-	msg_db_f("ScriptLinkSemiExternalVar", 2);
-	/*PreExternalVar v;
-	v.name = name;
-	v.pointer = pointer;
-	v.type = TypeUnknown; // unusable until defined via "extern" in the script!
-	v.is_semi_external = true; // ???
-	PreExternalVars.add(v);*/
+	ExternalLinkData l;
+	l.name = name;
+	l.pointer = pointer;
+	ExternalLinks.add(l);
 }
 
-// program functions - specific to the surrounding program, can't always be there...
-void LinkSemiExternalFunc(const string &name, void *pointer)
+void _LinkExternalClassFunc(const string &name, void (DummyClass::*function)())
 {
-	/*PreCommand c;
-	c.name = name;
-	c.is_class_function = false;
-	c.func = pointer;
-	c.return_type = TypeUnknown; // unusable until defined via "extern" in the script!
-	c.is_semi_external = true;
-	PreCommands.add(c);*/
+	LinkExternal(name, (void*)function);
 }
 
-void _LinkSemiExternalClassFunc(const string &name, void (DummyClass::*function)())
+void *GetExternalLink(const string &name)
 {
-	LinkSemiExternalFunc(name, (void*)function);
+	foreach(ExternalLinkData &l, ExternalLinks)
+		if (l.name == name)
+			return l.pointer;
+	return NULL;
 }
 
 void End()

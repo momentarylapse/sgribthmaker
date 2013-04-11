@@ -167,23 +167,6 @@ void *SyntaxTree::GetConstantValue()
 void DoClassFunction(SyntaxTree *ps, Command *Operand, Type *t, int f_no, Function *f)
 {
 	msg_db_f("DoClassFunc", 1);
-#if 0
-	switch(Operand->kind){
-		case KindVarLocal:
-		case KindVarGlobal:
-		case KindVarExternal:
-		case KindConstant:
-		case KindPointerShift:
-		case KindArray:
-		case KindDerefPointerShift:
-		/*case KindRefToLocal:
-		case KindRefToGlobal:
-		case KindRefToConst:*/
-			break;
-		default:
-			ps->DoError(string("class functions only allowed for object variables, not for: ", Kind2Str(Operand->kind)));
-	}
-#endif
 
 	// create a command for the object
 	Command *ob = ps->cp_command(Operand);
@@ -1354,31 +1337,18 @@ void SyntaxTree::ParseEnum()
 	Exp.cur_line --;
 }
 
-static int ExternalFuncPreCommandIndex;
-
 void SyntaxTree::ParseClassFunction(Type *t, bool as_extern)
 {
 	ParseFunction(t, as_extern);
 
 	ClassFunction cf;
-	if (as_extern){
-		DoError("external class function... todo");
-		/*PreCommand *c = &PreCommands[ExternalFuncPreCommandIndex];
-		cf.name = c->name.substr(t->name.num + 1, -1);
-		cf.kind = KindCompilerFunction;
-		cf.nr = ExternalFuncPreCommandIndex;
-		cf.return_type = c->return_type;
-		foreach(PreCommandParam &p, c->param)
-			cf.param_type.add(p.type);*/
-	}else{
-		Function *f = Functions.back();
-		cf.name = f->name.substr(t->name.num + 1, -1);
-		cf.nr = Functions.num - 1;
-		cf.return_type = f->return_type;
-		cf.script = script;
-		for (int i=0;i<f->num_params;i++)
-			cf.param_type.add(f->var[i].type);
-	}
+	Function *f = Functions.back();
+	cf.name = f->name.substr(t->name.num + 1, -1);
+	cf.nr = Functions.num - 1;
+	cf.return_type = f->return_type;
+	cf.script = script;
+	for (int i=0;i<f->num_params;i++)
+		cf.param_type.add(f->var[i].type);
 	t->function.add(cf);
 }
 
@@ -1537,33 +1507,6 @@ void SyntaxTree::ParseGlobalConst(const string &name, Type *type)
 	c->name = name;
 }
 
-void AddExternalVar(const string &name, Type *type)
-{
-#if 0
-	so("extern");
-	// already existing?
-	bool found = false;
-	for (int i=0;i<PreExternalVars.num;i++)
-		if (PreExternalVars[i].is_semi_external)
-			if (PreExternalVars[i].name == name){
-				PreExternalVars[i].type = type;
-				found = true;
-				break;
-			}
-
-		// not found -> create provisorium (not linkable.... but parsable)
-		if (!found){
-			// ScriptLinkSemiExternalVar()
-			PreExternalVar v;
-			v.name = name;
-			v.pointer = NULL;
-			v.type = type;
-			v.is_semi_external = true;
-			PreExternalVars.add(v);
-		}
-#endif
-}
-
 void CopyFuncDataToExternal(Function *f, PreCommand *c, bool is_class_func)
 {
 #if 0
@@ -1576,41 +1519,6 @@ void CopyFuncDataToExternal(Function *f, PreCommand *c, bool is_class_func)
 		p.type = f->var[j].type;
 		c->param.add(p);
 	}
-#endif
-}
-
-void AddExternalFunc(SyntaxTree *ps, Function *f, Type *class_type)
-{
-	ps->DoError("external function... todo");
-#if 0
-	so("extern");
-
-	string func_name = f->name;
-
-	// already existing?
-	bool found = false;
-	for (int i=0;i<PreCommands.num;i++)
-		if (PreCommands[i].is_semi_external)
-			if (PreCommands[i].name == func_name){
-				ExternalFuncPreCommandIndex = i;
-				CopyFuncDataToExternal(f, &PreCommands[i], class_type != NULL);
-				found = true;
-				break;
-			}
-
-	// not found -> create provisorium (not linkable.... but parsable)
-	if (!found){
-		PreCommand c;
-		c.name = func_name;
-		c.func = NULL;
-		CopyFuncDataToExternal(f, &c, class_type != NULL);
-		c.is_semi_external = true;
-		ExternalFuncPreCommandIndex = PreCommands.num;
-		PreCommands.add(c);
-	}
-
-	// delete as function
-	ps->Functions.pop();
 #endif
 }
 
@@ -1636,10 +1544,7 @@ Type *SyntaxTree::ParseVariableDefSingle(Type *type, Function *f, bool as_param)
 	TestArrayDefinition(&type, is_pointer);
 
 	// add
-	if (next_extern){
-		DoError("external vars not supported ...yet");
-		AddExternalVar(name, type);
-	}else if (next_const){
+	if (next_const){
 		ParseGlobalConst(name, type);
 	}else
 		AddVar(name, type, f);
@@ -1733,7 +1638,7 @@ void SyntaxTree::ParseFunction(Type *class_type, bool as_extern)
 	}
 
 	if (as_extern){
-		AddExternalFunc(this, f, class_type);
+		f->is_extern = true;
 		cur_func = NULL;
 		return;
 	}

@@ -282,15 +282,24 @@ extern CompilerConfiguration config;
 
 void Init(int instruction_set = -1, int abi = -1);
 void End();
-void ResetSemiExternalData();
-void LinkSemiExternalVar(const string &name, void *pointer);
-void LinkSemiExternalFunc(const string &name, void *pointer);
-void _LinkSemiExternalClassFunc(const string &name, void (DummyClass::*function)());
-template<typename T>
-void LinkSemiExternalClassFunc(const string &name, T pointer)
+
+
+struct ExternalLinkData
 {
-	_LinkSemiExternalClassFunc(name, (void(DummyClass::*)())pointer);
+	string name;
+	void *pointer;
+};
+extern Array<ExternalLinkData> ExternalLinks;
+
+void ResetSemiExternalData();
+void LinkExternal(const string &name, void *pointer);
+void _LinkExternalClassFunc(const string &name, void (DummyClass::*function)());
+template<typename T>
+void LinkExternalClassFunc(const string &name, T pointer)
+{
+	_LinkExternalClassFunc(name, (void(DummyClass::*)())pointer);
 }
+void *GetExternalLink(const string &name);
 
 
 

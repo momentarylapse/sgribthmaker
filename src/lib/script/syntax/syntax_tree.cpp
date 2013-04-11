@@ -323,19 +323,10 @@ void SyntaxTree::CreateAsmMetaInfo()
 
 int SyntaxTree::AddVar(const string &name, Type *type, Function *f)
 {
-/*	// "extern" variable -> link to main program
-	if ((next_extern) && (f == &RootOfAllEvil)){
-		for (int i=NumTruePreExternalVars;i<PreGlobalVar.num;i++)
-			if (strcmp(name, PreGlobalVar[i].Name) == 0){
-				f->Var[i].Type = type;
-				return i;
-			}
-	}
-should be done somwhere else (ParseVariableDefSingle) */
-	so("                                AddVar");
 	LocalVariable v;
 	v.name = name;
 	v.type = type;
+	v.is_extern = next_extern;
 	f->var.add(v);
 	return f->var.num - 1;
 }
@@ -344,7 +335,6 @@ should be done somwhere else (ParseVariableDefSingle) */
 
 int SyntaxTree::AddConstant(Type *type)
 {
-	so("                                AddConstant");
 	Constants.resize(Constants.num + 1);
 	Constant *c = &Constants.back();
 	c->name = "-none-";
@@ -358,7 +348,6 @@ int SyntaxTree::AddConstant(Type *type)
 
 Block *SyntaxTree::AddBlock()
 {
-	so("AddBlock");
 	Block *b = new Block;
 	b->index = Blocks.num;
 	b->root = -1;
@@ -370,7 +359,6 @@ Block *SyntaxTree::AddBlock()
 
 Function *SyntaxTree::AddFunction(const string &name, Type *type)
 {
-	so("AddFunction");
 	Function *f = new Function();
 	Functions.add(f);
 	f->name = name;
@@ -380,11 +368,11 @@ Function *SyntaxTree::AddFunction(const string &name, Type *type)
 	f->return_type = type;
 	f->literal_return_type = type;
 	f->_class = NULL;
+	f->is_extern = next_extern;
 	return f;
 }
 Command *SyntaxTree::AddCommand()
 {
-	so("AddCommand");
 	Command *c = new Command;
 	Commands.add(c);
 	c->type = TypeVoid;

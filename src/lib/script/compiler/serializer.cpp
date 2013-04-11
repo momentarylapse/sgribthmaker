@@ -1789,7 +1789,7 @@ void Serializer::ResolveDerefTempAndLocal()
 
 			if (shift2 > 0){
 				msg_write("resolve deref temp&loc 2");
-				add_cmd(Asm::inst_add, p_reg2, param_const(type_pointer, (void*)shift2));
+				add_cmd(Asm::inst_add, p_reg2, param_const(TypeInt, (void*)shift2));
 				move_last_cmd(cmd_pos ++);
 			}
 
@@ -1802,7 +1802,7 @@ void Serializer::ResolveDerefTempAndLocal()
 
 			if (shift1 > 0){
 				msg_write("resolve deref temp&loc 1");
-				add_cmd(Asm::inst_add, p_reg2, param_const(type_pointer, (void*)shift1));
+				add_cmd(Asm::inst_add, p_reg2, param_const(TypeInt, (void*)shift1));
 				move_last_cmd(cmd_pos ++);
 			}
 

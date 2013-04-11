@@ -88,6 +88,7 @@ struct LocalVariable
 	Type *type; // for creating instances
 	string name;
 	int _offset; // for compilation
+	bool is_extern;
 };
 
 // user defined functions
@@ -104,6 +105,7 @@ struct Function
 	Type *_class;
 	Type *return_type;
 	Type *literal_return_type;
+	bool is_extern;
 	// for compilation...
 	int _var_size, _param_size;
 };

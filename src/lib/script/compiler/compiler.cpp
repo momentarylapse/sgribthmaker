@@ -80,7 +80,8 @@ void Script::AllocateMemory()
 	// get memory size needed
 	MemorySize = 0;
 	for (int i=0;i<syntax->RootOfAllEvil.var.num;i++)
-		MemorySize += mem_align(syntax->RootOfAllEvil.var[i].type->size, 4);
+		if (!syntax->RootOfAllEvil.var[i].is_extern)
+			MemorySize += mem_align(syntax->RootOfAllEvil.var[i].type->size, 4);
 	foreachi(Constant &c, syntax->Constants, i){
 		int s = c.type->size;
 		if (c.type == TypeString){
@@ -152,13 +153,19 @@ void Script::MapGlobalVariablesToMemory()
 	// global variables -> into Memory
 	so("glob.Var.");
 	g_var.resize(syntax->RootOfAllEvil.var.num);
-	for (int i=0;i<syntax->RootOfAllEvil.var.num;i++){
-		if (syntax->FlagOverwriteVariablesOffset)
-			g_var[i] = (char*)(long)(MemorySize + syntax->VariablesOffset);
-		else
-			g_var[i] = &Memory[MemorySize];
-		so(format("%d: %s", MemorySize, syntax->RootOfAllEvil.var[i].name.c_str()));
-		MemorySize += mem_align(syntax->RootOfAllEvil.var[i].type->size, 4);
+	foreachi(LocalVariable &v, syntax->RootOfAllEvil.var, i){
+		if (v.is_extern){
+			g_var[i] = (char*)GetExternalLink(v.name);
+			if (!g_var[i])
+				DoErrorLink("external variable " + v.name + " was not linked");
+		}else{
+			if (syntax->FlagOverwriteVariablesOffset)
+				g_var[i] = (char*)(long)(MemorySize + syntax->VariablesOffset);
+			else
+				g_var[i] = &Memory[MemorySize];
+			so(format("%d: %s", MemorySize, v.name.c_str()));
+			MemorySize += mem_align(v.type->size, 4);
+		}
 	}
 	memset(Memory, 0, MemorySize); // reset all global variables to 0
 }
@@ -321,8 +328,14 @@ void Script::Compiler()
 	so("Funktionen");
 	func.resize(syntax->Functions.num);
 	foreachi(Function *f, syntax->Functions, i){
-		func[i] = (t_func*)&Opcode[OpcodeSize];
-		CompileFunction(f, Opcode, OpcodeSize);
+		if (f->is_extern){
+			func[i] = (t_func*)GetExternalLink(f->name);
+			if (!func[i])
+				DoErrorLink("external function " + f->name + " not linkable");
+		}else{
+			func[i] = (t_func*)&Opcode[OpcodeSize];
+			CompileFunction(f, Opcode, OpcodeSize);
+		}
 	}
 
 
