@@ -202,7 +202,7 @@ void CreateImplicitAssign(SyntaxTree *ps, Type *t)
 		// call child assignment
 		foreach(ClassElement &e, t->element){
 			Command *p = ps->shift_command(self, true, e.offset, e.type);
-			Command *o = ps->shift_command(ps->cp_command(other), true, e.offset, e.type); // needed for call-by-ref conversion!
+			Command *o = ps->shift_command(ps->cp_command(other), false, e.offset, e.type); // needed for call-by-ref conversion!
 
 			Command *cmd_assign = ps->LinkOperator(OperatorAssign, p, o);
 			if (!cmd_assign)
