@@ -726,7 +726,7 @@ void easyfy(SyntaxTree *ps, Command *c, int l)
 
 void convert_return_by_memory(SyntaxTree *ps, Block *b, Function *f)
 {
-	msg_db_f("convert_return_by_memory", 0);
+	msg_db_f("convert_return_by_memory", 2);
 	ps->script->cur_func = f;
 
 	foreachib(Command *c, b->command, i){
@@ -985,7 +985,7 @@ void SyntaxTree::MapLocalVariablesToStack()
 				foreachi(LocalVariable &v, f->var, i)
 					if (v.name == "-return-"){
 						v._offset = f->_param_size;
-						f->_param_size += 8;
+						f->_param_size += 4;
 					}
 			}
 
@@ -994,7 +994,7 @@ void SyntaxTree::MapLocalVariablesToStack()
 				foreachi(LocalVariable &v, f->var, i)
 					if (v.name == "self"){
 						v._offset = f->_param_size;
-						f->_param_size += 8;
+						f->_param_size += 4;
 					}
 			}
 
