@@ -112,11 +112,10 @@ void CreateImplicitAssign(SyntaxTree *ps, Type *t)
 	f->_class = t;
 	ps->AddVar("self", ps->GetPointerType(t), f);
 
-	Command *deref_other = ps->AddCommand();
-	deref_other->kind = KindVarLocal;
-	deref_other->link_nr = 0;
-	deref_other->type = t;
-	Command *other = ps->ref_command(ps->cp_command(deref_other));
+	Command *other = ps->AddCommand();
+	other->kind = KindVarLocal;
+	other->link_nr = 0;
+	other->type = t;
 
 	Command *self = ps->AddCommand();
 	self->kind = KindVarLocal;
@@ -180,7 +179,7 @@ void CreateImplicitAssign(SyntaxTree *ps, Type *t)
 		cmd_el->num_params = 2;
 
 		// el2 := other.data[for_var]
-		Command *other_data = ps->shift_command(deref_other, false, 0, ps->GetPointerType(t->parent));
+		Command *other_data = ps->shift_command(other, false, 0, ps->GetPointerType(t->parent));
 		Command *cmd_el2 = ps->AddCommand();
 		cmd_el2->kind = KindPointerAsArray;
 		cmd_el2->type = t->parent;

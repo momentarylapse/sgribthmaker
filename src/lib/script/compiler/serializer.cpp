@@ -1384,7 +1384,6 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 	}else if (com->kind == KindBlock){
 		SerializeBlock(syntax_tree->Blocks[com->link_nr], level + 1);
 	}else{
-		msg_write(Kind2Str(com->kind));
 		//so("---???");
 		//DoError(string("type of command is unimplemented (call Michi!): ",Kind2Str(com->Kind)));
 	}
