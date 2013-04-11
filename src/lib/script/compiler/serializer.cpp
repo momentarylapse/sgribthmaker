@@ -10,6 +10,8 @@ extern void script_db_out(int i);
 
 #define so		script_db_out
 
+//#define debug_evil_corrections	1
+
 //#ifdef ScriptDebug
 
 
@@ -2689,35 +2691,51 @@ void Serializer::Assemble(char *Opcode, int &OpcodeSize)
 				if ((cmd[i].inst == Asm::inst_add) || (cmd[i].inst == Asm::inst_mov)){
 					if ((cmd[i].p1.kind == KindRegister) && (cmd[i].p2.kind == KindRefToConst)){
 						if (cmd[i].p1.type->is_pointer){
+#ifdef debug_evil_corrections
 							msg_write("----evil resize a");
 							msg_write(cmd2str(cmd[i]));
+#endif
 							cmd[i].p1.type = TypeReg32;
 							cmd[i].p1.p = (char*)(long)reg_resize((long)cmd[i].p1.p, 4);
+#ifdef debug_evil_corrections
 							msg_write(cmd2str(cmd[i]));
+#endif
 						}
 					}
 					if ((cmd[i].p1.type->size == 8) && (cmd[i].p2.type->size == 4)){
 						if ((cmd[i].p1.kind == KindRegister) && ((cmd[i].p2.kind == KindRegister) || (cmd[i].p2.kind == KindConstant) || (cmd[i].p2.kind == KindRefToConst))){
+#ifdef debug_evil_corrections
 							msg_write("----evil resize b");
 							msg_write(cmd2str(cmd[i]));
+#endif
 							cmd[i].p1.type = cmd[i].p2.type;
 							cmd[i].p1.p = (char*)(long)reg_resize((long)cmd[i].p1.p, cmd[i].p2.type->size);
+#ifdef debug_evil_corrections
 							msg_write(cmd2str(cmd[i]));
+#endif
 						}else if (cmd[i].p2.kind == KindRegister){
+#ifdef debug_evil_corrections
 							msg_write("----evil resize c");
 							msg_write(cmd2str(cmd[i]));
+#endif
 							cmd[i].p2.type = cmd[i].p1.type;
 							cmd[i].p2.p = (char*)(long)reg_resize((long)cmd[i].p2.p, cmd[i].p1.type->size);
+#ifdef debug_evil_corrections
 							msg_write(cmd2str(cmd[i]));
+#endif
 						}
 					}
 					if ((cmd[i].p1.type->size < 8) && (cmd[i].p2.type->size == 8)){
 						if ((cmd[i].p1.kind == KindRegister) && ((cmd[i].p2.kind == KindRegister) || (cmd[i].p2.kind == KindDerefRegister))){
+#ifdef debug_evil_corrections
 							msg_write("----evil resize d");
 							msg_write(cmd2str(cmd[i]));
+#endif
 							cmd[i].p1.type = cmd[i].p2.type;
 							cmd[i].p1.p = (char*)(long)reg_resize((long)cmd[i].p1.p, cmd[i].p2.type->size);
+#ifdef debug_evil_corrections
 							msg_write(cmd2str(cmd[i]));
+#endif
 						}
 					}
 					/*if (cmd[i].p1.type->size > cmd[i].p2.type->size){

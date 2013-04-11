@@ -191,12 +191,14 @@ void DoClassFunction(SyntaxTree *ps, Command *Operand, Type *t, int f_no, Functi
 	//msg_write(LinkNr2Str(ps, Operand->Kind, Operand->Nr));
 
 	// the function
-	Operand->script = t->function[f_no].script;
+	ClassFunction &cf = t->function[f_no];
+	Operand->script = cf.script;
     Operand->kind = KindFunction;
-	Operand->link_nr = t->function[f_no].nr;
-	Operand->type = t->owner->Functions[t->function[f_no].nr]->literal_return_type;
-	Operand->num_params = t->owner->Functions[t->function[f_no].nr]->num_params;
-	ps->GetFunctionCall(t->owner->Functions[t->function[f_no].nr]->name, Operand, f);
+	Operand->link_nr = cf.nr;
+	Function *ff = cf.script->syntax->Functions[cf.nr];
+	Operand->type = ff->literal_return_type;
+	Operand->num_params = ff->num_params;
+	ps->GetFunctionCall(ff->name, Operand, f);
 	Operand->instance = ob;
 }
 
