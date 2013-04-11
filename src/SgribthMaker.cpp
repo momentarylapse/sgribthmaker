@@ -14,7 +14,7 @@ string Filename = "";
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.3.20.0";
+string AppVersion = "0.3.21.0";
 
 #define ALLOW_LOGGING			true
 //#define ALLOW_LOGGING			false
@@ -827,7 +827,7 @@ void Compile()
 	Script::config.CompileSilently = true;
 
 	try{
-		Script::Script *compile_script = Script::Load(Filename, true, true);
+		Script::Script *compile_script = Script::Load(Filename, true);
 
 		float dt = HuiGetTime(CompileTimer);
 
@@ -873,9 +873,6 @@ void CompileAndRun(bool verbose)
 		Script::Script *compile_script = Script::Load(Filename);
 		float dt_compile = HuiGetTime(CompileTimer);
 
-		void *x = NULL;
-		//compile_script->SetVariable("this", &x);
-
 		if (!verbose)
 			msg_set_verbose(true);
 
@@ -893,14 +890,7 @@ void CompileAndRun(bool verbose)
 				void_func *f = (void_func*)compile_script->MatchFunction("main", "void", 0);
 				if (f)
 					f();
-				typedef string string_func();
-				string_func *sf = (string_func*)compile_script->MatchFunction("getstring", "string", 0);
-				if (sf){
-					string t = sf();
-					msg_write(string((char*)&t, sizeof(t)).hex());
-					msg_write(t);
-				}
-				compile_script->ShowVars(false);
+				//compile_script->ShowVars(false);
 			}
 			dt_execute = HuiGetTime(CompileTimer);
 			HuiPopMainLevel();
@@ -1186,45 +1176,6 @@ void SetTag(int i, const char *fg_color, const char *bg_color, bool bold, bool i
 		g_object_set(tag[i].tag, "style", PANGO_STYLE_ITALIC, NULL);
 }
 
-struct TT
-{
-	int ii[700];
-	int a, b, c, d;
-	string s;
-	TT(int x){a=x;}
-	~TT(){a=0;};
-	void operator=(const TT &o)
-	{	s = o.s; a = o.a;	}
-	/*TT f(int x)
-	{msg_write("a");}
-	void g(){msg_write("b");}*/
-};
-
-TT sf()
-{
-	//TT r = TT(7);
-	return TT(7);
-}
-
-float gff1, gff2;
-
-void fff(float f, float g)
-{
-	gff1 = f;
-	gff2 = g;
-}
-
-void _ff()
-{
-	fff(1.0f, 2.0f);
-//	TT x = sf();
-	//ssss = sf();
-	//TT x = tt.f(7);
-//	TT *x;
-//	x->b = 7;
-	//tt.g();
-}
-
 int hui_main(Array<string> arg)
 {
 	msg_init(false);
@@ -1236,7 +1187,7 @@ int hui_main(Array<string> arg)
 	HuiSetProperty("version", AppVersion);
 	HuiSetProperty("comment", _("Texteditor und Kaba-Compiler"));
 	HuiSetProperty("website", "http://michisoft.michi.is-a-geek.org");
-	HuiSetProperty("copyright", "© 2006-2012 by MichiSoft TM");
+	HuiSetProperty("copyright", "© 2006-2013 by MichiSoft TM");
 	HuiSetProperty("author", "Michael Ankele <michi@lupina.de>");
 
 	timer = HuiCreateTimer();
@@ -1393,8 +1344,7 @@ int hui_main(Array<string> arg)
 
 	Script::Init();
 
-	msg_write(Asm::Disassemble((void*)fff, -1));
-	msg_write(Asm::Disassemble((void*)_ff, -1));
+	//msg_write(Asm::Disassemble((void*)fff, -1));
 
 	New();
 
