@@ -402,7 +402,14 @@ void script_make_super_array(Type *t, SyntaxTree *ps)
 
 		if (t->parent->is_simple_class()){
 			if (!t->parent->UsesCallByReference()){
-				if (t->parent->size == 4){
+				if (t->parent->is_pointer){
+					class_add_func("__init__",	TypeVoid, mf((tmf)&Array<void*>::__init__));
+					class_add_func("add", TypeVoid, mf((tmf)&DynamicArray::append_p_single));
+						func_add_param("x",		t->parent);
+					class_add_func("insert", TypeVoid, mf((tmf)&DynamicArray::insert_p_single));
+						func_add_param("x",		t->parent);
+						func_add_param("index",		TypeInt);
+				}else if (t->parent->size == 4){
 					class_add_func("__init__",	TypeVoid, mf((tmf)&Array<int>::__init__));
 					class_add_func("add", TypeVoid, mf((tmf)&DynamicArray::append_4_single));
 						func_add_param("x",		t->parent);
@@ -416,7 +423,8 @@ void script_make_super_array(Type *t, SyntaxTree *ps)
 					class_add_func("insert", TypeVoid, mf((tmf)&DynamicArray::insert_1_single));
 						func_add_param("x",		t->parent);
 						func_add_param("index",		TypeInt);
-				}
+				}else
+					msg_error("evil class type..." + t->name);
 			}else{
 				class_add_func("add", TypeVoid, mf((tmf)&DynamicArray::append_single));
 					func_add_param("x",		t->parent);
