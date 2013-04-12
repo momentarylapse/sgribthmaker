@@ -73,7 +73,6 @@ Type *TypeFloat;
 Type *TypeChar;
 Type *TypeString;
 Type *TypeCString;
-Type *TypeSuperArray;
 
 Type *TypeVector;
 Type *TypeRect;
@@ -658,7 +657,6 @@ void SIAddPackageBase()
 
 	// "real"
 	TypeVoid			= add_type  ("void",		0, FLAG_CALL_BY_VALUE);
-	TypeSuperArray		= add_type_a("void[]",		TypeVoid, -1); // substitute for all super arrays
 	TypePointer			= add_type_p("void*",		TypeVoid, FLAG_CALL_BY_VALUE); // substitute for all pointer types
 	TypePointerPs		= add_type_p("void*&",		TypePointer, FLAG_SILENT);
 	TypePointerList		= add_type_a("void*[]",		TypePointer, -1);
