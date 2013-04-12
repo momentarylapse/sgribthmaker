@@ -335,19 +335,22 @@ void FindScriptFunctions()
 				break;
 			else
 				ll ++;
-		char *s = gtk_text_buffer_get_text(tb, &start, &end, false);
-		if (char_type(s[0]) == CharLetter){
-			for (int i=0;i<ll;i++)
-				if (s[i]=='('){
-					ScriptFunction f;
-					f.name.resize(ll);
-					memcpy(f.name.data, s, ll);
-					f.line = l;
-					ScriptFunctions.add(f);
-					break;
-				}
+		char *ss = gtk_text_buffer_get_text(tb, &start, &end, false);
+		string s = ss;
+		if (char_type(ss[0]) == CharLetter){
+			bool ok = (s.find("(") >= 0);
+			if (s.find("class ") >= 0)
+				ok = true;
+			if (s.find("extern") >= 0)
+				ok = false;
+			if (ok){
+				ScriptFunction f;
+				f.name = s;
+				f.line = l;
+				ScriptFunctions.add(f);
+			}
 		}
-		g_free(s);
+		g_free(ss);
 	}
 	msg_db_l(1);
 }
