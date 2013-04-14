@@ -160,7 +160,7 @@ extern Type *TypeSocketList;
 	#define	GetDASubSkin(x)		0
 	#define	GetDAMaterial(x)	0
 #endif
-#ifdef _X_ALLOW_GOD_
+#ifdef _X_ALLOW_X_
 	static Fog *_fog;
 	static WorldData *_world_data;
 	static EngineData *_engine_data;
@@ -221,7 +221,7 @@ static void *amd64_wrap(void *orig, void *wrap)
 
 void SIAddPackageX()
 {
-	set_cur_package("x");
+	add_package("x", false);
 
 	
 	TypeModel			= add_type  ("Model",		0);
@@ -556,9 +556,9 @@ void SIAddPackageX()
 		class_add_element("session",		TypeString,		GetDAHostData(session));
 	
 	add_class(TypeHostDataList);
-		class_add_func("__init__",		TypeVoid,	god_p(mf((tmf)&HostDataList::__init__)));
-		class_add_func("__delete__",		TypeVoid,	god_p(mf((tmf)&HostDataList::__delete__)));
-		class_add_func("__assign__",		TypeVoid,	god_p(mf((tmf)&HostDataList::__assign__)));
+		class_add_func("__init__",		TypeVoid,	x_p(mf((tmf)&HostDataList::__init__)));
+		class_add_func("__delete__",		TypeVoid,	x_p(mf((tmf)&HostDataList::__delete__)));
+		class_add_func("__assign__",		TypeVoid,	x_p(mf((tmf)&HostDataList::__assign__)));
 			func_add_param("other",			TypeHostDataList);
 	
 	add_func("XFDrawStr",			TypeFloat,	meta_p(&XFDrawStr));
@@ -759,8 +759,8 @@ void SIAddPackageX()
 	add_ext_var("ElapsedRT",		TypeFloat,		meta_p(&ElapsedRT));
 	add_ext_var("TimeScale",		TypeFloat,		meta_p(&TimeScale));
 	add_ext_var("World", 			TypeWorldData,	god_p(&World));
-	add_ext_var("Engine", 			TypeEngineData,	god_p(&Engine));
-	add_ext_var("Net", 				TypeNetworkData,god_p(&Net));
+	add_ext_var("Engine", 			TypeEngineData,	x_p(&Engine));
+	add_ext_var("Net", 				TypeNetworkData,x_p(&Net));
 	add_ext_var("Object",			TypeModelPList,	god_p(&Objects));
 	add_ext_var("Ego",				TypeModelP,		god_p(&Ego));
 	add_ext_var("Terrain",			TypeTerrainPList,god_p(&Terrains));
@@ -771,7 +771,7 @@ void SIAddPackageX()
 	add_ext_var("CurrentGrouping",	TypeGroupingP,	gui_p(&Gui::CurrentGrouping));
 	add_ext_var("ShadowLight",		TypeInt,		meta_p(&ShadowLight));
 	add_ext_var("ShadowColor",		TypeColor,		meta_p(&ShadowColor));
-	add_ext_var("NetworkEnabled",	TypeBool,		meta_p(&NetworkEnabled));
+	add_ext_var("NetworkEnabled",	TypeBool,		x_p(&NetworkEnabled));
 	add_ext_var("XFontIndex",		TypeInt,		meta_p(&XFontIndex));
 
 	

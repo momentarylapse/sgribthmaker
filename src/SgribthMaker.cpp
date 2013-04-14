@@ -145,18 +145,20 @@ inline int WordType(const string &name)
 		(name == "self") ||
 		(name == "asm"))
 		return InWordSpecial;
-	for (int i=0;i<Script::GlobalDummyScript->syntax->Types.num;i++)
-		if (name == Script::GlobalDummyScript->syntax->Types[i]->name)
-			return InWordType;
-	for (int i=0;i<Script::GlobalDummyScript->syntax->RootOfAllEvil.var.num;i++)
-		if (name == Script::GlobalDummyScript->syntax->RootOfAllEvil.var[i].name)
-			return InWordGameVariable;
-	for (int i=0;i<Script::GlobalDummyScript->syntax->Constants.num;i++)
-		if (name == Script::GlobalDummyScript->syntax->Constants[i].name)
-			return InWordGameVariable;
-	for (int i=0;i<Script::GlobalDummyScript->syntax->Functions.num;i++)
-		if (name == Script::GlobalDummyScript->syntax->Functions[i]->name)
-			return InWordCompilerFunction;
+	foreach(Script::Package &p, Script::Packages){
+		for (int i=0;i<p.script->syntax->Types.num;i++)
+			if (name == p.script->syntax->Types[i]->name)
+				return InWordType;
+		for (int i=0;i<p.script->syntax->RootOfAllEvil.var.num;i++)
+			if (name == p.script->syntax->RootOfAllEvil.var[i].name)
+				return InWordGameVariable;
+		for (int i=0;i<p.script->syntax->Constants.num;i++)
+			if (name == p.script->syntax->Constants[i].name)
+				return InWordGameVariable;
+		for (int i=0;i<p.script->syntax->Functions.num;i++)
+			if (name == p.script->syntax->Functions[i]->name)
+				return InWordCompilerFunction;
+	}
 	for (int i=0;i<Script::PreCommands.num;i++)
 		if (name == Script::PreCommands[i].name)
 			return InWordCompilerFunction;
