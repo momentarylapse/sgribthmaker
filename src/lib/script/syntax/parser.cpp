@@ -1734,7 +1734,7 @@ void SyntaxTree::Parser()
 			Exp.rewind();
 			bool is_function = false;
 			for (int j=1;j<Exp.cur_line->exp.num-1;j++)
-				if (strcmp(Exp.cur_line->exp[j].name, "(") == 0)
+				if (Exp.cur_line->exp[j].name == "(")
 				    is_function = true;
 
 			// own function?

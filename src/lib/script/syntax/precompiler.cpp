@@ -192,25 +192,6 @@ void SyntaxTree::HandleMacro(ExpressionBuffer::Line *l, int &line_no, int &NumIf
 	line_no --;
 }
 
-inline void insert_into_buffer(SyntaxTree *ps, const char *name, int pos, int index = -1)
-{
-	ExpressionBuffer::Expression e;
-	e.name = ps->Exp.buf_cur;
-	ps->Exp.buf_cur += strlen(name) + 1;
-	strcpy(e.name, name);
-	e.pos = pos;
-	if (index < 0)
-		// at the end...
-		ps->Exp.cur_line->exp.add(e);
-	else
-		ps->Exp.cur_line->exp.insert(e, index);
-}
-
-inline void remove_from_buffer(SyntaxTree *ps, int index)
-{
-	ps->Exp.cur_line->exp.erase(index);
-}
-
 // ... maybe some time later
 void SyntaxTree::PreCompiler(bool just_analyse)
 {
@@ -224,7 +205,7 @@ void SyntaxTree::PreCompiler(bool just_analyse)
 		Exp.cur_line = &Exp.line[i];
 		if (Exp.line[i].exp[0].name[0] == '#'){
 			HandleMacro(Exp.cur_line, i, NumIfDefs, IfDefed, just_analyse);
-		}else if (strcmp(Exp.line[i].exp[0].name, "use") == 0){
+		}else if (Exp.line[i].exp[0].name == "use"){
 			ParseImport();
 			Exp.line.erase(i);
 			i --;
@@ -237,9 +218,9 @@ void SyntaxTree::PreCompiler(bool just_analyse)
 				foreachi(Define &d, Defines, j){
 					if (Exp.cur == d.Source){
 						int pos = Exp.cur_line->exp[Exp.cur_exp].pos;
-						remove_from_buffer(this, Exp.cur_exp);
+						Exp.remove(Exp.cur_exp);
 						for (int k=0;k<d.Dest.num;k++){
-							insert_into_buffer(this, d.Dest[k].c_str(), pos, Exp.cur_exp);
+							Exp.insert(d.Dest[k].c_str(), pos, Exp.cur_exp);
 							Exp.next();
 						}
 						Exp.cur_exp -= d.Dest.num;

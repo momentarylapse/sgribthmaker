@@ -13,7 +13,7 @@ struct ExpressionBuffer
 
 	struct Expression
 	{
-		char* name; // points into Exp.buffer
+		string name;
 		int pos;
 	};
 
@@ -23,8 +23,6 @@ struct ExpressionBuffer
 		Array<Expression> exp;
 	};
 
-	char *buffer; // holds ALL expressions of the file (0 separated)
-	char *buf_cur; // pointer to the latest one
 	Array<Line> line;
 	Line temp_line;
 	Line *cur_line;

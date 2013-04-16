@@ -119,7 +119,6 @@ Command *SyntaxTree::add_command_operator(Command *p1, Command *p2, int op)
 
 SyntaxTree::SyntaxTree(Script *_script)
 {
-	Exp.buffer = NULL;
 	FlagShow = false;
 	FlagShowPrae = false;
 	FlagDisassemble = false;
