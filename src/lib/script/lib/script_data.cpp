@@ -292,7 +292,6 @@ void add_const(const string &name, Type *type, void *value)
 		*(void**)c.data = value;
 	else
 		memcpy(c.data, value, type->size);
-	c.owner = cur_package_script->syntax;
 	cur_package_script->syntax->Constants.add(c);
 }
 

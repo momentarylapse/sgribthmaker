@@ -327,14 +327,14 @@ int SyntaxTree::AddVar(const string &name, Type *type, Function *f)
 
 int SyntaxTree::AddConstant(Type *type)
 {
-	Constants.resize(Constants.num + 1);
-	Constant *c = &Constants.back();
-	c->name = "-none-";
-	c->type = type;
+	Constant c;
+	c.name = "-none-";
+	c.type = type;
 	int s = max(type->size, config.PointerSize);
 	if (type == TypeString)
 		s = 256;
-	c->data = new char[s];
+	c.data = new char[s];
+	Constants.add(c);
 	return Constants.num - 1;
 }
 
@@ -1037,8 +1037,7 @@ SyntaxTree::~SyntaxTree()
 		delete(AsmMetaInfo);
 	
 	foreach(Constant &c, Constants)
-		if (c.owner == this)
-			delete[](c.data);
+		delete[](c.data);
 
 	foreach(Command *c, Commands)
 		delete(c);

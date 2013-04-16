@@ -26,7 +26,6 @@ struct Define
 // for any type of constant used in the script
 struct Constant
 {
-	SyntaxTree *owner;
 	string name;
 	char *data;
 	Type *type;

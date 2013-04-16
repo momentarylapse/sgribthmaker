@@ -227,7 +227,7 @@ Script::Script()
 	cur_func = NULL;
 	WaitingMode = WaitingModeFirst;
 	TimeToWait = 0;
-	ShowCompilerStats = (!config.CompileSilently) && ShowCompilerStats;
+	ShowCompilerStats = !config.CompileSilently;
 
 	Opcode = NULL;
 	OpcodeSize = 0;
