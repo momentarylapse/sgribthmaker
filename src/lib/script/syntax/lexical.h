@@ -51,7 +51,7 @@ struct ExpressionBuffer
 	void test_indent(int i);
 	void reset_indent();
 
-	void Analyse(SyntaxTree *ps, const char *source);
+	void Analyse(SyntaxTree *ps, const string &source);
 	bool AnalyseExpression(const char *source, int &pos, ExpressionBuffer::Line *l, int &line_no);
 	bool AnalyseLine(const char *source, ExpressionBuffer::Line *l, int &line_no);
 	void AnalyseLogicalLine(const char *source, ExpressionBuffer::Line *l, int &line_no);

@@ -632,13 +632,11 @@ void SyntaxTree::LoadToBuffer(const string &filename,bool just_analyse)
 		Exp.cur_line = NULL;
 		DoError("script file not loadable");
 	}
-	Buffer = f->ReadComplete();
+	string Buffer = f->ReadComplete();
+	Buffer.add(0); // compatibility... expected by lexical
 	FileClose(f);
 
-	Exp.Analyse(this, Buffer.c_str());
-
-
-	Buffer.clear();
+	Exp.Analyse(this, Buffer);
 }
 
 void conv_cbr(SyntaxTree *ps, Command *&c, int var)

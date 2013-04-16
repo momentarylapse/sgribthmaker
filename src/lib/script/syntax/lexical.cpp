@@ -146,14 +146,14 @@ int GetKind(char c)
 	return ExpKindLetter;
 }
 
-void ExpressionBuffer::Analyse(SyntaxTree *ps, const char *source)
+void ExpressionBuffer::Analyse(SyntaxTree *ps, const string &source)
 {
 	msg_db_f("Analyse", 4);
 	syntax = ps;
 	clear();
 
 	// scan all lines
-	const char *buf = source;
+	const char *buf = (char*)source.data;
 	for (int i=0;true;i++){
 		//exp_add_line(&Exp);
 		cur_line->physical_line = i;

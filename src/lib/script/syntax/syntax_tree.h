@@ -244,8 +244,6 @@ public:
 
 // data
 
-	string Buffer;
-	int BufferLength, BufferPos;
 	ExpressionBuffer Exp;
 	Command GetExistenceLink;
 
