@@ -316,7 +316,7 @@ void SyntaxTree::CreateAsmMetaInfo()
 
 int SyntaxTree::AddVar(const string &name, Type *type, Function *f)
 {
-	LocalVariable v;
+	Variable v;
 	v.name = name;
 	v.type = type;
 	v.is_extern = next_extern;
@@ -446,7 +446,7 @@ bool SyntaxTree::GetExistenceShared(const string &name)
 	GetExistenceLink.instance = NULL;
 
 	// global variables (=local variables in "RootOfAllEvil")
-	foreachi(LocalVariable &v, RootOfAllEvil.var, i)
+	foreachi(Variable &v, RootOfAllEvil.var, i)
 		if (v.name == name){
 			GetExistenceLink.type = v.type;
 			GetExistenceLink.link_nr = i;
@@ -490,7 +490,7 @@ bool SyntaxTree::GetExistence(const string &name, Function *func)
 
 	// first test local variables
 	if (func){
-		foreachi(LocalVariable &v, func->var, i){
+		foreachi(Variable &v, func->var, i){
 			if (v.name == name){
 				exlink_make_var_local(this, v.type, i);
 				return true;
@@ -737,7 +737,7 @@ void convert_return_by_memory(SyntaxTree *ps, Block *b, Function *f)
 
 		// convert into   *-return- = param
 		Command *p_ret = NULL;
-		foreachi(LocalVariable &v, f->var, i)
+		foreachi(Variable &v, f->var, i)
 			if (v.name == "-return-"){
 				p_ret = ps->AddCommand();
 				p_ret->type = v.type;
@@ -980,7 +980,7 @@ void SyntaxTree::MapLocalVariablesToStack()
 
 			// map "-return-" to the VERY first parameter
 			if (f->return_type->UsesReturnByMemory()){
-				foreachi(LocalVariable &v, f->var, i)
+				foreachi(Variable &v, f->var, i)
 					if (v.name == "-return-"){
 						v._offset = f->_param_size;
 						f->_param_size += 4;
@@ -989,14 +989,14 @@ void SyntaxTree::MapLocalVariablesToStack()
 
 			// map "self" to the first parameter
 			if (f->_class){
-				foreachi(LocalVariable &v, f->var, i)
+				foreachi(Variable &v, f->var, i)
 					if (v.name == "self"){
 						v._offset = f->_param_size;
 						f->_param_size += 4;
 					}
 			}
 
-			foreachi(LocalVariable &v, f->var, i){
+			foreachi(Variable &v, f->var, i){
 				if ((f->_class) && (v.name == "self"))
 					continue;
 				if (v.name == "-return-")
@@ -1015,7 +1015,7 @@ void SyntaxTree::MapLocalVariablesToStack()
 		}else if (config.instruction_set == Asm::InstructionSetAMD64){
 			f->_var_size = 0;
 			
-			foreachi(LocalVariable &v, f->var, i){
+			foreachi(Variable &v, f->var, i){
 				int s = mem_align(v.type->size, 4);
 				v._offset = - f->_var_size - s;
 				f->_var_size += s;

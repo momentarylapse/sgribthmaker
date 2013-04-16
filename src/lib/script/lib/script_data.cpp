@@ -368,7 +368,7 @@ void func_add_param(const string &name, Type *type)
 		p.type = type;
 		cur_cmd->param.add(p);
 	}else if (cur_func){
-		LocalVariable v;
+		Variable v;
 		v.name = name;
 		v.type = type;
 		cur_func->var.add(v);

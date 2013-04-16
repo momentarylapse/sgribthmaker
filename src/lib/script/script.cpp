@@ -304,7 +304,7 @@ void ExecuteSingleScriptCommand(const string &cmd)
 
 	// parse
 	ps->Exp.reset_parser();
-	ps->GetCompleteCommand(func->block, func);
+	ps->ParseCompleteCommand(func->block, func);
 	//pre_script->GetCompleteCommand((pre_script->Exp->ExpNr,0,0,&func);
 
 	ps->ConvertCallByReference();
@@ -369,7 +369,7 @@ void print_var(void *p, const string &name, Type *t)
 
 void Script::ShowVars(bool include_consts)
 {
-	foreachi(LocalVariable &v, syntax->RootOfAllEvil.var, i)
+	foreachi(Variable &v, syntax->RootOfAllEvil.var, i)
 		print_var((void*)g_var[i], v.name, v.type);
 	/*if (include_consts)
 		foreachi(LocalVariable &c, pre_script->Constant, i)

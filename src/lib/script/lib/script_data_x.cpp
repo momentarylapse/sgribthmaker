@@ -669,21 +669,21 @@ void SIAddPackageX()
 	add_func("LightDelete",							TypeVoid,	light_p(&Light::Delete));
 		func_add_param("index",		TypeInt);
 	// game
-	add_func("ExitProgram",									TypeVoid,	meta_p(ExitProgram));
-	add_func("ScreenShot",									TypeVoid,	meta_p(ScreenShot));
-	add_func("FindHosts",									TypeHostDataList,	meta_p(FindHosts));
+	add_func("ExitProgram",									TypeVoid,	x_p(ExitProgram));
+	add_func("ScreenShot",									TypeVoid,	x_p(ScreenShot));
+	add_func("FindHosts",									TypeHostDataList,	x_p(FindHosts));
 	add_func("XDelete",											TypeVoid,	meta_p(&MetaDelete));
 		func_add_param("p",		TypePointer);
 	add_func("XDeleteLater",						TypeVoid,	god_p(&MetaDeleteLater));
 		func_add_param("p",		TypePointer);
 	add_func("XDeleteSelection",						TypeVoid,	god_p(&MetaDeleteSelection));
-	add_func("LoadWorld",									TypeVoid,	meta_p(LoadWorldSoon));
+	add_func("LoadWorld",									TypeVoid,	x_p(LoadWorldSoon));
 		func_add_param("filename",		TypeString);
-	add_func("LoadGameFromHost",					TypeVoid,	meta_p(LoadGameFromHostSoon));
+	add_func("LoadGameFromHost",					TypeVoid,	x_p(LoadGameFromHostSoon));
 		func_add_param("host",		TypeHostData);
-	add_func("SaveGameState",							TypeVoid,	meta_p(SaveGameState));
+	add_func("SaveGameState",							TypeVoid,	x_p(SaveGameState));
 		func_add_param("filename",		TypeString);
-	add_func("LoadGameState",							TypeVoid,	meta_p(LoadGameStateSoon));
+	add_func("LoadGameState",							TypeVoid,	x_p(LoadGameStateSoon));
 		func_add_param("filename",		TypeString);
 	add_func("GetObjectByName",							TypeModelP,	god_p(&GetObjectByName));
 		func_add_param("name",		TypeString);
@@ -697,7 +697,7 @@ void SIAddPackageX()
 	add_func("CreateObject",							TypeModelP,	god_p(&_CreateObject));
 		func_add_param("filename",		TypeString);
 		func_add_param("pos",		TypeVector);
-	add_func("SplashScreen",					TypeVoid,	meta_p(DrawSplashScreen));
+	add_func("SplashScreen",					TypeVoid,	x_p(DrawSplashScreen));
 		func_add_param("status",		TypeString);
 		func_add_param("progress",		TypeFloat);
 	add_func("RenderScene",									TypeVoid, 	NULL);
