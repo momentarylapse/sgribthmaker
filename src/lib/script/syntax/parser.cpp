@@ -1211,14 +1211,18 @@ void SyntaxTree::ParseCompleteCommand(Block *block, Function *f)
 
 			// assignment?
 			if (Exp.cur == "="){
-				Exp.rewind();
+				//Exp.rewind();
+				// insert variable name because declaration might end with "[]"
+				Exp.insert(f->var.back().name.c_str(), 0, Exp.cur_exp);
+				Exp.cur = f->var.back().name;
+				// parse assignment
 				Command *c = GetCommand(f);
 				block->command.add(c);
 			}
 			if (Exp.end_of_line())
 				break;
 			if ((Exp.cur != ",") && (!Exp.end_of_line()))
-				DoError("\",\", \"=\" or newline expected after definition of local variable");
+				DoError("\",\", \"=\" or newline expected after declaration of local variable");
 			Exp.next();
 		}
 		return;
