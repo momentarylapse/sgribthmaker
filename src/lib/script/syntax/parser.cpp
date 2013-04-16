@@ -420,7 +420,7 @@ void SyntaxTree::CheckParamLink(Command *link, Type *type, const string &f_name,
 			// no need to do anything...
 		}else{
 			Exp.rewind();
-			DoError(format("(c) parameter %d for function \"%s\" has type (%s), (%s) expected", param_no + 1, f_name.c_str(), pt->name.c_str(), wt->name.c_str()));
+			DoError(format("(c) parameter %d in command \"%s\" has type (%s), (%s) expected", param_no + 1, f_name.c_str(), pt->name.c_str(), wt->name.c_str()));
 		}
 
 	// normal type cast
@@ -434,7 +434,8 @@ void SyntaxTree::CheckParamLink(Command *link, Type *type, const string &f_name,
 			so("TypeCast");
 			apply_type_cast(this, tc, link);
 		}else{
-			DoError(format("(a) parameter %d for function \"%s\" has type (%s), (%s) expected", param_no + 1, f_name.c_str(), pt->name.c_str(), wt->name.c_str()));
+			Exp.rewind();
+			DoError(format("parameter %d in command \"%s\" has type (%s), (%s) expected", param_no + 1, f_name.c_str(), pt->name.c_str(), wt->name.c_str()));
 		}
 	}
 }
@@ -908,19 +909,20 @@ void SyntaxTree::ParseSpecialCommandFor(Block *block, Function *f)
 		DoError("\",\" expected after variable in for");
 	Exp.next();
 	Command *val0 = GetCommand(f);
-	if (val0->type != for_var->type){
-		Exp.rewind();
-		DoError(format("%s expected as first value of for", for_var->type->name.c_str()));
-	}
+	CheckParamLink(val0, for_var->type, "for", 1);
 
 	// last value
 	if (Exp.cur != ",")
-		DoError("\",\" expected after variable in for");
+		DoError("\",\" expected after first value in for");
 	Exp.next();
 	Command *val1 = GetCommand(f);
-	if (val1->type != for_var->type){
-		Exp.rewind();
-		DoError(format("%s expected as last value of for", for_var->type->name.c_str()));
+	CheckParamLink(val1, for_var->type, "for", 2);
+
+	Command *val_step = NULL;
+	if (Exp.cur == ","){
+		Exp.next();
+		val_step = GetCommand(f);
+		CheckParamLink(val_step, for_var->type, "for", 2);
 	}
 
 	// implement
@@ -944,12 +946,17 @@ void SyntaxTree::ParseSpecialCommandFor(Block *block, Function *f)
 	// ...for_var += 1
 	Command *cmd_inc;
 	if (for_var->type == TypeInt){
-		cmd_inc = add_command_operator(for_var, val1 /*dummy*/, OperatorIntIncrease);
+		if (val_step)
+			cmd_inc = add_command_operator(for_var, val_step, OperatorIntAddS);
+		else
+			cmd_inc = add_command_operator(for_var, val1 /*dummy*/, OperatorIntIncrease);
 	}else{
-		int nc = AddConstant(TypeFloat);
-		*(float*)Constants[nc].data = 1.0;
-		Command *val_add = add_command_const(nc);
-		cmd_inc = add_command_operator(for_var, val_add, OperatorFloatAddS);
+		if (!val_step){
+			int nc = AddConstant(TypeFloat);
+			*(float*)Constants[nc].data = 1.0;
+			val_step = add_command_const(nc);
+		}
+		cmd_inc = add_command_operator(for_var, val_step, OperatorFloatAddS);
 	}
 	Block *loop_block = Blocks[loop_block_no];
 	loop_block->command.add(cmd_inc); // add to loop-block
