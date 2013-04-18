@@ -362,7 +362,8 @@ void SyntaxTree::FindFunctionSingleParameter(int p, Type **WantedType, Function 
 	}else if (cmd->kind == KindCompilerFunction){
 		if (p < PreCommands[cmd->link_nr].param.num)
 			WantedType[p] = PreCommands[cmd->link_nr].param[p].type;
-	}
+	}else
+		DoError("evil function...");
 	// link parameters
 	cmd->param[p] = Param;
 }

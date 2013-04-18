@@ -26,7 +26,7 @@
 
 namespace Script{
 
-string DataVersion = "0.11.0.0";
+string DataVersion = "0.11.0.2";
 
 CompilerConfiguration config;
 
@@ -657,22 +657,23 @@ void SIAddPackageBase()
 
 	// "real"
 	TypeVoid			= add_type  ("void",		0, FLAG_CALL_BY_VALUE);
+	TypeBool			= add_type  ("bool",		sizeof(bool), FLAG_CALL_BY_VALUE);
+	TypeInt				= add_type  ("int",			sizeof(int), FLAG_CALL_BY_VALUE);
+	TypeFloat			= add_type  ("float",		sizeof(float), FLAG_CALL_BY_VALUE);
+	TypeChar			= add_type  ("char",		sizeof(char), FLAG_CALL_BY_VALUE);
+	// derived   (must be defined after the primitive types!)
 	TypePointer			= add_type_p("void*",		TypeVoid, FLAG_CALL_BY_VALUE); // substitute for all pointer types
 	TypePointerPs		= add_type_p("void*&",		TypePointer, FLAG_SILENT);
 	TypePointerList		= add_type_a("void*[]",		TypePointer, -1);
-	TypeBool			= add_type  ("bool",		sizeof(bool), FLAG_CALL_BY_VALUE);
 	TypeBoolPs			= add_type_p("bool&",		TypeBool, FLAG_SILENT);
 	TypeBoolList		= add_type_a("bool[]",		TypeBool, -11);
-	TypeInt				= add_type  ("int",			sizeof(int), FLAG_CALL_BY_VALUE);
 	TypeIntPs			= add_type_p("int&",		TypeInt, FLAG_SILENT);
 	TypeIntList			= add_type_a("int[]",		TypeInt, -1);
 	TypeIntArray		= add_type_a("int[?]",		TypeInt, 1);
-	TypeFloat			= add_type  ("float",		sizeof(float), FLAG_CALL_BY_VALUE);
 	TypeFloatPs			= add_type_p("float&",		TypeFloat, FLAG_SILENT);
 	TypeFloatArray		= add_type_a("float[?]",	TypeFloat, 1);
 	TypeFloatArrayP		= add_type_p("float[?]*",	TypeFloatArray);
 	TypeFloatList		= add_type_a("float[]",		TypeFloat, -1);
-	TypeChar			= add_type  ("char",		sizeof(char), FLAG_CALL_BY_VALUE);
 	TypeCharPs			= add_type_p("char&",		TypeChar, FLAG_SILENT);
 	TypeCString			= add_type_a("cstring",		TypeChar, 256);	// cstring := char[256]
 	TypeString			= add_type_a("string",		TypeChar, -1);	// string := char[]

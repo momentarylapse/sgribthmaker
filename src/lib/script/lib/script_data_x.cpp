@@ -349,7 +349,7 @@ void SIAddPackageX()
 		class_add_element("time_to_live",	TypeFloat,		GetDAEffect(time_to_live));
 		class_add_element("var",			TypeFloatList,	GetDAEffect(script_var));
 		class_add_element("var_i",			TypeIntList,	GetDAEffect(script_var));
-		class_add_element("var_p",			TypePointerList,GetDAEffect(script_var));
+		class_add_element("var_p",			TypePointerList,GetDAEffect(script_var_p));
 		class_add_element("func_delta_t",	TypeFloat,		GetDAEffect(func_delta_t));
 		class_add_element("elapsed",		TypeFloat,		GetDAEffect(elapsed));
 		class_add_element("func",			TypePointer,	GetDAEffect(func));
@@ -420,7 +420,7 @@ void SIAddPackageX()
 		class_add_element("detail_dist",	TypeFloatArray,	GetDAModel(detail_dist));
 		class_add_element("var",			TypeFloatList,	GetDAModel(script_var));
 		class_add_element("var_i",			TypeIntList,	GetDAModel(script_var));
-		class_add_element("var_p",			TypePointerList,GetDAModel(script_var));
+		//class_add_element("var_p",			TypePointerList,GetDAModel(script_var));
 		class_add_element("data",			TypePointer,	GetDAModel(script_data));
 		class_add_element("item",			TypeModelPList,	GetDAModel(inventary));
 		class_add_func("AddForce",		TypeVoid,	god_p(mf((tmf)&Object::AddForce)));
