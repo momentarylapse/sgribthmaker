@@ -303,6 +303,11 @@ void amd64_vec_ang_interpolate(vector &r, vector &a, vector &b, float t)
 void amd64_vec_cross_product(vector &r, vector &a, vector &b)
 {	r = VecCrossProduct(a, b);	}
 
+void amd64_vec_rand_dir(vector &v, Random &r)
+{	v = r.dir();	}
+void amd64_vec_rand_in_ball(vector &v, Random &r, float rad)
+{	v = r.in_ball(rad);	}
+
 static void *amd64_wrap(void *orig, void *wrap)
 {
 	if (config.instruction_set == Asm::InstructionSetAMD64)
@@ -350,6 +355,8 @@ void SIAddPackageMath()
 	TypeFloatInterpolator	= add_type  ("FloatInterpolator",		sizeof(Interpolator<float>));
 	Type*
 	TypeVectorInterpolator	= add_type  ("VectorInterpolator",		sizeof(Interpolator<vector>));
+	Type*
+	TypeRandom		= add_type  ("Random",	sizeof(Random));
 	
 	
 	add_class(TypeIntList);
@@ -666,6 +673,20 @@ void SIAddPackageMath()
 		class_add_func("Decrypt",	TypeString, algebra_p(mf((tmf)&Crypto::Decrypt)));
 			func_add_param("str",		TypeString);
 			func_add_param("cut",		TypeBool);
+
+	add_class(TypeRandom);
+		class_add_element("n",	TypeRandom, 0);
+		class_add_func("seed",		TypeVoid, mf((tmf)&Random::seed));
+			func_add_param("str",		TypeString);
+		class_add_func("geti",		TypeInt, mf((tmf)&Random::geti));
+			func_add_param("max",		TypeInt);
+		class_add_func("getu",		TypeFloat, mf((tmf)&Random::getu));
+		class_add_func("geti",		TypeFloat, mf((tmf)&Random::getf));
+			func_add_param("min",		TypeFloat);
+			func_add_param("max",		TypeFloat);
+		class_add_func("in_ball",		TypeVector, amd64_wrap(mf((tmf)&Random::in_ball), type_p(&amd64_vec_rand_in_ball)));
+			func_add_param("r",		TypeFloat);
+		class_add_func("dir",		TypeVector, amd64_wrap(mf((tmf)&Random::dir), type_p(&amd64_vec_rand_dir)));
 	
 	add_compiler_func("complex",		TypeComplex,	CommandComplexSet);
 		func_add_param("x",		TypeFloat);
