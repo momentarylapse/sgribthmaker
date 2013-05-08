@@ -29,11 +29,6 @@ int timer, CompileTimer;
 #define COLORMODE		1
 
 
-namespace Script{
-extern Script *GlobalDummyScript;
-};
-
-
 //------------------------------------------------------------------------------
 // Undo/Redo
 

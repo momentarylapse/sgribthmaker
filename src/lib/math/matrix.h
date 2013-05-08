@@ -1,6 +1,6 @@
 
-#ifndef _TYPES_MATRIX_INCLUDED_
-#define _TYPES_MATRIX_INCLUDED_
+#ifndef _MATH_MATRIX_INCLUDED_
+#define _MATH_MATRIX_INCLUDED_
 
 //#define _element(row,col)	e[row+col*4]
 
@@ -113,5 +113,10 @@ matrix _cdecl MatrixRotation2(const vector &ang);
 
 const float f_m_id[16] = { 1,0,0,0 , 0,1,0,0 , 0,0,1,0 , 0,0,0,1 };
 const matrix m_id = matrix(f_m_id);
+
+
+inline vector *_matrix_get_translation_(const matrix &m)
+{	return (vector*)&m._03;	} // (_03, _13, _23) happens to be aligned the right way...
+
 
 #endif

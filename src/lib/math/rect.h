@@ -1,6 +1,6 @@
 
-#ifndef _TYPES_RECT_INCLUDED_
-#define _TYPES_RECT_INCLUDED_
+#ifndef _MATH_RECT_INCLUDED_
+#define _MATH_RECT_INCLUDED_
 
 // types
 struct rect

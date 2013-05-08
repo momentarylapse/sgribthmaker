@@ -1,6 +1,6 @@
 
-#ifndef _TYPES_QUATERNION_INCLUDED_
-#define _TYPES_QUATERNION_INCLUDED_
+#ifndef _MATH_QUATERNION_INCLUDED_
+#define _MATH_QUATERNION_INCLUDED_
 
 class vector;
 class matrix;

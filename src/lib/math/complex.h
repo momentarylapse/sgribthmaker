@@ -1,6 +1,6 @@
 
-#ifndef _TYPES_COMPLEX_INCLUDED_
-#define _TYPES_COMPLEX__INCLUDED_
+#ifndef _MATH_COMPLEX_INCLUDED_
+#define _MATH_COMPLEX__INCLUDED_
 
 struct complex
 {

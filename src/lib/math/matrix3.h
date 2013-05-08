@@ -1,6 +1,6 @@
 
-#ifndef _TYPES_MATRIX3_INCLUDED_
-#define _TYPES_MATRIX3_INCLUDED_
+#ifndef _MATH_MATRIX3_INCLUDED_
+#define _MATH_MATRIX3_INCLUDED_
 
 class vector;
 

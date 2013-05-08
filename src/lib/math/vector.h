@@ -1,6 +1,8 @@
 
-#ifndef _TYPES_VECTOR_INCLUDED_
-#define _TYPES_VECTOR_INCLUDED_
+#ifndef _MATH_VECTOR_INCLUDED_
+#define _MATH_VECTOR_INCLUDED_
+
+#include <math.h>
 
 class matrix;
 class matrix3;
@@ -77,6 +79,36 @@ const vector v_0 = vector(0, 0, 0);
 const vector e_x = vector(1, 0, 0);
 const vector e_y = vector(0, 1, 0);
 const vector e_z = vector(0, 0, 1);
+
+
+inline float _vec_length_(const vector &v)
+{	return sqrt(v*v);	}
+
+inline float _vec_length_fuzzy_(const vector &v)
+{
+	float x=fabs(v.x);
+	float y=fabs(v.y);
+	float z=fabs(v.z);
+	float xy=(x>y)?x:y;
+	return (xy>z)?xy:z;
+}
+
+inline void _vec_normalize_(vector &v)
+{	float inv_norm = 1.0f / sqrt(v*v); v *= inv_norm;	}
+
+inline bool _vec_between_(const vector &v,const vector &a,const vector &b)
+{
+	if ((v.x>a.x)&&(v.x>b.x))	return false;
+	if ((v.x<a.x)&&(v.x<b.x))	return false;
+	if ((v.y>a.y)&&(v.y>b.y))	return false;
+	if ((v.y<a.y)&&(v.y<b.y))	return false;
+	if ((v.z>a.z)&&(v.z>b.z))	return false;
+	if ((v.z<a.z)&&(v.z<b.z))	return false;
+	return true;
+}
+
+inline float _vec_factor_between_(const vector &v,const vector &a,const vector &b)
+{	return ((v-a)*(b-a)) / ((b-a)*(b-a));	}
 
 
 #endif

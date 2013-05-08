@@ -6,7 +6,7 @@ all : $(BIN)
 MODULES = \
  lib/script/script.a \
  lib/file/file.a \
- lib/types/types.a \
+ lib/math/math.a \
  lib/nix/nix.a \
  lib/image/image.a \
  lib/net/net.a \
@@ -48,7 +48,7 @@ include lib/nix/nix.mk
 include lib/image/image.mk
 include lib/script/script.mk
 include lib/net/net.mk
-include lib/types/types.mk
+include lib/math/math.mk
 include lib/any/any.mk
 include lib/algebra/algebra.mk
 
