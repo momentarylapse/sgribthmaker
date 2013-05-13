@@ -14,7 +14,7 @@ string Filename = "";
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.3.21.0";
+string AppVersion = "0.3.22.0";
 
 #define ALLOW_LOGGING			true
 //#define ALLOW_LOGGING			false
@@ -25,6 +25,8 @@ CHuiWindow *MainWin;
 CHuiWindow *CommandDialog = NULL, *MessageDialog;
 string LastCommand;
 int timer, CompileTimer;
+
+extern string NixShaderError;
 
 #define COLORMODE		1
 
@@ -807,17 +809,9 @@ string get_time_str(float t)
 		return format("%.2fs", t);
 }
 
-void Compile()
+void CompileKaba()
 {
-	if (Filename.extension() != "kaba"){
-		SetMessage(_("nur *.kaba-Dataien k&onnen &ubersetzt werden!"));
-		return;
-	}
-
-	if (!Save())
-		return;
-
-	msg_db_r("Compile",1);
+	msg_db_f("CompileKaba",1);
 
 	//HuiSetDirectory(SgribthDir);
 	msg_set_verbose(true);
@@ -846,7 +840,41 @@ void Compile()
 
 	msg_db_m("set verbose...",1);
 	msg_set_verbose(ALLOW_LOGGING);
-	msg_db_l(1);
+}
+
+void CompileShader()
+{
+	msg_db_f("CompileShader",1);
+
+	CHuiWindow *w = HuiCreateNixWindow("nix", -1, -1, 640, 480);
+	w->Update();
+	NixInit("OpenGL", 640, 480, 32, false, w);
+
+	int shader = NixLoadShader(Filename);
+	if (shader < 0){
+		HuiErrorBox(MainWin, _("Fehler"), NixShaderError);
+	}else{
+		NixUnrefShader(shader);
+	}
+	delete(w);
+
+	msg_db_m("set verbose...",1);
+	msg_set_verbose(ALLOW_LOGGING);
+}
+
+void Compile()
+{
+	string ext = Filename.extension();
+
+	if (!Save())
+		return;
+
+	if (ext == "kaba")
+		CompileKaba();
+	else if (ext == "glsl")
+		CompileShader();
+	else
+		SetMessage(_("nur *.kaba-Dataien k&onnen &ubersetzt werden!"));
 }
 
 void CompileAndRun(bool verbose)

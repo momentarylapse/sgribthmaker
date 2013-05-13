@@ -7,6 +7,7 @@
 #ifdef _X_ALLOW_X_
 	#include "../../../world/world.h"
 	#include "../../../world/object.h"
+	#include "../../../world/model_manager.h"
 	#include "../../../world/terrain.h"
 	#include "../../../world/camera.h"
 	#include "../../../physics/links.h"
@@ -607,7 +608,7 @@ void SIAddPackageX()
 		func_add_param("func",		TypePointer);
 		func_add_param("del_func",		TypePointer);
 		func_add_param("life",		TypeFloat);
-	add_func("LoadModel",												TypeModelP,	x_p(&MetaLoadModel));
+	add_func("LoadModel",												TypeModelP,	x_p(&LoadModel));
 		func_add_param("filename",		TypeString);
 /*	add_func("GetModelOID",												TypeInt,	x_p(&MetaGetModelOID));
 		func_add_param("filename",		TypeString);*/
