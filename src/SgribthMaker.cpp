@@ -14,7 +14,7 @@ string Filename = "";
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.3.23.0";
+string AppVersion = "0.3.24.0";
 
 #define ALLOW_LOGGING			true
 //#define ALLOW_LOGGING			false
@@ -341,6 +341,7 @@ void FindScriptFunctions()
 	ScriptFunctions.clear();
 	GtkTextIter start, end;
 	int num_lines = gtk_text_buffer_get_line_count(tb);
+	string last_class;
 	for (int l=0;l<num_lines;l++){
 		int ll = 0;
 		gtk_text_buffer_get_iter_at_line_index(tb, &start, l, 0);
@@ -353,14 +354,27 @@ void FindScriptFunctions()
 		char *ss = gtk_text_buffer_get_text(tb, &start, &end, false);
 		string s = ss;
 		if (char_type(ss[0]) == CharLetter){
-			bool ok = (s.find("(") >= 0);
-			if (s.find("class ") >= 0)
+			bool ok = false;
+			if (s.find("class ") >= 0){
 				ok = true;
+				last_class = s.replace("\t", " ").replace(":", " ").explode(" ")[1];
+				s = "class " + last_class;
+			}else if (s.find("(") >= 0){
+				ok = true;
+				last_class = "";
+			}
 			if (s.find("extern") >= 0)
 				ok = false;
 			if (ok){
 				ScriptFunction f;
 				f.name = s;
+				f.line = l;
+				ScriptFunctions.add(f);
+			}
+		}else if ((last_class.num > 0) && (ss[0] == '\t') && (char_type(ss[1]) == CharLetter)){
+			if (s.find("(") >= 0){
+				ScriptFunction f;
+				f.name = ">" + s;
 				f.line = l;
 				ScriptFunctions.add(f);
 			}
