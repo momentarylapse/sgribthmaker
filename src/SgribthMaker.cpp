@@ -77,9 +77,34 @@ enum{
 	InString,
 	InOperator,
 	InNumber,
-	InSpecialCallback,
 	NumTagTypes
 };
+
+struct HighlightContext
+{
+	color fg, bg;
+	bool set_bg;
+	bool bold, italic;
+	HighlightContext(){}
+	HighlightContext(const color &_fg, const color &_bg, bool _set_bg, bool _bold, bool _italic)
+	{
+		fg = _fg;
+		bg = _bg;
+		set_bg = _set_bg;
+		bold = _bold;
+		italic = _italic;
+	}
+};
+
+struct HighlightSchema
+{
+	string name;
+	color fg, bg;
+	HighlightContext context[NumTagTypes];
+	void apply();
+};
+
+Array<HighlightSchema> HighlightSchemas;
 
 /*enum{
 	HighLightNone,
@@ -87,15 +112,7 @@ enum{
 	HighLightLatex
 };*/
 
-struct TagType
-{
-	color fg, bg;
-	bool set_bg;
-	bool bold, italic;
-	GtkTextTag *tag;
-};
-
-TagType tag[NumTagTypes];
+GtkTextTag *tag[NumTagTypes];
 
 
 struct ScriptFunction
@@ -179,7 +196,7 @@ inline void MarkWord(int line, int start, int end, int type, char *p0, char *p)
 	GtkTextIter _start, _end;
 	gtk_text_buffer_get_iter_at_line_offset(tb, &_start, line, start);
 	gtk_text_buffer_get_iter_at_line_offset(tb, &_end, line, end);
-	gtk_text_buffer_apply_tag (tb, tag[type].tag, &_start, &_end);
+	gtk_text_buffer_apply_tag (tb, tag[type], &_start, &_end);
 }
 
 #define next_char()	p=g_utf8_next_char(p);pos++
@@ -1050,7 +1067,6 @@ void ExecuteSettingsDialog()
 	SettingsDialog->AddString("context_list", _("String"));
 	SettingsDialog->AddString("context_list", _("Operator"));
 	SettingsDialog->AddString("context_list", _("Zahl"));
-	SettingsDialog->AddString("context_list", _("Spezial Callback"));
 	SettingsDialog->Update();
 
 	SettingsDialog->Event("close", &OnSettingsClose);
@@ -1209,13 +1225,13 @@ void OnExit()
 
 void SetTag(int i, const char *fg_color, const char *bg_color, bool bold, bool italic)
 {
-	tag[i].tag = gtk_text_buffer_create_tag(tb, NULL, "foreground", fg_color, NULL);
+	tag[i] = gtk_text_buffer_create_tag(tb, NULL, "foreground", fg_color, NULL);
 	if (bg_color)
-		g_object_set(tag[i].tag, "background", bg_color, NULL);
+		g_object_set(tag[i], "background", bg_color, NULL);
 	if (bold)
-		g_object_set(tag[i].tag, "weight", PANGO_WEIGHT_BOLD, NULL);
+		g_object_set(tag[i], "weight", PANGO_WEIGHT_BOLD, NULL);
 	if (italic)
-		g_object_set(tag[i].tag, "style", PANGO_STYLE_ITALIC, NULL);
+		g_object_set(tag[i], "style", PANGO_STYLE_ITALIC, NULL);
 }
 
 void UpdateTabSize()
@@ -1236,6 +1252,27 @@ void UpdateFont()
 	gtk_widget_modify_font(tv, font_desc);
 	pango_font_description_free(font_desc);
 	UpdateTabSize();
+}
+
+string color_to_hex(const color &c)
+{
+	int r = int(255.0f * c.r);
+	int g = int(255.0f * c.g);
+	int b = int(255.0f * c.b);
+	return "#" + string((char*)&r, 1).hex() + string((char*)&g, 1).hex() + string((char*)&b, 1).hex();
+}
+
+void HighlightSchema::apply()
+{
+	for (int i=0; i<NumTagTypes; i++){
+		if (context[i].set_bg)
+			SetTag(i, color_to_hex(context[i].fg).c_str(), color_to_hex(context[i].bg).c_str(), context[i].bold, context[i].italic);
+		else
+			SetTag(i, color_to_hex(context[i].fg).c_str(), NULL, context[i].bold, context[i].italic);
+	}
+	GdkColor _color;
+	gdk_color_parse(color_to_hex(fg).c_str(), &_color);
+	gtk_widget_modify_base(tv, GTK_STATE_NORMAL, &_color);
 }
 
 int hui_main(Array<string> arg)
@@ -1333,61 +1370,30 @@ int hui_main(Array<string> arg)
 
 	/* Change default font throughout the widget */
 	UpdateFont();
-	GdkColor color;
-	if (COLORMODE == 1)
-		gdk_color_parse ("#ffffff", &color);
-	else{
-		gdk_color_parse ("#000000", &color);
-		gtk_widget_modify_base(tv, GTK_STATE_NORMAL, &color);
-	}
 	//g_object_set(tv, "wrap-mode", GTK_WRAP_WORD_CHAR, NULL);
 
 	HuiRunLater(50, &UpdateTabSize);
 
+	HighlightSchema schema;
+	schema.name = "default";
+	schema.fg = Black;
+	schema.bg = White;
+	schema.context[InLineComment] = HighlightContext(color(1, 0.5f, 0.5f, 0.5f), Black, false, false, true);
+	schema.context[InCommentLevel1] = HighlightContext(color(1, 0.5f, 0.5f, 0.5f), Black, false, false, true);
+	schema.context[InCommentLevel2] = HighlightContext(color(1, 0.7f, 0.7f, 0.7f), Black, false, false, true);
+	schema.context[InSpace] = HighlightContext(Black, Black, false, false, false);
+	schema.context[InWord] = HighlightContext(Black, Black, false, false, false);
+	schema.context[InWordType] = HighlightContext(color(1, 0.125f, 0, 0.875f), Black, false, true, false);
+	schema.context[InWordGameVariable] = HighlightContext(color(1, 0.625f, 0.625f, 0), Black, false, false, false);
+	schema.context[InWordCompilerFunction] = HighlightContext(color(1, 0.065f, 0, 0.625f), Black, false, false, false);
+	schema.context[InWordSpecial] = HighlightContext(color(1, 0.625f, 0, 0.625f), Black, false, true, false);
+	schema.context[InNumber] = HighlightContext(color(1, 0, 0.5f, 0), Black, false, false, false);
+	schema.context[InOperator] = HighlightContext(color(1, 0.25f, 0.25f, 0), Black, false, false, false);
+	schema.context[InString] = HighlightContext(color(1, 1, 0, 0), Black, false, false, false);
+	schema.context[InMacro] = HighlightContext(color(1, 0, 0.5f, 0.5f), Black, false, false, false);
 
-	if (COLORMODE == 1){
-		SetTag(InLineComment, "#808080", NULL, false, true);
-		SetTag(InCommentLevel1, "#808080", NULL, false, true);
-		SetTag(InCommentLevel2, "#b0b0b0", NULL, false, true);
-		SetTag(InSpace, "#000000", NULL, false, false);
-		SetTag(InWord, "#000000", NULL, false, false);
-		SetTag(InWordType, "#2000d0", NULL, true, false);
-		SetTag(InWordGameVariable, "#a0a000", NULL, false, false);
-		SetTag(InWordCompilerFunction, "#1000a0", NULL, false, false);
-		SetTag(InWordSpecial, "#a000a0", NULL, true, false);
-		SetTag(InNumber, "#008000", NULL, false, false);
-		SetTag(InOperator, "#404000", NULL, false, false);
-		SetTag(InString, "#ff0000", NULL, false, false);
-		SetTag(InMacro, "#008080", NULL, false, false);
-		SetTag(InSpecialCallback, "#1000a0", NULL, true, false);
-	}else{
-		/*SetTag(InLineComment, "#808080", NULL, false, false);
-		SetTag(InCommentLevel1, "#808080", NULL, false, false);
-		SetTag(InCommentLevel2, "#b0b0b0", NULL, false, false);
-		SetTag(InSpace, "#000000", NULL, false, false);
-		SetTag(InWord, "#000000", NULL, false, false);
-		SetTag(InWordType, "#2000d0", NULL, false, false);
-		SetTag(InWordGameVariable, "#a0a000", NULL, false, false);
-		SetTag(InWordCompilerFunction, "#1000a0", NULL, false, false);
-		SetTag(InWordSpecial, "#a000a0", NULL, false, false);
-		SetTag(InNumber, "#008000", NULL, false, false);
-		SetTag(InOperator, "#404000", NULL, false, false);
-		SetTag(InString, "#ff0000", NULL, false, false);
-		SetTag(InMacro, "#008080", NULL, false, false);
-		tag[InLineComment] = gtk_text_buffer_create_tag(tb, NULL, "foreground", "#808080", NULL);
-		tag[InCommentLevel1] = gtk_text_buffer_create_tag(tb, NULL, "foreground", "#808080", NULL);
-		tag[InCommentLevel2] = gtk_text_buffer_create_tag(tb, NULL, "foreground", "#b0b0b0", NULL);
-		tag[InSpace] = gtk_text_buffer_create_tag(tb, NULL, "foreground", "#000000", NULL);
-		tag[InWord] = gtk_text_buffer_create_tag(tb, NULL, "foreground", "#ffffff", NULL);
-		tag[InWordType] = gtk_text_buffer_create_tag(tb, NULL, "foreground", "#6040ff", NULL);
-		tag[InWordGameVariable] = gtk_text_buffer_create_tag(tb, NULL, "foreground", "#b0b000", NULL);
-		tag[InWordCompilerFunction] = gtk_text_buffer_create_tag(tb, NULL, "foreground", "#5040ff", NULL);
-		tag[InWordSpecial] = gtk_text_buffer_create_tag(tb, NULL, "foreground", "#ff40ff", NULL);
-		tag[InNumber] = gtk_text_buffer_create_tag(tb, NULL, "foreground", "#40a040", NULL);
-		tag[InOperator] = gtk_text_buffer_create_tag(tb, NULL, "foreground", "#ffffb0", NULL);
-		tag[InString] = gtk_text_buffer_create_tag(tb, NULL, "foreground", "#ff0000", NULL);
-		tag[InMacro] = gtk_text_buffer_create_tag(tb, NULL, "foreground", "#008080", NULL);*/
-	}
+	HighlightSchemas.add(schema);
+	schema.apply();
 
 	MainWin->SetMenu(HuiCreateResourceMenu("menu"));
 	MainWin->SetMaximized(maximized);
