@@ -14,7 +14,7 @@ string Filename = "";
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.3.22.0";
+string AppVersion = "0.3.23.0";
 
 #define ALLOW_LOGGING			true
 //#define ALLOW_LOGGING			false
@@ -23,6 +23,7 @@ string AppVersion = "0.3.22.0";
 
 CHuiWindow *MainWin;
 CHuiWindow *CommandDialog = NULL, *MessageDialog;
+CHuiWindow *SettingsDialog = NULL;
 string LastCommand;
 int timer, CompileTimer;
 
@@ -166,7 +167,7 @@ inline void MarkWord(int line, int start, int end, int type, char *p0, char *p)
 {
 	if (start == end)
 		return;
-	msg_db_r("MarkWord", 1);
+	msg_db_f("MarkWord", 1);
 	if (type == InWord)
 		if ((start == 0) || (p0[-1] != '.'))
 		if ((long)p - (long)p0 < 64){
@@ -179,7 +180,6 @@ inline void MarkWord(int line, int start, int end, int type, char *p0, char *p)
 	gtk_text_buffer_get_iter_at_line_offset(tb, &_start, line, start);
 	gtk_text_buffer_get_iter_at_line_offset(tb, &_end, line, end);
 	gtk_text_buffer_apply_tag (tb, tag[type].tag, &_start, &_end);
-	msg_db_l(1);
 }
 
 #define next_char()	p=g_utf8_next_char(p);pos++
@@ -203,7 +203,7 @@ void CreateTextColors(int first_line = -1, int last_line = -1)
 		return;
 	if (!allow_highlighting(Filename))
 		return;
-	msg_db_r("CreateTextColors", 1);
+	msg_db_f("CreateTextColors", 1);
 	GtkTextIter start, end;
 
 	int comment_level = 0;
@@ -316,12 +316,11 @@ void CreateTextColors(int first_line = -1, int last_line = -1)
 			MarkWord(l, pos0, line_len, in_type, p0, &s[str_len]);
 		g_free(s);
 	}
-	msg_db_l(1);
 }
 
 void FindScriptFunctions()
 {
-	msg_db_r("FindScriptFunctions", 1);
+	msg_db_f("FindScriptFunctions", 1);
 	ScriptFunctions.clear();
 	GtkTextIter start, end;
 	int num_lines = gtk_text_buffer_get_line_count(tb);
@@ -351,34 +350,31 @@ void FindScriptFunctions()
 		}
 		g_free(ss);
 	}
-	msg_db_l(1);
 }
 
 int status_count = 0;
 
 void UpdateStatusBar()
 {
-	msg_db_r("UpdateStatusBar", 2);
+	msg_db_f("UpdateStatusBar", 2);
 	status_count --;
 	if (status_count == 0)
 		MainWin->EnableStatusbar(false);
-	msg_db_l(2);
 }
 
 void SetMessage(const string &str)
 {
-	msg_db_r("SetMessage", 2);
+	msg_db_f("SetMessage", 2);
 	MainWin->SetStatusText(str);
 	MainWin->EnableStatusbar(true);
 	//HuiGetTime(timer);
 	status_count ++;
 	HuiRunLater(5000, &UpdateStatusBar);
-	msg_db_l(2);
 }
 
 void SetWindowTitle()
 {
-	msg_db_r("SetWinTitle", 1);
+	msg_db_f("SetWinTitle", 1);
 	if (Changed){
 		if (Filename.num > 0)
 			MainWin->SetTitle("*" + Filename + " - " + AppTitle);
@@ -390,12 +386,11 @@ void SetWindowTitle()
 		else
 			MainWin->SetTitle("neues Dokument - " + AppTitle);
 	}
-	msg_db_l(1);
 }
 
 void ResetHistory()
 {
-	msg_db_r("RestHistory", 1);
+	msg_db_f("RestHistory", 1);
 	for (int i=0;i<undo.num;i++)
 		g_free(undo[i].text);
 	undo.resize(0);
@@ -405,23 +400,21 @@ void ResetHistory()
 	HistoryEnabled = true;
 	MainWin->GetMenu()->EnableItem("undo", false);
 	MainWin->GetMenu()->EnableItem("redo", false);
-	msg_db_l(1);
 }
 
 void undo_insert_text(int pos, char *text, int length)
 {
-	msg_db_r("undo_insert_text", 1);
+	msg_db_f("undo_insert_text", 1);
 	GtkTextIter start, end;
 	gtk_text_buffer_get_iter_at_offset(tb, &start, pos);
 	gtk_text_buffer_insert(tb, &start, text, length);
 	gtk_text_buffer_place_cursor(tb, &start);
 	gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb));
-	msg_db_l(1);
 }
 
 void undo_remove_text(int pos, char *text, int length)
 {
-	msg_db_r("undo_remove_text", 1);
+	msg_db_f("undo_remove_text", 1);
 	GtkTextIter start, end;
 	gtk_text_buffer_get_iter_at_offset(tb, &start, pos);
 	gtk_text_buffer_get_iter_at_offset(tb, &end, pos);
@@ -429,7 +422,6 @@ void undo_remove_text(int pos, char *text, int length)
 	gtk_text_buffer_delete(tb, &start, &end);
 	gtk_text_buffer_place_cursor(tb, &start);
 	gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb));
-	msg_db_l(1);
 }
 
 void UpdateMenu()
@@ -442,7 +434,7 @@ void Undo()
 {
 	if (UndoStackPos <= 0)
 		return;
-	msg_db_r("Undo", 1);
+	msg_db_f("Undo", 1);
 	HistoryEnabled = false;
 	UndoStackPos --;
 	s_undo *u = &undo[UndoStackPos];
@@ -454,14 +446,13 @@ void Undo()
 	Changed = (UndoStackPos != UndoStackSavedPos);
 	SetWindowTitle();
 	UpdateMenu();
-	msg_db_l(1);
 }
 
 void Redo()
 {
 	if (UndoStackPos >= undo.num)
 		return;
-	msg_db_r("Redo", 1);
+	msg_db_f("Redo", 1);
 	HistoryEnabled = false;
 	s_undo *u = &undo[UndoStackPos];
 	if (u->type == UndoRemove)
@@ -473,14 +464,13 @@ void Redo()
 	Changed = (UndoStackPos != UndoStackSavedPos);
 	SetWindowTitle();
 	UpdateMenu();
-	msg_db_l(1);
 }
 
 void ChangeHistory(int type, char *text, int length, int pos)
 {
 	if (!HistoryEnabled)
 		return;
-	msg_db_r("ChangeHistory", 1);
+	msg_db_f("ChangeHistory", 1);
 	s_undo u;
 	u.type = type;
 	u.text = text;
@@ -499,7 +489,6 @@ void ChangeHistory(int type, char *text, int length, int pos)
 	UndoStackPos ++;
 	Changed = true;
 	UpdateMenu();
-	msg_db_l(1);
 }
 
 bool Save();
@@ -522,7 +511,7 @@ void New()
 	if (!AllowTermination())
 		return;
 
-	msg_db_r("New", 1);
+	msg_db_f("New", 1);
 	HistoryEnabled = false;
 	GtkTextIter start, end;
 	gtk_text_buffer_get_bounds(tb, &start, &end);
@@ -532,12 +521,11 @@ void New()
 	Filename = "";
 	ResetHistory();
 	SetWindowTitle();
-	msg_db_l(1);
 }
 
 string convert_to_utf8(string temp)
 {
-	msg_db_r("convert_to_utf8", 1);
+	msg_db_f("convert_to_utf8", 1);
 	string utf8;// = new char[strlen(temp)];
 	const char *t = temp.c_str();
 	while(*t){
@@ -552,17 +540,15 @@ string convert_to_utf8(string temp)
 	gunichar *aa = g_utf8_to_ucs4(temp, -1, NULL, NULL, NULL);
 	char *utf8 = g_ucs4_to_utf8(aa, -1, NULL, NULL, NULL);
 	g_free(aa);*/
-	msg_db_l(1);
 	return utf8;
 }
 
 bool LoadFromFile(const string &filename)
 {
-	msg_db_r("LoadFromFile", 1);
+	msg_db_f("LoadFromFile", 1);
 	CFile *f = OpenFile(filename);
 	if (!f){
 		SetMessage(_("Datei l&asst sich nicht &offnen"));
-		msg_db_l(1);
 		return false;
 	}
 	
@@ -602,13 +588,12 @@ bool LoadFromFile(const string &filename)
 	gtk_text_buffer_get_start_iter(tb, &start);
 	gtk_text_buffer_place_cursor(tb, &start);
 	SetWindowTitle();
-	msg_db_l(1);
 	return true;
 }
 
 bool WriteToFile(const string &filename)
 {
-	msg_db_r("WriteToFile", 1);
+	msg_db_f("WriteToFile", 1);
 	CFile *f = CreateFile(filename);
 	GtkTextIter start, end;
 	gtk_text_buffer_get_bounds(tb, &start, &end);
@@ -623,7 +608,6 @@ bool WriteToFile(const string &filename)
 	Changed = false;
 	SetWindowTitle();
 	SetMessage(_("gespeichert"));
-	msg_db_l(1);
 	return true;
 }
 
@@ -686,7 +670,7 @@ void CopyToClipboard()
 
 void PasteFromClipboard()
 {
-	msg_db_r("PasteFromCB", 1);
+	msg_db_f("PasteFromCB", 1);
 	GtkClipboard *cb=gtk_clipboard_get_for_display(gdk_display_get_default(),GDK_SELECTION_CLIPBOARD);
 	//gtk_text_buffer_paste_clipboard(tb, cb, NULL, true);
 	char *text = gtk_clipboard_wait_for_text(cb);
@@ -696,15 +680,13 @@ void PasteFromClipboard()
 		g_free(text);
 	}
 	SetMessage(_("eingef&ugt"));
-	msg_db_l(1);
 }
 
 void DeleteSelection()
 {
-	msg_db_r("DeleteSel", 1);
+	msg_db_f("DeleteSel", 1);
 	gtk_text_buffer_delete_selection(tb, true, true);
 	gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb));
-	msg_db_l(1);
 }
 
 void Cut()
@@ -715,7 +697,7 @@ void Cut()
 
 void JumpToStartOfLine(bool shift)
 {
-	msg_db_r("JumpToStartOfLine", 1);
+	msg_db_f("JumpToStartOfLine", 1);
 	GtkTextMark *mi = gtk_text_buffer_get_insert(tb);
 	GtkTextMark *msb = gtk_text_buffer_get_selection_bound(tb);
 	GtkTextIter ii, isb, i0, i1;
@@ -738,12 +720,11 @@ void JumpToStartOfLine(bool shift)
 	else
 		gtk_text_buffer_place_cursor(tb, &ii);
 	gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb));
-	msg_db_l(1);
 }
 
 void JumpToEndOfLine(bool shift)
 {
-	msg_db_r("JumpToEndOfLine", 1);
+	msg_db_f("JumpToEndOfLine", 1);
 	GtkTextMark *mi = gtk_text_buffer_get_insert(tb);
 	GtkTextMark *msb = gtk_text_buffer_get_selection_bound(tb);
 	GtkTextIter ii, isb;
@@ -760,12 +741,11 @@ void JumpToEndOfLine(bool shift)
 	else
 		gtk_text_buffer_place_cursor(tb, &ii);
 	gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb));
-	msg_db_l(1);
 }
 
 void MoveCursorTo(int line, int pos)
 {
-	msg_db_r("MoveCursorTo", 1);
+	msg_db_f("MoveCursorTo", 1);
 	GtkTextIter iter;
 	gtk_text_buffer_get_iter_at_line_index(tb, &iter, line, 0);
 	while (!gtk_text_iter_ends_line(&iter))
@@ -775,12 +755,11 @@ void MoveCursorTo(int line, int pos)
 		gtk_text_buffer_get_iter_at_line_index(tb, &iter, line, pos);
 	gtk_text_buffer_place_cursor(tb, &iter);
 	gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb));
-	msg_db_l(1);
 }
 
 void InsertReturn()
 {
-	msg_db_r("InsertReturn", 1);
+	msg_db_f("InsertReturn", 1);
 	GtkTextMark *mi = gtk_text_buffer_get_insert(tb);
 	GtkTextIter ii, i0, i1;
 	gtk_text_buffer_get_iter_at_mark(tb, &ii, mi);
@@ -798,7 +777,6 @@ void InsertReturn()
 	gtk_text_buffer_insert_at_cursor(tb, "\n", -1);
 	gtk_text_buffer_insert_at_cursor(tb, text, -1);
 	g_free(text);
-	msg_db_l(1);
 }
 
 string get_time_str(float t)
@@ -887,7 +865,7 @@ void CompileAndRun(bool verbose)
 	if (!Save())
 		return;
 
-	msg_db_r("CompileAndRun",1);
+	msg_db_f("CompileAndRun",1);
 
 	HuiSetDirectory(Filename);
 	//if (verbose)
@@ -946,8 +924,6 @@ void CompileAndRun(bool verbose)
 	Script::DeleteAllScripts(true, true);
 
 	msg_set_verbose(ALLOW_LOGGING);
-
-	msg_db_l(1);
 }
 
 void OnCompileAndRunVerbose()
@@ -959,18 +935,17 @@ void OnCompileAndRunSilent()
 
 void ShowCurLine()
 {
-	msg_db_r("ShowCurLine", 1);
+	msg_db_f("ShowCurLine", 1);
 	GtkTextIter ii;
 	gtk_text_buffer_get_iter_at_mark(tb, &ii, gtk_text_buffer_get_insert(tb));
 	int line = gtk_text_iter_get_line(&ii);
 	int off = gtk_text_iter_get_line_offset(&ii);
 	SetMessage(format(_("Zeile  %d : %d"), line + 1, off + 1));
-	msg_db_l(1);
 }
 
 void ExecuteCommand(string &cmd)
 {
-	msg_db_r("ExecCmd", 1);
+	msg_db_f("ExecCmd", 1);
 	// find...
 	GtkTextIter ii, isb;
 	gtk_text_buffer_get_iter_at_mark(tb, &ii, gtk_text_buffer_get_insert(tb));
@@ -1005,7 +980,6 @@ void ExecuteCommand(string &cmd)
 		gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb));
 	}else
 		SetMessage(format(_("\"%s\" nicht gefunden"), cmd.c_str()));
-	msg_db_l(1);
 }
 
 void OnCommandOk()
@@ -1022,7 +996,7 @@ void OnCommandClose()
 
 void ExecuteCommandDialog()
 {
-	msg_db_r("ExecCmdDlg", 1);
+	msg_db_f("ExecCmdDlg", 1);
 	if (!CommandDialog){
 		CommandDialog = HuiCreateResourceDialog("command_dialog", MainWin);
 		CommandDialog->SetString("command", LastCommand);
@@ -1033,8 +1007,58 @@ void ExecuteCommandDialog()
 	}
 
 	HuiWaitTillWindowClosed(CommandDialog);
-	msg_db_l(1);
 }
+
+void OnSettingsClose()
+{
+	delete(SettingsDialog);
+}
+
+void UpdateFont();
+void UpdateTabSize();
+
+void OnSettingsFont()
+{
+	if (HuiSelectFont(SettingsDialog, _("Font w&ahlen"))){
+		SettingsDialog->SetString("font", HuiFontname);
+		HuiConfigWriteStr("Font", HuiFontname);
+		UpdateFont();
+	}
+}
+
+void OnSettingsTabWidth()
+{
+	HuiConfigWriteInt("TabWidth", SettingsDialog->GetInt("tab_width"));
+	UpdateTabSize();
+}
+
+void ExecuteSettingsDialog()
+{
+	SettingsDialog = HuiCreateResourceDialog("settings_dialog", MainWin);
+	SettingsDialog->SetInt("tab_width", HuiConfigReadInt("TabWidth", 8));
+	SettingsDialog->SetString("font", HuiConfigReadStr("Font", "Monospace 10"));
+	SettingsDialog->AddString("context_list", _("reserviertes Wort"));
+	SettingsDialog->AddString("context_list", _("Api Funktion"));
+	SettingsDialog->AddString("context_list", _("Api Variable"));
+	SettingsDialog->AddString("context_list", _("Typ"));
+	SettingsDialog->AddString("context_list", _("Text"));
+	SettingsDialog->AddString("context_list", _("Kommentar Zeile"));
+	SettingsDialog->AddString("context_list", _("Kommentar Ebene 1"));
+	SettingsDialog->AddString("context_list", _("Kommentar Ebene 2"));
+	SettingsDialog->AddString("context_list", _("Macro"));
+	SettingsDialog->AddString("context_list", _("Trennzeichen"));
+	SettingsDialog->AddString("context_list", _("String"));
+	SettingsDialog->AddString("context_list", _("Operator"));
+	SettingsDialog->AddString("context_list", _("Zahl"));
+	SettingsDialog->AddString("context_list", _("Spezial Callback"));
+	SettingsDialog->Update();
+
+	SettingsDialog->Event("close", &OnSettingsClose);
+	SettingsDialog->Event("font", &OnSettingsFont);
+	SettingsDialog->Event("tab_width", &OnSettingsTabWidth);
+	HuiWaitTillWindowClosed(SettingsDialog);
+}
+
 bool change_return = true;
 
 void insert_text(GtkTextBuffer *textbuffer, GtkTextIter *location, gchar *text, gint len, gpointer user_data)
@@ -1042,14 +1066,13 @@ void insert_text(GtkTextBuffer *textbuffer, GtkTextIter *location, gchar *text, 
 	if (!HistoryEnabled)
 		return;
 
-	msg_db_r("insert_text", 1);
+	msg_db_f("insert_text", 1);
 
 	if ((strcmp(text, "\n") == 0) && (change_return)){
 		g_signal_stop_emission_by_name(textbuffer, "insert-text");
 		change_return = false;
 		InsertReturn();
 		change_return = true;
-		msg_db_l(1);
 		return;
 	}
 
@@ -1063,26 +1086,24 @@ void insert_text(GtkTextBuffer *textbuffer, GtkTextIter *location, gchar *text, 
 	for (int i=0;i<len;i++)
 		if (text[i] == '\n')
 			NeedsUpdateEnd ++;
-	msg_db_l(1);
 }
 
 void delete_range(GtkTextBuffer *textbuffer, GtkTextIter *start, GtkTextIter *end, gpointer user_data)
 {
 	if (!HistoryEnabled)
 		return;
-	msg_db_r("delete_range", 1);
+	msg_db_f("delete_range", 1);
 	char *text = gtk_text_buffer_get_text(textbuffer, start, end, false);
 	ChangeHistory(UndoRemove, text, strlen(text), gtk_text_iter_get_offset(start));
 	SetWindowTitle();
 
 	NeedsUpdateStart = gtk_text_iter_get_line(start);
 	NeedsUpdateEnd = NeedsUpdateStart;
-	msg_db_l(1);
 }
 
 void move_cursor(GtkTextView *text_view, GtkMovementStep step, gint count, gboolean extend_selection, gpointer user_data)
 {
-	msg_db_r("move_cursor", 1);
+	msg_db_f("move_cursor", 1);
 	if (step == GTK_MOVEMENT_DISPLAY_LINE_ENDS){
 		g_signal_stop_emission_by_name(text_view, "move-cursor");
 		if (count > 0)
@@ -1091,47 +1112,43 @@ void move_cursor(GtkTextView *text_view, GtkMovementStep step, gint count, gbool
 			JumpToStartOfLine(extend_selection);
 	}
 	//printf("move cursor  %d  %d  %d\n", count, (int)extend_selection, (int)step);
-	msg_db_l(1);
 }
 
 void copy_clipboard(GtkTextView *text_view, gpointer user_data)
-{	msg_db_r("copy_cb", 1);	g_signal_stop_emission_by_name(text_view, "copy-clipboard");	msg_db_l(1);	}
+{	msg_db_f("copy_cb", 1);	g_signal_stop_emission_by_name(text_view, "copy-clipboard");	}
 
 void paste_clipboard(GtkTextView *text_view, gpointer user_data)
-{	msg_db_r("paste_cb", 1);	g_signal_stop_emission_by_name(text_view, "paste-clipboard");	msg_db_l(1);	}
+{	msg_db_f("paste_cb", 1);	g_signal_stop_emission_by_name(text_view, "paste-clipboard");	}
 
 void cut_clipboard(GtkTextView *text_view, gpointer user_data)
-{	msg_db_r("cut_cb", 1);	g_signal_stop_emission_by_name(text_view, "cut-clipboard");	msg_db_l(1);	}
+{	msg_db_f("cut_cb", 1);	g_signal_stop_emission_by_name(text_view, "cut-clipboard");	}
 
 void toggle_cursor_visible(GtkTextView *text_view, gpointer user_data)
-{	msg_db_r("toggle_cursor_visible", 1);	g_signal_stop_emission_by_name(text_view, "toggle-cursor-visible");	msg_db_l(1);	}
+{	msg_db_f("toggle_cursor_visible", 1);	g_signal_stop_emission_by_name(text_view, "toggle-cursor-visible");	}
 
 void ShowLineOnScreen(int line)
 {
-	msg_db_r("ShowLineOnScreen", 1);
+	msg_db_f("ShowLineOnScreen", 1);
 	GtkTextIter it;
 	gtk_text_buffer_get_iter_at_line(tb, &it, line);
 	gtk_text_buffer_place_cursor(tb, &it);
 	//gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb)); // line is minimally visible
 	gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(tv), &it, false, true, 0.0, 0.5); // line is vertically centered
-	msg_db_l(1);
 }
 
 gboolean CallbackJumpLine(GtkWidget *widget, gpointer data)
 {
-	msg_db_r("CallbackJumpLine", 1);
+	msg_db_f("CallbackJumpLine", 1);
 	int line = (int)(long)data;
 	ShowLineOnScreen(line);
 	//msg_write((int)(long)data);
-	msg_db_l(1);
 	return FALSE;
 }
 
 void populate_popup(GtkTextView *text_view, GtkMenu *menu, gpointer user_data)
 {
-	msg_db_r("populate_popup", 1);
+	msg_db_f("populate_popup", 1);
 	if (Filename.extension() != "kaba"){
-		msg_db_l(1);
 		return;
 	}
 	FindScriptFunctions();
@@ -1150,7 +1167,6 @@ void populate_popup(GtkTextView *text_view, GtkMenu *menu, gpointer user_data)
 		gtk_widget_show(m);
 		g_signal_connect(G_OBJECT(m), "activate", G_CALLBACK(CallbackJumpLine), (void*)(long)f.line);
 	}
-	msg_db_l(1);
 }
 
 int color_busy_level = 0;
@@ -1164,12 +1180,11 @@ void CreateColorsIfNotBusy()
 
 void changed(GtkTextBuffer *textbuffer, gpointer user_data)
 {
-	msg_db_r("changed", 1);
+	msg_db_f("changed", 1);
 	//printf("change\n");
 	CreateTextColors(NeedsUpdateStart, NeedsUpdateEnd);
 	HuiRunLater(3000, &CreateColorsIfNotBusy);
 	color_busy_level ++;
-	msg_db_l(1);
 }
 
 void OnAbout()
@@ -1188,7 +1203,6 @@ void OnExit()
 		HuiConfigWriteInt("Y",r.y1);
 		HuiConfigWriteBool("Maximized",MainWin->IsMaximized());
 		HuiEnd();
-		msg_db_l(1);
 	}
 }
 
@@ -1215,10 +1229,19 @@ void UpdateTabSize()
 	gtk_text_view_set_tabs(GTK_TEXT_VIEW(tv), ta);
 }
 
+void UpdateFont()
+{
+	string font_name = HuiConfigReadStr("Font", "Monospace 10");
+	PangoFontDescription *font_desc = pango_font_description_from_string(font_name.c_str());
+	gtk_widget_modify_font(tv, font_desc);
+	pango_font_description_free(font_desc);
+	UpdateTabSize();
+}
+
 int hui_main(Array<string> arg)
 {
 	msg_init(false);
-	msg_db_r("main",1);
+	msg_db_f("main",1);
 	HuiInitExtended("sgribthmaker", AppVersion, NULL, true, "Deutsch");
 	msg_init(HuiAppDirectory + "message.txt", ALLOW_LOGGING);
 
@@ -1262,6 +1285,7 @@ int hui_main(Array<string> arg)
 	HuiAddCommand("compile", "", KEY_F7, &Compile);
 	HuiAddCommand("compile_and_run_verbose", "", KEY_F6 + KEY_CONTROL, &OnCompileAndRunVerbose);
 	HuiAddCommand("compile_and_run", "", KEY_F6, &OnCompileAndRunSilent);
+	HuiAddCommand("settings", "", -1, &ExecuteSettingsDialog);
 	//HuiAddCommand("script_help", "hui:help", KEY_F1 + KEY_SHIFT);
 	
 	HuiAddCommand("show_cur_line", "", KEY_F2, &ShowCurLine);
@@ -1308,11 +1332,7 @@ int hui_main(Array<string> arg)
 
 
 	/* Change default font throughout the widget */
-	int font_size = HuiConfigReadInt("FontSize", 8);
-	string font_name = HuiConfigReadStr("FontName", "Monospace");
-	PangoFontDescription *font_desc = pango_font_description_from_string((font_name + " " + i2s(font_size)).c_str());
-	gtk_widget_modify_font(tv, font_desc);
-	pango_font_description_free(font_desc);
+	UpdateFont();
 	GdkColor color;
 	if (COLORMODE == 1)
 		gdk_color_parse ("#ffffff", &color);

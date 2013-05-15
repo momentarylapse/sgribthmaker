@@ -1,0 +1,21 @@
+	// dialog
+	CHuiWindow *dlg = HuiCreateDialog("dialog", 400, 395, MainWin, false);
+	dlg->SetID("settings_dialog");
+	dlg->AddText("!bold\\Font", 5, 5, 350, 25, "cdt_font");
+	dlg->AddText("Tabbreite", 20, 65, 100, 25, "cdt_tab");
+	dlg->AddSpinButton("1\\1\\32", 125, 65, 230, 25, "tab_width");
+	dlg->AddText("!bold\\Syntax Highlighting", 10, 170, 285, 25, "cdt_highlighting");
+	dlg->AddText("Text", 25, 200, 100, 25, "cdt_col_text");
+	dlg->AddText("Hintergrund", 25, 230, 100, 25, "cdt_col_bg");
+	dlg->AddColorButton("", 130, 200, 100, 25, "color_text");
+	dlg->AddColorButton("", 130, 230, 100, 25, "color_background");
+	dlg->AddCheckBox("Fett", 25, 260, 100, 25, "bold");
+	dlg->AddCheckBox("Kursiv", 130, 260, 100, 25, "italic");
+	dlg->AddListView("!nobar\\context", 240, 200, 100, 135, "context_list");
+	dlg->AddDefButton("Schlie&sen", 275, 355, 100, 25, "close");
+	dlg->SetImage("close", "hui:close");
+	dlg->AddText("Font", 20, 35, 100, 25, "cdt_fontname");
+	dlg->AddButton("", 125, 35, 230, 25, "font");
+	dlg->Update();
+
+

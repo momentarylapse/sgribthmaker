@@ -1,0 +1,11 @@
+	// dialog
+	CHuiWindow *dlg = HuiCreateDialog("Befehl", 550, 65, MainWin, false);
+	dlg->SetID("command_dialog");
+	dlg->AddEdit("", 5, 5, 540, 25, "command");
+	dlg->AddDefButton("Ok", 445, 35, 100, 25, "ok");
+	dlg->SetImage("ok", "hui:ok");
+	dlg->AddButton("Abbrechen", 340, 35, 100, 25, "cancel");
+	dlg->SetImage("cancel", "hui:cancel");
+	dlg->Update();
+
+
