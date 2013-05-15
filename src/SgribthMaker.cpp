@@ -1204,6 +1204,17 @@ void SetTag(int i, const char *fg_color, const char *bg_color, bool bold, bool i
 		g_object_set(tag[i].tag, "style", PANGO_STYLE_ITALIC, NULL);
 }
 
+void UpdateTabSize()
+{
+	int tab_size = HuiConfigReadInt("TabWidth", 8);
+	PangoLayout *layout = gtk_widget_create_pango_layout(tv, "W");
+	int width, height;
+	pango_layout_get_pixel_size(layout, &width, &height);
+	PangoTabArray *ta = pango_tab_array_new(1, true);
+	pango_tab_array_set_tab(ta, 0, PANGO_TAB_LEFT, width * tab_size);
+	gtk_text_view_set_tabs(GTK_TEXT_VIEW(tv), ta);
+}
+
 int hui_main(Array<string> arg)
 {
 	msg_init(false);
@@ -1230,7 +1241,6 @@ int hui_main(Array<string> arg)
 	int x = HuiConfigReadInt("X", 0);
 	int y = HuiConfigReadInt("Y", 0);
 	bool maximized = HuiConfigReadBool("Maximized", false);
-	int font_size = HuiConfigReadInt("FontSize", 8);
 
 	HuiAddCommand("new", "hui:new", KEY_N + KEY_CONTROL, &New);
 	//HuiAddKeyCode(HMM_NEW_HEX, KEY_F1 + 256);
@@ -1257,7 +1267,6 @@ int hui_main(Array<string> arg)
 	HuiAddCommand("show_cur_line", "", KEY_F2, &ShowCurLine);
 
 	MainWin = HuiCreateControlWindow(AppTitle, -1, -1, width, height);
-
 	MainWin->AllowEvents("key");
 
 	MainWin->Event("about", &OnAbout);
@@ -1299,8 +1308,9 @@ int hui_main(Array<string> arg)
 
 
 	/* Change default font throughout the widget */
-	PangoFontDescription *font_desc;
-	font_desc = pango_font_description_from_string(format("Monospace %d", font_size).c_str());
+	int font_size = HuiConfigReadInt("FontSize", 8);
+	string font_name = HuiConfigReadStr("FontName", "Monospace");
+	PangoFontDescription *font_desc = pango_font_description_from_string((font_name + " " + i2s(font_size)).c_str());
 	gtk_widget_modify_font(tv, font_desc);
 	pango_font_description_free(font_desc);
 	GdkColor color;
@@ -1312,14 +1322,7 @@ int hui_main(Array<string> arg)
 	}
 	//g_object_set(tv, "wrap-mode", GTK_WRAP_WORD_CHAR, NULL);
 
-
-	// Tab size
-	int tab_size = HuiConfigReadInt("TabWidth", 8);
-	PangoLayout *layout = gtk_widget_create_pango_layout(tv, " ");
-	pango_layout_get_pixel_size(layout, &width, &height);
-	PangoTabArray *ta = pango_tab_array_new(1, true);
-	pango_tab_array_set_tab(ta, 0, PANGO_TAB_LEFT, width * tab_size);
-	gtk_text_view_set_tabs(GTK_TEXT_VIEW(tv), ta);
+	HuiRunLater(50, &UpdateTabSize);
 
 
 	if (COLORMODE == 1){
