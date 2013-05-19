@@ -16,7 +16,14 @@ Type::Type()//const string &_name, int _size, SyntaxTree *_owner)
 	is_silent = false;
 	parent = NULL;
 	force_call_by_value = false;
+	vtable = NULL;
 };
+
+Type::~Type()
+{
+	if (vtable)
+		delete[](vtable);
+}
 
 bool Type::UsesCallByReference()
 {	return ((!force_call_by_value) && (!is_pointer)) || (is_array);	}

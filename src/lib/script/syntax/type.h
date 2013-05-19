@@ -21,11 +21,13 @@ struct ClassFunction{
 	// _func_(x)  ->  p.func(x)
 	Array<Type*> param_type;
 	Type *return_type;
+	bool is_virtual;
 };
 
 struct Type{
 	Type();
 	//Type(const string &name, int size, SyntaxTree *owner);
+	~Type();
 	string name;
 	int size; // complete size of type
 	int array_length;
@@ -35,6 +37,7 @@ struct Type{
 	Array<ClassFunction> function;
 	Type *parent;
 	SyntaxTree *owner; // to share and be able to delete...
+	void **vtable;
 
 	bool force_call_by_value;
 	bool UsesCallByReference();

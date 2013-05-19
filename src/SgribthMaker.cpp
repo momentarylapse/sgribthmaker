@@ -155,6 +155,7 @@ inline int WordType(const string &name)
 		(name == "and") ||
 		(name == "or") ||
 		(name == "extern") ||
+		(name == "virtual") ||
 		(name == "const") ||
 		(name == "this") ||
 		(name == "self") ||
