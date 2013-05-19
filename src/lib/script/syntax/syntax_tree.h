@@ -170,7 +170,6 @@ public:
 	void ImplementImplicitConstructor(Function *f, Type *t);
 	void ImplementImplicitDestructor(Function *f, Type *t);
 	void CreateImplicitFunctions(Type *t, bool relocate_last_function);
-	void CreateAllImplicitFunctions(bool relocate_last_function);
 
 	// syntax analysis
 	Type *GetConstantType();

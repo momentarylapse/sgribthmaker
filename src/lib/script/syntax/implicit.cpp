@@ -585,11 +585,5 @@ void SyntaxTree::CreateImplicitFunctions(Type *t, bool relocate_last_function)
 	}
 }
 
-void SyntaxTree::CreateAllImplicitFunctions(bool relocate_last_function)
-{
-	foreach(Type *t, Types)
-		CreateImplicitFunctions(t, relocate_last_function);
-}
-
 
 }
