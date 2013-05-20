@@ -22,6 +22,8 @@ struct ClassFunction{
 	Array<Type*> param_type;
 	Type *return_type;
 	bool is_virtual;
+	ClassFunction(){}
+	ClassFunction(const string &name, Type *return_type, Script *s, int no);
 };
 
 struct Type{

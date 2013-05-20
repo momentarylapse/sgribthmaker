@@ -1394,8 +1394,8 @@ void SyntaxTree::ParseClassFunction(Type *t, bool as_extern, bool as_virtual)
 {
 	ParseFunction(t, as_extern);
 
-	ClassFunction cf;
 	Function *f = Functions.back();
+	ClassFunction cf;
 	cf.name = f->name.substr(t->name.num + 1, -1);
 	cf.nr = Functions.num - 1;
 	cf.return_type = f->return_type;

@@ -4,6 +4,15 @@
 namespace Script{
 
 
+ClassFunction::ClassFunction(const string &_name, Type *_return_type, Script *s, int no)
+{
+	name = _name;
+	return_type = _return_type;
+	script = s;
+	nr = no;
+	is_virtual = false;
+}
+
 Type::Type()//const string &_name, int _size, SyntaxTree *_owner)
 {
 	//name = _name;

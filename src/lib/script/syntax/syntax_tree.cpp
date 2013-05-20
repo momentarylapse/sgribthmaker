@@ -902,8 +902,7 @@ void SyntaxTree::BreakDownComplicatedCommands()
 
 			Command *c_index = c->param[1];
 			// & array
-			Command *c_ref_array = cp_command(c->param[0]);
-			ref_command_old(this, c_ref_array);
+			Command *c_ref_array = ref_command(c->param[0]);
 			// create command for size constant
 			int nc = AddConstant(TypeInt);
 			*(int*)Constants[nc].data = el_type->size;
@@ -956,8 +955,7 @@ void SyntaxTree::BreakDownComplicatedCommands()
 //        -> shift
 
 			// & struct
-			Command *c_ref_struct = cp_command(c->param[0]);
-			ref_command_old(this, c_ref_struct);
+			Command *c_ref_struct = ref_command(c->param[0]);
 			// create command for shift constant
 			int nc = AddConstant(TypeInt);
 			*(int*)Constants[nc].data = c->link_nr;

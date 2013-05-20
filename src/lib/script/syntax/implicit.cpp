@@ -52,12 +52,7 @@ void CreateImplicitConstructor(SyntaxTree *ps, Type *t)
 
 	ps->ImplementImplicitConstructor(f, t);
 
-	ClassFunction cf;
-	cf.nr = fn;
-	cf.name = "__init__";
-	cf.return_type = TypeVoid;
-	cf.script = ps->script;
-	t->function.add(cf);
+	t->function.add(ClassFunction("__init__", TypeVoid, ps->script, fn));
 }
 
 
@@ -95,12 +90,7 @@ void CreateImplicitDestructor(SyntaxTree *ps, Type *t)
 
 	ps->ImplementImplicitDestructor(f, t);
 
-	ClassFunction cf;
-	cf.nr = fn;
-	cf.name = "__delete__";
-	cf.return_type = TypeVoid;
-	cf.script = ps->script;
-	t->function.add(cf);
+	t->function.add(ClassFunction("__delete__", TypeVoid, ps->script, fn));
 }
 
 void CreateImplicitAssign(SyntaxTree *ps, Type *t)
@@ -194,12 +184,8 @@ void CreateImplicitAssign(SyntaxTree *ps, Type *t)
 		}
 	}
 
-	ClassFunction cf;
-	cf.nr = fn;
-	cf.name = "__assign__";
-	cf.return_type = TypeVoid;
+	ClassFunction cf = ClassFunction("__assign__", TypeVoid, ps->script, fn);
 	cf.param_type.add(t);
-	cf.script = ps->script;
 	t->function.add(cf);
 }
 
@@ -261,12 +247,7 @@ void CreateImplicitArrayClear(SyntaxTree *ps, Type *t)
 	f->block->command.add(cmd_clear);
 
 
-	ClassFunction cf;
-	cf.nr = fn;
-	cf.name = "clear";
-	cf.return_type = TypeVoid;
-	cf.script = ps->script;
-	t->function.add(cf);
+	t->function.add(ClassFunction("clear", TypeVoid, ps->script, fn));
 }
 
 
@@ -372,12 +353,8 @@ void CreateImplicitArrayResize(SyntaxTree *ps, Type *t)
 	}
 
 
-	ClassFunction cf;
-	cf.nr = fn;
-	cf.name = "resize";
-	cf.return_type = TypeVoid;
+	ClassFunction cf = ClassFunction("resize", TypeVoid, ps->script, fn);
 	cf.param_type.add(TypeInt);
-	cf.script = ps->script;
 	t->function.add(cf);
 }
 
@@ -422,12 +399,8 @@ void CreateImplicitArrayAdd(SyntaxTree *ps, Type *t)
 		ps->DoError(format("%s.add(): no %s.__assign__ for elements", t->name.c_str(), t->parent->name.c_str()));
 	f->block->command.add(cmd_assign);
 
-	ClassFunction cf;
-	cf.nr = fn;
-	cf.name = "add";
-	cf.return_type = TypeVoid;
+	ClassFunction cf = ClassFunction("add", TypeVoid, ps->script, fn);
 	cf.param_type.add(t->parent);
-	cf.script = ps->script;
 	t->function.add(cf);
 }
 
