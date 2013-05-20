@@ -224,6 +224,8 @@ public:
 	Command *add_command_classfunc(Type *class_type, ClassFunction &f, Command *inst);
 	Command *add_command_const(int nc);
 	Command *add_command_operator(Command *p1, Command *p2, int op);
+	Command *add_command_local_var(int no, Type *type);
+	Command *add_command_parray(Command *p, Command *index, Type *type);
 	Command *cp_command(Command *c);
 	Command *cp_command_deep(Command *c);
 	Command *ref_command(Command *sub);

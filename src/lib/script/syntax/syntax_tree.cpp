@@ -117,6 +117,27 @@ Command *SyntaxTree::add_command_operator(Command *p1, Command *p2, int op)
 	return cmd;
 }
 
+
+Command *SyntaxTree::add_command_local_var(int no, Type *type)
+{
+	Command *cmd = AddCommand();
+	cmd->kind = KindVarLocal;
+	cmd->link_nr = no;
+	cmd->type = type;
+	return cmd;
+}
+
+Command *SyntaxTree::add_command_parray(Command *p, Command *index, Type *type)
+{
+	Command *cmd_el = AddCommand();
+	cmd_el->kind = KindPointerAsArray;
+	cmd_el->type = type;
+	cmd_el->param[0] = p;
+	cmd_el->param[1] = index;
+	cmd_el->num_params = 2;
+	return cmd_el;
+}
+
 SyntaxTree::SyntaxTree(Script *_script)
 {
 	FlagShow = false;

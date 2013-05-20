@@ -1416,8 +1416,6 @@ int hui_main(Array<string> arg)
 
 	Script::Init();
 
-	//msg_write(Asm::Disassemble((void*)fff, -1));
-
 	New();
 
 	if (arg.num > 1)

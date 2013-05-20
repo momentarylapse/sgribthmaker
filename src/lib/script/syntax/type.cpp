@@ -41,6 +41,8 @@ bool Type::is_simple_class()
 		return false;*/
 	if (is_super_array)
 		return false;
+	if (vtable)
+		return false;
 	if (GetConstructor())
 		return false;
 	if (GetDestructor())
