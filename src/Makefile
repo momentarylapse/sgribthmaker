@@ -14,7 +14,7 @@ MODULES = \
  lib/any/any.a \
  lib/algebra/algebra.a \
  lib/base/base.a
-OBJ = lib/base/strings.o lib/file/msg.o lib/script/script.o
+OBJ = lib/base/strings.o lib/file/msg.o lib/script/script.o History.o CommandDialog.o SettingsDialog.o
 CPP  = g++
 #GLOBALFLAGS = -O3
 #GLOBALFLAGS = -g -O3
@@ -27,6 +27,15 @@ CXXFLAGSLINKING =  `pkg-config --cflags --libs gtk+-3.0` -lGL -lGLU -lX11 -I/usr
 $(BIN) : $(MAINSOURCE) $(OBJ) $(MODULES)
 	$(CPP) $(OBJ) $(MODULES) $(MAINSOURCE) -o $(BIN) $(CXXFLAGSLINKING)
 
+
+History.o : History.cpp
+	$(CPP) -c History.cpp -o $@ $(CXXFLAGS)
+
+SettingsDialog.o : SettingsDialog.cpp
+	$(CPP) -c SettingsDialog.cpp -o $@ $(CXXFLAGS)
+
+CommandDialog.o : CommandDialog.cpp
+	$(CPP) -c CommandDialog.cpp -o $@ $(CXXFLAGS)
 
 install : all
 	mkdir -p /usr/share/sgribthmaker

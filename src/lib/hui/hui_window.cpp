@@ -50,7 +50,7 @@ void add_key_to_buffer(HuiInputData *d, int key)
 
 HuiWindow::HuiWindow(const string &title, int x, int y, int width, int height, HuiWindow *root, bool allow_root, int mode)
 {
-	_Init_(title, x, y, width, height, parent, allow_root, mode);
+	_Init_(title, x, y, width, height, root, allow_root, mode);
 }
 
 
