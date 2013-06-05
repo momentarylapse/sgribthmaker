@@ -5,6 +5,8 @@
 #include "lib/script/script.h"
 #include <gtk/gtk.h>
 #include "lib/algebra/algebra.h"
+#include "SettingsDialog.h"
+#include "CommandDialog.h"
 
 
 GtkTextBuffer *tb;
@@ -21,9 +23,7 @@ string AppVersion = "0.3.24.0";
 
 #define MAX_HIGHLIGHTING_SIZE	100000
 
-CHuiWindow *MainWin;
-CHuiWindow *CommandDialog = NULL, *MessageDialog;
-CHuiWindow *SettingsDialog = NULL;
+HuiWindow *MainWin;
 string LastCommand;
 int timer, CompileTimer;
 
@@ -430,8 +430,8 @@ void ResetHistory()
 	UndoStackSavedPos = 0;
 	Changed = false;
 	HistoryEnabled = true;
-	MainWin->GetMenu()->EnableItem("undo", false);
-	MainWin->GetMenu()->EnableItem("redo", false);
+	MainWin->Enable("undo", false);
+	MainWin->Enable("redo", false);
 }
 
 void undo_insert_text(int pos, char *text, int length)
@@ -458,8 +458,8 @@ void undo_remove_text(int pos, char *text, int length)
 
 void UpdateMenu()
 {
-	MainWin->GetMenu()->EnableItem("undo", UndoStackPos > 0);
-	MainWin->GetMenu()->EnableItem("redo", true);
+	MainWin->Enable("undo", UndoStackPos > 0);
+	MainWin->Enable("redo", true);
 }
 
 void Undo()
@@ -856,8 +856,8 @@ void CompileShader()
 {
 	msg_db_f("CompileShader",1);
 
-	CHuiWindow *w = HuiCreateNixWindow("nix", -1, -1, 640, 480);
-	w->Update();
+	HuiWindow *w = HuiCreateNixWindow("nix", -1, -1, 640, 480);
+	w->Show();
 	NixInit("OpenGL", 640, 480, 32, false, w);
 
 	int shader = NixLoadShader(Filename);
@@ -975,7 +975,7 @@ void ShowCurLine()
 	SetMessage(format(_("Zeile  %d : %d"), line + 1, off + 1));
 }
 
-void ExecuteCommand(string &cmd)
+void ExecuteCommand(const string &cmd)
 {
 	msg_db_f("ExecCmd", 1);
 	// find...
@@ -1014,80 +1014,16 @@ void ExecuteCommand(string &cmd)
 		SetMessage(format(_("\"%s\" nicht gefunden"), cmd.c_str()));
 }
 
-void OnCommandOk()
-{
-	LastCommand = CommandDialog->GetString("command");
-	ExecuteCommand(LastCommand);
-}
-
-void OnCommandClose()
-{
-	delete(CommandDialog);
-	CommandDialog = NULL;
-}
-
 void ExecuteCommandDialog()
 {
-	msg_db_f("ExecCmdDlg", 1);
-	if (!CommandDialog){
-		CommandDialog = HuiCreateResourceDialog("command_dialog", MainWin);
-		CommandDialog->SetString("command", LastCommand);
-		CommandDialog->Event("ok", &OnCommandOk);
-		CommandDialog->Event("cancel", &OnCommandClose);
-		CommandDialog->Event("hui:close", &OnCommandClose);
-		CommandDialog->Update();
-	}
-
-	HuiWaitTillWindowClosed(CommandDialog);
-}
-
-void OnSettingsClose()
-{
-	delete(SettingsDialog);
-}
-
-void UpdateFont();
-void UpdateTabSize();
-
-void OnSettingsFont()
-{
-	if (HuiSelectFont(SettingsDialog, _("Font w&ahlen"))){
-		SettingsDialog->SetString("font", HuiFontname);
-		HuiConfigWriteStr("Font", HuiFontname);
-		UpdateFont();
-	}
-}
-
-void OnSettingsTabWidth()
-{
-	HuiConfigWriteInt("TabWidth", SettingsDialog->GetInt("tab_width"));
-	UpdateTabSize();
+	CommandDialog *dlg = new CommandDialog(MainWin);
+	dlg->Run();
 }
 
 void ExecuteSettingsDialog()
 {
-	SettingsDialog = HuiCreateResourceDialog("settings_dialog", MainWin);
-	SettingsDialog->SetInt("tab_width", HuiConfigReadInt("TabWidth", 8));
-	SettingsDialog->SetString("font", HuiConfigReadStr("Font", "Monospace 10"));
-	SettingsDialog->AddString("context_list", _("reserviertes Wort"));
-	SettingsDialog->AddString("context_list", _("Api Funktion"));
-	SettingsDialog->AddString("context_list", _("Api Variable"));
-	SettingsDialog->AddString("context_list", _("Typ"));
-	SettingsDialog->AddString("context_list", _("Text"));
-	SettingsDialog->AddString("context_list", _("Kommentar Zeile"));
-	SettingsDialog->AddString("context_list", _("Kommentar Ebene 1"));
-	SettingsDialog->AddString("context_list", _("Kommentar Ebene 2"));
-	SettingsDialog->AddString("context_list", _("Macro"));
-	SettingsDialog->AddString("context_list", _("Trennzeichen"));
-	SettingsDialog->AddString("context_list", _("String"));
-	SettingsDialog->AddString("context_list", _("Operator"));
-	SettingsDialog->AddString("context_list", _("Zahl"));
-	SettingsDialog->Update();
-
-	SettingsDialog->Event("close", &OnSettingsClose);
-	SettingsDialog->Event("font", &OnSettingsFont);
-	SettingsDialog->Event("tab_width", &OnSettingsTabWidth);
-	HuiWaitTillWindowClosed(SettingsDialog);
+	SettingsDialog *dlg = new SettingsDialog(MainWin);
+	dlg->Run();
 }
 
 bool change_return = true;
@@ -1412,7 +1348,7 @@ int hui_main(Array<string> arg)
 
 	MainWin->SetMenu(HuiCreateResourceMenu("menu"));
 	MainWin->SetMaximized(maximized);
-	MainWin->Update();
+	MainWin->Show();
 
 	Script::Init();
 
