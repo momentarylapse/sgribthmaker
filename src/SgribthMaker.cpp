@@ -4,9 +4,9 @@
 #include "lib/file/file.h"
 #include "lib/script/script.h"
 #include <gtk/gtk.h>
-#include "lib/algebra/algebra.h"
 #include "SettingsDialog.h"
 #include "CommandDialog.h"
+#include "History.h"
 
 
 GtkTextBuffer *tb;
@@ -16,7 +16,7 @@ string Filename = "";
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.3.24.0";
+string AppVersion = "0.3.25.0";
 
 #define ALLOW_LOGGING			true
 //#define ALLOW_LOGGING			false
@@ -31,25 +31,7 @@ extern string NixShaderError;
 
 #define COLORMODE		1
 
-
-//------------------------------------------------------------------------------
-// Undo/Redo
-
-bool Changed = false;
-bool HistoryEnabled = false;
-
-
-#define UndoInsert		0
-#define UndoRemove		1
-
-int UndoStackPos = 0;
-int UndoStackSavedPos = -1;
-struct s_undo{
-	char type;
-	int pos, length;
-	char *text;
-};
-Array<s_undo> undo;
+History *history;
 
 int NeedsUpdateStart = 0, NeedsUpdateEnd = 0;
 
@@ -407,7 +389,7 @@ void SetMessage(const string &str)
 void SetWindowTitle()
 {
 	msg_db_f("SetWinTitle", 1);
-	if (Changed){
+	if (history->changed){
 		if (Filename.num > 0)
 			MainWin->SetTitle("*" + Filename + " - " + AppTitle);
 		else
@@ -418,20 +400,6 @@ void SetWindowTitle()
 		else
 			MainWin->SetTitle("neues Dokument - " + AppTitle);
 	}
-}
-
-void ResetHistory()
-{
-	msg_db_f("RestHistory", 1);
-	for (int i=0;i<undo.num;i++)
-		g_free(undo[i].text);
-	undo.resize(0);
-	UndoStackPos = 0;
-	UndoStackSavedPos = 0;
-	Changed = false;
-	HistoryEnabled = true;
-	MainWin->Enable("undo", false);
-	MainWin->Enable("redo", false);
 }
 
 void undo_insert_text(int pos, char *text, int length)
@@ -458,76 +426,16 @@ void undo_remove_text(int pos, char *text, int length)
 
 void UpdateMenu()
 {
-	MainWin->Enable("undo", UndoStackPos > 0);
-	MainWin->Enable("redo", true);
-}
-
-void Undo()
-{
-	if (UndoStackPos <= 0)
-		return;
-	msg_db_f("Undo", 1);
-	HistoryEnabled = false;
-	UndoStackPos --;
-	s_undo *u = &undo[UndoStackPos];
-	if (u->type == UndoRemove)
-		undo_insert_text(u->pos, u->text, u->length);
-	else
-		undo_remove_text(u->pos, u->text, u->length);
-	HistoryEnabled = true;
-	Changed = (UndoStackPos != UndoStackSavedPos);
+	MainWin->Enable("undo", history->Undoable());
+	MainWin->Enable("redo", history->Redoable());
 	SetWindowTitle();
-	UpdateMenu();
-}
-
-void Redo()
-{
-	if (UndoStackPos >= undo.num)
-		return;
-	msg_db_f("Redo", 1);
-	HistoryEnabled = false;
-	s_undo *u = &undo[UndoStackPos];
-	if (u->type == UndoRemove)
-		undo_remove_text(u->pos, u->text, u->length);
-	else
-		undo_insert_text(u->pos, u->text, u->length);
-	UndoStackPos ++;
-	HistoryEnabled = true;
-	Changed = (UndoStackPos != UndoStackSavedPos);
-	SetWindowTitle();
-	UpdateMenu();
-}
-
-void ChangeHistory(int type, char *text, int length, int pos)
-{
-	if (!HistoryEnabled)
-		return;
-	msg_db_f("ChangeHistory", 1);
-	s_undo u;
-	u.type = type;
-	u.text = text;
-	u.length = length;
-	u.pos = pos;
-
-	// remove illegal actions
-	for (int i=UndoStackPos;i<undo.num;i++)
-		g_free(undo[i].text);
-	undo.resize(UndoStackPos);
-	if (UndoStackPos < UndoStackSavedPos)
-		UndoStackSavedPos = -1;
-
-	// insert
-	undo.add(u);
-	UndoStackPos ++;
-	Changed = true;
-	UpdateMenu();
 }
 
 bool Save();
 
 bool AllowTermination()
 {
-	if (Changed){
+	if (history->changed){
 		string answer = HuiQuestionBox(MainWin, _("dem&utige aber h&ofliche Frage"), _("Sie haben die Entropie erh&oht. Wollen Sie Ihr Werk speichern?"), true);
 		if (answer == "cancel")
 			return false;
@@ -544,14 +452,14 @@ void New()
 		return;
 
 	msg_db_f("New", 1);
-	HistoryEnabled = false;
+	history->enabled = false;
 	GtkTextIter start, end;
 	gtk_text_buffer_get_bounds(tb, &start, &end);
 	gtk_text_buffer_delete(tb, &start, &end);
 	gtk_text_buffer_set_modified(tb, false);
 
 	Filename = "";
-	ResetHistory();
+	history->Reset();
 	SetWindowTitle();
 }
 
@@ -584,13 +492,13 @@ bool LoadFromFile(const string &filename)
 		return false;
 	}
 	
-	HistoryEnabled = false;
+	history->enabled = false;
 	GtkTextIter start, end;
 	gtk_text_buffer_get_bounds(tb, &start, &end);
 	gtk_text_buffer_delete(tb, &start, &end);
-	ResetHistory();
+	history->Reset();
 
-	HistoryEnabled = false;
+	history->enabled = false;
 	string temp = f->ReadComplete();
 	FileClose(f);
 
@@ -599,7 +507,7 @@ bool LoadFromFile(const string &filename)
 		gtk_text_buffer_set_text(tb, temp.c_str(), -1);
 		gtk_text_buffer_set_modified(tb, false);
 		temp.clear();
-		ResetHistory();
+		history->Reset();
 	}else{
 		SetMessage(_("Datei nicht UTF-8 kompatibel"));
 		string temp_utf8 = convert_to_utf8(temp);
@@ -607,9 +515,9 @@ bool LoadFromFile(const string &filename)
 		gtk_text_buffer_set_text(tb, temp_utf8.c_str(), -1);
 		gtk_text_buffer_set_modified(tb, true);
 		temp_utf8.clear();
-		ResetHistory();
-		UndoStackSavedPos = -1;
-		Changed = true;
+		history->Reset();
+		history->saved_pos = -1;
+		history->changed = true;
 	}
 
 	Filename = filename;
@@ -636,9 +544,7 @@ bool WriteToFile(const string &filename)
 	gtk_text_buffer_set_modified(tb, false);
 
 	Filename = filename;
-	UndoStackSavedPos = UndoStackPos;
-	Changed = false;
-	SetWindowTitle();
+	history->DefineAsSaved();
 	SetMessage(_("gespeichert"));
 	return true;
 }
@@ -692,6 +598,12 @@ bool Reload()
 
 void OnReload()
 {	Reload();	}
+
+void OnUndo()
+{	history->Undo();	}
+
+void OnRedo()
+{	history->Redo();	}
 
 void CopyToClipboard()
 {
@@ -1030,7 +942,7 @@ bool change_return = true;
 
 void insert_text(GtkTextBuffer *textbuffer, GtkTextIter *location, gchar *text, gint len, gpointer user_data)
 {
-	if (!HistoryEnabled)
+	if (!history->enabled)
 		return;
 
 	msg_db_f("insert_text", 1);
@@ -1045,7 +957,7 @@ void insert_text(GtkTextBuffer *textbuffer, GtkTextIter *location, gchar *text, 
 
 	char *text2 = (char*)g_malloc(len + 1);
 	memcpy(text2, text, len);
-	ChangeHistory(UndoInsert, text2, len, gtk_text_iter_get_offset(location));
+	history->Execute(new CommandInsert(text2, len, gtk_text_iter_get_offset(location)));
 	SetWindowTitle();
 
 	NeedsUpdateStart = gtk_text_iter_get_line(location);
@@ -1057,11 +969,11 @@ void insert_text(GtkTextBuffer *textbuffer, GtkTextIter *location, gchar *text, 
 
 void delete_range(GtkTextBuffer *textbuffer, GtkTextIter *start, GtkTextIter *end, gpointer user_data)
 {
-	if (!HistoryEnabled)
+	if (!history->enabled)
 		return;
 	msg_db_f("delete_range", 1);
 	char *text = gtk_text_buffer_get_text(textbuffer, start, end, false);
-	ChangeHistory(UndoRemove, text, strlen(text), gtk_text_iter_get_offset(start));
+	history->Execute(new CommandDelete(text, strlen(text), gtk_text_iter_get_offset(start)));
 	SetWindowTitle();
 
 	NeedsUpdateStart = gtk_text_iter_get_line(start);
@@ -1267,8 +1179,8 @@ int hui_main(Array<string> arg)
 	HuiAddCommand("copy", "hui:copy", KEY_C + KEY_CONTROL, &CopyToClipboard);
 	HuiAddCommand("paste", "hui:paste", KEY_V + KEY_CONTROL, &PasteFromClipboard);
 	HuiAddCommand("reload", "hui:reload", KEY_R + KEY_CONTROL, &OnReload);
-	HuiAddCommand("undo", "hui:undo", KEY_Z + KEY_CONTROL, &Undo);
-	HuiAddCommand("redo", "hui:redo", KEY_Y + KEY_CONTROL, &Redo);
+	HuiAddCommand("undo", "hui:undo", KEY_Z + KEY_CONTROL, &OnUndo);
+	HuiAddCommand("redo", "hui:redo", KEY_Y + KEY_CONTROL, &OnRedo);
 	HuiAddKeyCode("redo", KEY_Z + KEY_SHIFT + KEY_CONTROL);
 	HuiAddCommand("compile", "", KEY_F7, &Compile);
 	HuiAddCommand("compile_and_run_verbose", "", KEY_F6 + KEY_CONTROL, &OnCompileAndRunVerbose);
@@ -1346,11 +1258,14 @@ int hui_main(Array<string> arg)
 	HighlightSchemas.add(schema);
 	schema.apply();
 
+	history = new History;
+
 	MainWin->SetMenu(HuiCreateResourceMenu("menu"));
 	MainWin->SetMaximized(maximized);
 	MainWin->Show();
 
 	Script::Init();
+
 
 	New();
 
