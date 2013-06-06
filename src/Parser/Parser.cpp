@@ -68,8 +68,6 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 {
 	if (gtk_text_buffer_get_char_count(sv->tb) > MAX_HIGHLIGHTING_SIZE)
 		return;
-	/*if (!allow_highlighting(Filename))
-		return;*/
 	msg_db_f("CreateTextColors", 1);
 
 	int comment_level = 0;
@@ -84,14 +82,14 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 	for (int l=first_line;l<=last_line;l++){
 		string s = sv->GetLine(l);
 
-		//msg_write("a");
 		char *p = &s[0];
 		char *p0 = p;
 		int last_type = CharSpace;
 		int in_type = (comment_level > 1) ? InCommentLevel2 : ((comment_level > 0) ? InCommentLevel1 : InSpace);
 		int pos0 = 0;
 		int pos = 0;
-		while(pos < s.num){
+		int num_uchars = g_utf8_strlen(p, s.num);
+		while(pos < num_uchars){
 			int type = char_type(*p);
 			// still in a string?
 			if (in_type == InString){
@@ -170,7 +168,7 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 			next_char();
 		}
 		if (s.num > 0)
-			sv->MarkWord(l, pos0, s.num, in_type, p0, &s[s.num]);
+			sv->MarkWord(l, pos0, num_uchars, in_type, p0, &s[s.num]);
 	}
 }
 
