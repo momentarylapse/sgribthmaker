@@ -6,12 +6,10 @@
  */
 
 #include "History.h"
+#include "SourceView.h"
 #include "lib/hui/hui.h"
 
 void UpdateMenu();
-
-void undo_insert_text(int pos, char *text, int length);
-void undo_remove_text(int pos, char *text, int length);
 
 History::History()
 {
@@ -58,7 +56,7 @@ void History::Undo()
 	enabled = false;
 	pos --;
 	Command *u = stack[pos];
-	u->Undo();
+	u->Undo(sv);
 	enabled = true;
 	changed = (pos != saved_pos);
 	UpdateMenu();
@@ -70,7 +68,7 @@ void History::Redo()
 		return;
 	enabled = false;
 	Command *u = stack[pos];
-	u->Execute();
+	u->Execute(sv);
 	pos ++;
 	enabled = true;
 	changed = (pos != saved_pos);
@@ -117,14 +115,14 @@ CommandInsert::~CommandInsert()
 	g_free(text);
 }
 
-void CommandInsert::Execute()
+void CommandInsert::Execute(SourceView *sv)
 {
-	undo_insert_text(pos, text, length);
+	sv->undo_insert_text(pos, text, length);
 }
 
-void CommandInsert::Undo()
+void CommandInsert::Undo(SourceView *sv)
 {
-	undo_remove_text(pos, text, length);
+	sv->undo_remove_text(pos, text, length);
 }
 
 CommandDelete::CommandDelete(char *_text, int _length, int _pos)
@@ -139,13 +137,13 @@ CommandDelete::~CommandDelete()
 	g_free(text);
 }
 
-void CommandDelete::Execute()
+void CommandDelete::Execute(SourceView *sv)
 {
-	undo_remove_text(pos, text, length);
+	sv->undo_remove_text(pos, text, length);
 }
 
-void CommandDelete::Undo()
+void CommandDelete::Undo(SourceView *sv)
 {
-	undo_insert_text(pos, text, length);
+	sv->undo_insert_text(pos, text, length);
 }
 

@@ -6,6 +6,9 @@
  */
 
 #include "SettingsDialog.h"
+#include "SourceView.h"
+
+extern SourceView *source_view;
 
 SettingsDialog::SettingsDialog(HuiWindow *parent) :
 	HuiWindow("settings_dialog", parent, false)
@@ -41,21 +44,18 @@ void SettingsDialog::OnClose()
 	delete(this);
 }
 
-void UpdateFont();
-void UpdateTabSize();
-
 void SettingsDialog::OnFont()
 {
 	if (HuiSelectFont(this, _("Font w&ahlen"))){
 		SetString("font", HuiFontname);
 		HuiConfigWriteStr("Font", HuiFontname);
-		UpdateFont();
+		source_view->UpdateFont();
 	}
 }
 
 void SettingsDialog::OnTabWidth()
 {
 	HuiConfigWriteInt("TabWidth", GetInt("tab_width"));
-	UpdateTabSize();
+	source_view->UpdateTabSize();
 }
 

@@ -7,10 +7,10 @@
 #include "SettingsDialog.h"
 #include "CommandDialog.h"
 #include "History.h"
+#include "HighlightSchema.h"
+#include "SourceView.h"
+#include "Parser/Parser.h"
 
-
-GtkTextBuffer *tb;
-GtkWidget *tv;
 
 string Filename = "";
 
@@ -21,169 +21,22 @@ string AppVersion = "0.3.25.0";
 #define ALLOW_LOGGING			true
 //#define ALLOW_LOGGING			false
 
-#define MAX_HIGHLIGHTING_SIZE	100000
-
 HuiWindow *MainWin;
 string LastCommand;
 int timer, CompileTimer;
 
+SourceView *source_view;
+
 extern string NixShaderError;
 
-#define COLORMODE		1
-
 History *history;
-
-int NeedsUpdateStart = 0, NeedsUpdateEnd = 0;
 
 //------------------------------------------------------------------------------
 // Highlighting
 
-enum{
-	CharSpace,
-	CharLetter,
-	CharNumber,
-	CharSign
-};
-
-enum{
-	InWordSpecial,
-	InWordCompilerFunction,
-	InWordGameVariable,
-	InWordType,
-	InWord,
-	InLineComment,
-	InCommentLevel1,
-	InCommentLevel2,
-	InMacro,
-	InSpace,
-	InString,
-	InOperator,
-	InNumber,
-	NumTagTypes
-};
-
-struct HighlightContext
-{
-	color fg, bg;
-	bool set_bg;
-	bool bold, italic;
-	HighlightContext(){}
-	HighlightContext(const color &_fg, const color &_bg, bool _set_bg, bool _bold, bool _italic)
-	{
-		fg = _fg;
-		bg = _bg;
-		set_bg = _set_bg;
-		bold = _bold;
-		italic = _italic;
-	}
-};
-
-struct HighlightSchema
-{
-	string name;
-	color fg, bg;
-	HighlightContext context[NumTagTypes];
-	void apply();
-};
 
 Array<HighlightSchema> HighlightSchemas;
 
-/*enum{
-	HighLightNone,
-	HighLightKaba,
-	HighLightLatex
-};*/
-
-GtkTextTag *tag[NumTagTypes];
-
-
-struct ScriptFunction
-{
-	string name;
-	int line;
-};
-Array<ScriptFunction> ScriptFunctions;
-
-
-
-inline int char_type(char c)
-{
-	if ((c >= '0') && (c <= '9'))
-		return CharNumber;
-	if ((c == ' ') || (c == '\n') || (c == '\t'))
-		return CharSpace;
-	if (((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')) || (c == '_'))
-		return CharLetter;
-	return CharSign;
-}
-
-inline int WordType(const string &name)
-{
-	if (name[0] == '#')
-		return InMacro;
-	if ((name == "enum") ||
-	    (name == "class") ||
-		(name == "use") ||
-		(name == "import") ||
-		(name == "if") ||
-		(name == "else") ||
-		(name == "while") ||
-		(name == "for") ||
-		(name == "forall") ||
-		(name == "in") ||
-		(name == "return") ||
-		(name == "break") ||
-		(name == "continue") ||
-		(name == "and") ||
-		(name == "or") ||
-		(name == "extern") ||
-		(name == "virtual") ||
-		(name == "const") ||
-		(name == "this") ||
-		(name == "self") ||
-		(name == "asm"))
-		return InWordSpecial;
-	foreach(Script::Package &p, Script::Packages){
-		for (int i=0;i<p.script->syntax->Types.num;i++)
-			if (name == p.script->syntax->Types[i]->name)
-				return InWordType;
-		for (int i=0;i<p.script->syntax->RootOfAllEvil.var.num;i++)
-			if (name == p.script->syntax->RootOfAllEvil.var[i].name)
-				return InWordGameVariable;
-		for (int i=0;i<p.script->syntax->Constants.num;i++)
-			if (name == p.script->syntax->Constants[i].name)
-				return InWordGameVariable;
-		for (int i=0;i<p.script->syntax->Functions.num;i++)
-			if (name == p.script->syntax->Functions[i]->name)
-				return InWordCompilerFunction;
-	}
-	for (int i=0;i<Script::PreCommands.num;i++)
-		if (name == Script::PreCommands[i].name)
-			return InWordCompilerFunction;
-	return -1;
-}
-
-inline void MarkWord(int line, int start, int end, int type, char *p0, char *p)
-{
-	if (start == end)
-		return;
-	msg_db_f("MarkWord", 1);
-	if (type == InWord)
-		if ((start == 0) || (p0[-1] != '.'))
-		if ((long)p - (long)p0 < 64){
-			string temp = string(p0, (long)p - (long)p0);
-			int type2 = WordType(temp);
-			if (type2 >= 0)
-				type = type2;
-		}
-	GtkTextIter _start, _end;
-	gtk_text_buffer_get_iter_at_line_offset(tb, &_start, line, start);
-	gtk_text_buffer_get_iter_at_line_offset(tb, &_end, line, end);
-	gtk_text_buffer_apply_tag (tb, tag[type], &_start, &_end);
-}
-
-#define next_char()	p=g_utf8_next_char(p);pos++
-#define set_mark()	p0=p;pos0=pos
 
 bool allow_highlighting(const string &name)
 {
@@ -197,174 +50,6 @@ bool allow_highlighting(const string &name)
 	return false;
 }
 
-void CreateTextColors(int first_line = -1, int last_line = -1)
-{
-	if (gtk_text_buffer_get_char_count(tb) > MAX_HIGHLIGHTING_SIZE)
-		return;
-	if (!allow_highlighting(Filename))
-		return;
-	msg_db_f("CreateTextColors", 1);
-	GtkTextIter start, end;
-
-	int comment_level = 0;
-	int num_lines = gtk_text_buffer_get_line_count(tb);
-	if (first_line < 0)
-		first_line = 0;
-	if (last_line < 0)
-		last_line = num_lines - 1;
-
-
-	for (int l=first_line;l<=last_line;l++){
-		gtk_text_buffer_get_iter_at_line_index(tb, &start, l, 0);
-		gtk_text_buffer_get_iter_at_line_index(tb, &end, l, 0);
-		while (!gtk_text_iter_ends_line(&end))
-			if (!gtk_text_iter_forward_char(&end))
-				break;
-
-
-		gtk_text_buffer_remove_all_tags(tb,&start, &end);
-
-		//msg_write("a");
-		char *s = gtk_text_buffer_get_text(tb, &start, &end, false);
-		char *p = s;
-		char *p0 = s;
-		int last_type = CharSpace;
-		int in_type = (comment_level > 1) ? InCommentLevel2 : ((comment_level > 0) ? InCommentLevel1 : InSpace);
-		int line_len = gtk_text_iter_get_offset(&end) - gtk_text_iter_get_offset(&start);
-		int str_len = strlen(s);
-		int pos0 = 0;
-		int pos = 0;
-		while(pos < line_len){
-			int type = char_type(*p);
-			// still in a string?
-			if (in_type == InString){
-				if (*p == '\"'){
-					in_type = InOperator;
-					next_char();
-					MarkWord(l, pos0, pos, InString, p0, p);
-					set_mark();
-					continue;
-				}
-			// still in a multi-comment?
-			}else if (comment_level > 0){
-				if ((*p == '/') && (p[1] == '*')){
-					MarkWord(l, pos0, pos, in_type, p0, p);
-					set_mark();
-					next_char();
-					in_type = InCommentLevel2;
-					comment_level ++;
-				}else if ((*p == '*') && (p[1] == '/')){
-					next_char();
-					next_char();
-					MarkWord(l, pos0, pos, in_type, p0, p);
-					set_mark();
-					comment_level --;
-					in_type = (comment_level > 0) ? InCommentLevel1 : InOperator;
-					last_type = type;
-					continue;
-				}
-			}else{
-				// string starting?
-				if (*p == '\"'){
-					MarkWord(l, pos0, pos, in_type, p0, p);
-					set_mark();
-					in_type = InString;
-				}else if (last_type != type){
-					if ((in_type == InNumber) && ((*p == '.') || (*p == 'x') || ((*p >= 'a') && (*p <= 'f')))){
-						next_char();
-						continue;
-					}
-					if ((in_type == InWord) && (type == CharNumber)){
-						next_char();
-						continue;
-					}
-					MarkWord(l, pos0, pos, in_type, p0, p);
-					set_mark();
-					if (type == CharSpace)
-						in_type = InSpace;
-					else if (type == CharLetter)
-						in_type = InWord;
-					else if (type == CharNumber)
-						in_type = InNumber;
-					else if (type == CharSign)
-						in_type = InOperator;
-					// # -> macro...
-					if (*p == '#'){
-						in_type = InWord;
-						type = CharLetter;
-					}
-				}
-				// line comment starting?
-				if ((*p == '/') && (p[1] == '/')){
-					MarkWord(l, pos0, pos, in_type, p0, p);
-					set_mark();
-					in_type = InLineComment;
-					break;
-				// multi-comment starting?
-				}else if ((*p == '/') && (p[1] == '*')){
-					MarkWord(l, pos0, pos, in_type, p0, p);
-					set_mark();
-					in_type = InCommentLevel1;
-					comment_level ++;
-					next_char();
-				}
-			}
-			last_type = type;
-			next_char();
-		}
-		if (line_len > 0)
-			MarkWord(l, pos0, line_len, in_type, p0, &s[str_len]);
-		g_free(s);
-	}
-}
-
-void FindScriptFunctions()
-{
-	msg_db_f("FindScriptFunctions", 1);
-	ScriptFunctions.clear();
-	GtkTextIter start, end;
-	int num_lines = gtk_text_buffer_get_line_count(tb);
-	string last_class;
-	for (int l=0;l<num_lines;l++){
-		int ll = 0;
-		gtk_text_buffer_get_iter_at_line_index(tb, &start, l, 0);
-		gtk_text_buffer_get_iter_at_line_index(tb, &end, l, 0);
-		while (!gtk_text_iter_ends_line(&end))
-			if (!gtk_text_iter_forward_char(&end))
-				break;
-			else
-				ll ++;
-		char *ss = gtk_text_buffer_get_text(tb, &start, &end, false);
-		string s = ss;
-		if (char_type(ss[0]) == CharLetter){
-			bool ok = false;
-			if (s.find("class ") >= 0){
-				ok = true;
-				last_class = s.replace("\t", " ").replace(":", " ").explode(" ")[1];
-				s = "class " + last_class;
-			}else if (s.find("(") >= 0){
-				ok = true;
-				last_class = "";
-			}
-			if (s.find("extern") >= 0)
-				ok = false;
-			if (ok){
-				ScriptFunction f;
-				f.name = s;
-				f.line = l;
-				ScriptFunctions.add(f);
-			}
-		}else if ((last_class.num > 0) && (ss[0] == '\t') && (char_type(ss[1]) == CharLetter)){
-			if (s.find("(") >= 0){
-				ScriptFunction f;
-				f.name = ">" + s;
-				f.line = l;
-				ScriptFunctions.add(f);
-			}
-		}
-		g_free(ss);
-	}
-}
 
 int status_count = 0;
 
@@ -402,28 +87,6 @@ void SetWindowTitle()
 	}
 }
 
-void undo_insert_text(int pos, char *text, int length)
-{
-	msg_db_f("undo_insert_text", 1);
-	GtkTextIter start, end;
-	gtk_text_buffer_get_iter_at_offset(tb, &start, pos);
-	gtk_text_buffer_insert(tb, &start, text, length);
-	gtk_text_buffer_place_cursor(tb, &start);
-	gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb));
-}
-
-void undo_remove_text(int pos, char *text, int length)
-{
-	msg_db_f("undo_remove_text", 1);
-	GtkTextIter start, end;
-	gtk_text_buffer_get_iter_at_offset(tb, &start, pos);
-	gtk_text_buffer_get_iter_at_offset(tb, &end, pos);
-	gtk_text_iter_forward_chars(&end, g_utf8_strlen(text, length));
-	gtk_text_buffer_delete(tb, &start, &end);
-	gtk_text_buffer_place_cursor(tb, &start);
-	gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb));
-}
-
 void UpdateMenu()
 {
 	MainWin->Enable("undo", history->Undoable());
@@ -453,34 +116,11 @@ void New()
 
 	msg_db_f("New", 1);
 	history->enabled = false;
-	GtkTextIter start, end;
-	gtk_text_buffer_get_bounds(tb, &start, &end);
-	gtk_text_buffer_delete(tb, &start, &end);
-	gtk_text_buffer_set_modified(tb, false);
+	source_view->Clear();
 
 	Filename = "";
 	history->Reset();
 	SetWindowTitle();
-}
-
-string convert_to_utf8(string temp)
-{
-	msg_db_f("convert_to_utf8", 1);
-	string utf8;// = new char[strlen(temp)];
-	const char *t = temp.c_str();
-	while(*t){
-		gunichar a = g_utf8_get_char_validated(t, -1);
-		if (a != -1)
-			utf8.append_1_single(a);
-		else
-			utf8.append_1_single('?');
-		t ++;
-	}
-	/*return utf8;
-	gunichar *aa = g_utf8_to_ucs4(temp, -1, NULL, NULL, NULL);
-	char *utf8 = g_ucs4_to_utf8(aa, -1, NULL, NULL, NULL);
-	g_free(aa);*/
-	return utf8;
 }
 
 bool LoadFromFile(const string &filename)
@@ -493,28 +133,17 @@ bool LoadFromFile(const string &filename)
 	}
 	
 	history->enabled = false;
-	GtkTextIter start, end;
-	gtk_text_buffer_get_bounds(tb, &start, &end);
-	gtk_text_buffer_delete(tb, &start, &end);
+	source_view->Clear();
 	history->Reset();
 
 	history->enabled = false;
 	string temp = f->ReadComplete();
 	FileClose(f);
 
-	char **val_end;
-	if (g_utf8_validate((char*)temp.data, temp.num, NULL)){
-		gtk_text_buffer_set_text(tb, temp.c_str(), -1);
-		gtk_text_buffer_set_modified(tb, false);
-		temp.clear();
+	if (source_view->Fill(temp)){
 		history->Reset();
 	}else{
 		SetMessage(_("Datei nicht UTF-8 kompatibel"));
-		string temp_utf8 = convert_to_utf8(temp);
-		temp.clear();
-		gtk_text_buffer_set_text(tb, temp_utf8.c_str(), -1);
-		gtk_text_buffer_set_modified(tb, true);
-		temp_utf8.clear();
 		history->Reset();
 		history->saved_pos = -1;
 		history->changed = true;
@@ -522,11 +151,8 @@ bool LoadFromFile(const string &filename)
 
 	Filename = filename;
 
-	CreateTextColors();
+	source_view->SetParser(Filename);
 
-	//GtkTextIter start;
-	gtk_text_buffer_get_start_iter(tb, &start);
-	gtk_text_buffer_place_cursor(tb, &start);
 	SetWindowTitle();
 	return true;
 }
@@ -535,16 +161,14 @@ bool WriteToFile(const string &filename)
 {
 	msg_db_f("WriteToFile", 1);
 	CFile *f = CreateFile(filename);
-	GtkTextIter start, end;
-	gtk_text_buffer_get_bounds(tb, &start, &end);
-	char *temp = gtk_text_buffer_get_text(tb, &start, &end, false);
-	f->WriteBuffer(temp, strlen(temp));
+	string temp = source_view->GetAll();
+	f->WriteBuffer(temp.data, temp.num);
 	FileClose(f);
-	g_free(temp);
-	gtk_text_buffer_set_modified(tb, false);
 
 	Filename = filename;
 	history->DefineAsSaved();
+	source_view->SetParser(Filename);
+
 	SetMessage(_("gespeichert"));
 	return true;
 }
@@ -607,120 +231,25 @@ void OnRedo()
 
 void CopyToClipboard()
 {
-	GtkClipboard *cb=gtk_clipboard_get_for_display(gdk_display_get_default(),GDK_SELECTION_CLIPBOARD);
-	gtk_text_buffer_copy_clipboard(tb, cb);
+	HuiCopyToClipBoard(source_view->GetSelection());
 	SetMessage(_("kopiert"));
 }
 
 void PasteFromClipboard()
 {
-	msg_db_f("PasteFromCB", 1);
-	GtkClipboard *cb=gtk_clipboard_get_for_display(gdk_display_get_default(),GDK_SELECTION_CLIPBOARD);
-	//gtk_text_buffer_paste_clipboard(tb, cb, NULL, true);
-	char *text = gtk_clipboard_wait_for_text(cb);
-	if (text){
-		gtk_text_buffer_insert_at_cursor(tb, text, -1);
-		gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb));
-		g_free(text);
-	}
+	source_view->InsertAtCursor(HuiPasteFromClipBoard());
 	SetMessage(_("eingef&ugt"));
 }
 
 void DeleteSelection()
 {
-	msg_db_f("DeleteSel", 1);
-	gtk_text_buffer_delete_selection(tb, true, true);
-	gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb));
+	source_view->DeleteSelection();
 }
 
 void Cut()
 {
 	CopyToClipboard();
 	DeleteSelection();
-}
-
-void JumpToStartOfLine(bool shift)
-{
-	msg_db_f("JumpToStartOfLine", 1);
-	GtkTextMark *mi = gtk_text_buffer_get_insert(tb);
-	GtkTextMark *msb = gtk_text_buffer_get_selection_bound(tb);
-	GtkTextIter ii, isb, i0, i1;
-	gtk_text_buffer_get_iter_at_mark(tb, &ii, mi);
-	gtk_text_buffer_get_iter_at_mark(tb, &isb, msb);
-
-	int line = gtk_text_iter_get_line(&ii);
-	gtk_text_buffer_get_iter_at_line_index(tb, &i0, line, 0);
-	i1 = i0;
-	while (!gtk_text_iter_ends_line(&i1)){
-		int c = gtk_text_iter_get_char(&i1);
-		if (!g_unichar_isspace(c))
-			break;
-		if (!gtk_text_iter_forward_char(&i1))
-			break;
-	}
-	ii = (gtk_text_iter_equal(&i1, &ii)) ? i0 : i1;
-	if (shift)
-		gtk_text_buffer_select_range(tb, &ii, &isb);
-	else
-		gtk_text_buffer_place_cursor(tb, &ii);
-	gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb));
-}
-
-void JumpToEndOfLine(bool shift)
-{
-	msg_db_f("JumpToEndOfLine", 1);
-	GtkTextMark *mi = gtk_text_buffer_get_insert(tb);
-	GtkTextMark *msb = gtk_text_buffer_get_selection_bound(tb);
-	GtkTextIter ii, isb;
-	gtk_text_buffer_get_iter_at_mark(tb, &ii, mi);
-	gtk_text_buffer_get_iter_at_mark(tb, &isb, msb);
-
-	int line = gtk_text_iter_get_line(&ii);
-	gtk_text_buffer_get_iter_at_line_index(tb, &ii, line, 0);
-	while (!gtk_text_iter_ends_line(&ii))
-		if (!gtk_text_iter_forward_char(&ii))
-			break;
-	if (shift)
-		gtk_text_buffer_select_range(tb, &ii, &isb);
-	else
-		gtk_text_buffer_place_cursor(tb, &ii);
-	gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb));
-}
-
-void MoveCursorTo(int line, int pos)
-{
-	msg_db_f("MoveCursorTo", 1);
-	GtkTextIter iter;
-	gtk_text_buffer_get_iter_at_line_index(tb, &iter, line, 0);
-	while (!gtk_text_iter_ends_line(&iter))
-		if (!gtk_text_iter_forward_char(&iter))
-			break;
-	if (gtk_text_iter_get_line_index(&iter) > pos)
-		gtk_text_buffer_get_iter_at_line_index(tb, &iter, line, pos);
-	gtk_text_buffer_place_cursor(tb, &iter);
-	gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb));
-}
-
-void InsertReturn()
-{
-	msg_db_f("InsertReturn", 1);
-	GtkTextMark *mi = gtk_text_buffer_get_insert(tb);
-	GtkTextIter ii, i0, i1;
-	gtk_text_buffer_get_iter_at_mark(tb, &ii, mi);
-	int line = gtk_text_iter_get_line(&ii);
-	gtk_text_buffer_get_iter_at_line_index(tb, &i0, line, 0);
-	i1 = i0;
-	while ((!gtk_text_iter_ends_line(&i1)) && (!gtk_text_iter_equal(&i1, &ii))){
-		int c = gtk_text_iter_get_char(&i1);
-		if (!g_unichar_isspace(c))
-			break;
-		if (!gtk_text_iter_forward_char(&i1))
-			break;
-	}
-	char *text = gtk_text_buffer_get_text(tb, &i0, &i1, false);
-	gtk_text_buffer_insert_at_cursor(tb, "\n", -1);
-	gtk_text_buffer_insert_at_cursor(tb, text, -1);
-	g_free(text);
 }
 
 string get_time_str(float t)
@@ -754,7 +283,7 @@ void CompileKaba()
 	}catch(const Script::Exception &e){
 		e.print();
 		HuiErrorBox(MainWin, _("Fehler"), e.message);
-		MoveCursorTo(e.line, e.column);
+		source_view->MoveCursorTo(e.line, e.column);
 	}
 
 	//RemoveScript(compile_script);
@@ -860,7 +389,7 @@ void CompileAndRun(bool verbose)
 	}catch(const Script::Exception &e){
 		e.print();
 		HuiErrorBox(MainWin, _("Fehler"), e.message);
-		MoveCursorTo(e.line, e.column);
+		source_view->MoveCursorTo(e.line, e.column);
 	}
 	
 
@@ -880,15 +409,14 @@ void OnCompileAndRunSilent()
 void ShowCurLine()
 {
 	msg_db_f("ShowCurLine", 1);
-	GtkTextIter ii;
-	gtk_text_buffer_get_iter_at_mark(tb, &ii, gtk_text_buffer_get_insert(tb));
-	int line = gtk_text_iter_get_line(&ii);
-	int off = gtk_text_iter_get_line_offset(&ii);
+	int line, off;
+	source_view->GetCurLinePos(line, off);
 	SetMessage(format(_("Zeile  %d : %d"), line + 1, off + 1));
 }
 
 void ExecuteCommand(const string &cmd)
 {
+#if 0
 	msg_db_f("ExecCmd", 1);
 	// find...
 	GtkTextIter ii, isb;
@@ -924,6 +452,7 @@ void ExecuteCommand(const string &cmd)
 		gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb));
 	}else
 		SetMessage(format(_("\"%s\" nicht gefunden"), cmd.c_str()));
+#endif
 }
 
 void ExecuteCommandDialog()
@@ -938,133 +467,7 @@ void ExecuteSettingsDialog()
 	dlg->Run();
 }
 
-bool change_return = true;
 
-void insert_text(GtkTextBuffer *textbuffer, GtkTextIter *location, gchar *text, gint len, gpointer user_data)
-{
-	if (!history->enabled)
-		return;
-
-	msg_db_f("insert_text", 1);
-
-	if ((strcmp(text, "\n") == 0) && (change_return)){
-		g_signal_stop_emission_by_name(textbuffer, "insert-text");
-		change_return = false;
-		InsertReturn();
-		change_return = true;
-		return;
-	}
-
-	char *text2 = (char*)g_malloc(len + 1);
-	memcpy(text2, text, len);
-	history->Execute(new CommandInsert(text2, len, gtk_text_iter_get_offset(location)));
-	SetWindowTitle();
-
-	NeedsUpdateStart = gtk_text_iter_get_line(location);
-	NeedsUpdateEnd = NeedsUpdateStart;
-	for (int i=0;i<len;i++)
-		if (text[i] == '\n')
-			NeedsUpdateEnd ++;
-}
-
-void delete_range(GtkTextBuffer *textbuffer, GtkTextIter *start, GtkTextIter *end, gpointer user_data)
-{
-	if (!history->enabled)
-		return;
-	msg_db_f("delete_range", 1);
-	char *text = gtk_text_buffer_get_text(textbuffer, start, end, false);
-	history->Execute(new CommandDelete(text, strlen(text), gtk_text_iter_get_offset(start)));
-	SetWindowTitle();
-
-	NeedsUpdateStart = gtk_text_iter_get_line(start);
-	NeedsUpdateEnd = NeedsUpdateStart;
-}
-
-void move_cursor(GtkTextView *text_view, GtkMovementStep step, gint count, gboolean extend_selection, gpointer user_data)
-{
-	msg_db_f("move_cursor", 1);
-	if (step == GTK_MOVEMENT_DISPLAY_LINE_ENDS){
-		g_signal_stop_emission_by_name(text_view, "move-cursor");
-		if (count > 0)
-			JumpToEndOfLine(extend_selection);
-		else
-			JumpToStartOfLine(extend_selection);
-	}
-	//printf("move cursor  %d  %d  %d\n", count, (int)extend_selection, (int)step);
-}
-
-void copy_clipboard(GtkTextView *text_view, gpointer user_data)
-{	msg_db_f("copy_cb", 1);	g_signal_stop_emission_by_name(text_view, "copy-clipboard");	}
-
-void paste_clipboard(GtkTextView *text_view, gpointer user_data)
-{	msg_db_f("paste_cb", 1);	g_signal_stop_emission_by_name(text_view, "paste-clipboard");	}
-
-void cut_clipboard(GtkTextView *text_view, gpointer user_data)
-{	msg_db_f("cut_cb", 1);	g_signal_stop_emission_by_name(text_view, "cut-clipboard");	}
-
-void toggle_cursor_visible(GtkTextView *text_view, gpointer user_data)
-{	msg_db_f("toggle_cursor_visible", 1);	g_signal_stop_emission_by_name(text_view, "toggle-cursor-visible");	}
-
-void ShowLineOnScreen(int line)
-{
-	msg_db_f("ShowLineOnScreen", 1);
-	GtkTextIter it;
-	gtk_text_buffer_get_iter_at_line(tb, &it, line);
-	gtk_text_buffer_place_cursor(tb, &it);
-	//gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb)); // line is minimally visible
-	gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(tv), &it, false, true, 0.0, 0.5); // line is vertically centered
-}
-
-gboolean CallbackJumpLine(GtkWidget *widget, gpointer data)
-{
-	msg_db_f("CallbackJumpLine", 1);
-	int line = (int)(long)data;
-	ShowLineOnScreen(line);
-	//msg_write((int)(long)data);
-	return FALSE;
-}
-
-void populate_popup(GtkTextView *text_view, GtkMenu *menu, gpointer user_data)
-{
-	msg_db_f("populate_popup", 1);
-	if (Filename.extension() != "kaba"){
-		return;
-	}
-	FindScriptFunctions();
-	GtkWidget *m = gtk_separator_menu_item_new();
-	gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), m);
-	gtk_widget_show(m);
-	if (ScriptFunctions.num == 0){
-		m = gtk_menu_item_new_with_label(_("- Keine Funktionen -").c_str());
-		gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), m);
-		gtk_widget_set_sensitive(m, false);
-		gtk_widget_show(m);
-	}
-	foreachb(ScriptFunction &f, ScriptFunctions){
-		m = gtk_menu_item_new_with_label(f.name.c_str());
-		gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), m);
-		gtk_widget_show(m);
-		g_signal_connect(G_OBJECT(m), "activate", G_CALLBACK(CallbackJumpLine), (void*)(long)f.line);
-	}
-}
-
-int color_busy_level = 0;
-
-void CreateColorsIfNotBusy()
-{
-	color_busy_level --;
-	if (color_busy_level == 0)
-		CreateTextColors();
-}
-
-void changed(GtkTextBuffer *textbuffer, gpointer user_data)
-{
-	msg_db_f("changed", 1);
-	//printf("change\n");
-	CreateTextColors(NeedsUpdateStart, NeedsUpdateEnd);
-	HuiRunLater(3000, &CreateColorsIfNotBusy);
-	color_busy_level ++;
-}
 
 void OnAbout()
 {	HuiAboutBox(MainWin);	}
@@ -1085,58 +488,6 @@ void OnExit()
 	}
 }
 
-
-void SetTag(int i, const char *fg_color, const char *bg_color, bool bold, bool italic)
-{
-	tag[i] = gtk_text_buffer_create_tag(tb, NULL, "foreground", fg_color, NULL);
-	if (bg_color)
-		g_object_set(tag[i], "background", bg_color, NULL);
-	if (bold)
-		g_object_set(tag[i], "weight", PANGO_WEIGHT_BOLD, NULL);
-	if (italic)
-		g_object_set(tag[i], "style", PANGO_STYLE_ITALIC, NULL);
-}
-
-void UpdateTabSize()
-{
-	int tab_size = HuiConfigReadInt("TabWidth", 8);
-	PangoLayout *layout = gtk_widget_create_pango_layout(tv, "W");
-	int width, height;
-	pango_layout_get_pixel_size(layout, &width, &height);
-	PangoTabArray *ta = pango_tab_array_new(1, true);
-	pango_tab_array_set_tab(ta, 0, PANGO_TAB_LEFT, width * tab_size);
-	gtk_text_view_set_tabs(GTK_TEXT_VIEW(tv), ta);
-}
-
-void UpdateFont()
-{
-	string font_name = HuiConfigReadStr("Font", "Monospace 10");
-	PangoFontDescription *font_desc = pango_font_description_from_string(font_name.c_str());
-	gtk_widget_modify_font(tv, font_desc);
-	pango_font_description_free(font_desc);
-	UpdateTabSize();
-}
-
-string color_to_hex(const color &c)
-{
-	int r = int(255.0f * c.r);
-	int g = int(255.0f * c.g);
-	int b = int(255.0f * c.b);
-	return "#" + string((char*)&r, 1).hex() + string((char*)&g, 1).hex() + string((char*)&b, 1).hex();
-}
-
-void HighlightSchema::apply()
-{
-	for (int i=0; i<NumTagTypes; i++){
-		if (context[i].set_bg)
-			SetTag(i, color_to_hex(context[i].fg).c_str(), color_to_hex(context[i].bg).c_str(), context[i].bold, context[i].italic);
-		else
-			SetTag(i, color_to_hex(context[i].fg).c_str(), NULL, context[i].bold, context[i].italic);
-	}
-	GdkColor _color;
-	gdk_color_parse(color_to_hex(fg).c_str(), &_color);
-	gtk_widget_modify_base(tv, GTK_STATE_NORMAL, &_color);
-}
 
 int hui_main(Array<string> arg)
 {
@@ -1216,49 +567,24 @@ int hui_main(Array<string> arg)
 	MainWin->SetImage("console_close", "hui:close");
 	MainWin->HideControl("table_console", true);
 	
-	tv = MainWin->_GetControl_("edit")->widget;
-	tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tv));
 
-	g_signal_connect(G_OBJECT(tb),"insert-text",G_CALLBACK(insert_text),NULL);
-	g_signal_connect(G_OBJECT(tb),"delete-range",G_CALLBACK(delete_range),NULL);
-	g_signal_connect(G_OBJECT(tb),"changed",G_CALLBACK(changed),NULL);
-
-	g_signal_connect(G_OBJECT(tv),"move-cursor",G_CALLBACK(move_cursor),NULL);
-	g_signal_connect(G_OBJECT(tv),"copy-clipboard",G_CALLBACK(copy_clipboard),NULL);
-	g_signal_connect(G_OBJECT(tv),"paste-clipboard",G_CALLBACK(paste_clipboard),NULL);
-	g_signal_connect(G_OBJECT(tv),"cut-clipboard",G_CALLBACK(cut_clipboard),NULL);
-	g_signal_connect(G_OBJECT(tv),"toggle-cursor-visible",G_CALLBACK(toggle_cursor_visible),NULL);
-	g_signal_connect(G_OBJECT(tv),"populate-popup",G_CALLBACK(populate_popup),NULL);
+	InitParser();
+	source_view = new SourceView(MainWin, "edit");
 
 
 	/* Change default font throughout the widget */
-	UpdateFont();
+	source_view->UpdateFont();
 	//g_object_set(tv, "wrap-mode", GTK_WRAP_WORD_CHAR, NULL);
 
-	HuiRunLater(50, &UpdateTabSize);
+	HuiRunLaterM(50, source_view, &SourceView::UpdateTabSize);
 
-	HighlightSchema schema;
-	schema.name = "default";
-	schema.fg = Black;
-	schema.bg = White;
-	schema.context[InLineComment] = HighlightContext(color(1, 0.5f, 0.5f, 0.5f), Black, false, false, true);
-	schema.context[InCommentLevel1] = HighlightContext(color(1, 0.5f, 0.5f, 0.5f), Black, false, false, true);
-	schema.context[InCommentLevel2] = HighlightContext(color(1, 0.7f, 0.7f, 0.7f), Black, false, false, true);
-	schema.context[InSpace] = HighlightContext(Black, Black, false, false, false);
-	schema.context[InWord] = HighlightContext(Black, Black, false, false, false);
-	schema.context[InWordType] = HighlightContext(color(1, 0.125f, 0, 0.875f), Black, false, true, false);
-	schema.context[InWordGameVariable] = HighlightContext(color(1, 0.625f, 0.625f, 0), Black, false, false, false);
-	schema.context[InWordCompilerFunction] = HighlightContext(color(1, 0.065f, 0, 0.625f), Black, false, false, false);
-	schema.context[InWordSpecial] = HighlightContext(color(1, 0.625f, 0, 0.625f), Black, false, true, false);
-	schema.context[InNumber] = HighlightContext(color(1, 0, 0.5f, 0), Black, false, false, false);
-	schema.context[InOperator] = HighlightContext(color(1, 0.25f, 0.25f, 0), Black, false, false, false);
-	schema.context[InString] = HighlightContext(color(1, 1, 0, 0), Black, false, false, false);
-	schema.context[InMacro] = HighlightContext(color(1, 0, 0.5f, 0.5f), Black, false, false, false);
-
+	HighlightSchema schema = GetDefaultSchema();
 	HighlightSchemas.add(schema);
-	schema.apply();
+	schema.apply(source_view);
 
 	history = new History;
+	source_view->history = history;
+	history->sv = source_view;
 
 	MainWin->SetMenu(HuiCreateResourceMenu("menu"));
 	MainWin->SetMaximized(maximized);

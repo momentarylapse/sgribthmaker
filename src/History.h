@@ -10,6 +10,8 @@
 
 #include "lib/base/base.h"
 
+class SourceView;
+
 class History
 {
 public:
@@ -35,14 +37,15 @@ public:
 	class Command{
 	public:
 		virtual ~Command(){}
-		virtual void Execute() = 0;
-		virtual void Undo() = 0;
+		virtual void Execute(SourceView *sv) = 0;
+		virtual void Undo(SourceView *sv) = 0;
 	};
 	Array<Command*> stack;
 
 
 
 	void Execute(Command *c);
+	SourceView *sv;
 
 };
 
@@ -53,8 +56,8 @@ class CommandInsert : public History::Command
 public:
 	CommandInsert(char *text, int length, int pos);
 	virtual ~CommandInsert();
-	virtual void Execute();
-	virtual void Undo();
+	virtual void Execute(SourceView *sv);
+	virtual void Undo(SourceView *sv);
 };
 
 class CommandDelete : public History::Command
@@ -64,8 +67,8 @@ class CommandDelete : public History::Command
 public:
 	CommandDelete(char *text, int length, int pos);
 	virtual ~CommandDelete();
-	virtual void Execute();
-	virtual void Undo();
+	virtual void Execute(SourceView *sv);
+	virtual void Undo(SourceView *sv);
 };
 
 #endif /* HISTORY_H_ */
