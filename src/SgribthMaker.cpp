@@ -16,7 +16,7 @@ string Filename = "";
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.3.25.0";
+string AppVersion = "0.3.26.0";
 
 #define ALLOW_LOGGING			true
 //#define ALLOW_LOGGING			false
@@ -229,27 +229,27 @@ void OnUndo()
 void OnRedo()
 {	history->Redo();	}
 
-void CopyToClipboard()
+void OnCopy()
 {
 	HuiCopyToClipBoard(source_view->GetSelection());
 	SetMessage(_("kopiert"));
 }
 
-void PasteFromClipboard()
+void OnPaste()
 {
 	source_view->InsertAtCursor(HuiPasteFromClipBoard());
 	SetMessage(_("eingef&ugt"));
 }
 
-void DeleteSelection()
+void OnDelete()
 {
 	source_view->DeleteSelection();
 }
 
-void Cut()
+void OnCut()
 {
-	CopyToClipboard();
-	DeleteSelection();
+	OnCopy();
+	OnDelete();
 }
 
 string get_time_str(float t)
@@ -526,9 +526,9 @@ int hui_main(Array<string> arg)
 	//HuiAddCommand("show_data", "", KEY_D + KEY_CONTROL, &ShowData);
 	HuiAddCommand("execute_command", "", KEY_E + KEY_CONTROL, &ExecuteCommandDialog);
 	HuiAddCommand("find", "", KEY_F + KEY_CONTROL, &ExecuteCommandDialog);
-	HuiAddCommand("cut", "hui:cut", KEY_X + KEY_CONTROL, &Cut);
-	HuiAddCommand("copy", "hui:copy", KEY_C + KEY_CONTROL, &CopyToClipboard);
-	HuiAddCommand("paste", "hui:paste", KEY_V + KEY_CONTROL, &PasteFromClipboard);
+	HuiAddCommand("cut", "hui:cut", KEY_X + KEY_CONTROL, &OnCut);
+	HuiAddCommand("copy", "hui:copy", KEY_C + KEY_CONTROL, &OnCopy);
+	HuiAddCommand("paste", "hui:paste", KEY_V + KEY_CONTROL, &OnPaste);
 	HuiAddCommand("reload", "hui:reload", KEY_R + KEY_CONTROL, &OnReload);
 	HuiAddCommand("undo", "hui:undo", KEY_Z + KEY_CONTROL, &OnUndo);
 	HuiAddCommand("redo", "hui:redo", KEY_Y + KEY_CONTROL, &OnRedo);

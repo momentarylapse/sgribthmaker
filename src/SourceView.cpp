@@ -222,6 +222,7 @@ bool SourceView::Fill(const string &text)
 void SourceView::SetParser(const string &filename)
 {
 	parser = GetParser(filename);
+	//msg_write("parser: " + parser->GetName());
 	CreateTextColors();
 }
 
@@ -241,7 +242,7 @@ string SourceView::GetSelection()
 {
 	string r;
 	GtkTextIter start, end;
-	gtk_text_buffer_select_range(tb, &start, &end);
+	gtk_text_buffer_get_selection_bounds(tb, &start, &end);
 	char *temp = gtk_text_buffer_get_text(tb, &start, &end, false);
 	r = string(temp, strlen(temp));
 	g_free(temp);
