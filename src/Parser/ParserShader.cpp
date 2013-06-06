@@ -62,6 +62,9 @@ int ParserShader::WordType(const string &name)
 		(name == "dot") ||
 		(name == "pow") ||
 		(name == "texture2D") ||
+		(name == "textureCube") ||
+		(name == "reflect") ||
+		(name == "refract") ||
 		(name == "normalize"))
 		return InWordCompilerFunction;
 	if ((name == "gl_Position") ||
@@ -79,6 +82,11 @@ int ParserShader::WordType(const string &name)
 		(name == "gl_LightSource") ||
 		(name == "gl_ModelViewProjectionMatrix") ||
 		(name == "gl_FrontMaterial") ||
+		(name == "gl_FrontColor") ||
+		(name == "gl_Fog") ||
+		(name == "gl_FogFragCoord") ||
+		(name == "gl_FragCoord") ||
+		(name == "gl_Color") ||
 		(name == "gl_FragColor"))
 		return InWordGameVariable;
 	return -1;
