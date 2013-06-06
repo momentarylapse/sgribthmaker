@@ -14,7 +14,10 @@ MODULES = \
  lib/any/any.a \
  lib/algebra/algebra.a \
  lib/base/base.a
-OBJ = lib/base/strings.o lib/file/msg.o lib/script/script.o History.o CommandDialog.o SettingsDialog.o
+OBJ = lib/base/strings.o lib/file/msg.o lib/script/script.o \
+ History.o CommandDialog.o SettingsDialog.o SourceView.o HighlightSchema.o \
+ Parser/Parser.o Parser/ParserKaba.o Parser/ParserText.o \
+ Parser/ParserC.o Parser/ParserShader.o
 CPP  = g++
 #GLOBALFLAGS = -O3
 #GLOBALFLAGS = -g -O3
@@ -36,6 +39,27 @@ SettingsDialog.o : SettingsDialog.cpp
 
 CommandDialog.o : CommandDialog.cpp
 	$(CPP) -c CommandDialog.cpp -o $@ $(CXXFLAGS)
+
+HighlightSchema.o : HighlightSchema.cpp
+	$(CPP) -c HighlightSchema.cpp -o $@ $(CXXFLAGS)
+
+SourceView.o : SourceView.cpp
+	$(CPP) -c SourceView.cpp -o $@ $(CXXFLAGS)
+
+Parser/Parser.o : Parser/Parser.cpp
+	$(CPP) -c Parser/Parser.cpp -o $@ $(CXXFLAGS)
+
+Parser/ParserKaba.o : Parser/ParserKaba.cpp
+	$(CPP) -c Parser/ParserKaba.cpp -o $@ $(CXXFLAGS)
+
+Parser/ParserText.o : Parser/ParserText.cpp
+	$(CPP) -c Parser/ParserText.cpp -o $@ $(CXXFLAGS)
+
+Parser/ParserC.o : Parser/ParserC.cpp
+	$(CPP) -c Parser/ParserC.cpp -o $@ $(CXXFLAGS)
+
+Parser/ParserShader.o : Parser/ParserShader.cpp
+	$(CPP) -c Parser/ParserShader.cpp -o $@ $(CXXFLAGS)
 
 install : all
 	mkdir -p /usr/share/sgribthmaker
