@@ -27,6 +27,7 @@ Type::Type()//const string &_name, int _size, SyntaxTree *_owner)
 	parent = NULL;
 	force_call_by_value = false;
 	vtable = NULL;
+	num_virtual = 0;
 };
 
 Type::~Type()

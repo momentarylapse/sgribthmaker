@@ -26,6 +26,8 @@ struct ClassFunction{
 	ClassFunction(const string &name, Type *return_type, Script *s, int no);
 };
 
+typedef void *VirtualTable;
+
 struct Type{
 	Type();
 	//Type(const string &name, int size, SyntaxTree *owner);
@@ -39,7 +41,8 @@ struct Type{
 	Array<ClassFunction> function;
 	Type *parent;
 	SyntaxTree *owner; // to share and be able to delete...
-	void **vtable;
+	VirtualTable *vtable;
+	int num_virtual;
 
 	bool force_call_by_value;
 	bool UsesCallByReference();
