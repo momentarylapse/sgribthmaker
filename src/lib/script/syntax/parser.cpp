@@ -1390,7 +1390,7 @@ void SyntaxTree::ParseEnum()
 	Exp.cur_line --;
 }
 
-void SyntaxTree::ParseClassFunction(Type *t, bool as_extern, bool as_virtual)
+void SyntaxTree::ParseClassFunction(Type *t, bool as_extern, int virtual_index)
 {
 	ParseFunction(t, as_extern);
 
@@ -1402,7 +1402,7 @@ void SyntaxTree::ParseClassFunction(Type *t, bool as_extern, bool as_virtual)
 	cf.script = script;
 	for (int i=0;i<f->num_params;i++)
 		cf.param_type.add(f->var[i].type);
-	cf.is_virtual = as_virtual;
+	cf.virtual_index = virtual_index;
 	t->function.add(cf);
 }
 
@@ -1475,6 +1475,7 @@ void SyntaxTree::ParseClass()
 
 	// virtual functions?
 	bool has_virtual = class_has_virtual_functions(this);
+	int virtual_count = 0;
 	if (has_virtual){
 		ClassElement el;
 		el.name = "-vtable-";
@@ -1529,7 +1530,7 @@ void SyntaxTree::ParseClass()
 			if (is_function){
 				Exp.cur_exp = ie;
 				Exp.cur = Exp.cur_line->exp[Exp.cur_exp].name;
-				ParseClassFunction(_class, next_extern, next_virtual);
+				ParseClassFunction(_class, next_extern, next_virtual ? (virtual_count ++) : -1);
 
 				break;
 			}
@@ -1566,13 +1567,11 @@ void SyntaxTree::ParseClass()
 		if (type_needs_alignment(e.type))
 			_offset = mem_align(_offset, 4);
 	_class->size = ProcessClassSize(_class->name, _offset);
+
+	// create vtable
 	if (has_virtual){
-		int n = 0;
-		foreach(ClassFunction &cf, _class->function)
-			if (cf.is_virtual)
-				n ++;
 		typedef void *__pointer;
-		_class->vtable = new __pointer[n];
+		_class->vtable = new __pointer[virtual_count];
 	}
 
 

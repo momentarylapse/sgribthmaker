@@ -21,7 +21,7 @@ struct ClassFunction{
 	// _func_(x)  ->  p.func(x)
 	Array<Type*> param_type;
 	Type *return_type;
-	bool is_virtual;
+	int virtual_index;
 	ClassFunction(){}
 	ClassFunction(const string &name, Type *return_type, Script *s, int no);
 };
@@ -49,6 +49,7 @@ struct Type{
 	int GetFunc(const string &name);
 	ClassFunction *GetConstructor();
 	ClassFunction *GetDestructor();
+	void LinkVirtualTable();
 	string var2str(void *p);
 };
 extern Type *TypeUnknown;
