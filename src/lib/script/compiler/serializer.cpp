@@ -575,16 +575,15 @@ void Serializer::add_function_call_amd64(Script *script, int func_no)
 
 void Serializer::add_virtual_function_call_x86(int virtual_index)
 {
-	DoError("virtual function call on x86 not yet implemented!");
 	msg_db_f("AddFunctionCallX86", 4);
 
 	int push_size = fc_x86_begin();
 
-	/*void *func = (void*)script->func[func_no];
-	if (!func)
-		DoErrorLink("could not link function " + script->syntax->Functions[func_no]->name);
-	add_cmd(Asm::inst_call, param_const(TypePointer, func)); // the actual call*/
-	// function pointer will be shifted later...
+	add_cmd(Asm::inst_mov, p_eax, CompilerFunctionInstance);
+	add_cmd(Asm::inst_mov, p_eax, p_deref_eax);
+	add_cmd(Asm::inst_add, p_eax, param_const(TypeInt, (void*)(4 * virtual_index)));
+	add_cmd(Asm::inst_mov, param_reg(TypePointer, Asm::RegEdx), p_deref_eax);
+	add_cmd(Asm::inst_call, param_reg(TypePointer, Asm::RegEdx)); // the actual call
 
 	fc_x86_end(push_size);
 }
