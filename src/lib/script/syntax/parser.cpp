@@ -172,12 +172,18 @@ Command *DoClassFunction(SyntaxTree *ps, Command *ob, ClassFunction &cf, Functio
 
 	// the function
 	cmd->script = cf.script;
-	cmd->kind = KindFunction;
-	cmd->link_nr = cf.nr;
 	Function *ff = cf.script->syntax->Functions[cf.nr];
 	cmd->type = ff->literal_return_type;
 	cmd->num_params = ff->num_params;
-	ps->GetFunctionCall(ff->name, cmd, f);
+	if (cf.virtual_index >= 0){
+		cmd->kind = KindVirtualFunction;
+		cmd->link_nr = cf.virtual_index;
+		ps->GetFunctionCall("?." + cf.name, cmd, f);
+	}else{
+		cmd->kind = KindFunction;
+		cmd->link_nr = cf.nr;
+		ps->GetFunctionCall(ff->name, cmd, f);
+	}
 	cmd->instance = ob;
 	return cmd;
 }
@@ -475,7 +481,7 @@ void SyntaxTree::GetFunctionCall(const string &f_name, Command *Operand, Functio
 
 
 
-	// find (and provisorically link) the parameters in the source
+	// find (and provisional link) the parameters in the source
 	int np;
 	Type *WantedType[SCRIPT_MAX_PARAMS];
 
