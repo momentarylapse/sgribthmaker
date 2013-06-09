@@ -26,7 +26,7 @@ extern bool next_const;
 inline bool type_match(Type *type, bool is_class, Type *wanted);
 inline bool direct_type_match(Type *a, Type *b)
 {
-	return ( (a==b) || ( (a->is_pointer) && (b->is_pointer) ) );
+	return ( (a==b) || ( (a->is_pointer) && (b->is_pointer) ) || (a->IsDerivedFrom(b)) );
 }
 inline bool type_match_with_cast(Type *type, bool is_class, bool is_modifiable, Type *wanted, int &penalty, int &cast);
 
@@ -655,7 +655,7 @@ inline bool type_match(Type *type, bool is_class, Type *wanted)
 		return true;
 	if ((type->is_pointer) && (wanted == TypePointer))
 		return true;
-	if ((is_class) && (wanted == TypeClass))
+	if (/*(is_class) &&*/ (type->IsDerivedFrom(wanted)))
 		return true;
 	return false;
 }
