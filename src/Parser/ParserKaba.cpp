@@ -77,6 +77,8 @@ int ParserKaba::WordType(const string &name)
 		(name == "const") ||
 		(name == "this") ||
 		(name == "self") ||
+		(name == "new") ||
+		(name == "delete") ||
 		(name == "asm"))
 		return InWordSpecial;
 	foreach(Script::Package &p, Script::Packages){
