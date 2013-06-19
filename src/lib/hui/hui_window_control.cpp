@@ -1,4 +1,5 @@
 #include "hui.h"
+#include "controls/HuiControl.h"
 
 //    for all
 bool HuiWindow::IsEnabled(const string &id)
@@ -62,7 +63,6 @@ void GetPartStrings(const string &id, const string &title)
 		if (PartString[0].num > 0)
 			if (PartString[0][0] == '!'){
 				OptionString = PartString[0].substr(1, -1);
-				PartString[0].clear();
 				PartString.erase(0);
 
 				int a = OptionString.find("format=");

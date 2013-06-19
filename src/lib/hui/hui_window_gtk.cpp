@@ -1,5 +1,6 @@
 #include "hui.h"
 #include "hui_internal.h"
+#include "controls/HuiControl.h"
 #ifdef HUI_API_GTK
 
 
@@ -1048,7 +1049,7 @@ void HuiWindow::Activate(const string &control_id)
 	if (control_id.num > 0)
 		for (int i=0;i<control.num;i++)
 			if (control_id == control[i]->id)
-				gtk_widget_grab_focus(control[i]->widget);
+				control[i]->Focus();
 }
 
 bool HuiWindow::IsActive(bool include_sub_windows)

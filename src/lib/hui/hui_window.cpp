@@ -8,6 +8,7 @@
 
 #include "hui.h"
 #include "hui_internal.h"
+#include "controls/HuiControl.h"
 
 
 // for unique window identifiers

@@ -13,6 +13,7 @@
 
 class HuiMenu;
 class HuiEvent;
+class HuiControl;
 class HuiWindow;
 class rect;
 
@@ -50,27 +51,6 @@ public:
 	irect(){};
 	irect(int x1,int x2,int y1,int y2)
 	{	this->x1=x1;	this->x2=x2;	this->y1=y1;	this->y2=y2;	}
-};
-
-
-struct HuiControl
-{
-	int type;
-	string id;
-	int x, y;
-#ifdef HUI_API_WIN
-	HWND hWnd,hWnd2,hWnd3;
-	Array<HWND> _item_;
-	int color[4]; // ColorButton...
-#endif
-#ifdef HUI_API_GTK
-    GtkWidget *widget;
-	int selected;
-	Array<GtkTreeIter> _item_;
-#endif
-	bool enabled;
-	bool is_button_bar;
-	HuiWindow *win;
 };
 
 struct HuiToolbarItem
@@ -141,8 +121,17 @@ class HuiDrawingContext
 	int width, height;
 };
 
+class HuiControlTabControlGtk;
+class HuiControlListViewGtk;
+class HuiControlTreeViewGtk;
+class HuiControlGridGtk;
+
 class HuiWindow : public HuiEventHandler
 {
+	friend class HuiControlTabControlGtk;
+	friend class HuiControlListViewGtk;
+	friend class HuiControlTreeViewGtk;
+	friend class HuiControlGridGtk;
 public:
 	HuiWindow(const string &title, int x, int y, int width, int height, HuiWindow *parent, bool allow_parent, int mode);
 	HuiWindow(const string &id, HuiWindow *parent, bool allow_parent);
@@ -332,7 +321,7 @@ private:
 	GtkWidget *vbox, *hbox, *menubar, *statusbar, *__ttt__, *input_widget;
 	Array<GtkWidget*> gtk_menu;
 	int gtk_num_menus;
-	HuiControl *_InsertControl_(GtkWidget *widget, int x, int y, int width, int height, const string &id, int type, GtkWidget *frame = NULL);
+	void _InsertControl_(HuiControl *c, int x, int y, int width, int height);
 #endif
 	
 	int num_float_decimals;

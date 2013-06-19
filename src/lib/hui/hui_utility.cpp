@@ -61,21 +61,22 @@ void HuiSendBugReport()
 {
 	// dialog
 	ReportDialog=HuiCreateDialog(_("Fehlerbericht"),400,295,ErrorDialog,false);
-	ReportDialog->AddText(_("!bold\\Name:"),5,5,360,25,"");
+	ReportDialog->AddText(_("!bold$Name:"),5,5,360,25,"brd_t_name");
 	ReportDialog->AddEdit("",5,35,385,25,"report_sender");
 	ReportDialog->AddDefButton(_("OK"),265,255,120,25,"ok");
 	ReportDialog->SetImage("ok", "hui:ok");
 	ReportDialog->AddButton(_("Abbrechen"),140,255,120,25,"cancel");
 	ReportDialog->SetImage("cancel", "hui:cancel");
-	ReportDialog->AddText(_("!bold\\Kommentar/Geschehnisse:"),5,65,360,25,"");
+	ReportDialog->AddText(_("!bold$Kommentar/Geschehnisse:"),5,65,360,25,"brd_t_comment");
 	ReportDialog->AddMultilineEdit("",5,95,385,110,"comment");
-	ReportDialog->AddText(_("Neben diesen Angaben wird noch der Inhalt der Datei message.txt geschickt"),5,210,390,35,"");
+	ReportDialog->AddText(_("!wrap$Neben diesen Angaben wird noch der Inhalt der Datei message.txt geschickt"),5,210,390,35,"brd_t_explanation");
 
 	ReportDialog->SetString("report_sender",_("(anonym)"));
 	ReportDialog->SetString("comment",_("Ist halt irgendwie passiert..."));
 
 	ReportDialog->Event("ok", &OnReportDialogOK);
 	ReportDialog->Event("cancel", &OnReportDialogClose);
+	ReportDialog->Event("hui:close", &OnReportDialogClose);
 
 	ReportDialog->Run();
 }
@@ -115,7 +116,7 @@ void hui_default_error_handler()
 	msg_write(_("                  Close dialog box to exit program."));
 
 	//HuiMultiline=true;
-	HuiComboBoxSeparator="$";
+	HuiComboBoxSeparator = "$";
 
 	//HuiErrorBox(NULL,"Fehler","Fehler");
 
