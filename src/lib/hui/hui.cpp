@@ -352,7 +352,7 @@ void HuiInit()
 	msg_db_l(1);
 }
 
-void HuiInitExtended(const string &program, const string &version, hui_callback *error_cleanup_function, bool load_res, const string &def_lang)
+void HuiInitExtended(const string &program, bool load_res, const string &def_lang)
 {
 	HuiInitialWorkingDirectory = get_current_dir();
 	string s1, s2;
@@ -407,7 +407,7 @@ void HuiInitExtended(const string &program, const string &version, hui_callback 
 	HuiAppDirectoryStatic = s2;
 	dir_create(HuiAppDirectory);
 #endif
-	HuiSetDefaultErrorHandler(program, version, error_cleanup_function);
+	HuiSetDefaultErrorHandler(NULL);
 	//msg_write("");
 
 	
@@ -428,14 +428,12 @@ void HuiInitExtended(const string &program, const string &version, hui_callback 
 
 	
 
-	if (version.num > 0)
-		HuiPropVersion = version;
 	if (file_test_existence(HuiAppDirectoryStatic + "Data/icon.svg"))
-		HuiPropLogo = HuiAppDirectoryStatic + "Data/icon.svg";
+		HuiSetProperty("logo", HuiAppDirectoryStatic + "Data/icon.svg");
 	else if (file_test_existence(HuiAppDirectoryStatic + "Data/icon.ico"))
-		HuiPropLogo = HuiAppDirectoryStatic + "Data/icon.ico";
+		HuiSetProperty("logo", HuiAppDirectoryStatic + "Data/icon.ico");
 	if (file_test_existence(HuiAppDirectoryStatic + "Data/license_small.txt"))
-		HuiPropLicense = FileRead(HuiAppDirectoryStatic + "Data/license_small.txt");
+		HuiSetProperty("license", FileRead(HuiAppDirectoryStatic + "Data/license_small.txt"));
 }
 
 

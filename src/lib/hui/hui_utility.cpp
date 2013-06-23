@@ -33,7 +33,6 @@ void HuiSetErrorFunction(hui_callback *error_function)
 	signal(SIGABRT_COMPAT,(void (*)(int))HuiErrorFunction);*/
 }
 
-static string _eh_program_, _eh_version_;
 static HuiWindow *ErrorDialog,*ReportDialog;
 static hui_callback *_eh_cleanup_function_;
 
@@ -45,7 +44,7 @@ void OnReportDialogOK()
 	string sender = ReportDialog->GetString("report_sender");
 	string comment = ReportDialog->GetString("comment");
 	string return_msg;
-	if (NetSendBugReport(sender, _eh_program_,_eh_version_, comment, return_msg))
+	if (NetSendBugReport(sender, HuiGetProperty("name"), HuiGetProperty("version"), comment, return_msg))
 		HuiInfoBox(NULL, "ok", return_msg);
 	else
 		HuiErrorBox(NULL, "error", return_msg);
@@ -99,7 +98,7 @@ void hui_default_error_handler()
 
 	msg_reset_shift();
 	msg_write("");
-	msg_write("==============================================================================================");
+	msg_write("================================================================================");
 	msg_write(_("program has crashed, error handler has been called... maybe SegFault... m(-_-)m"));
 	//msg_write("---");
 	msg_write("      trace:");
@@ -122,15 +121,18 @@ void hui_default_error_handler()
 
 	// dialog
 	ErrorDialog=HuiCreateDialog(_("Fehler"),600,500,NULL,false);
-	ErrorDialog->AddText(_eh_version_ + _(" ist abgest&urzt!		Die letzten Zeilen der Datei message.txt:"),5,5,590,20,"error_header");
+	ErrorDialog->AddText(HuiGetProperty("name") + " " + HuiGetProperty("version") + _(" ist abgest&urzt!		Die letzten Zeilen der Datei message.txt:"),5,5,590,20,"error_header");
 	ErrorDialog->AddListView(_("Nachrichten"),5,30,590,420,"message_list");
 	//ErrorDialog->AddEdit("",5,30,590,420,"message_list";
 	ErrorDialog->AddButton(_("OK"),5,460,100,25,"ok");
 	ErrorDialog->SetImage("ok", "hui:ok");
 	ErrorDialog->AddButton(_("message.txt &offnen"),115,460,200,25,"show_log");
-#ifdef _X_USE_NET_
 	ErrorDialog->AddButton(_("Fehlerbericht an Michi senden"),325,460,265,25,"send_report");
+#ifdef _X_USE_NET_
 	ErrorDialog->Event("send_report", &HuiSendBugReport);
+#else
+	ErrorDialog->Enable("send_report", false);
+	ErrorDialog->SetTooltip("send_report", _("Anwendung ohne Netzwerk-Unterst&utzung compiliert..."));
 #endif
 	for (int i=1023;i>=0;i--){
 		string temp = msg_get_str(i);
@@ -147,11 +149,9 @@ void hui_default_error_handler()
 	exit(0);
 }
 
-void HuiSetDefaultErrorHandler(const string &program, const string &version, hui_callback *error_cleanup_function)
+void HuiSetDefaultErrorHandler(hui_callback *error_cleanup_function)
 {
 	_eh_cleanup_function_ = error_cleanup_function;
-	_eh_program_ = program;
-	_eh_version_ = version;
 	HuiSetErrorFunction(&hui_default_error_handler);
 }
 

@@ -463,8 +463,9 @@ void HuiWindow::_Init_(const string &title, int x, int y, int width, int height,
 		gtk_widget_set_size_request(window, width, height);
 
 	// icon
-	if (HuiPropLogo.num > 0)
-		gtk_window_set_icon_from_file(GTK_WINDOW(window), sys_str_f(HuiPropLogo), NULL);
+	string logo = HuiGetProperty("logo");
+	if (logo.num > 0)
+		gtk_window_set_icon_from_file(GTK_WINDOW(window), sys_str_f(logo), NULL);
 
 	// catch signals
 	g_signal_connect(G_OBJECT(window), "delete-event", G_CALLBACK(&OnGtkWindowClose), this);

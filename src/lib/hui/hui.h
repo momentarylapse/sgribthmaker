@@ -41,7 +41,7 @@ class HuiEventHandler;
 
 // execution
 void HuiInit();
-void HuiInitExtended(const string &program, const string &version, hui_callback *error_cleanup_function, bool load_res, const string &def_lang);
+void HuiInitExtended(const string &program, bool load_res, const string &def_lang);
 void _HuiMakeUsable_();
 int HuiRun();
 void HuiPushMainLevel();

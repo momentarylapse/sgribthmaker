@@ -18,7 +18,7 @@ int _cdecl HuiGetCpuCount();
 
 // error handling
 void HuiSetErrorFunction(hui_callback *error_function);
-void HuiSetDefaultErrorHandler(const string &program, const string &version, hui_callback *error_cleanup_function);
+void HuiSetDefaultErrorHandler(hui_callback *error_cleanup_function);
 void HuiRaiseError(const string &message);
 void HuiSendBugReport();
 

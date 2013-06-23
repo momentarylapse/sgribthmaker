@@ -493,7 +493,7 @@ int hui_main(Array<string> arg)
 {
 	msg_init(false);
 	msg_db_f("main",1);
-	HuiInitExtended("sgribthmaker", AppVersion, NULL, true, "Deutsch");
+	HuiInitExtended("sgribthmaker", true, "Deutsch");
 	msg_init(HuiAppDirectory + "message.txt", ALLOW_LOGGING);
 
 	HuiSetProperty("name", AppTitle);
