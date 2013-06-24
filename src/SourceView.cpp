@@ -164,20 +164,28 @@ SourceView::SourceView(HuiWindow *win, const string &id)
 	g_signal_connect(G_OBJECT(tv),"toggle-cursor-visible",G_CALLBACK(toggle_cursor_visible),this);
 	g_signal_connect(G_OBJECT(tv),"populate-popup",G_CALLBACK(populate_popup),this);
 
+	history = new History(this);
 }
 
 SourceView::~SourceView()
 {
+	delete(history);
 }
 
 
 void SourceView::Clear()
 {
+	history->enabled = false;
+
 	GtkTextIter start, end;
 	gtk_text_buffer_get_bounds(tb, &start, &end);
 	gtk_text_buffer_delete(tb, &start, &end);
 	gtk_text_buffer_set_modified(tb, false);
 	SetParser("");
+
+	history->Reset();
+	history->enabled = false;
+
 }
 
 
@@ -207,11 +215,15 @@ bool SourceView::Fill(const string &text)
 	if (g_utf8_validate((char*)text.data, text.num, NULL)){
 		gtk_text_buffer_set_text(tb, text.c_str(), -1);
 		gtk_text_buffer_set_modified(tb, false);
+		history->Reset();
 	}else{
 		string temp_utf8 = convert_to_utf8(text);
 		gtk_text_buffer_set_text(tb, temp_utf8.c_str(), -1);
 		gtk_text_buffer_set_modified(tb, true);
 		ok = false;
+		history->Reset();
+		history->saved_pos = -1;
+		history->changed = true;
 	}
 
 	GtkTextIter start;

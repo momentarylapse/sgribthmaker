@@ -15,7 +15,7 @@ class SourceView;
 class History
 {
 public:
-	History();
+	History(SourceView *sv);
 	virtual ~History();
 
 	void Reset();

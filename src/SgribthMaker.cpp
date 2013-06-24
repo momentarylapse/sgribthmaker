@@ -29,8 +29,6 @@ SourceView *source_view;
 
 extern string NixShaderError;
 
-History *history;
-
 //------------------------------------------------------------------------------
 // Highlighting
 
@@ -74,7 +72,7 @@ void SetMessage(const string &str)
 void SetWindowTitle()
 {
 	msg_db_f("SetWinTitle", 1);
-	if (history->changed){
+	if (source_view->history->changed){
 		if (Filename.num > 0)
 			MainWin->SetTitle("*" + Filename + " - " + AppTitle);
 		else
@@ -89,8 +87,8 @@ void SetWindowTitle()
 
 void UpdateMenu()
 {
-	MainWin->Enable("undo", history->Undoable());
-	MainWin->Enable("redo", history->Redoable());
+	MainWin->Enable("undo", source_view->history->Undoable());
+	MainWin->Enable("redo", source_view->history->Redoable());
 	SetWindowTitle();
 }
 
@@ -98,11 +96,11 @@ bool Save();
 
 bool AllowTermination()
 {
-	if (history->changed){
+	if (source_view->history->changed){
 		string answer = HuiQuestionBox(MainWin, _("dem&utige aber h&ofliche Frage"), _("Sie haben die Entropie erh&oht. Wollen Sie Ihr Werk speichern?"), true);
-		if (answer == "cancel")
+		if (answer == "hui:cancel")
 			return false;
-		if (answer == "yes")
+		if (answer == "hui:yes")
 			return Save();
 		return true;
 	}
@@ -115,11 +113,9 @@ void New()
 		return;
 
 	msg_db_f("New", 1);
-	history->enabled = false;
 	source_view->Clear();
 
 	Filename = "";
-	history->Reset();
 	SetWindowTitle();
 }
 
@@ -132,22 +128,13 @@ bool LoadFromFile(const string &filename)
 		return false;
 	}
 	
-	history->enabled = false;
 	source_view->Clear();
-	history->Reset();
 
-	history->enabled = false;
 	string temp = f->ReadComplete();
 	FileClose(f);
 
-	if (source_view->Fill(temp)){
-		history->Reset();
-	}else{
+	if (!source_view->Fill(temp))
 		SetMessage(_("Datei nicht UTF-8 kompatibel"));
-		history->Reset();
-		history->saved_pos = -1;
-		history->changed = true;
-	}
 
 	Filename = filename;
 
@@ -166,7 +153,7 @@ bool WriteToFile(const string &filename)
 	FileClose(f);
 
 	Filename = filename;
-	history->DefineAsSaved();
+	source_view->history->DefineAsSaved();
 	source_view->SetParser(Filename);
 
 	SetMessage(_("gespeichert"));
@@ -224,10 +211,10 @@ void OnReload()
 {	Reload();	}
 
 void OnUndo()
-{	history->Undo();	}
+{	source_view->history->Undo();	}
 
 void OnRedo()
-{	history->Redo();	}
+{	source_view->history->Redo();	}
 
 void OnCopy()
 {
@@ -499,7 +486,7 @@ int hui_main(Array<string> arg)
 	HuiSetProperty("name", AppTitle);
 	HuiSetProperty("version", AppVersion);
 	HuiSetProperty("comment", _("Texteditor und Kaba-Compiler"));
-	HuiSetProperty("website", "http://michisoft.michi.is-a-geek.org");
+	HuiSetProperty("website", "http://michi.is-a-geek.org/michisoft");
 	HuiSetProperty("copyright", "© 2006-2013 by MichiSoft TM");
 	HuiSetProperty("author", "Michael Ankele <michi@lupina.de>");
 
@@ -581,10 +568,6 @@ int hui_main(Array<string> arg)
 	HighlightSchema schema = GetDefaultSchema();
 	HighlightSchemas.add(schema);
 	schema.apply(source_view);
-
-	history = new History;
-	source_view->history = history;
-	history->sv = source_view;
 
 	MainWin->SetMenu(HuiCreateResourceMenu("menu"));
 	MainWin->SetMaximized(maximized);

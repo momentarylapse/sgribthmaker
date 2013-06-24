@@ -11,12 +11,13 @@
 
 void UpdateMenu();
 
-History::History()
+History::History(SourceView *_sv)
 {
 	pos = 0;
 	saved_pos = 0;
 	changed = false;
 	enabled = true;
+	sv = _sv;
 }
 
 History::~History()
