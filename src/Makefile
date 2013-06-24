@@ -17,7 +17,7 @@ MODULES = \
 OBJ = lib/base/strings.o lib/file/msg.o lib/script/script.o \
  History.o CommandDialog.o SettingsDialog.o SourceView.o HighlightSchema.o \
  Parser/Parser.o Parser/ParserKaba.o Parser/ParserText.o \
- Parser/ParserC.o Parser/ParserShader.o
+ Parser/ParserC.o Parser/ParserShader.o Parser/ParserPython.o
 CPP  = g++
 #GLOBALFLAGS = -O3
 #GLOBALFLAGS = -g -O3
@@ -60,6 +60,9 @@ Parser/ParserC.o : Parser/ParserC.cpp
 
 Parser/ParserShader.o : Parser/ParserShader.cpp
 	$(CPP) -c Parser/ParserShader.cpp -o $@ $(CXXFLAGS)
+
+Parser/ParserPython.o : Parser/ParserPython.cpp
+	$(CPP) -c Parser/ParserPython.cpp -o $@ $(CXXFLAGS)
 
 install : all
 	mkdir -p /usr/share/sgribthmaker

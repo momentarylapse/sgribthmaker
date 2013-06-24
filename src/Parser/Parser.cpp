@@ -10,6 +10,7 @@
 #include "ParserKaba.h"
 #include "ParserC.h"
 #include "ParserShader.h"
+#include "ParserPython.h"
 #include "../SourceView.h"
 #include "../HighlightSchema.h"
 
@@ -184,6 +185,7 @@ void InitParser()
 	ParserAssociations.add(ParserAssociation(new ParserC, "h"));
 	ParserAssociations.add(ParserAssociation(new ParserC, "hpp"));
 	ParserAssociations.add(ParserAssociation(new ParserShader, "glsl"));
+	ParserAssociations.add(ParserAssociation(new ParserPython, "py"));
 }
 
 Parser *GetParser(const string &filename)

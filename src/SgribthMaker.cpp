@@ -16,7 +16,7 @@ string Filename = "";
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.3.26.0";
+string AppVersion = "0.3.27.0";
 
 #define ALLOW_LOGGING			true
 //#define ALLOW_LOGGING			false
@@ -292,6 +292,7 @@ void CompileShader()
 	if (shader < 0){
 		HuiErrorBox(MainWin, _("Fehler"), NixShaderError);
 	}else{
+		SetMessage(_("Shader ist fehler-frei &ubersetzbar!"));
 		NixUnrefShader(shader);
 	}
 	delete(w);
@@ -312,13 +313,13 @@ void Compile()
 	else if (ext == "glsl")
 		CompileShader();
 	else
-		SetMessage(_("nur *.kaba-Dataien k&onnen &ubersetzt werden!"));
+		SetMessage(_("nur *.kaba und *.glsl-Dateien k&onnen &ubersetzt werden!"));
 }
 
 void CompileAndRun(bool verbose)
 {
 	if (Filename.extension() != "kaba"){
-		SetMessage(_("nur *.kaba-Dataien k&onnen &ubersetzt werden!"));
+		SetMessage(_("nur *.kaba-Dateien k&onnen ausgef&uhrt werden!"));
 		return;
 	}
 
