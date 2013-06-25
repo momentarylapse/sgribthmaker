@@ -385,7 +385,7 @@ void SIAddPackageHui()
 	add_func("HuiEnd",				TypeVoid,		(void*)&HuiEnd);
 	add_func("HuiDoSingleMainLoop",	TypeVoid,	(void*)&HuiDoSingleMainLoop);
 	add_func("HuiSleep",			TypeVoid,	(void*)&HuiSleep);
-		func_add_param("ms",		TypeInt);
+		func_add_param("duration",		TypeFloat);
 	add_func("HuiFileDialogOpen",	TypeBool,	(void*)&HuiFileDialogOpen);
 		func_add_param("root",		TypeHuiWindowP);
 		func_add_param("title",		TypeString);

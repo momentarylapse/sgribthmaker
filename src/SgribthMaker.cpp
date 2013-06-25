@@ -36,19 +36,6 @@ extern string NixShaderError;
 Array<HighlightSchema> HighlightSchemas;
 
 
-bool allow_highlighting(const string &name)
-{
-	string extension = name.extension();
-	if (extension == "kaba")
-		return true;
-	if ((extension == "cpp") || (extension == "h"))
-		return true;
-	if (name.basename() == "config.txt")
-		return true;
-	return false;
-}
-
-
 int status_count = 0;
 
 void UpdateStatusBar()
@@ -66,7 +53,7 @@ void SetMessage(const string &str)
 	MainWin->EnableStatusbar(true);
 	//HuiGetTime(timer);
 	status_count ++;
-	HuiRunLater(5000, &UpdateStatusBar);
+	HuiRunLater(5, &UpdateStatusBar);
 }
 
 void SetWindowTitle()
@@ -481,7 +468,7 @@ int hui_main(Array<string> arg)
 {
 	msg_init(false);
 	msg_db_f("main",1);
-	HuiInitExtended("sgribthmaker", true, "Deutsch");
+	HuiInit("sgribthmaker", true, "Deutsch");
 	msg_init(HuiAppDirectory + "message.txt", ALLOW_LOGGING);
 
 	HuiSetProperty("name", AppTitle);
@@ -559,12 +546,6 @@ int hui_main(Array<string> arg)
 	InitParser();
 	source_view = new SourceView(MainWin, "edit");
 
-
-	/* Change default font throughout the widget */
-	source_view->UpdateFont();
-	//g_object_set(tv, "wrap-mode", GTK_WRAP_WORD_CHAR, NULL);
-
-	HuiRunLaterM(50, source_view, &SourceView::UpdateTabSize);
 
 	HighlightSchema schema = GetDefaultSchema();
 	HighlightSchemas.add(schema);

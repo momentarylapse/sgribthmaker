@@ -165,6 +165,11 @@ SourceView::SourceView(HuiWindow *win, const string &id)
 	g_signal_connect(G_OBJECT(tv),"populate-popup",G_CALLBACK(populate_popup),this);
 
 	history = new History(this);
+
+	UpdateFont();
+	//g_object_set(tv, "wrap-mode", GTK_WRAP_WORD_CHAR, NULL);
+
+	HuiRunLaterM(0.05f, this, &SourceView::UpdateTabSize);
 }
 
 SourceView::~SourceView()

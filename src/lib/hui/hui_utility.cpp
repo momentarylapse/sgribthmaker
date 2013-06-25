@@ -168,15 +168,15 @@ void HuiRaiseError(const string &message)
 
 
 
-void HuiSleep(int duration_ms)
+void HuiSleep(float duration)
 {
-	if (duration_ms<=0)
+	if (duration <= 0)
 		return;
 #ifdef OS_WINDOWS
-	Sleep(duration_ms);
+	Sleep(duration * 1000);
 #endif
 #ifdef OS_LINUX
-	usleep(duration_ms*1000);
+	usleep(duration * 1000000);
 #endif
 }
 

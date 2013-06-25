@@ -11,7 +11,7 @@
 
 
 void _cdecl HuiSetDirectory(const string &dir);
-void _cdecl HuiSleep(int duration_ms);
+void _cdecl HuiSleep(float duration);
 int _cdecl HuiGetCpuCount();
 
 

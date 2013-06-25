@@ -40,8 +40,7 @@ class HuiEventHandler;
 
 
 // execution
-void HuiInit();
-void HuiInitExtended(const string &program, bool load_res, const string &def_lang);
+void HuiInit(const string &program, bool load_res, const string &def_lang);
 void _HuiMakeUsable_();
 int HuiRun();
 void HuiPushMainLevel();
@@ -51,11 +50,11 @@ void _HuiSetIdleFunctionM(HuiEventHandler *object, void (HuiEventHandler::*funct
 template<typename T>
 void HuiSetIdleFunctionM(HuiEventHandler *object, T fun)
 {	_HuiSetIdleFunctionM(object, (void(HuiEventHandler::*)())fun);	}
-void HuiRunLater(int time_ms, hui_callback *function);
-void _HuiRunLaterM(int time_ms, HuiEventHandler *object, void (HuiEventHandler::*function)());
+void HuiRunLater(float time, hui_callback *function);
+void _HuiRunLaterM(float time, HuiEventHandler *object, void (HuiEventHandler::*function)());
 template<typename T>
-void HuiRunLaterM(int time_ms, HuiEventHandler *object, T fun)
-{	_HuiRunLaterM(time_ms, object, (void(HuiEventHandler::*)())fun);	}
+void HuiRunLaterM(float time, HuiEventHandler *object, T fun)
+{	_HuiRunLaterM(time, object, (void(HuiEventHandler::*)())fun);	}
 void HuiDoSingleMainLoop();
 void HuiEnd();
 extern bool HuiEndKeepMsgAlive;
