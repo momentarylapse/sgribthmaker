@@ -1,5 +1,5 @@
 #include "hui.h"
-#include "controls/HuiControl.h"
+#include "Controls/HuiControl.h"
 
 //    for all
 bool HuiWindow::IsEnabled(const string &id)

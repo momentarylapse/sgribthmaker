@@ -8,7 +8,7 @@
 #include "SourceView.h"
 #include "History.h"
 #include "Parser/Parser.h"
-#include "lib/hui/controls/HuiControlGtk.h"
+#include "lib/hui/Controls/HuiControl.h"
 
 
 void insert_text(GtkTextBuffer *textbuffer, GtkTextIter *location, gchar *text, gint len, gpointer user_data)
@@ -144,7 +144,7 @@ SourceView::JumpData::JumpData(SourceView *_sv, int _line)
 
 SourceView::SourceView(HuiWindow *win, const string &id)
 {
-	tv = ((HuiControlGtk*)win->_GetControl_("edit"))->widget;
+	tv = win->_GetControl_("edit")->widget;
 	tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tv));
 
 	NeedsUpdateStart = 0;

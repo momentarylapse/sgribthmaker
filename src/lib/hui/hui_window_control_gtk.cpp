@@ -1,23 +1,23 @@
 #include "hui.h"
 #include "hui_internal.h"
-#include "controls/HuiControlButtonGtk.h"
-#include "controls/HuiControlCheckBoxGtk.h"
-#include "controls/HuiControlColorButtonGtk.h"
-#include "controls/HuiControlComboBoxGtk.h"
-#include "controls/HuiControlDrawingAreaGtk.h"
-#include "controls/HuiControlEditGtk.h"
-#include "controls/HuiControlGridGtk.h"
-#include "controls/HuiControlGroupGtk.h"
-#include "controls/HuiControlLabelGtk.h"
-#include "controls/HuiControlListViewGtk.h"
-#include "controls/HuiControlMultilineEditGtk.h"
-#include "controls/HuiControlProgressBarGtk.h"
-#include "controls/HuiControlRadioButtonGtk.h"
-#include "controls/HuiControlSliderGtk.h"
-#include "controls/HuiControlSpinButtonGtk.h"
-#include "controls/HuiControlTabControlGtk.h"
-#include "controls/HuiControlToggleButtonGtk.h"
-#include "controls/HuiControlTreeViewGtk.h"
+#include "Controls/HuiControlButton.h"
+#include "Controls/HuiControlCheckBox.h"
+#include "Controls/HuiControlColorButton.h"
+#include "Controls/HuiControlComboBox.h"
+#include "Controls/HuiControlDrawingArea.h"
+#include "Controls/HuiControlEdit.h"
+#include "Controls/HuiControlGrid.h"
+#include "Controls/HuiControlGroup.h"
+#include "Controls/HuiControlLabel.h"
+#include "Controls/HuiControlListView.h"
+#include "Controls/HuiControlMultilineEdit.h"
+#include "Controls/HuiControlProgressBar.h"
+#include "Controls/HuiControlRadioButton.h"
+#include "Controls/HuiControlSlider.h"
+#include "Controls/HuiControlSpinButton.h"
+#include "Controls/HuiControlTabControl.h"
+#include "Controls/HuiControlToggleButton.h"
+#include "Controls/HuiControlTreeView.h"
 #ifdef HUI_API_GTK
 #include "../math/math.h"
 
@@ -83,9 +83,8 @@ enum{
 	}
 #endif
 
-void HuiWindow::_InsertControl_(HuiControl *_c, int x, int y, int width, int height)
+void HuiWindow::_InsertControl_(HuiControl *c, int x, int y, int width, int height)
 {
-	HuiControlGtk *c = dynamic_cast<HuiControlGtk*>(_c);
 	GtkWidget *frame = c->frame;
 	if (!frame)
 		frame = c->widget;
@@ -98,7 +97,7 @@ void HuiWindow::_InsertControl_(HuiControl *_c, int x, int y, int width, int hei
 		if (root_ctrl){
 			if (root_ctrl->type == HuiKindControlTable){
 				root_type = HuiGtkInsertTable;
-				target_widget = dynamic_cast<HuiControlGtk*>(root_ctrl)->widget;
+				target_widget = root_ctrl->widget;
 				unsigned int n_cols, n_rows;
 				gtk_table_get_size(GTK_TABLE(target_widget), &n_rows, &n_cols);
 
@@ -108,7 +107,7 @@ void HuiWindow::_InsertControl_(HuiControl *_c, int x, int y, int width, int hei
 						c->is_button_bar = true;
 			}else if (root_ctrl->type == HuiKindTabControl){
 				root_type = HuiGtkInsertTabControl;
-				target_widget = dynamic_cast<HuiControlGtk*>(root_ctrl)->widget;
+				target_widget = root_ctrl->widget;
 				target_widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(target_widget), tab_creation_page); // selected by SetTabCreationPage()...
 			}else
 				root_type = -1;
@@ -215,7 +214,7 @@ void HuiWindow::_InsertControl_(HuiControl *_c, int x, int y, int width, int hei
 		// fixed
 		GtkWidget *target_widget = plugable;
 		if (cur_control)
-			target_widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(dynamic_cast<HuiControlGtk*>(cur_control)->widget), tab_creation_page); // selected by SetTabCreationPage()...
+			target_widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(cur_control->widget), tab_creation_page); // selected by SetTabCreationPage()...
 			
 		gtk_widget_set_size_request(frame, width, height);
 		gtk_fixed_put(GTK_FIXED(target_widget), frame, x, y);
@@ -252,7 +251,7 @@ HuiControl *HuiWindow ::_GetControl_(const string &id)
 HuiControl *HuiWindow::_GetControlByWidget_(GtkWidget *widget)
 {
 	for (int j=0;j<control.num;j++)
-		if (((HuiControlGtk*)control[j])->widget == widget)
+		if (control[j]->widget == widget)
 			return control[j];
 	return NULL;
 }
@@ -261,7 +260,7 @@ string HuiWindow::_GetIDByWidget_(GtkWidget *widget)
 {
 	// controls
 	for (int j=0;j<control.num;j++)
-		if (((HuiControlGtk*)control[j])->widget == widget)
+		if (control[j]->widget == widget)
 			return control[j]->id;
 
 	// toolbars
@@ -304,20 +303,20 @@ void SetImageById(HuiWindow *win, const string &id)
 
 void HuiWindow::AddButton(const string &title,int x,int y,int width,int height,const string &id)
 {
-	_InsertControl_(new HuiControlButtonGtk(title, id), x, y, width, height);
+	_InsertControl_(new HuiControlButton(title, id), x, y, width, height);
 
 	SetImageById(this, id);
 }
 
 void HuiWindow::AddColorButton(const string &title,int x,int y,int width,int height,const string &id)
 {
-	_InsertControl_(new HuiControlColorButtonGtk(title, id), x, y, width, height);
+	_InsertControl_(new HuiControlColorButton(title, id), x, y, width, height);
 }
 
 void HuiWindow::AddDefButton(const string &title,int x,int y,int width,int height,const string &id)
 {
 	AddButton(title, x, y, width, height, id);
-	GtkWidget *b = ((HuiControlGtk*)control.back())->widget;
+	GtkWidget *b = control.back()->widget;
 #ifdef OS_WINDOWS
 	GTK_WIDGET_SET_FLAGS(b, GTK_CAN_DEFAULT);
 #else
@@ -331,19 +330,19 @@ void HuiWindow::AddDefButton(const string &title,int x,int y,int width,int heigh
 
 void HuiWindow::AddCheckBox(const string &title,int x,int y,int width,int height,const string &id)
 {
-	_InsertControl_(new HuiControlCheckBoxGtk(title, id), x, y, width, height);
+	_InsertControl_(new HuiControlCheckBox(title, id), x, y, width, height);
 }
 
 void HuiWindow::AddText(const string &title,int x,int y,int width,int height,const string &id)
 {
-	_InsertControl_(new HuiControlLabelGtk(title, id), x, y, width, height);
+	_InsertControl_(new HuiControlLabel(title, id), x, y, width, height);
 }
 
 
 
 void HuiWindow::AddEdit(const string &title,int x,int y,int width,int height,const string &id)
 {
-	_InsertControl_(new HuiControlEditGtk(title, id), x, y, width, height);
+	_InsertControl_(new HuiControlEdit(title, id), x, y, width, height);
 
 	// dumb but usefull test
 /*	if (height > 30){
@@ -356,22 +355,22 @@ void HuiWindow::AddEdit(const string &title,int x,int y,int width,int height,con
 
 void HuiWindow::AddMultilineEdit(const string &title,int x,int y,int width,int height,const string &id)
 {
-	_InsertControl_(new HuiControlMultilineEditGtk(title, id), x, y, width, height);
+	_InsertControl_(new HuiControlMultilineEdit(title, id), x, y, width, height);
 }
 
 void HuiWindow::AddSpinButton(const string &title,int x,int y,int width,int height,const string &id)
 {
-	_InsertControl_(new HuiControlSpinButtonGtk(title, id), x, y, width, height);
+	_InsertControl_(new HuiControlSpinButton(title, id), x, y, width, height);
 }
 
 void HuiWindow::AddGroup(const string &title,int x,int y,int width,int height,const string &id)
 {
-	_InsertControl_(new HuiControlGroupGtk(title, id), x, y, width, height);
+	_InsertControl_(new HuiControlGroup(title, id), x, y, width, height);
 }
 
 void HuiWindow::AddComboBox(const string &title,int x,int y,int width,int height,const string &id)
 {
-	_InsertControl_(new HuiControlComboBoxGtk(title, id), x, y, width, height);
+	_InsertControl_(new HuiControlComboBox(title, id), x, y, width, height);
 	if ((PartString.num > 1) || (PartString[0] != ""))
 		for (int i=0;i<PartString.num;i++)
 			AddString(id, PartString[i]);
@@ -380,17 +379,17 @@ void HuiWindow::AddComboBox(const string &title,int x,int y,int width,int height
 
 void HuiWindow::AddToggleButton(const string &title,int x,int y,int width,int height,const string &id)
 {
-	_InsertControl_(new HuiControlToggleButtonGtk(title, id), x, y, width, height);
+	_InsertControl_(new HuiControlToggleButton(title, id), x, y, width, height);
 }
 
 void HuiWindow::AddRadioButton(const string &title,int x,int y,int width,int height,const string &id)
 {
-	_InsertControl_(new HuiControlRadioButtonGtk(title, id), x, y, width, height);
+	_InsertControl_(new HuiControlRadioButton(title, id), x, y, width, height);
 }
 
 void HuiWindow::AddTabControl(const string &title,int x,int y,int width,int height,const string &id)
 {
-	_InsertControl_(new HuiControlTabControlGtk(title, id, this), x, y, width, height);
+	_InsertControl_(new HuiControlTabControl(title, id, this), x, y, width, height);
 }
 
 void HuiWindow::SetTarget(const string &id,int page)
@@ -405,12 +404,12 @@ void HuiWindow::SetTarget(const string &id,int page)
 
 void HuiWindow::AddListView(const string &title,int x,int y,int width,int height,const string &id)
 {
-	_InsertControl_(new HuiControlListViewGtk(title, id, this), x, y, width, height);
+	_InsertControl_(new HuiControlListView(title, id, this), x, y, width, height);
 }
 
 void HuiWindow::AddTreeView(const string &title,int x,int y,int width,int height,const string &id)
 {
-	_InsertControl_(new HuiControlTreeViewGtk(title, id, this), x, y, width, height);
+	_InsertControl_(new HuiControlTreeView(title, id, this), x, y, width, height);
 }
 
 void HuiWindow::AddIconView(const string &title,int x,int y,int width,int height,const string &id)
@@ -447,12 +446,12 @@ void HuiWindow::AddIconView(const string &title,int x,int y,int width,int height
 
 void HuiWindow::AddProgressBar(const string &title,int x,int y,int width,int height,const string &id)
 {
-	_InsertControl_(new HuiControlProgressBarGtk(title, id), x, y, width, height);
+	_InsertControl_(new HuiControlProgressBar(title, id), x, y, width, height);
 }
 
 void HuiWindow::AddSlider(const string &title,int x,int y,int width,int height,const string &id)
 {
-	_InsertControl_(new HuiControlSliderGtk(title, id, height > width), x, y, width, height);
+	_InsertControl_(new HuiControlSlider(title, id, height > width), x, y, width, height);
 }
 
 void HuiWindow::AddImage(const string &title,int x,int y,int width,int height,const string &id)
@@ -473,14 +472,14 @@ void HuiWindow::AddImage(const string &title,int x,int y,int width,int height,co
 
 void HuiWindow::AddDrawingArea(const string &title,int x,int y,int width,int height,const string &id)
 {
-	_InsertControl_(new HuiControlDrawingAreaGtk(title, id), x, y, width, height);
-	input_widget = ((HuiControlGtk*)control.back())->widget;
+	_InsertControl_(new HuiControlDrawingArea(title, id), x, y, width, height);
+	input_widget = control.back()->widget;
 }
 
 
 void HuiWindow::AddControlTable(const string &title, int x, int y, int width, int height, const string &id)
 {
-	_InsertControl_(new HuiControlGridGtk(title, id, width, height, this), x, y, width, height);
+	_InsertControl_(new HuiControlGrid(title, id, width, height, this), x, y, width, height);
 }
 
 void HuiWindow::EmbedDialog(const string &id, int x, int y)
@@ -547,7 +546,7 @@ void HuiWindow::RemoveControl(const string &id)
 			control.resize(i);
 	}
 
-	gtk_widget_destroy(((HuiControlGtk*)c)->widget);
+	gtk_widget_destroy(c->widget);
 }
 
 
@@ -555,20 +554,16 @@ void HuiWindow::RemoveControl(const string &id)
 //----------------------------------------------------------------------------------
 // drawing
 
-static int cur_font_size;
-static string cur_font = "Sans";
-static bool cur_font_bold, cur_font_italic;
-
 void HuiWindow::Redraw(const string &_id)
 {
-	HuiControlGtk *c = (HuiControlGtk*)_GetControl_(_id);
+	HuiControl *c = _GetControl_(_id);
 	if (c)
 		gdk_window_invalidate_rect(gtk_widget_get_window(c->widget), NULL, false);
 }
 
 void HuiWindow::RedrawRect(const string &_id, int x, int y, int w, int h)
 {
-	HuiControlGtk *c = (HuiControlGtk*)_GetControl_(_id);
+	HuiControl *c = _GetControl_(_id);
 	if (c){
 		if (w < 0){
 			x += w;
@@ -587,11 +582,12 @@ void HuiWindow::RedrawRect(const string &_id, int x, int y, int w, int h)
 	}
 }
 
-static HuiDrawingContext hui_drawing_context; 
 
-HuiDrawingContext *HuiWindow::BeginDraw(const string &_id)
+static HuiPainter hui_drawing_context;
+
+HuiPainter *HuiWindow::BeginDraw(const string &_id)
 {
-	HuiControlGtk *c = (HuiControlGtk*)_GetControl_(_id);
+	HuiControl *c = _GetControl_(_id);
 	hui_drawing_context.win = this;
 	hui_drawing_context.id = _id;
 	hui_drawing_context.cr = NULL;
@@ -605,230 +601,6 @@ HuiDrawingContext *HuiWindow::BeginDraw(const string &_id)
 	}
 	return &hui_drawing_context;
 }
-
-void HuiDrawingContext::End()
-{
-	if (!cr)
-		return;
-	
-	cairo_destroy(cr);
-}
-
-void HuiDrawingContext::SetColor(const color &c)
-{
-	if (!cr)
-		return;
-	cairo_set_source_rgba(cr, c.r, c.g, c.b, c.a);
-}
-
-void HuiDrawingContext::SetLineWidth(float w)
-{
-	if (!cr)
-		return;
-	cairo_set_line_width(cr, w);
-}
-
-color HuiDrawingContext::GetThemeColor(int i)
-{
-	GtkStyle *style = gtk_widget_get_style(win->window);
-	int x = (i / 5);
-	int y = (i % 5);
-	GdkColor c;
-	if (x == 0)
-		c = style->fg[y];
-	else if (x == 1)
-		c = style->bg[y];
-	else if (x == 2)
-		c = style->light[y];
-	else if (x == 3)
-		c = style->mid[y];
-	else if (x == 4)
-		c = style->dark[y];
-	else if (x == 5)
-		c = style->base[y];
-	else if (x == 6)
-		c = style->text[y];
-	return color(1, (float)c.red / 65535.0f, (float)c.green / 65535.0f, (float)c.blue / 65535.0f);
-}
-
-
-void HuiDrawingContext::DrawPoint(float x, float y)
-{
-	if (!cr)
-		return;
-}
-
-void HuiDrawingContext::DrawLine(float x1, float y1, float x2, float y2)
-{
-	if (!cr)
-		return;
-	cairo_move_to(cr, x1 + 0.5f, y1 + 0.5f);
-	cairo_line_to(cr, x2 + 0.5f, y2 + 0.5f);
-	cairo_stroke(cr);
-}
-
-void HuiDrawingContext::DrawLines(float *x, float *y, int num_lines)
-{
-	if (!cr)
-		return;
-	//cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
-	//cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
-	cairo_move_to(cr, x[0], y[0]);
-	for (int i=1;i<=num_lines;i++)  // <=  !!!
-		cairo_line_to(cr, x[i], y[i]);
-	cairo_stroke(cr);
-}
-
-void HuiDrawingContext::DrawLinesMA(Array<float> &x, Array<float> &y)
-{
-	DrawLines(&x[0], &y[0], x.num - 1);
-}
-
-void HuiDrawingContext::DrawPolygon(float *x, float *y, int num_points)
-{
-	if (!cr)
-		return;
-	cairo_move_to(cr, x[0], y[0]);
-	for (int i=1;i<num_points;i++)
-		cairo_line_to(cr, x[i], y[i]);
-	cairo_close_path(cr);
-	cairo_fill(cr);
-}
-
-void HuiDrawingContext::DrawPolygonMA(Array<float> &x, Array<float> &y)
-{
-	DrawPolygon(&x[0], &y[0], x.num);
-}
-
-void HuiDrawingContext::DrawStr(float x, float y, const string &str)
-{
-	if (!cr)
-		return;
-	cairo_move_to(cr, x, y);// + cur_font_size);
-	PangoLayout *layout = pango_cairo_create_layout(cr);
-	pango_layout_set_text(layout, (char*)str.data, str.num);//.c_str(), -1);
-	string f = cur_font;
-	if (cur_font_bold)
-		f += " Bold";
-	if (cur_font_italic)
-		f += " Italic";
-	f += " " + i2s(cur_font_size);
-	PangoFontDescription *desc = pango_font_description_from_string(f.c_str());
-	//PangoFontDescription *desc = pango_font_description_new();
-	//pango_font_description_set_family(desc, "Sans");//cur_font);
-	//pango_font_description_set_size(desc, 10);//cur_font_size);
-	pango_layout_set_font_description(layout, desc);
-	pango_font_description_free(desc);
-	pango_cairo_show_layout(cr, layout);
-	g_object_unref(layout);
-	
-	//cairo_show_text(cr, str);
-}
-
-float HuiDrawingContext::GetStrWidth(const string &str)
-{
-	if (!cr)
-		return 0;
-	PangoLayout *layout = pango_cairo_create_layout(cr);
-	pango_layout_set_text(layout, (char*)str.data, str.num);//.c_str(), -1);
-	string f = cur_font;
-	if (cur_font_bold)
-		f += " Bold";
-	if (cur_font_italic)
-		f += " Italic";
-	f += " " + i2s(cur_font_size);
-	PangoFontDescription *desc = pango_font_description_from_string(f.c_str());
-	//PangoFontDescription *desc = pango_font_description_new();
-	//pango_font_description_set_family(desc, "Sans");//cur_font);
-	//pango_font_description_set_size(desc, 10);//cur_font_size);
-	pango_layout_set_font_description(layout, desc);
-	pango_font_description_free(desc);
-	int w, h;
-	pango_layout_get_size(layout, &w, &h);
-	g_object_unref(layout);
-
-	return (float)w / 1000.0f;
-}
-
-void HuiDrawingContext::DrawRect(float x, float y, float w, float h)
-{
-	if (!cr)
-		return;
-	cairo_rectangle(cr, x, y, w, h);
-	cairo_fill(cr);
-}
-
-void HuiDrawingContext::DrawRect(const rect &r)
-{
-	if (!cr)
-		return;
-	cairo_rectangle(cr, r.x1, r.y1, r.width(), r.height());
-	cairo_fill(cr);
-}
-
-void HuiDrawingContext::DrawCircle(float x, float y, float radius)
-{
-	if (!cr)
-		return;
-	cairo_arc(cr, x, y, radius, 0, 2 * pi);
-	cairo_fill(cr);
-}
-
-void HuiDrawingContext::DrawImage(float x, float y, const Image &image)
-{
-#ifdef _X_USE_IMAGE_
-	if (!cr)
-		return;
-	image.SetMode(Image::ModeBGRA);
-	cairo_pattern_t *p = cairo_get_source(cr);
-	cairo_pattern_reference(p);
-	cairo_surface_t *img = cairo_image_surface_create_for_data((unsigned char*)image.data.data,
-                                                         CAIRO_FORMAT_ARGB32,
-                                                         image.width,
-                                                         image.height,
-	    image.width * 4);
-
-	cairo_set_source_surface (cr, img, x, y);
-	cairo_paint(cr);
-	cairo_surface_destroy(img);
-	cairo_set_source(cr, p);
-	cairo_pattern_destroy(p);
-#endif
-}
-
-void HuiDrawingContext::SetFont(const string &font, float size, bool bold, bool italic)
-{
-	if (!cr)
-		return;
-	//cairo_select_font_face(cr, "serif", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-	//cairo_set_font_size(cr, size);
-	if (font.num > 0)
-		cur_font = font;
-	if (size > 0)
-		cur_font_size = size;
-	cur_font_bold = bold;
-	cur_font_italic = italic;
-}
-
-void HuiDrawingContext::SetFontSize(float size)
-{
-	if (!cr)
-		return;
-	//cairo_set_font_size(cr, size);
-	cur_font_size = size;
-}
-
-void HuiDrawingContext::SetAntialiasing(bool enabled)
-{
-	if (!cr)
-		return;
-	if (enabled)
-		cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
-	else
-		cairo_set_antialias(cr, CAIRO_ANTIALIAS_NONE);
-}
-
-
 
 
 //----------------------------------------------------------------------------------
