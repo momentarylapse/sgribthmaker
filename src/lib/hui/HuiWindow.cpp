@@ -9,6 +9,7 @@
 #include "hui.h"
 #include "hui_internal.h"
 #include "Controls/HuiControl.h"
+#include "HuiToolbar.h"
 
 
 // for unique window identifiers
@@ -73,7 +74,7 @@ HuiWindow::HuiWindow(const string &id, HuiWindow *parent, bool allow_parent)
 
 	// toolbar?
 	if (res->s_param[1].num > 0)
-		ToolbarSetByID(res->s_param[1]);
+		toolbar[HuiToolbarTop]->SetByID(res->s_param[1]);
 
 	// controls
 	foreach(HuiResourceCommand &cmd, res->cmd){
@@ -122,13 +123,10 @@ void HuiWindow::_InitGeneric_(HuiWindow *_root, bool _allow_root, int _mode)
 	}
 	menu = popup = NULL;
 	statusbar_enabled = false;
-	for (int i=0;i<4;i++){
-		toolbar[i].enabled = false;
-		toolbar[i].text_enabled = true;
-		toolbar[i].large_icons = true;
-		toolbar[i].item.clear();
-	}
-	cur_toolbar = &toolbar[HuiToolbarTop];
+	toolbar[HuiToolbarTop] = new HuiToolbar(this);
+	toolbar[HuiToolbarLeft] = new HuiToolbar(this, true);
+	toolbar[HuiToolbarRight] = new HuiToolbar(this, true);
+	toolbar[HuiToolbarBottom] = new HuiToolbar(this);
 	input.reset();
 	tab_creation_page = -1;
 
@@ -151,6 +149,9 @@ void HuiWindow::_CleanUp_()
 	c.win = this;
 	c.last_id = cur_id;
 	_HuiClosedWindow_.add(c);
+
+	for (int i=0;i<4;i++)
+		delete(toolbar[i]);
 
 	for (int i=0;i<control.num;i++)
 		delete(control[i]);
@@ -442,7 +443,7 @@ void HuiWindow::FromResource(const string &id)
 
 	// toolbar?
 	if (res->s_param[1].num > 0)
-		ToolbarSetByID(res->s_param[1]);
+		toolbar[HuiToolbarTop]->SetByID(res->s_param[1]);
 
 	// controls
 	foreach(HuiResourceCommand &cmd, res->cmd){

@@ -67,6 +67,7 @@ extern bool HuiRunning;
 #include "hui_utility.h"
 #include "HuiPainter.h"
 #include "HuiTimer.h"
+#include "HuiToolbar.h"
 #include "hui_error.h"
 #include "hui_clipboard.h"
 

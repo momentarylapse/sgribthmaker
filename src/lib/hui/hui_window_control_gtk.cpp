@@ -258,16 +258,9 @@ HuiControl *HuiWindow::_GetControlByWidget_(GtkWidget *widget)
 
 string HuiWindow::_GetIDByWidget_(GtkWidget *widget)
 {
-	// controls
 	for (int j=0;j<control.num;j++)
 		if (control[j]->widget == widget)
 			return control[j]->id;
-
-	// toolbars
-	for (int t=0;t<4;t++)
-		for (int j=0;j<toolbar[t].item.num;j++)
-			if ((GtkWidget*)toolbar[t].item[j].widget == widget)
-				return toolbar[t].item[j].id;
 	return "";
 }
 
@@ -781,7 +774,6 @@ color HuiWindow::GetColor(const string &_id)
 //    for all
 void HuiWindow::Enable(const string &_id,bool enabled)
 {
-	_ToolbarEnable_(_id, enabled);
 	if (menu)
 		menu->EnableItem(_id, enabled);
 	
@@ -805,7 +797,6 @@ void HuiWindow::HideControl(const string &_id,bool hide)
 //    for CheckBox, ToolBarItemCheckable
 void HuiWindow::Check(const string &_id,bool checked)
 {
-	_ToolbarCheck_(_id, checked);
 	HuiControl *c = _GetControl_(_id);
 	if (menu)
 		menu->CheckItem(_id, checked);
@@ -822,7 +813,7 @@ bool HuiWindow::IsChecked(const string &_id)
 {
 	HuiControl *c = _GetControl_(_id);
 	if (!c)
-		return _ToolbarIsChecked_(_id);
+		return false;
 	return c->IsChecked();
 }
 

@@ -26,7 +26,7 @@ class HuiControl
 {
 public:
 	HuiControl(int _type, const string &_id);
-	virtual ~HuiControl(){}
+	virtual ~HuiControl();
 	int type;
 	string id;
 	int x, y;

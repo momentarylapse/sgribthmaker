@@ -134,7 +134,12 @@ enum{
 	HuiKindMultilineEdit,
 	HuiKindSpinButton,
 	HuiKindRadioButton,
-	HuiKindToggleButton
+	HuiKindToggleButton,
+
+	HuiKindToolButton,
+	HuiKindToolToggleButton,
+	HuiKindToolSeparator,
+	HuiKindToolMenuButton
 };
 
 // key codes

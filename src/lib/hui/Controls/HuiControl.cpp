@@ -23,6 +23,16 @@ HuiControl::HuiControl(int _type, const string &_id)
 #endif
 }
 
+HuiControl::~HuiControl()
+{
+	for (int i=0;i<win->control.num;i++)
+		if (win->control[i] == this)
+			win->control.erase(i);
+#ifdef HUI_API_GTK
+	gtk_widget_destroy(widget);
+#endif
+}
+
 #ifdef HUI_API_GTK
 
 void HuiControl::Enable(bool _enabled)

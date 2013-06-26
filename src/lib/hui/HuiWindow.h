@@ -16,6 +16,7 @@ class HuiEvent;
 class HuiControl;
 class HuiWindow;
 class HuiPainter;
+class HuiToolbar;
 class rect;
 
 
@@ -54,31 +55,6 @@ public:
 	{	this->x1=x1;	this->x2=x2;	this->y1=y1;	this->y2=y2;	}
 };
 
-struct HuiToolbarItem
-{
-	int type;
-	string id;
-#ifdef HUI_API_GTK
-	GtkToolItem *widget;
-#endif
-	bool enabled;
-	HuiMenu *menu;
-};
-
-struct HuiToolbar
-{
-	Array<HuiToolbarItem> item;
-	bool enabled;
-	bool text_enabled;
-	bool large_icons;
-#ifdef HUI_API_WIN
-	HWND hWnd;
-#endif
-#ifdef HUI_API_GTK
-	GtkWidget *widget;
-#endif
-};
-
 class HuiEventHandler
 {
 public:
@@ -92,6 +68,7 @@ struct HuiWinEvent
 	HuiEventHandler *object;
 };
 
+class HuiControl;
 class HuiControlTabControl;
 class HuiControlListView;
 class HuiControlTreeView;
@@ -99,6 +76,7 @@ class HuiControlGrid;
 
 class HuiWindow : public HuiEventHandler
 {
+	friend class HuiControl;
 	friend class HuiControlTabControl;
 	friend class HuiControlListView;
 	friend class HuiControlTreeView;
@@ -141,25 +119,10 @@ public:
 	void _cdecl SetCursorPos(int x,int y);
 	void _cdecl ShowCursor(bool show);
 
-	// tool bars
+	// status bar
 	void _cdecl EnableStatusbar(bool enabled);
 	//bool _cdecl IsStatusbarEnabled();
 	void _cdecl SetStatusText(const string &str);
-	void _cdecl EnableToolbar(bool enabled);
-	void _cdecl ToolbarSetCurrent(int index);
-	void _cdecl ToolbarConfigure(bool text_enabled, bool large_icons);
-	void _cdecl ToolbarAddItem(const string &title, const string &tool_tip, const string &image, const string &id);
-	void _cdecl ToolbarAddItemCheckable(const string &title, const string &tool_tip, const string &image, const string &id);
-	void _cdecl ToolbarAddItemMenu(const string &title, const string &tool_tip, const string &image, HuiMenu *menu, const string &id);
-	void _cdecl ToolbarAddItemMenuByID(const string &title, const string &tool_tip, const string &image, const string &menu_id, const string &id);
-	void _cdecl ToolbarAddSeparator();
-	void _cdecl ToolbarReset();
-	void _cdecl ToolbarSetByID(const string &id);
-	// (internal)
-	void _ToolbarEnable_(const string &id, bool enabled);
-	bool _ToolbarIsEnabled_(const string &id);
-	void _ToolbarCheck_(const string &id, bool checked);
-	bool _ToolbarIsChecked_(const string &id);
 
 	// events
 	void _cdecl AllowEvents(const string &msg);
@@ -266,6 +229,8 @@ public:
 	HuiInputData input;
 	int mouse_offset_x, mouse_offset_y;
 
+	HuiToolbar *toolbar[4];
+
 private:
 	int tab_creation_page;
 
@@ -302,7 +267,6 @@ private:
 	Array<HuiControl*> control;
 	HuiControl *cur_control;
 	Array<HuiWinEvent> event;
-	HuiToolbar toolbar[4], *cur_toolbar;
 	HuiMenu *menu, *popup;
 	bool statusbar_enabled;
 	bool allowed, allow_keys;
@@ -346,13 +310,6 @@ enum{
 #define HuiBottom	8
 
 
-// tool bar items
-enum{
-	HuiToolButton,
-	HuiToolCheckable,
-	HuiToolSeparator,
-	HuiToolMenu
-};
 
 // which one of the toolbars?
 enum{

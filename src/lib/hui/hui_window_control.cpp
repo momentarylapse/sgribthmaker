@@ -7,7 +7,7 @@ bool HuiWindow::IsEnabled(const string &id)
 	for (int i=0;i<control.num;i++)
 		if (id == control[i]->id)
 			return control[i]->enabled;
-	return _ToolbarIsEnabled_(id);
+	return false;
 }
 
 

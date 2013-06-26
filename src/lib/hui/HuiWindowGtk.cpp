@@ -1,5 +1,6 @@
 #include "hui.h"
 #include "hui_internal.h"
+#include "HuiToolbar.h"
 #include "Controls/HuiControl.h"
 #ifdef HUI_API_GTK
 
@@ -488,18 +489,8 @@ void HuiWindow::_Init_(const string &title, int x, int y, int width, int height,
 	gtk_box_pack_start(GTK_BOX(vbox), menubar, FALSE, FALSE, 0);
 
 	// tool bars
-	toolbar[HuiToolbarTop].widget = gtk_toolbar_new();
-	gtk_toolbar_set_show_arrow(GTK_TOOLBAR(toolbar[HuiToolbarTop].widget), true);
-	toolbar[HuiToolbarBottom].widget = gtk_toolbar_new();
-	gtk_toolbar_set_show_arrow(GTK_TOOLBAR(toolbar[HuiToolbarBottom].widget),true);
-	toolbar[HuiToolbarLeft].widget = gtk_toolbar_new();
-	gtk_toolbar_set_show_arrow(GTK_TOOLBAR(toolbar[HuiToolbarLeft].widget), true);
-	gtk_orientable_set_orientation(GTK_ORIENTABLE(toolbar[HuiToolbarLeft].widget), GTK_ORIENTATION_VERTICAL);
-	toolbar[HuiToolbarRight].widget = gtk_toolbar_new();
-	gtk_toolbar_set_show_arrow(GTK_TOOLBAR(toolbar[HuiToolbarRight].widget), true);
-	gtk_orientable_set_orientation(GTK_ORIENTABLE(toolbar[HuiToolbarRight].widget), GTK_ORIENTATION_VERTICAL);
-
-	gtk_box_pack_start(GTK_BOX(vbox), toolbar[HuiToolbarTop].widget, FALSE, FALSE, 0);
+	gtk_style_context_add_class(gtk_widget_get_style_context(toolbar[HuiToolbarTop]->widget), "primary-toolbar");
+	gtk_box_pack_start(GTK_BOX(vbox), toolbar[HuiToolbarTop]->widget, FALSE, FALSE, 0);
 
 
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
@@ -507,7 +498,7 @@ void HuiWindow::_Init_(const string &title, int x, int y, int width, int height,
 	//gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 	gtk_widget_show(hbox);
 
-	gtk_box_pack_start(GTK_BOX(hbox), toolbar[HuiToolbarLeft].widget, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), toolbar[HuiToolbarLeft]->widget, FALSE, FALSE, 0);
 
 	plugable = NULL;
 	gl_widget = NULL;
@@ -552,8 +543,8 @@ void HuiWindow::_Init_(const string &title, int x, int y, int width, int height,
 		}
 	}
 
-	gtk_box_pack_start(GTK_BOX(hbox), toolbar[HuiToolbarRight].widget, FALSE, FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(vbox), toolbar[HuiToolbarBottom].widget, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), toolbar[HuiToolbarRight]->widget, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), toolbar[HuiToolbarBottom]->widget, FALSE, FALSE, 0);
 
 	// status bar
 	statusbar = gtk_statusbar_new();

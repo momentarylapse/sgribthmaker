@@ -534,6 +534,14 @@ int hui_main(Array<string> arg)
 	MainWin->AddButton("", 2, 0, 0, 0, "console_close");
 	MainWin->SetImage("console_close", "hui:close");
 	MainWin->HideControl("table_console", true);
+
+	MainWin->toolbar[0]->Enable(true);
+	MainWin->toolbar[0]->AddItem("", "hui:new", "new");
+	MainWin->toolbar[0]->AddItem("", "hui:open", "open");
+	MainWin->toolbar[0]->AddItem("", "hui:save", "save");
+	MainWin->toolbar[0]->AddSeparator();
+	MainWin->toolbar[0]->AddItem("", "hui:find", "compile");
+	MainWin->toolbar[0]->AddItem("", "hui:media-play", "compile_and_run");
 	
 
 	InitParser();
