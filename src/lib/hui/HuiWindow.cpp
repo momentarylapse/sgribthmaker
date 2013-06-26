@@ -470,6 +470,283 @@ void HuiWindow::FromResource(const string &id)
 	msg_db_l(1);
 }
 
+//----------------------------------------------------------------------------------
+// data exchanging functions for control items
+
+
+
+// replace all the text
+//    for all
+void HuiWindow::SetString(const string &_id, const string &str)
+{
+	if (id == _id)
+		SetTitle(str);
+	allow_signal_level++;
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			c->SetString(str);
+	allow_signal_level--;
+}
+
+// replace all the text with a numerical value (int)
+//    for all
+// select an item
+//    for ComboBox, TabControl, ListView?
+void HuiWindow::SetInt(const string &_id, int n)
+{
+	allow_signal_level++;
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			c->SetInt(n);
+	allow_signal_level--;
+}
+
+// replace all the text with a float
+//    for all
+void HuiWindow::SetFloat(const string &_id, float f)
+{
+	allow_signal_level ++;
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			c->SetFloat(f);
+	allow_signal_level --;
+}
+
+void HuiWindow::SetImage(const string &_id, const string &image)
+{
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			c->SetImage(image);
+}
+
+void HuiWindow::SetTooltip(const string &_id, const string &tip)
+{
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			c->SetTooltip(tip);
+}
+
+
+// add a single line/string
+//    for ComboBox, ListView, ListViewTree, ListViewIcons
+void HuiWindow::AddString(const string &_id, const string &str)
+{
+	allow_signal_level++;
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			c->AddString(str);
+	allow_signal_level--;
+}
+
+// add a single line as a child in the tree of a ListViewTree
+//    for ListViewTree
+void HuiWindow::AddChildString(const string &_id, int parent_row, const string &str)
+{
+	allow_signal_level++;
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			c->AddChildString(parent_row, str);
+	allow_signal_level--;
+}
+
+// change a single line in the tree of a ListViewTree
+//    for ListViewTree
+void HuiWindow::ChangeString(const string &_id,int row,const string &str)
+{
+	allow_signal_level++;
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			c->ChangeString(row, str);
+	allow_signal_level--;
+}
+
+// listview / treeview
+string HuiWindow::GetCell(const string &_id, int row, int column)
+{
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			return c->GetCell(row, column);
+	return "";
+}
+
+// listview / treeview
+void HuiWindow::SetCell(const string &_id, int row, int column, const string &str)
+{
+	allow_signal_level++;
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			c->SetCell(row, column, str);
+	allow_signal_level--;
+}
+
+void HuiWindow::SetColor(const string &_id, const color &col)
+{
+	allow_signal_level++;
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			c->SetColor(col);
+	allow_signal_level--;
+}
+
+// retrieve the text
+//    for edit
+string HuiWindow::GetString(const string &_id)
+{
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			return c->GetString();
+	return "";
+}
+
+// retrieve the text as a numerical value (int)
+//    for edit
+// which item/line is selected?
+//    for ComboBox, TabControl, ListView
+int HuiWindow::GetInt(const string &_id)
+{
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			return c->GetInt();
+	return 0;
+}
+
+// retrieve the text as a numerical value (float)
+//    for edit
+float HuiWindow::GetFloat(const string &_id)
+{
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			return c->GetFloat();
+	return 0;
+}
+
+color HuiWindow::GetColor(const string &_id)
+{
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			return c->GetColor();
+	return Black;
+}
+
+// switch control to usable/unusable
+//    for all
+void HuiWindow::Enable(const string &_id,bool enabled)
+{
+	if (menu)
+		menu->EnableItem(_id, enabled);
+
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			c->Enable(enabled);
+}
+
+// show/hide control
+//    for all
+void HuiWindow::HideControl(const string &_id,bool hide)
+{
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			c->Hide(hide);
+}
+
+// mark as "checked"
+//    for CheckBox, ToolBarItemCheckable
+void HuiWindow::Check(const string &_id,bool checked)
+{
+	if (menu)
+		menu->CheckItem(_id, checked);
+	allow_signal_level++;
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			c->Check(checked);
+	allow_signal_level--;
+}
+
+// is marked as "checked"?
+//    for CheckBox
+bool HuiWindow::IsChecked(const string &_id)
+{
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			return c->IsChecked();
+	return false;
+}
+
+// which lines are selected?
+//    for ListView
+Array<int> HuiWindow::GetMultiSelection(const string &_id)
+{
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			return c->GetMultiSelection();
+	Array<int> sel;
+	return sel;
+}
+
+void HuiWindow::SetMultiSelection(const string &_id, Array<int> &sel)
+{
+	allow_signal_level++;
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			c->SetMultiSelection(sel);
+	allow_signal_level--;
+}
+
+// delete all the content
+//    for ComboBox, ListView
+void HuiWindow::Reset(const string &_id)
+{
+	allow_signal_level++;
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			c->Reset();
+	allow_signal_level--;
+}
+
+void HuiWindow::CompletionAdd(const string &_id, const string &text)
+{
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			c->CompletionAdd(text);
+}
+
+void HuiWindow::CompletionClear(const string &_id)
+{
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			c->CompletionClear();
+}
+
+// expand a single row
+//    for TreeView
+void HuiWindow::Expand(const string &_id, int row, bool expand)
+{
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			c->Expand(row, expand);
+}
+
+// expand all rows
+//    for TreeView
+void HuiWindow::ExpandAll(const string &_id, bool expand)
+{
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			c->ExpandAll(expand);
+}
+
+// is column in tree expanded?
+//    for TreeView
+bool HuiWindow::IsExpanded(const string &_id, int row)
+{
+	foreach(HuiControl *c, control)
+		if (c->id == _id)
+			return false;
+	return false;
+}
+
+
+
 HuiWindow *HuiCreateWindow(const string &title,int x,int y,int width,int height)
 {
 	return new HuiWindow(	title,

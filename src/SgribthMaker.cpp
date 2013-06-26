@@ -540,8 +540,15 @@ int hui_main(Array<string> arg)
 	MainWin->toolbar[0]->AddItem("", "hui:open", "open");
 	MainWin->toolbar[0]->AddItem("", "hui:save", "save");
 	MainWin->toolbar[0]->AddSeparator();
+	MainWin->toolbar[0]->AddItem("", "hui:undo", "undo");
+	MainWin->toolbar[0]->AddItem("", "hui:redo", "redo");
+	MainWin->toolbar[0]->AddSeparator();
 	MainWin->toolbar[0]->AddItem("", "hui:find", "compile");
 	MainWin->toolbar[0]->AddItem("", "hui:media-play", "compile_and_run");
+
+	MainWin->SetTooltip("new", _("neue Datei"));
+	MainWin->SetTooltip("open", _("eine Datei &offnen"));
+	MainWin->SetTooltip("save", _("Datei speichern"));
 	
 
 	InitParser();
