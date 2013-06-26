@@ -27,7 +27,7 @@ HuiControlMultilineEdit::HuiControlMultilineEdit(const string &title, const stri
 		frame = gtk_frame_new(NULL);
 		gtk_container_add(GTK_CONTAINER(frame), scroll);
 //	}
-	g_signal_connect(G_OBJECT(widget), "changed", G_CALLBACK(&OnGtkMultilineEditChange), this);
+	g_signal_connect(G_OBJECT(tb), "changed", G_CALLBACK(&OnGtkMultilineEditChange), this);
 }
 
 HuiControlMultilineEdit::~HuiControlMultilineEdit()

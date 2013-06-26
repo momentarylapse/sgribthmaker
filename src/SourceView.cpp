@@ -131,7 +131,7 @@ void changed(GtkTextBuffer *textbuffer, gpointer user_data)
 	msg_db_f("changed", 1);
 	//printf("change\n");
 	sv->CreateTextColors(sv->NeedsUpdateStart, sv->NeedsUpdateEnd);
-	HuiRunLaterM(3000, sv, &SourceView::CreateColorsIfNotBusy);
+	HuiRunLaterM(3, sv, &SourceView::CreateColorsIfNotBusy);
 	sv->color_busy_level ++;
 }
 
@@ -189,7 +189,7 @@ void SourceView::Clear()
 	SetParser("");
 
 	history->Reset();
-	history->enabled = false;
+	history->enabled = true;
 
 }
 

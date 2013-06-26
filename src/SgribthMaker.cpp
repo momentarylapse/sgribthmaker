@@ -3,7 +3,6 @@
 #include "lib/nix/nix.h"
 #include "lib/file/file.h"
 #include "lib/script/script.h"
-#include <gtk/gtk.h>
 #include "SettingsDialog.h"
 #include "CommandDialog.h"
 #include "History.h"
@@ -549,7 +548,7 @@ int hui_main(Array<string> arg)
 	MainWin->SetTooltip("new", _("neue Datei"));
 	MainWin->SetTooltip("open", _("eine Datei &offnen"));
 	MainWin->SetTooltip("save", _("Datei speichern"));
-	
+
 
 	InitParser();
 	source_view = new SourceView(MainWin, "edit");
