@@ -139,7 +139,12 @@ enum{
 	HuiKindToolButton,
 	HuiKindToolToggleButton,
 	HuiKindToolSeparator,
-	HuiKindToolMenuButton
+	HuiKindToolMenuButton,
+
+	HuiKindMenuItem,
+	HuiKindMenuItemToggle,
+	HuiKindMenuItemSubmenu,
+	HuiKindMenuItemSeparator,
 };
 
 // key codes

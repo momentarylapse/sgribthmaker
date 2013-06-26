@@ -1,5 +1,6 @@
 #include "hui.h"
 #include "hui_internal.h"
+#include "Controls/HuiControl.h"
 
 //----------------------------------------------------------------------------------
 // resource functions
@@ -214,7 +215,7 @@ HuiMenu *_create_res_menu_(HuiResource *res, int &index, int num)
 			menu->AddSubMenu(get_lang(cmd->id, "", true), cmd->id, sub);
 			index --;
 		}
-		menu->EnableItem(cmd->id, cmd->enabled);
+		menu->item.back()->Enable(cmd->enabled);
 		index ++;
 	}
 	msg_db_l(2);

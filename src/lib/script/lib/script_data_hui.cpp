@@ -85,17 +85,6 @@ void SIAddPackageHui()
 			func_add_param("name",		TypeString);
 			func_add_param("id",		TypeInt);
 			func_add_param("sub_menu",	TypeHuiMenuP);
-		class_add_func("CheckItem",	TypeVoid,		mf((tmf)&HuiMenu::CheckItem));
-			func_add_param("id",		TypeInt);
-			func_add_param("checked",	TypeBool);
-		class_add_func("IsItemChecked",TypeBool,		mf((tmf)&HuiMenu::IsItemChecked));
-			func_add_param("id",		TypeInt);
-		class_add_func("EnableItem",	TypeVoid,		mf((tmf)&HuiMenu::EnableItem));
-			func_add_param("id",		TypeInt);
-			func_add_param("enabled",	TypeBool);
-		class_add_func("SetText",		TypeVoid,		mf((tmf)&HuiMenu::SetText));
-			func_add_param("id",		TypeInt);
-			func_add_param("text",		TypeString);
 	
 	add_class(TypeHuiWindow);
 		class_add_func("Run",			TypeString,		mf((tmf)&HuiWindow::Run));

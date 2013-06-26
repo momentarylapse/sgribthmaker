@@ -7,6 +7,7 @@
 \*----------------------------------------------------------------------------*/
 
 #include "hui.h"
+#include "Controls/HuiMenuItemSubmenu.h"
 
 
 // stupid function for HuiBui....
@@ -14,14 +15,14 @@ void HuiMenu::SetID(const string &id)
 {
 }
 
-
 HuiMenu *HuiMenu::GetSubMenuByID(const string &id)
 {
-	foreach(HuiMenuItem &it, item){
-		if (it.sub_menu){
-			if (it.id == id)
-				return it.sub_menu;
-			HuiMenu *m = it.sub_menu->GetSubMenuByID(id);
+	foreach(HuiControl *c, item){
+		HuiMenuItemSubmenu *s = dynamic_cast<HuiMenuItemSubmenu*>(c);
+		if (s){
+			if (s->id == id)
+				return s->sub_menu;
+			HuiMenu *m = s->sub_menu->GetSubMenuByID(id);
 			if (m)
 				return m;
 		}
@@ -33,6 +34,7 @@ HuiMenu *HuiMenu::GetSubMenuByID(const string &id)
 void HuiMenu::UpdateLanguage()
 {
 	msg_db_r("UpdateMenuLanguage", 1);
+#if 0
 	foreach(HuiMenuItem &it, item){
 		if (it.sub_menu)
 			it.sub_menu->UpdateLanguage();
@@ -54,9 +56,20 @@ void HuiMenu::UpdateLanguage()
 			//gtk_menu_item_set_label(GTK_MENU_ITEM(it.g_item), get_lang_sys(it.ID, "", true));
 		EnableItem(it.id, enabled);
 	}
+#endif
 	msg_db_l(1);
 }
 
+Array<HuiControl*> HuiMenu::get_all_controls()
+{
+	Array<HuiControl*> list = item;
+	foreach(HuiControl *c, item){
+		HuiMenuItemSubmenu *s = dynamic_cast<HuiMenuItemSubmenu*>(c);
+		if (s)
+			list.append(s->sub_menu->get_all_controls());
+	}
+	return list;
+}
 
 HuiMenu *HuiCreateMenu()
 {

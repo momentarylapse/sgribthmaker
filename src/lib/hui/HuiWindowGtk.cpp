@@ -690,13 +690,20 @@ void HuiWindow::SetMenu(HuiMenu *_menu)
 	msg_db_r("SetMenu", 1);
 	// remove old menu...
 	if (menu){
+		Array<HuiControl*> list = menu->get_all_controls();
 		// move items from <menu_bar> back to <Menu>
 		for (int i=0;i<gtk_num_menus;i++){
 			gtk_container_remove(GTK_CONTAINER(menubar), GTK_WIDGET(gtk_menu[i]));
-			gtk_menu_shell_append(GTK_MENU_SHELL(menu->g_menu), GTK_WIDGET(gtk_menu[i]));
+			gtk_menu_shell_append(GTK_MENU_SHELL(menu->widget), GTK_WIDGET(gtk_menu[i]));
 		}
 		gtk_menu.clear();
 		gtk_num_menus = 0;
+		foreach(HuiControl *c, list){
+			c->win = NULL;
+			for (int i=0;i<control.num;i++)
+				if (control[i] == c)
+					control.erase(i);
+		}
 	}
 
 	
@@ -707,12 +714,16 @@ void HuiWindow::SetMenu(HuiMenu *_menu)
 		gtk_num_menus = menu->item.num;
 		for (int i=0;i<menu->item.num;i++){
 			// move items from <Menu> to <menu_bar>
-			HuiMenuItem *it = &menu->item[i];
+			HuiControl *it = menu->item[i];
 			gtk_menu.add(it->widget);
 			gtk_widget_show(gtk_menu[i]);
-			gtk_container_remove(GTK_CONTAINER(menu->g_menu), gtk_menu[i]);
+			gtk_container_remove(GTK_CONTAINER(menu->widget), gtk_menu[i]);
 			gtk_menu_shell_append(GTK_MENU_SHELL(menubar), gtk_menu[i]);
 		}
+		Array<HuiControl*> list = menu->get_all_controls();
+		control.append(list);
+		foreach(HuiControl *c, list)
+			c->win = this;
 	}else
 		gtk_widget_hide(menubar);
 	msg_db_l(1);

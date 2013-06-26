@@ -632,9 +632,6 @@ color HuiWindow::GetColor(const string &_id)
 //    for all
 void HuiWindow::Enable(const string &_id,bool enabled)
 {
-	if (menu)
-		menu->EnableItem(_id, enabled);
-
 	foreach(HuiControl *c, control)
 		if (c->id == _id)
 			c->Enable(enabled);
@@ -653,8 +650,6 @@ void HuiWindow::HideControl(const string &_id,bool hide)
 //    for CheckBox, ToolBarItemCheckable
 void HuiWindow::Check(const string &_id,bool checked)
 {
-	if (menu)
-		menu->CheckItem(_id, checked);
 	allow_signal_level++;
 	foreach(HuiControl *c, control)
 		if (c->id == _id)
