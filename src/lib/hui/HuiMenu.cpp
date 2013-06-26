@@ -7,8 +7,59 @@
 \*----------------------------------------------------------------------------*/
 
 #include "hui.h"
+#include "Controls/HuiMenuItem.h"
+#include "Controls/HuiMenuItemToggle.h"
 #include "Controls/HuiMenuItemSubmenu.h"
+#include "Controls/HuiMenuItemSeparator.h"
 
+
+void HuiMenu::Clear()
+{
+	foreach(HuiControl *c, item)
+		delete(c);
+	item.clear();
+}
+
+void HuiMenu::AddItem(const string &name, const string &id)
+{
+	add(new HuiMenuItem(name, id));
+}
+
+void HuiMenu::AddItemImage(const string &name, const string &image, const string &id)
+{
+	add(new HuiMenuItem(name, id));
+	item.back()->SetImage(image);
+}
+
+void HuiMenu::AddItemCheckable(const string &name, const string &id)
+{
+	add(new HuiMenuItemToggle(name, id));
+}
+
+void HuiMenu::AddSeparator()
+{
+	add(new HuiMenuItemSeparator());
+}
+
+void HuiMenu::AddSubMenu(const string &name, const string &id, HuiMenu *menu)
+{
+	if (menu)
+		add(new HuiMenuItemSubmenu(name, menu, id));
+}
+
+void HuiMenu::set_win(HuiWindow *_win)
+{
+	win = _win;
+	foreach(HuiControl *c, item){
+		c->win = win;
+		HuiMenuItemSubmenu *s = dynamic_cast<HuiMenuItemSubmenu*>(c);
+		if (s)
+			s->sub_menu->set_win(win);
+	}
+}
+
+// only allow menu callback, if we are in layer 0 (if we don't edit it ourself)
+int allow_signal_level = 0;
 
 // stupid function for HuiBui....
 void HuiMenu::SetID(const string &id)

@@ -17,7 +17,7 @@ public:
 	HuiControlSlider(const string &text, const string &id, bool horizontal);
 	virtual ~HuiControlSlider();
 	virtual float GetFloat();
-	virtual void SetFloat(float f);
+	virtual void __SetFloat(float f);
 };
 
 #endif /* HUICONTROLSLIDER_H_ */

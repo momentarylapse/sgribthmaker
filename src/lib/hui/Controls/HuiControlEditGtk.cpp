@@ -27,7 +27,7 @@ HuiControlEdit::~HuiControlEdit() {
 	// TODO Auto-generated destructor stub
 }
 
-void HuiControlEdit::SetString(const string &str)
+void HuiControlEdit::__SetString(const string &str)
 {
 	gtk_entry_set_text(GTK_ENTRY(widget), sys_str(str));
 }

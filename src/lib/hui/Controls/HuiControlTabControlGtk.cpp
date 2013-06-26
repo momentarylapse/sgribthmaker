@@ -48,11 +48,11 @@ string HuiControlTabControl::GetString()
 {
 }
 
-void HuiControlTabControl::SetString(const string& str)
+void HuiControlTabControl::__SetString(const string& str)
 {
 }
 
-void HuiControlTabControl::SetInt(int i)
+void HuiControlTabControl::__SetInt(int i)
 {
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(widget), i);
 	cur_page = i;

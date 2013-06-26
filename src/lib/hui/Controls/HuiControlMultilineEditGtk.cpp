@@ -35,7 +35,7 @@ HuiControlMultilineEdit::~HuiControlMultilineEdit()
 	// TODO Auto-generated destructor stub
 }
 
-void HuiControlMultilineEdit::SetString(const string &str)
+void HuiControlMultilineEdit::__SetString(const string &str)
 {
 	GtkTextBuffer *tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(widget));
 	const char *str2 = sys_str(str);
@@ -51,6 +51,6 @@ string HuiControlMultilineEdit::GetString()
 	return de_sys_str(gtk_text_buffer_get_text(tb, &is, &ie, false));
 }
 
-void HuiControlMultilineEdit::AddString(const string& str)
+void HuiControlMultilineEdit::__AddString(const string& str)
 {
 }

@@ -22,7 +22,7 @@ HuiMenuItemToggle::HuiMenuItemToggle(const string &title, const string &id) :
 HuiMenuItemToggle::~HuiMenuItemToggle()
 {
 }
-void HuiMenuItemToggle::Check(bool checked)
+void HuiMenuItemToggle::__Check(bool checked)
 {
 	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(widget), checked);
 }

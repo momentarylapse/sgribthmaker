@@ -27,12 +27,12 @@ string HuiControlCheckBox::GetString()
 	return gtk_button_get_label(GTK_BUTTON(widget));
 }
 
-void HuiControlCheckBox::SetString(const string &str)
+void HuiControlCheckBox::__SetString(const string &str)
 {
 	gtk_button_set_label(GTK_BUTTON(widget), sys_str(str));
 }
 
-void HuiControlCheckBox::Check(bool checked)
+void HuiControlCheckBox::__Check(bool checked)
 {
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), checked);
 }

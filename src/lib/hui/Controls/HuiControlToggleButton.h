@@ -17,9 +17,9 @@ public:
 	HuiControlToggleButton(const string &text, const string &id);
 	virtual ~HuiControlToggleButton();
 	virtual string GetString();
-	virtual void SetString(const string &str);
+	virtual void __SetString(const string &str);
 	virtual void SetImage(const string &str);
-	virtual void Check(bool checked);
+	virtual void __Check(bool checked);
 	virtual bool IsChecked();
 };
 

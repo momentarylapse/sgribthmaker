@@ -74,6 +74,7 @@ class HuiControlTabControl;
 class HuiControlListView;
 class HuiControlTreeView;
 class HuiControlGrid;
+class HuiControlRadioButton;
 
 class HuiWindow : public HuiEventHandler
 {
@@ -83,6 +84,7 @@ class HuiWindow : public HuiEventHandler
 	friend class HuiControlListView;
 	friend class HuiControlTreeView;
 	friend class HuiControlGrid;
+	friend class HuiControlRadioButton;
 public:
 	HuiWindow(const string &title, int x, int y, int width, int height, HuiWindow *parent, bool allow_parent, int mode);
 	HuiWindow(const string &id, HuiWindow *parent, bool allow_parent);

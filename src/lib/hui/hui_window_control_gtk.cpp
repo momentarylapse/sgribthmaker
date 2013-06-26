@@ -377,7 +377,7 @@ void HuiWindow::AddToggleButton(const string &title,int x,int y,int width,int he
 
 void HuiWindow::AddRadioButton(const string &title,int x,int y,int width,int height,const string &id)
 {
-	_InsertControl_(new HuiControlRadioButton(title, id), x, y, width, height);
+	_InsertControl_(new HuiControlRadioButton(title, id, this), x, y, width, height);
 }
 
 void HuiWindow::AddTabControl(const string &title,int x,int y,int width,int height,const string &id)

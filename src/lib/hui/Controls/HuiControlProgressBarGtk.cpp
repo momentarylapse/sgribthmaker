@@ -24,7 +24,7 @@ string HuiControlProgressBar::GetString()
 {
 }
 
-void HuiControlProgressBar::SetString(const string &str)
+void HuiControlProgressBar::__SetString(const string &str)
 {
 	gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(widget), true);
 	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(widget), sys_str(str));
@@ -34,7 +34,7 @@ float HuiControlProgressBar::GetFloat()
 {
 }
 
-void HuiControlProgressBar::SetFloat(float f)
+void HuiControlProgressBar::__SetFloat(float f)
 {
 	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(widget), min(max(f, 0), 1));
 }

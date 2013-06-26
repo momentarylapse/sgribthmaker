@@ -154,9 +154,9 @@ string HuiControlListView::GetString()
 	return "";
 }
 
-void HuiControlListView::SetString(const string &str)
+void HuiControlListView::__SetString(const string &str)
 {
-	AddString(str);
+	__AddString(str);
 }
 
 void set_list_cell(GtkListStore *store, GtkTreeIter &iter, int column, const string &str)
@@ -173,7 +173,7 @@ void set_list_cell(GtkListStore *store, GtkTreeIter &iter, int column, const str
 	}
 }
 
-void HuiControlListView::AddString(const string& str)
+void HuiControlListView::__AddString(const string& str)
 {
 	GtkTreeIter iter;
 	GetPartStrings("", str);
@@ -184,7 +184,7 @@ void HuiControlListView::AddString(const string& str)
 	_item_.add(iter);
 }
 
-void HuiControlListView::SetInt(int i)
+void HuiControlListView::__SetInt(int i)
 {
 	GtkTreeSelection *sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(widget));
 	if (i >= 0){
@@ -205,7 +205,7 @@ int HuiControlListView::GetInt()
 	return -1;
 }
 
-void HuiControlListView::ChangeString(int row, const string& str)
+void HuiControlListView::__ChangeString(int row, const string& str)
 {
 	GetPartStrings("", str);
 	GtkListStore *store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(widget)));
@@ -220,7 +220,7 @@ string HuiControlListView::GetCell(int row, int column)
 	return tree_get_cell(store, _item_[row], column);
 }
 
-void HuiControlListView::SetCell(int row, int column, const string& str)
+void HuiControlListView::__SetCell(int row, int column, const string& str)
 {
 	GtkListStore *store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(widget)));
 	if (gtk_list_store_iter_is_valid(store, &_item_[row]))
@@ -239,7 +239,7 @@ Array<int> HuiControlListView::GetMultiSelection()
 	return sel;
 }
 
-void HuiControlListView::SetMultiSelection(Array<int>& sel)
+void HuiControlListView::__SetMultiSelection(Array<int>& sel)
 {
 	GtkTreeSelection *s = gtk_tree_view_get_selection(GTK_TREE_VIEW(widget));
 	gtk_tree_selection_set_mode(s, GTK_SELECTION_MULTIPLE);
@@ -248,7 +248,7 @@ void HuiControlListView::SetMultiSelection(Array<int>& sel)
 		gtk_tree_selection_select_iter(s, &_item_[sel[j]]);
 }
 
-void HuiControlListView::Reset()
+void HuiControlListView::__Reset()
 {
 	GtkListStore *store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(widget)));
 	gtk_list_store_clear(store);

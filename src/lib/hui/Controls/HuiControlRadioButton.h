@@ -14,11 +14,11 @@
 class HuiControlRadioButton : public HuiControl
 {
 public:
-	HuiControlRadioButton(const string &text, const string &id);
+	HuiControlRadioButton(const string &text, const string &id, HuiWindow *win);
 	virtual ~HuiControlRadioButton();
 	virtual string GetString();
-	virtual void SetString(const string &str);
-	virtual void Check(bool checked);
+	virtual void __SetString(const string &str);
+	virtual void __Check(bool checked);
 	virtual bool IsChecked();
 };
 

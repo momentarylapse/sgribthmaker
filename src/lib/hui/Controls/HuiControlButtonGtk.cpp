@@ -31,7 +31,7 @@ string HuiControlButton::GetString()
 	return gtk_button_get_label(GTK_BUTTON(widget));
 }
 
-void HuiControlButton::SetString(const string &str)
+void HuiControlButton::__SetString(const string &str)
 {
 	gtk_button_set_label(GTK_BUTTON(widget), sys_str(str));
 }

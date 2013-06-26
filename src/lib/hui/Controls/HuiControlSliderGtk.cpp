@@ -32,7 +32,7 @@ float HuiControlSlider::GetFloat()
 	return gtk_range_get_value(GTK_RANGE(widget));
 }
 
-void HuiControlSlider::SetFloat(float f)
+void HuiControlSlider::__SetFloat(float f)
 {
 	gtk_range_set_value(GTK_RANGE(widget), f);
 }

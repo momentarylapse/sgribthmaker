@@ -17,7 +17,7 @@ public:
 	HuiControlLabel(const string &text, const string &id);
 	virtual ~HuiControlLabel();
 	virtual string GetString();
-	virtual void SetString(const string &str);
+	virtual void __SetString(const string &str);
 };
 
 

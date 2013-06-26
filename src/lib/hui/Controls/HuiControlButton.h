@@ -17,7 +17,7 @@ public:
 	HuiControlButton(const string &text, const string &id);
 	virtual ~HuiControlButton();
 	virtual string GetString();
-	virtual void SetString(const string &str);
+	virtual void __SetString(const string &str);
 	virtual void SetImage(const string &str);
 };
 

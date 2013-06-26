@@ -16,7 +16,7 @@ public:
 	HuiMenuItemToggle(const string &title, const string &id);
 	virtual ~HuiMenuItemToggle();
 
-	virtual void Check(bool checked);
+	virtual void __Check(bool checked);
 	virtual bool IsChecked();
 };
 

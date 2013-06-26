@@ -17,7 +17,7 @@ public:
 	HuiControlColorButton(const string &text, const string &id);
 	virtual ~HuiControlColorButton();
 
-	virtual void SetColor(const color &c);
+	virtual void __SetColor(const color &c);
 	virtual color GetColor();
 };
 

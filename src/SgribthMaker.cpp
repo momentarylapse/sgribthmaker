@@ -71,8 +71,8 @@ void SetWindowTitle()
 
 void UpdateMenu()
 {
-	MainWin->Enable("undo", source_view->history->Undoable());
-	MainWin->Enable("redo", source_view->history->Redoable());
+	MainWin->Enable("undo", source_view->Undoable());
+	MainWin->Enable("redo", source_view->Redoable());
 	SetWindowTitle();
 }
 
@@ -195,10 +195,10 @@ void OnReload()
 {	Reload();	}
 
 void OnUndo()
-{	source_view->history->Undo();	}
+{	source_view->Undo();	}
 
 void OnRedo()
-{	source_view->history->Redo();	}
+{	source_view->Redo();	}
 
 void OnCopy()
 {

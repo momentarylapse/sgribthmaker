@@ -17,11 +17,11 @@ public:
 	HuiControlComboBox(const string &text, const string &id);
 	virtual ~HuiControlComboBox();
 	virtual string GetString();
-	virtual void SetString(const string &str);
-	virtual void AddString(const string &str);
-	virtual void SetInt(int i);
+	virtual void __SetString(const string &str);
+	virtual void __AddString(const string &str);
+	virtual void __SetInt(int i);
 	virtual int GetInt();
-	virtual void Reset();
+	virtual void __Reset();
 };
 
 #endif /* HUICONTROLCOMBOBOX_H_ */

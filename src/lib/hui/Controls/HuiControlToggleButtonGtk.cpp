@@ -31,7 +31,7 @@ string HuiControlToggleButton::GetString()
 {
 }
 
-void HuiControlToggleButton::SetString(const string &str)
+void HuiControlToggleButton::__SetString(const string &str)
 {
 	gtk_button_set_label(GTK_BUTTON(widget), sys_str(str));
 }
@@ -42,7 +42,7 @@ void HuiControlToggleButton::SetImage(const string& str)
 	gtk_button_set_image(GTK_BUTTON(widget), im);
 }
 
-void HuiControlToggleButton::Check(bool checked)
+void HuiControlToggleButton::__Check(bool checked)
 {
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), checked);
 }

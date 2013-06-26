@@ -17,8 +17,8 @@ public:
 	HuiControlCheckBox(const string &text, const string &id);
 	virtual ~HuiControlCheckBox();
 	virtual string GetString();
-	virtual void SetString(const string &str);
-	virtual void Check(bool checked);
+	virtual void __SetString(const string &str);
+	virtual void __Check(bool checked);
 	virtual bool IsChecked();
 };
 

@@ -17,7 +17,7 @@ public:
 	HuiControlEdit(const string &text, const string &id);
 	virtual ~HuiControlEdit();
 	virtual string GetString();
-	virtual void SetString(const string &str);
+	virtual void __SetString(const string &str);
 	virtual void CompletionAdd(const string &text);
 	virtual void CompletionClear();
 };

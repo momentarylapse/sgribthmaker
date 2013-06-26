@@ -8,15 +8,22 @@ HUI_OBJ  = $(HUI_DIR)/hui.o \
  $(HUI_DIR)/hui_common_dlg.o $(HUI_DIR)/hui_common_dlg_gtk.o $(HUI_DIR)/hui_common_dlg_win.o \
  $(HUI_DIR)/HuiMenu.o $(HUI_DIR)/HuiMenuGtk.o $(HUI_DIR)/HuiMenuWin.o \
  $(HUI_DIR)/HuiWindow.o $(HUI_DIR)/HuiWindowGtk.o $(HUI_DIR)/HuiWindowWin.o \
- $(HUI_DIR)/hui_window_toolbar.o $(HUI_DIR)/hui_window_toolbar_gtk.o $(HUI_DIR)/hui_window_toolbar_win.o \
+ $(HUI_DIR)/HuiToolbar.o $(HUI_DIR)/HuiToolbarGtk.o $(HUI_DIR)/HuiToolbarWin.o \
  $(HUI_DIR)/hui_window_control.o $(HUI_DIR)/hui_window_control_gtk.o $(HUI_DIR)/hui_window_control_win.o \
  $(HUI_DIR)/HuiPainterGtk.o $(HUI_DIR)/Controls/HuiControl.o \
- $(HUI_DIR)/Controls/HuiControlCheckBoxGtk.o $(HUI_DIR)/Controls/HuiControlButtonGtk.o $(HUI_DIR)/Controls/HuiControlColorButtonGtk.o \
- $(HUI_DIR)/Controls/HuiControlEditGtk.o $(HUI_DIR)/Controls/HuiControlComboBoxGtk.o $(HUI_DIR)/Controls/HuiControlGridGtk.o \
- $(HUI_DIR)/Controls/HuiControlDrawingAreaGtk.o $(HUI_DIR)/Controls/HuiControlGroupGtk.o $(HUI_DIR)/Controls/HuiControlLabelGtk.o \
- $(HUI_DIR)/Controls/HuiControlListViewGtk.o $(HUI_DIR)/Controls/HuiControlMultilineEditGtk.o $(HUI_DIR)/Controls/HuiControlProgressBarGtk.o \
- $(HUI_DIR)/Controls/HuiControlRadioButtonGtk.o $(HUI_DIR)/Controls/HuiControlToggleButtonGtk.o $(HUI_DIR)/Controls/HuiControlSpinButtonGtk.o \
- $(HUI_DIR)/Controls/HuiControlSliderGtk.o $(HUI_DIR)/Controls/HuiControlTabControlGtk.o $(HUI_DIR)/Controls/HuiControlTreeViewGtk.o
+ $(HUI_DIR)/Controls/HuiControlCheckBoxGtk.o $(HUI_DIR)/Controls/HuiControlButtonGtk.o \
+ $(HUI_DIR)/Controls/HuiControlColorButtonGtk.o $(HUI_DIR)/Controls/HuiControlEditGtk.o \
+ $(HUI_DIR)/Controls/HuiControlComboBoxGtk.o $(HUI_DIR)/Controls/HuiControlGridGtk.o \
+ $(HUI_DIR)/Controls/HuiControlDrawingAreaGtk.o $(HUI_DIR)/Controls/HuiControlGroupGtk.o \
+ $(HUI_DIR)/Controls/HuiControlLabelGtk.o $(HUI_DIR)/Controls/HuiControlListViewGtk.o \
+ $(HUI_DIR)/Controls/HuiControlMultilineEditGtk.o $(HUI_DIR)/Controls/HuiControlProgressBarGtk.o \
+ $(HUI_DIR)/Controls/HuiControlRadioButtonGtk.o $(HUI_DIR)/Controls/HuiControlToggleButtonGtk.o \
+ $(HUI_DIR)/Controls/HuiControlSpinButtonGtk.o $(HUI_DIR)/Controls/HuiControlSliderGtk.o \
+ $(HUI_DIR)/Controls/HuiControlTabControlGtk.o $(HUI_DIR)/Controls/HuiControlTreeViewGtk.o \
+ $(HUI_DIR)/Controls/HuiToolItemButtonGtk.o $(HUI_DIR)/Controls/HuiToolItemMenuButtonGtk.o \
+ $(HUI_DIR)/Controls/HuiToolItemSeparatorGtk.o $(HUI_DIR)/Controls/HuiToolItemToggleButtonGtk.o \
+ $(HUI_DIR)/Controls/HuiMenuItemGtk.o $(HUI_DIR)/Controls/HuiMenuItemSubmenuGtk.o \
+ $(HUI_DIR)/Controls/HuiMenuItemSeparatorGtk.o $(HUI_DIR)/Controls/HuiMenuItemToggleGtk.o
 HUI_CXXFLAGS =  `pkg-config --cflags gtk+-3.0` $(GLOBALFLAGS)
 
 
@@ -81,14 +88,14 @@ $(HUI_DIR)/HuiWindowGtk.o : $(HUI_DIR)/HuiWindowGtk.cpp
 $(HUI_DIR)/HuiWindowWin.o : $(HUI_DIR)/HuiWindowWin.cpp
 	$(CPP) -c $(HUI_DIR)/HuiWindowWin.cpp -o $@ $(HUI_CXXFLAGS)
 
-$(HUI_DIR)/hui_window_toolbar.o : $(HUI_DIR)/hui_window_toolbar.cpp
-	$(CPP) -c $(HUI_DIR)/hui_window_toolbar.cpp -o $@ $(HUI_CXXFLAGS)
+$(HUI_DIR)/HuiToolbar.o : $(HUI_DIR)/HuiToolbar.cpp
+	$(CPP) -c $(HUI_DIR)/HuiToolbar.cpp -o $@ $(HUI_CXXFLAGS)
 
-$(HUI_DIR)/hui_window_toolbar_gtk.o : $(HUI_DIR)/hui_window_toolbar_gtk.cpp
-	$(CPP) -c $(HUI_DIR)/hui_window_toolbar_gtk.cpp -o $@ $(HUI_CXXFLAGS)
+$(HUI_DIR)/HuiToolbarGtk.o : $(HUI_DIR)/HuiToolbarGtk.cpp
+	$(CPP) -c $(HUI_DIR)/HuiToolbarGtk.cpp -o $@ $(HUI_CXXFLAGS)
 
-$(HUI_DIR)/hui_window_toolbar_win.o : $(HUI_DIR)/hui_window_toolbar_win.cpp
-	$(CPP) -c $(HUI_DIR)/hui_window_toolbar_win.cpp -o $@ $(HUI_CXXFLAGS)
+$(HUI_DIR)/HuiToolbarWin.o : $(HUI_DIR)/HuiToolbarWin.cpp
+	$(CPP) -c $(HUI_DIR)/HuiToolbarWin.cpp -o $@ $(HUI_CXXFLAGS)
 
 $(HUI_DIR)/hui_window_control.o : $(HUI_DIR)/hui_window_control.cpp
 	$(CPP) -c $(HUI_DIR)/hui_window_control.cpp -o $@ $(HUI_CXXFLAGS)
@@ -155,6 +162,27 @@ $(HUI_DIR)/Controls/HuiControlToggleButtonGtk.o : $(HUI_DIR)/Controls/HuiControl
 
 $(HUI_DIR)/Controls/HuiControlTreeViewGtk.o : $(HUI_DIR)/Controls/HuiControlTreeViewGtk.cpp
 	$(CPP) -c $(HUI_DIR)/Controls/HuiControlTreeViewGtk.cpp -o $@ $(HUI_CXXFLAGS)
+
+$(HUI_DIR)/Controls/HuiControlToolItemButtonGtk.o : $(HUI_DIR)/Controls/HuiControlToolItemButtonGtk.cpp
+	$(CPP) -c $(HUI_DIR)/Controls/HuiControlToolItemButtonGtk.cpp -o $@ $(HUI_CXXFLAGS)
+
+$(HUI_DIR)/Controls/HuiControlToolItemMenuButtonGtk.o : $(HUI_DIR)/Controls/HuiControlToolItemMenuButtonGtk.cpp
+	$(CPP) -c $(HUI_DIR)/Controls/HuiControlToolItemMenuButtonGtk.cpp -o $@ $(HUI_CXXFLAGS)
+
+$(HUI_DIR)/Controls/HuiControlToolItemSeparatorGtk.o : $(HUI_DIR)/Controls/HuiControlToolItemSeparatorGtk.cpp
+	$(CPP) -c $(HUI_DIR)/Controls/HuiControlToolItemSeparatorGtk.cpp -o $@ $(HUI_CXXFLAGS)
+
+$(HUI_DIR)/Controls/HuiControlToolItemToggleButtonGtk.o : $(HUI_DIR)/Controls/HuiControlToolItemToggleButtonGtk.cpp
+	$(CPP) -c $(HUI_DIR)/Controls/HuiControlToolItemToggleButtonGtk.cpp -o $@ $(HUI_CXXFLAGS)
+
+$(HUI_DIR)/Controls/HuiControlMenuItemGtk.o : $(HUI_DIR)/Controls/HuiControlMenuItemGtk.cpp
+	$(CPP) -c $(HUI_DIR)/Controls/HuiControlMenuItemGtk.cpp -o $@ $(HUI_CXXFLAGS)
+
+$(HUI_DIR)/Controls/HuiControlMenuItemSubmenuGtk.o : $(HUI_DIR)/Controls/HuiControlMenuItemSubmenuGtk.cpp
+	$(CPP) -c $(HUI_DIR)/Controls/HuiControlMenuItemSubmenuGtk.cpp -o $@ $(HUI_CXXFLAGS)
+
+$(HUI_DIR)/Controls/HuiControlMenuItemToggleGtk.o : $(HUI_DIR)/Controls/HuiControlMenuItemToggleGtk.cpp
+	$(CPP) -c $(HUI_DIR)/Controls/HuiControlMenuItemToggleGtk.cpp -o $@ $(HUI_CXXFLAGS)
 
 $(HUI_DIR)/HuiPainterGtk.o : $(HUI_DIR)/HuiPainterGtk.cpp
 	$(CPP) -c $(HUI_DIR)/HuiPainterGtk.cpp -o $@ $(HUI_CXXFLAGS)

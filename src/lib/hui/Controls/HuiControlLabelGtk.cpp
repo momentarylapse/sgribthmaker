@@ -21,7 +21,7 @@ HuiControlLabel::HuiControlLabel(const string &title, const string &id) :
 		gtk_misc_set_alignment(GTK_MISC(widget), 1, 0.5f);
 	else
 		gtk_misc_set_alignment(GTK_MISC(widget), 0, 0.5f);
-	HuiControlLabel::SetString(title);
+	HuiControlLabel::__SetString(title);
 }
 
 string HuiControlLabel::GetString()
@@ -33,7 +33,7 @@ HuiControlLabel::~HuiControlLabel()
 {
 }
 
-void HuiControlLabel::SetString(const string &str)
+void HuiControlLabel::__SetString(const string &str)
 {
 	GetPartStrings(id, str);
 	string s = sys_str(PartString[0]);

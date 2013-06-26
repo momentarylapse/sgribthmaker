@@ -568,6 +568,11 @@ void HuiWindow::_Init_(const string &title, int x, int y, int width, int height,
 HuiWindow::~HuiWindow()
 {
 	msg_db_r("~CHuiWindow",1);
+
+	// quick'n'dirty fix (gtk destroys its widgets recursively)
+	foreach(HuiControl *c, control)
+		c->widget = NULL;
+
 	_CleanUp_();
 
 	gtk_widget_destroy(window);
@@ -698,8 +703,8 @@ void HuiWindow::SetMenu(HuiMenu *_menu)
 		}
 		gtk_menu.clear();
 		gtk_num_menus = 0;
+		menu->set_win(NULL);
 		foreach(HuiControl *c, list){
-			c->win = NULL;
 			for (int i=0;i<control.num;i++)
 				if (control[i] == c)
 					control.erase(i);
@@ -710,6 +715,7 @@ void HuiWindow::SetMenu(HuiMenu *_menu)
 	// insert new menu
 	menu = _menu;
 	if (menu){
+		menu->set_win(this);
 		gtk_widget_show(menubar);
 		gtk_num_menus = menu->item.num;
 		for (int i=0;i<menu->item.num;i++){
@@ -722,8 +728,6 @@ void HuiWindow::SetMenu(HuiMenu *_menu)
 		}
 		Array<HuiControl*> list = menu->get_all_controls();
 		control.append(list);
-		foreach(HuiControl *c, list)
-			c->win = this;
 	}else
 		gtk_widget_hide(menubar);
 	msg_db_l(1);

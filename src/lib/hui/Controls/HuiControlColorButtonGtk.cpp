@@ -29,7 +29,7 @@ int col_f_to_i16(float f)
 float col_i16_to_f(int i)
 {	return (float)i / 65535.0f;	}
 
-void HuiControlColorButton::SetColor(const color& c)
+void HuiControlColorButton::__SetColor(const color& c)
 {
 	GdkColor gcol;
 	gcol.red = col_f_to_i16(c.r);

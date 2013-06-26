@@ -17,9 +17,9 @@ public:
 	HuiControlProgressBar(const string &text, const string &id);
 	virtual ~HuiControlProgressBar();
 	virtual string GetString();
-	virtual void SetString(const string &str);
+	virtual void __SetString(const string &str);
 	virtual float GetFloat();
-	virtual void SetFloat(float f);
+	virtual void __SetFloat(float f);
 };
 
 #endif /* HUICONTROLPROGRESSBAR_H_ */

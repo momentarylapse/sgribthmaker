@@ -27,7 +27,7 @@ HuiToolItemToggleButton::~HuiToolItemToggleButton()
 {
 }
 
-void HuiToolItemToggleButton::Check(bool checked)
+void HuiToolItemToggleButton::__Check(bool checked)
 {
 	gtk_toggle_tool_button_set_active(GTK_TOGGLE_TOOL_BUTTON(widget), checked);
 }

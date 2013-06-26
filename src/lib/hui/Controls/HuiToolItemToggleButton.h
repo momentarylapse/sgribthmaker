@@ -16,7 +16,7 @@ public:
 	HuiToolItemToggleButton(const string &title, const string &image, const string &id);
 	virtual ~HuiToolItemToggleButton();
 
-	virtual void Check(bool checked);
+	virtual void __Check(bool checked);
 	virtual bool IsChecked();
 };
 

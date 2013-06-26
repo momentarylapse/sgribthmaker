@@ -64,9 +64,9 @@ string HuiControlTreeView::GetString()
 {
 }
 
-void HuiControlTreeView::SetString(const string &str)
+void HuiControlTreeView::__SetString(const string &str)
 {
-	AddString(str);
+	__AddString(str);
 }
 
 void set_tree_cell(GtkTreeStore *store, GtkTreeIter &iter, int column, const string &str)
@@ -100,7 +100,7 @@ string tree_get_cell(GtkTreeModel *store, GtkTreeIter &iter, int column)
 	return r;
 }
 
-void HuiControlTreeView::AddString(const string& str)
+void HuiControlTreeView::__AddString(const string& str)
 {
 	GtkTreeIter iter;
 	GetPartStrings("", str);
@@ -111,7 +111,7 @@ void HuiControlTreeView::AddString(const string& str)
 	_item_.add(iter);
 }
 
-void HuiControlTreeView::SetInt(int i)
+void HuiControlTreeView::__SetInt(int i)
 {
 	GtkTreeSelection *sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(widget));
 	if (i >= 0){
@@ -132,7 +132,7 @@ int HuiControlTreeView::GetInt()
 	return -1;
 }
 
-void HuiControlTreeView::AddChildString(int parent_row, const string& str)
+void HuiControlTreeView::__AddChildString(int parent_row, const string& str)
 {
 	GtkTreeIter iter;
 	GetPartStrings("", str);
@@ -143,7 +143,7 @@ void HuiControlTreeView::AddChildString(int parent_row, const string& str)
 	_item_.add(iter);
 }
 
-void HuiControlTreeView::ChangeString(int row, const string& str)
+void HuiControlTreeView::__ChangeString(int row, const string& str)
 {
 	GetPartStrings("", str);
 	GtkTreeStore *store = GTK_TREE_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(widget)));
@@ -160,7 +160,7 @@ string HuiControlTreeView::GetCell(int row, int column)
 	return tree_get_cell(store, _item_[row], column);
 }
 
-void HuiControlTreeView::SetCell(int row, int column, const string& str)
+void HuiControlTreeView::__SetCell(int row, int column, const string& str)
 {
 	GtkTreeStore *store = GTK_TREE_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(widget)));
 	if (gtk_tree_store_iter_is_valid(store, &_item_[row]))
@@ -179,7 +179,7 @@ Array<int> HuiControlTreeView::GetMultiSelection()
 	return sel;
 }
 
-void HuiControlTreeView::SetMultiSelection(Array<int>& sel)
+void HuiControlTreeView::__SetMultiSelection(Array<int>& sel)
 {
 	GtkTreeSelection *s = gtk_tree_view_get_selection(GTK_TREE_VIEW(widget));
 	gtk_tree_selection_set_mode(s, GTK_SELECTION_MULTIPLE);
@@ -188,7 +188,7 @@ void HuiControlTreeView::SetMultiSelection(Array<int>& sel)
 		gtk_tree_selection_select_iter(s, &_item_[sel[j]]);
 }
 
-void HuiControlTreeView::Reset()
+void HuiControlTreeView::__Reset()
 {
 	GtkTreeStore *store = GTK_TREE_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(widget)));
 	gtk_tree_store_clear(store);

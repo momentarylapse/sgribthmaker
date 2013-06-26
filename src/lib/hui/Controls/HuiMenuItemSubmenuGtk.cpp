@@ -19,5 +19,6 @@ HuiMenuItemSubmenu::HuiMenuItemSubmenu(const string &title, HuiMenu *menu, const
 
 HuiMenuItemSubmenu::~HuiMenuItemSubmenu()
 {
+	delete(sub_menu);
 }
 

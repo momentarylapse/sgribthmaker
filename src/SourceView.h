@@ -42,6 +42,11 @@ public:
 	void undo_remove_text(int pos, char *text, int length);
 
 
+	bool Undoable();
+	bool Redoable();
+	void Undo();
+	void Redo();
+
 	void JumpToStartOfLine(bool shift);
 	void JumpToEndOfLine(bool shift);
 	void MoveCursorTo(int line, int pos);

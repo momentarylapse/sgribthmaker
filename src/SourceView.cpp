@@ -237,6 +237,18 @@ bool SourceView::Fill(const string &text)
 	return ok;
 }
 
+bool SourceView::Undoable()
+{	return history->Undoable();	}
+
+bool SourceView::Redoable()
+{	return history->Redoable();	}
+
+void SourceView::Undo()
+{	history->Undo();	}
+
+void SourceView::Redo()
+{	history->Redo();	}
+
 void SourceView::SetParser(const string &filename)
 {
 	parser = GetParser(filename);

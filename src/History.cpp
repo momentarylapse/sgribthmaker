@@ -47,7 +47,7 @@ bool History::Undoable()
 
 bool History::Redoable()
 {
-	return pos < stack.num - 1;
+	return pos < stack.num;
 }
 
 void History::Undo()

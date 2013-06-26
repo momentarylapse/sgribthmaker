@@ -36,6 +36,7 @@ public:
 	Array<HuiControl*> get_all_controls();
 
 	void UpdateLanguage();
+	void set_win(HuiWindow *win);
 	
 #ifdef HUI_API_GTK
 	void gtk_realize();
@@ -47,6 +48,7 @@ public:
 	HMENU hMenu;
 #endif
 	Array<HuiControl*> item;
+	HuiWindow *win;
 };
 
 HuiMenu *_cdecl HuiCreateMenu();

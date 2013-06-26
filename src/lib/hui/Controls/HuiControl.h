@@ -43,24 +43,34 @@ public:
 	bool is_button_bar;
 	HuiWindow *win;
 
-	virtual void Reset(){}
+	virtual void __Reset(){}
+	void Reset();
 	virtual string GetString(){	return "";	}
 	virtual int GetInt(){	return GetString()._int();	}
 	virtual float GetFloat(){	return GetString()._float();	}
 	virtual color GetColor(){	return Black;	}
-	virtual void SetString(const string &str){}
-	virtual void AddString(const string &str){}
-	virtual void SetInt(int i){	SetString(i2s(i));	}
-	virtual void SetFloat(float f){	SetString(f2s(f, 3));	}
-	virtual void SetColor(const color &c){}
+	virtual void __SetString(const string &str){}
+	void SetString(const string &str);
+	virtual void __AddString(const string &str){}
+	void AddString(const string &str);
+	virtual void __SetInt(int i){	__SetString(i2s(i));	}
+	void SetInt(int i);
+	virtual void __SetFloat(float f){	__SetString(f2s(f, 3));	}
+	void SetFloat(float f);
+	virtual void __SetColor(const color &c){}
+	void SetColor(const color &c);
 	virtual void SetImage(const string &str){}
 
-	virtual void AddChildString(int parent_row, const string &str){}
-	virtual void ChangeString(int row, const string &str){}
+	virtual void __AddChildString(int parent_row, const string &str){}
+	void AddChildString(int parent_row, const string &str);
+	virtual void __ChangeString(int row, const string &str){}
+	void ChangeString(int row, const string &str);
 	virtual string GetCell(int row, int column){	return "";	}
-	virtual void SetCell(int row, int column, const string &str){}
+	virtual void __SetCell(int row, int column, const string &str){}
+	void SetCell(int row, int column, const string &str);
 	virtual Array<int> GetMultiSelection(){	Array<int> r;	return r;	}
-	virtual void SetMultiSelection(Array<int> &sel){}
+	virtual void __SetMultiSelection(Array<int> &sel){}
+	void SetMultiSelection(Array<int> &sel);
 	virtual void Expand(int row, bool expand){}
 	virtual void ExpandAll(bool expand){}
 	virtual bool IsExpanded(int row){	return false;	}
@@ -68,7 +78,8 @@ public:
 	virtual void Enable(bool enabled);
 	virtual bool IsEnabled();
 	virtual void Hide(bool hidden);
-	virtual void Check(bool checked){}
+	virtual void __Check(bool checked){}
+	void Check(bool checked);
 	virtual bool IsChecked(){	return false;	}
 	virtual void SetTooltip(const string &str);
 	virtual void Focus();

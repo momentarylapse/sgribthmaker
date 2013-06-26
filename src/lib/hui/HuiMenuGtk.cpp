@@ -1,9 +1,6 @@
 #include "hui.h"
 #include "hui_internal.h"
-#include "Controls/HuiMenuItem.h"
-#include "Controls/HuiMenuItemToggle.h"
-#include "Controls/HuiMenuItemSubmenu.h"
-#include "Controls/HuiMenuItemSeparator.h"
+#include "Controls/HuiControl.h"
 #ifdef HUI_API_GTK
 
 
@@ -45,6 +42,7 @@ HuiMenu::HuiMenu()
 {
 	msg_db_r("CHuiMenu()", 1);
 	_HuiMakeUsable_();
+	win = NULL;
 	
 	widget = gtk_menu_new();
 	if (accel_group == NULL)
@@ -54,18 +52,12 @@ HuiMenu::HuiMenu()
 
 HuiMenu::~HuiMenu()
 {
+	Clear();
 }
 
 void HuiMenu::gtk_realize()
 {
 	widget = gtk_menu_new();
-}
-
-void HuiMenu::Clear()
-{
-	foreach(HuiControl *c, item)
-		delete(c);
-	item.clear();
 }
 
 // window coordinate system!
@@ -83,11 +75,7 @@ void HuiMenu::add(HuiControl *c)
 	item.add(c);
 	gtk_menu_shell_append(GTK_MENU_SHELL(widget), c->widget);
 	gtk_widget_show(c->widget);
-}
-
-void HuiMenu::AddItem(const string &name, const string &id)
-{
-	add(new HuiMenuItem(name, id));
+	c->win = win;
 }
 
 
@@ -232,31 +220,6 @@ void *get_gtk_image_pixbuf(const string &image)
 	}
 	return NULL;
 }
-
-void HuiMenu::AddItemImage(const string &name, const string &image, const string &id)
-{
-	add(new HuiMenuItem(name, id));
-	item.back()->SetImage(image);
-}
-
-void HuiMenu::AddItemCheckable(const string &name, const string &id)
-{
-	add(new HuiMenuItemToggle(name, id));
-}
-
-void HuiMenu::AddSeparator()
-{
-	add(new HuiMenuItemSeparator());
-}
-
-void HuiMenu::AddSubMenu(const string &name, const string &id, HuiMenu *menu)
-{
-	if (menu)
-		add(new HuiMenuItemSubmenu(name, menu, id));
-}
-
-// only allow menu callback, if we are in layer 0 (if we don't edit it ourself)
-int allow_signal_level=0;
 
 /*void HuiMenu::SetText(const string &id, const string &text)
 {
