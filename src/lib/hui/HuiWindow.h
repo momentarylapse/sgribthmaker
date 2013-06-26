@@ -68,6 +68,7 @@ struct HuiWinEvent
 	HuiEventHandler *object;
 };
 
+class HuiToolbar;
 class HuiControl;
 class HuiControlTabControl;
 class HuiControlListView;
@@ -76,6 +77,7 @@ class HuiControlGrid;
 
 class HuiWindow : public HuiEventHandler
 {
+	friend class HuiToolbar;
 	friend class HuiControl;
 	friend class HuiControlTabControl;
 	friend class HuiControlListView;

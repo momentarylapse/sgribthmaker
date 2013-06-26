@@ -36,5 +36,3 @@ bool HuiToolItemToggleButton::IsChecked()
 {
 	return gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(widget));
 }
-
-
