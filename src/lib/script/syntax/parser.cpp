@@ -1489,9 +1489,10 @@ void SyntaxTree::ParseClass()
 		}
 		if (parent->function.num > 0){
 			// inheritance of functions
-			foreach(ClassFunction &f, parent->function)
-				if ((f.name != "__init__") && (f.name != "__delete__") && (f.name != "__assign__"))
+			foreach(ClassFunction &f, parent->function){
+				if ((f.name != "__init__") && (f.name != "__assign__"))
 					_class->function.add(f);
+			}
 			found = true;
 		}
 		if (!found)

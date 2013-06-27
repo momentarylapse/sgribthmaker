@@ -552,6 +552,7 @@ int hui_main(Array<string> arg)
 
 	InitParser();
 	source_view = new SourceView(MainWin, "edit");
+	MainWin->Activate("edit");
 
 
 	HighlightSchema schema = GetDefaultSchema();
@@ -563,7 +564,6 @@ int hui_main(Array<string> arg)
 	MainWin->Show();
 
 	Script::Init();
-
 
 	New();
 
