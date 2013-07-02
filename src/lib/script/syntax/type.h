@@ -50,7 +50,8 @@ struct Type{
 	bool is_simple_class();
 	bool IsDerivedFrom(Type *root) const;
 	int GetFunc(const string &name);
-	ClassFunction *GetConstructor();
+	ClassFunction *GetDefaultConstructor();
+	ClassFunction *GetComplexConstructor();
 	ClassFunction *GetDestructor();
 	ClassFunction *GetVirtualFunction(int virtual_index);
 	void LinkVirtualTable();

@@ -463,7 +463,7 @@ void SyntaxTree::GetFunctionCall(const string &f_name, Command *Operand, Functio
 		}else{
 			Exp.rewind();
 			//DoError("\"(\" expected in front of parameter list");
-			DoError("only script functions can be referenced");
+			DoError("only functions can be referenced");
 		}
 	}
 
@@ -536,6 +536,13 @@ Command *SyntaxTree::GetOperand(Function *f)
 		Type *t = GetType(Exp.cur, true);
 		Operand = add_command_compilerfunc(CommandNew);
 		Operand->type = GetPointerType(t);
+		if (Exp.cur == "("){
+			ClassFunction *cf = t->GetComplexConstructor();
+			if (!cf)
+				DoError(format("class \"%s\" does not have a constructor with parameters", t->name.c_str()));
+			Operand->param[0] = DoClassFunction(this, NULL, *cf, f);
+			Operand->num_params = 1;
+		}
 	}else if (Exp.cur == "delete"){ // delete operator
 		Exp.next();
 		Operand = add_command_compilerfunc(CommandDelete);
