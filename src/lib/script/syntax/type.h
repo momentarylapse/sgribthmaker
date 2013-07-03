@@ -49,6 +49,7 @@ struct Type{
 	bool UsesReturnByMemory();
 	bool is_simple_class();
 	bool IsDerivedFrom(Type *root) const;
+	bool DeriveFrom(Type *root);
 	int GetFunc(const string &name);
 	ClassFunction *GetDefaultConstructor();
 	ClassFunction *GetComplexConstructor();

@@ -145,6 +145,28 @@ void Type::LinkVirtualTable()
 		}
 }
 
+bool Type::DeriveFrom(Type* root)
+{
+	parent = root;
+	bool found = false;
+	if (parent->element.num > 0){
+		// inheritance of elements
+		element = parent->element;
+		found = true;
+	}
+	if (parent->function.num > 0){
+		// inheritance of functions
+		foreach(ClassFunction &f, parent->function){
+			if ((f.name != "__init__") && (f.name != "__assign__"))
+				function.add(f);
+		}
+		found = true;
+	}
+	size += parent->size;
+	num_virtual += parent->num_virtual;
+	return found;
+}
+
 string Type::var2str(void *p)
 {
 	if (this == TypeInt)

@@ -48,8 +48,14 @@ void SIAddPackageHui()
 	Type*
 	TypeHuiMenuP	= add_type_p("menu",		TypeHuiMenu);
 	Type*
-	TypeHuiWindow	= add_type  ("Window",0);
+	TypeHuiWindow	= add_type  ("Window", sizeof(HuiWindow));
 	TypeHuiWindowP	= add_type_p("window",	TypeHuiWindow);
+	Type*
+	TypeHuiNixWindow= add_type  ("NixWindow", sizeof(HuiWindow));
+	Type*
+	TypeHuiDialog	= add_type  ("Dialog", sizeof(HuiWindow));
+	Type*
+	TypeHuiFixedDialog= add_type  ("FixedDialog", sizeof(HuiWindow));
 	Type*
 	TypeHuiEvent	= add_type  ("Event",		0);
 	Type*
@@ -87,6 +93,15 @@ void SIAddPackageHui()
 			func_add_param("sub_menu",	TypeHuiMenuP);
 	
 	add_class(TypeHuiWindow);
+		class_set_vtable(HuiWindow);
+		TypeHuiWindow->vtable = new VirtualTable[10];
+		class_add_func("__init__",		TypeVoid,		mf((tmf)&HuiWindow::__init_ext__));
+			func_add_param("title",		TypeString);
+			func_add_param("x",		TypeInt);
+			func_add_param("y",		TypeInt);
+			func_add_param("width",		TypeInt);
+			func_add_param("height",		TypeInt);
+		class_add_func("__delete__",		TypeVoid,		mf((tmf)&HuiWindow::__delete__));
 		class_add_func("Run",			TypeString,		mf((tmf)&HuiWindow::Run));
 		class_add_func("Show",			TypeVoid,		mf((tmf)&HuiWindow::Show));
 		class_add_func("Hide",			TypeVoid,		mf((tmf)&HuiWindow::Hide));
@@ -315,6 +330,37 @@ void SIAddPackageHui()
 			func_add_param("func",			TypePointer);
 		class_add_func("BeginDraw",								TypeHuiPainterP,		mf((tmf)&HuiWindow::BeginDraw));
 			func_add_param("id",		TypeString);
+		TypeHuiWindow->LinkVirtualTable();
+
+	add_class(TypeHuiNixWindow);
+		TypeHuiNixWindow->DeriveFrom(TypeHuiWindow);
+		TypeHuiNixWindow->vtable = TypeHuiWindow->vtable;
+		class_add_func("__init__",		TypeVoid,		mf((tmf)&HuiNixWindow::__init_ext__));
+			func_add_param("title",		TypeString);
+			func_add_param("x",		TypeInt);
+			func_add_param("y",		TypeInt);
+			func_add_param("width",		TypeInt);
+			func_add_param("height",		TypeInt);
+
+	add_class(TypeHuiDialog);
+		TypeHuiDialog->DeriveFrom(TypeHuiWindow);
+		TypeHuiDialog->vtable = TypeHuiWindow->vtable;
+		class_add_func("__init__",		TypeVoid,		mf((tmf)&HuiDialog::__init_ext__));
+			func_add_param("title",		TypeString);
+			func_add_param("width",		TypeInt);
+			func_add_param("height",		TypeInt);
+			func_add_param("root",		TypeHuiWindowP);
+			func_add_param("allow_root",TypeBool);
+
+	add_class(TypeHuiFixedDialog);
+		TypeHuiFixedDialog->DeriveFrom(TypeHuiWindow);
+		TypeHuiFixedDialog->vtable = TypeHuiWindow->vtable;
+		class_add_func("__init__",		TypeVoid,		mf((tmf)&HuiFixedDialog::__init_ext__));
+			func_add_param("title",		TypeString);
+			func_add_param("width",		TypeInt);
+			func_add_param("height",		TypeInt);
+			func_add_param("root",		TypeHuiWindowP);
+			func_add_param("allow_root",TypeBool);
 	
 	add_class(TypeHuiPainter);
 		class_add_element("width",		TypeInt,	GetDAPainter(width));
@@ -448,39 +494,6 @@ void SIAddPackageHui()
 		func_add_param("image",		TypeImage);
 	// menu
 	add_func("HuiCreateMenu",		TypeHuiMenuP,		(void*)&HuiCreateMenu);
-	// window
-	add_func("HuiCreateWindow",		TypeHuiWindowP,			(void*)&HuiCreateWindow);
-		func_add_param("title",		TypeString);
-		func_add_param("x",			TypeInt);
-		func_add_param("y",			TypeInt);
-		func_add_param("width",		TypeInt);
-		func_add_param("height",	TypeInt);
-	add_func("HuiCreateNixWindow",	TypeHuiWindowP,			(void*)&HuiCreateNixWindow);
-		func_add_param("title",		TypeString);
-		func_add_param("x",			TypeInt);
-		func_add_param("y",			TypeInt);
-		func_add_param("width",		TypeInt);
-		func_add_param("height",	TypeInt);
-	add_func("HuiCreateControlWindow",		TypeHuiWindowP,			(void*)&HuiCreateControlWindow);
-		func_add_param("title",		TypeString);
-		func_add_param("x",			TypeInt);
-		func_add_param("y",			TypeInt);
-		func_add_param("width",		TypeInt);
-		func_add_param("height",	TypeInt);
-	add_func("HuiCreateDialog",		TypeHuiWindowP,			(void*)&HuiCreateDialog);
-		func_add_param("title",		TypeString);
-		func_add_param("width",		TypeInt);
-		func_add_param("height",	TypeInt);
-		func_add_param("root",		TypeHuiWindowP);
-		func_add_param("allow_root",TypeBool);
-	add_func("HuiCreateSizableDialog",		TypeHuiWindowP,			(void*)&HuiCreateSizableDialog);
-		func_add_param("title",		TypeString);
-		func_add_param("width",		TypeInt);
-		func_add_param("height",	TypeInt);
-		func_add_param("root",		TypeHuiWindowP);
-		func_add_param("allow_root",TypeBool);
-	add_func("HuiWinClose",			TypeVoid,				(void*)&HuiCloseWindow);
-		func_add_param("w",			TypeHuiWindowP);
 
 	add_class(TypeHuiEvent);
 		class_add_element("id",			TypeString,	GetDAEvent(id));

@@ -268,7 +268,7 @@ void CompileShader()
 {
 	msg_db_f("CompileShader",1);
 
-	HuiWindow *w = HuiCreateNixWindow("nix", -1, -1, 640, 480);
+	HuiWindow *w = new HuiNixWindow("nix", -1, -1, 640, 480);
 	w->Show();
 	NixInit("OpenGL", 640, 480, 32, false, w);
 
@@ -508,7 +508,7 @@ int hui_main(Array<string> arg)
 	
 	HuiAddCommand("show_cur_line", "", KEY_F2, &ShowCurLine);
 
-	MainWin = HuiCreateControlWindow(AppTitle, -1, -1, width, height);
+	MainWin = new HuiWindow(AppTitle, -1, -1, width, height);
 	MainWin->AllowEvents("key");
 
 	MainWin->Event("about", &OnAbout);

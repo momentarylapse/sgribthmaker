@@ -567,7 +567,7 @@ void HuiWindow::_Init_(const string &title, int x, int y, int width, int height,
 
 HuiWindow::~HuiWindow()
 {
-	msg_db_r("~CHuiWindow",1);
+	msg_db_f("~CHuiWindow",1);
 
 	// quick'n'dirty fix (gtk destroys its widgets recursively)
 	foreach(HuiControl *c, control)
@@ -576,8 +576,19 @@ HuiWindow::~HuiWindow()
 	_CleanUp_();
 
 	gtk_widget_destroy(window);
-	
-	msg_db_l(1);
+}
+
+void HuiWindow::__delete__()
+{
+	msg_db_f("HuiWindow.del",0);
+
+	// quick'n'dirty fix (gtk destroys its widgets recursively)
+	foreach(HuiControl *c, control)
+		c->widget = NULL;
+
+	_CleanUp_();
+
+	gtk_widget_destroy(window);
 }
 
 // should be called after creating (and filling) the window to actually show it
