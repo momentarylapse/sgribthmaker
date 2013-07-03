@@ -15,8 +15,7 @@ CommandDialog::CommandDialog(HuiWindow *parent) :
 {
 	SetString("command", LastCommand);
 	EventM("ok", this, &CommandDialog::OnOk);
-	EventM("cancel", this, &CommandDialog::OnClose);
-	EventM("hui:close", this, &CommandDialog::OnClose);
+	EventM("cancel", this, &CommandDialog::OnCancel);
 }
 
 CommandDialog::~CommandDialog()
@@ -30,7 +29,7 @@ void CommandDialog::OnOk()
 	ExecuteCommand(LastCommand);
 }
 
-void CommandDialog::OnClose()
+void CommandDialog::OnCancel()
 {
 	delete(this);
 }

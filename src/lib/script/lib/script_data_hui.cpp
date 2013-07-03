@@ -94,7 +94,7 @@ void SIAddPackageHui()
 	
 	add_class(TypeHuiWindow);
 		class_set_vtable(HuiWindow);
-		TypeHuiWindow->vtable = new VirtualTable[10];
+		TypeHuiWindow->vtable = new VirtualTable[30];
 		class_add_func("__init__",		TypeVoid,		mf((tmf)&HuiWindow::__init_ext__));
 			func_add_param("title",		TypeString);
 			func_add_param("x",		TypeInt);
@@ -328,6 +328,16 @@ void SIAddPackageHui()
 			func_add_param("id",			TypeString);
 			func_add_param("msg",			TypeString);
 			func_add_param("func",			TypePointer);
+		class_add_func("OnMouseMove", TypeVoid, mf((tmf)&HuiWindow::OnMouseMove));
+		class_add_func("OnMouseWheel", TypeVoid, mf((tmf)&HuiWindow::OnMouseWheel));
+		class_add_func("OnLeftButtonDown", TypeVoid, mf((tmf)&HuiWindow::OnLeftButtonDown));
+		class_add_func("OnMiddleButtonDown", TypeVoid, mf((tmf)&HuiWindow::OnMiddleButtonDown));
+		class_add_func("OnRightButtonDown", TypeVoid, mf((tmf)&HuiWindow::OnRightButtonDown));
+		class_add_func("OnLeftButtonUp", TypeVoid, mf((tmf)&HuiWindow::OnLeftButtonUp));
+		class_add_func("OnMiddleButtonUp", TypeVoid, mf((tmf)&HuiWindow::OnMiddleButtonUp));
+		class_add_func("OnRightButtonUp", TypeVoid, mf((tmf)&HuiWindow::OnRightButtonUp));
+		class_add_func("OnDoubleClick", TypeVoid, mf((tmf)&HuiWindow::OnDoubleClick));
+		class_add_func("CanClose", TypeBool, mf((tmf)&HuiWindow::CanClose));
 		class_add_func("BeginDraw",								TypeHuiPainterP,		mf((tmf)&HuiWindow::BeginDraw));
 			func_add_param("id",		TypeString);
 		TypeHuiWindow->LinkVirtualTable();
@@ -446,7 +456,7 @@ void SIAddPackageHui()
 		func_add_param("root",		TypeHuiWindowP);
 		func_add_param("title",		TypeString);
 		func_add_param("dir",		TypeString);
-	add_func("HuiQuestionBox",		TypeInt,	(void*)&HuiQuestionBox);
+	add_func("HuiQuestionBox",		TypeString,	(void*)&HuiQuestionBox);
 		func_add_param("root",		TypeHuiWindowP);
 		func_add_param("title",		TypeString);
 		func_add_param("text",		TypeString);

@@ -17,7 +17,7 @@ public:
 	virtual ~CommandDialog();
 
 	void OnOk();
-	void OnClose();
+	void OnCancel();
 };
 
 #endif /* COMMANDDIALOG_H_ */

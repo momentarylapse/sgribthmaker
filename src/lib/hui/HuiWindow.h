@@ -147,6 +147,23 @@ public:
 	{	_EventMX(id, msg, handler, (void(HuiEventHandler::*)())fun);	}
 	bool _SendEvent_(HuiEvent *e);
 
+	// events by overwriting
+	virtual void OnMouseMove(){}
+	virtual void OnLeftButtonDown(){}
+	virtual void OnMiddleButtonDown(){}
+	virtual void OnRightButtonDown(){}
+	virtual void OnLeftButtonUp(){}
+	virtual void OnMiddleButtonUp(){}
+	virtual void OnRightButtonUp(){}
+	virtual void OnDoubleClick(){}
+	virtual void OnMouseWheel(){}
+	virtual bool CanClose(){ return true; }
+	virtual void OnKeyDown(){}
+	virtual void OnKeyUp(){}
+	virtual void OnResize(){}
+	virtual void OnMove(){}
+	virtual void OnRedraw(){}
+
 	// creating controls
 	void _cdecl AddButton(const string &title,int x,int y,int width,int height,const string &id);
 	void _cdecl AddDefButton(const string &title,int x,int y,int width,int height,const string &id);
