@@ -1299,9 +1299,11 @@ void Serializer::SerializeCompilerFunction(Command *com, Array<SerialCommandPara
 							add_cmd(Asm::inst_movss, param_reg(TypeReg128, Asm::RegXmm0), t);
 						else
 							add_cmd(Asm::inst_fld, t);
-					}else if (cur_func->return_type->size == 1)
+					}else if (cur_func->return_type->size == 1){
 						add_cmd(Asm::inst_mov, param_reg(cur_func->return_type, Asm::RegAl), t);
-					else
+					}else if (cur_func->return_type->size == 8){
+						add_cmd(Asm::inst_mov, param_reg(cur_func->return_type, Asm::RegRax), t);
+					}else
 						add_cmd(Asm::inst_mov, param_reg(cur_func->return_type, Asm::RegEax), t);
 					add_cmd(Asm::inst_leave);
 					add_cmd(Asm::inst_ret);
