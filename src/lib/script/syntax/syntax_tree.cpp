@@ -459,6 +459,29 @@ void exlink_make_var_local(SyntaxTree *ps, Type *t, int var_no)
 	ps->GetExistenceLink.instance = NULL;
 }
 
+void exlink_make_var_element(SyntaxTree *ps, Function *f, ClassElement &e)
+{
+	Command *self = ps->add_command_local_var(f->num_params, ps->GetPointerType(f->_class));
+	ps->GetExistenceLink.type = e.type;
+	ps->GetExistenceLink.link_nr = e.offset;
+	ps->GetExistenceLink.kind = KindDerefAddressShift;
+	ps->GetExistenceLink.num_params = 1;
+	ps->GetExistenceLink.param[0] = self;
+	ps->GetExistenceLink.script = ps->script;
+	ps->GetExistenceLink.instance = NULL;
+}
+
+void exlink_make_func_class(SyntaxTree *ps, Function *f, ClassFunction &cf)
+{
+	Command *self = ps->add_command_local_var(f->num_params, ps->GetPointerType(f->_class));
+	ps->GetExistenceLink.kind = KindFunction;
+	ps->GetExistenceLink.link_nr = cf.nr;
+	ps->GetExistenceLink.script = cf.script;
+	ps->GetExistenceLink.type = cf.return_type;
+	ps->GetExistenceLink.num_params = cf.param_type.num;
+	ps->GetExistenceLink.instance = self;
+}
+
 bool SyntaxTree::GetExistenceShared(const string &name)
 {
 	msg_db_f("GetExistenceShared", 3);
@@ -477,7 +500,7 @@ bool SyntaxTree::GetExistenceShared(const string &name)
 			return true;
 		}
 
-	// then the (self-coded) functions
+	// then the (real) functions
 	foreachi(Function *f, Functions, i)
 		if (f->name == name){
 			GetExistenceLink.kind = KindFunction;
@@ -511,13 +534,26 @@ bool SyntaxTree::GetExistence(const string &name, Function *func)
 	GetExistenceLink.script = script;
 	GetExistenceLink.instance = NULL;
 
-	// first test local variables
 	if (func){
+		// first test local variables
 		foreachi(Variable &v, func->var, i){
 			if (v.name == name){
 				exlink_make_var_local(this, v.type, i);
 				return true;
 			}
+		}
+		if (func->_class){
+			// class elements (within a class function)
+			foreach(ClassElement &e, func->_class->element)
+				if (e.name == name){
+					exlink_make_var_element(this, func, e);
+					return true;
+				}
+			foreach(ClassFunction &cf, func->_class->function)
+				if (cf.name == name){
+					exlink_make_func_class(this, func, cf);
+					return true;
+				}
 		}
 	}
 
