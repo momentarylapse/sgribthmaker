@@ -111,7 +111,7 @@ void Script::AllocateStack()
 	Stack = NULL;
 	foreach(Command *cmd, syntax->Commands){
 		if (cmd->kind == KindCompilerFunction)
-			if ((cmd->link_nr == CommandWait) || (cmd->link_nr == CommandWaitRT) || (cmd->link_nr == CommandWaitOneFrame)){
+			if ((cmd->link_no == CommandWait) || (cmd->link_no == CommandWaitRT) || (cmd->link_no == CommandWaitOneFrame)){
 				Stack = new char[config.StackSize];
 				break;
 			}

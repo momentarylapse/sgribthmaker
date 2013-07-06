@@ -218,10 +218,8 @@ void CreateImplicitAssign(SyntaxTree *ps, Type *t)
 		cmd_while->param[0] = cmd_cmp;
 		f->block->command.add(cmd_while);
 
-		Command *cb = ps->AddCommand();
 		Block *b = ps->AddBlock();
-		cb->kind = KindBlock;
-		cb->link_nr = b->index;
+		Command *cb = ps->AddCommand(KindBlock, b->index, TypeVoid);
 
 		// el := self.data[for_var]
 		Command *deref_self = ps->deref_command(ps->cp_command(self));
@@ -294,10 +292,8 @@ void CreateImplicitArrayClear(SyntaxTree *ps, Type *t)
 		cmd_while->param[0] = cmd_cmp;
 		f->block->command.add(cmd_while);
 
-		Command *cb = ps->AddCommand();
 		Block *b = ps->AddBlock();
-		cb->kind = KindBlock;
-		cb->link_nr = b->index;
+		Command *cb = ps->AddCommand(KindBlock, b->index, TypeVoid);
 
 		// el := self.data[for_var]
 		Command *deref_self = ps->deref_command(ps->cp_command(self));
@@ -364,10 +360,8 @@ void CreateImplicitArrayResize(SyntaxTree *ps, Type *t)
 		cmd_while->param[0] = cmd_cmp;
 		f->block->command.add(cmd_while);
 
-		Command *cb = ps->AddCommand();
 		Block *b = ps->AddBlock();
-		cb->kind = KindBlock;
-		cb->link_nr = b->index;
+		Command *cb = ps->AddCommand(KindBlock, b->index, TypeVoid);
 
 		// el := self.data[for_var]
 		Command *deref_self = ps->deref_command(ps->cp_command(self));
@@ -404,10 +398,8 @@ void CreateImplicitArrayResize(SyntaxTree *ps, Type *t)
 		cmd_while->param[0] = cmd_cmp;
 		f->block->command.add(cmd_while);
 
-		Command *cb = ps->AddCommand();
 		Block *b = ps->AddBlock();
-		cb->kind = KindBlock;
-		cb->link_nr = b->index;
+		Command *cb = ps->AddCommand(KindBlock, b->index, TypeVoid);
 
 		// el := self.data[for_var]
 		Command *deref_self = ps->deref_command(ps->cp_command(self));
@@ -529,10 +521,10 @@ void SyntaxTree::CreateImplicitFunctions(Type *t, bool relocate_last_function)
 			if (c->kind == KindFunction){
 				if (c->script != script)
 					continue;
-				if (c->link_nr == num_funcs - 1)
-					c->link_nr = Functions.num - 1;
-				else if (c->link_nr > num_funcs - 1)
-					c->link_nr --;
+				if (c->link_no == num_funcs - 1)
+					c->link_no = Functions.num - 1;
+				else if (c->link_no > num_funcs - 1)
+					c->link_no --;
 			}
 
 		// relink class functions
