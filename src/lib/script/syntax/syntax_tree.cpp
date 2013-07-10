@@ -372,6 +372,14 @@ Function::Function(const string &_name, Type *_return_type)
 	_var_size = 0;
 }
 
+int Function::get_var(const string &name)
+{
+	foreachi(Variable &v, var, i)
+		if (v.name == name)
+			return i;
+	return -1;
+}
+
 Function *SyntaxTree::AddFunction(const string &name, Type *type)
 {
 	Function *f = new Function(name, type);
@@ -454,7 +462,7 @@ void exlink_make_var_local(SyntaxTree *ps, Type *t, int var_no)
 
 void exlink_make_var_element(SyntaxTree *ps, Function *f, ClassElement &e)
 {
-	Command *self = ps->add_command_local_var(f->num_params, ps->GetPointerType(f->_class));
+	Command *self = ps->add_command_local_var(f->get_var("self"), ps->GetPointerType(f->_class));
 	ps->GetExistenceLink.type = e.type;
 	ps->GetExistenceLink.link_no = e.offset;
 	ps->GetExistenceLink.kind = KindDerefAddressShift;
@@ -466,7 +474,7 @@ void exlink_make_var_element(SyntaxTree *ps, Function *f, ClassElement &e)
 
 void exlink_make_func_class(SyntaxTree *ps, Function *f, ClassFunction &cf)
 {
-	Command *self = ps->add_command_local_var(f->num_params, ps->GetPointerType(f->_class));
+	Command *self = ps->add_command_local_var(f->get_var("self"), ps->GetPointerType(f->_class));
 	ps->GetExistenceLink.kind = KindFunction;
 	ps->GetExistenceLink.link_no = cf.nr;
 	ps->GetExistenceLink.script = cf.script;
@@ -1043,11 +1051,13 @@ void SyntaxTree::MapLocalVariablesToStack()
 					if (v.name == "self"){
 						v._offset = f->_param_size;
 						f->_param_size += 4;
+					}else if (v.name == "super"){
+						v._offset = f->var[f->get_var("self")]._offset;
 					}
 			}
 
 			foreachi(Variable &v, f->var, i){
-				if ((f->_class) && (v.name == "self"))
+				if ((f->_class) && (v.name == "self") && (v.name == "super"))
 					continue;
 				if (v.name == "-return-")
 					continue;
@@ -1066,9 +1076,14 @@ void SyntaxTree::MapLocalVariablesToStack()
 			f->_var_size = 0;
 			
 			foreachi(Variable &v, f->var, i){
-				int s = mem_align(v.type->size, 4);
-				v._offset = - f->_var_size - s;
-				f->_var_size += s;
+				if ((f->_class) && (v.name == "super")){
+					// map "super" to "self"
+					v._offset = f->var[f->get_var("self")]._offset;
+				}else{
+					int s = mem_align(v.type->size, 4);
+					v._offset = - f->_var_size - s;
+					f->_var_size += s;
+				}
 			}
 		}
 	}

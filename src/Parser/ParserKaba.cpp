@@ -77,6 +77,7 @@ int ParserKaba::WordType(const string &name)
 		(name == "const") ||
 		(name == "this") ||
 		(name == "self") ||
+		(name == "super") ||
 		(name == "new") ||
 		(name == "delete") ||
 		(name == "asm"))
