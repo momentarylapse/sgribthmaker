@@ -174,8 +174,8 @@ Command *DoClassFunction(SyntaxTree *ps, Command *ob, ClassFunction &cf, Functio
 		Command *cmd = ps->AddCommand(KindVirtualFunction, cf.virtual_index, ff->literal_return_type);
 		cmd->num_params = ff->num_params;
 		cmd->script = cf.script;
-		ps->GetFunctionCall("?." + cf.name, cmd, f);
 		cmd->instance = ob;
+		ps->GetFunctionCall("?." + cf.name, cmd, f);
 		return cmd;
 	}
 
@@ -362,6 +362,12 @@ void SyntaxTree::FindFunctionSingleParameter(int p, Type **WantedType, Function 
 		Function *ff = cmd->script->syntax->Functions[cmd->link_no];
 		if (p < ff->num_params)
 			WantedType[p] = ff->literal_param_type[p];
+	}else if (cmd->kind == KindVirtualFunction){
+		ClassFunction *cf = cmd->instance->type->parent->GetVirtualFunction(cmd->link_no);
+		if (!cf)
+			DoError("FindFunctionSingleParameter: cant find virtual function...?!?");
+		if (p < cf->param_type.num)
+			WantedType[p] = cf->param_type[p];
 	}else if (cmd->kind == KindCompilerFunction){
 		if (p < PreCommands[cmd->link_no].param.num)
 			WantedType[p] = PreCommands[cmd->link_no].param[p].type;
