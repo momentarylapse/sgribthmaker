@@ -10,7 +10,7 @@ class quaternion;
 matrix MatrixMultiply2(const matrix &m2, const matrix &m1);
 
 
-struct matrix
+class matrix
 {
 public:
 	union{

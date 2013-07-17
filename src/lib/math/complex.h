@@ -2,8 +2,9 @@
 #ifndef _MATH_COMPLEX_INCLUDED_
 #define _MATH_COMPLEX__INCLUDED_
 
-struct complex
+class complex
 {
+public:
 	float x, y;
 	complex(){};
 	complex(float x, float y);

@@ -28,7 +28,8 @@ struct ClassFunction{
 
 typedef void *VirtualTable;
 
-struct Type{
+class Type{
+public:
 	Type();
 	//Type(const string &name, int size, SyntaxTree *owner);
 	~Type();
@@ -49,8 +50,10 @@ struct Type{
 	bool UsesReturnByMemory();
 	bool is_simple_class();
 	bool IsDerivedFrom(Type *root) const;
+	bool DeriveFrom(Type *root);
 	int GetFunc(const string &name);
-	ClassFunction *GetConstructor();
+	ClassFunction *GetDefaultConstructor();
+	ClassFunction *GetComplexConstructor();
 	ClassFunction *GetDestructor();
 	ClassFunction *GetVirtualFunction(int virtual_index);
 	void LinkVirtualTable();

@@ -8,6 +8,7 @@
 #include "SourceView.h"
 #include "History.h"
 #include "Parser/Parser.h"
+#include "lib/hui/Controls/HuiControl.h"
 
 
 void insert_text(GtkTextBuffer *textbuffer, GtkTextIter *location, gchar *text, gint len, gpointer user_data)

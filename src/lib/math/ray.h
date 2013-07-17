@@ -9,8 +9,9 @@
 #define RAY_H_
 
 
-struct Ray
+class Ray
 {
+public:
 	Ray();
 	Ray(const vector &a, const vector &b);
 	vector u, v;

@@ -15,7 +15,7 @@
 #include "../file/file.h"
 
 
-string HuiVersion = "0.4.90.0";
+string HuiVersion = "0.4.93.0";
 
 
 #include <stdio.h>
@@ -93,7 +93,7 @@ string HuiComboBoxSeparator;
 bool HuiCreateHiddenWindows;
 
 string HuiAppFilename;
-string HuiAppDirectory;			// dir of changeable files (ie. ~/app/)
+string HuiAppDirectory;			// dir of changeable files (ie. ~/.app/)
 string HuiAppDirectoryStatic;	// dir of static files (ie. /usr/shar/app)
 string HuiInitialWorkingDirectory;
 Array<string> HuiArgument;
@@ -212,7 +212,7 @@ void HuiSetIdleFunction(hui_callback *idle_function)
 {
 #ifdef HUI_API_GTK
 	bool old_idle = (HuiIdleFunction) || ((hui_idle_object) && (hui_idle_member_function));
-	bool new_idle = idle_function;
+	bool new_idle = (bool)idle_function;
 	if ((new_idle) && (!old_idle))
 		idle_id = g_idle_add_full(300, GtkIdleFunction, NULL, NULL);
 	if ((!new_idle) && (old_idle) && (idle_id >= 0)){
@@ -242,7 +242,7 @@ void _HuiSetIdleFunctionM(HuiEventHandler *object, void (HuiEventHandler::*funct
 	HuiIdleFunction = NULL;
 }
 
-void HuiRunLater(int time_ms, hui_callback *function)
+void HuiRunLater(float time, hui_callback *function)
 {
 	#ifdef HUI_API_WIN
 		msg_todo("HuiRunLater");
@@ -250,11 +250,11 @@ void HuiRunLater(int time_ms, hui_callback *function)
 	#ifdef HUI_API_GTK
 		HuiRunLaterItem *i = new HuiRunLaterItem;
 		i->function = function;
-		g_timeout_add_full(300, time_ms, &GtkRunLaterFunction, (void*)i, NULL);
+		g_timeout_add_full(300, time * 1000, &GtkRunLaterFunction, (void*)i, NULL);
 	#endif
 }
 
-void _HuiRunLaterM(int time_ms, HuiEventHandler *object, void (HuiEventHandler::*function)())
+void _HuiRunLaterM(float time, HuiEventHandler *object, void (HuiEventHandler::*function)())
 {
 	#ifdef HUI_API_WIN
 		msg_todo("HuiRunLater");
@@ -263,7 +263,7 @@ void _HuiRunLaterM(int time_ms, HuiEventHandler *object, void (HuiEventHandler::
 		HuiRunLaterItem *i = new HuiRunLaterItem;
 		i->member_function = function;
 		i->member_object = object;
-		g_timeout_add_full(300, time_ms, &GtkRunLaterFunction, (void*)i, NULL);
+		g_timeout_add_full(300, time * 1000, &GtkRunLaterFunction, (void*)i, NULL);
 	#endif
 }
 
@@ -278,7 +278,7 @@ void _HuiMakeUsable_()
 	//WinStandartFont=CreateFont(8,0,0,0,FW_NORMAL,FALSE,FALSE,0,ANSI_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,DEFAULT_PITCH|FF_SWISS,"MS Sans Serif");
 	hui_win_default_font=(HFONT)GetStockObject(DEFAULT_GUI_FONT);
 
-	hui_win_main_icon=ExtractIcon(hui_win_instance,sys_str(_pgmptr),0);
+	hui_win_main_icon=ExtractIcon(hui_win_instance,sys_str(HuiAppFilename),0);
 
 #endif
 #ifdef HUI_API_GTK
@@ -293,11 +293,22 @@ void _HuiMakeUsable_()
 	_HuiScreenOpened_ = true;
 }
 
-void HuiInit()
+void HuiInitBase()
 {
 	#ifdef OS_WINDOWS
-		HuiAppFilename = _pgmptr;
+#if 0
+		char *ttt = NULL;
+	msg_write("base0");
+	int r = _get_pgmptr(&ttt);
+	msg_write("base00");
+		msg_write(r);
+	msg_write(ttt);
+	msg_write("base01");
+		HuiAppFilename = ttt;
+	msg_write("base1");
 		HuiAppDirectory = HuiAppFilename.dirname();
+	msg_write("base12");
+#endif
 		hui_win_instance = (HINSTANCE)GetModuleHandle(NULL);
 	#endif
 	#ifdef OS_LINUX
@@ -344,15 +355,10 @@ void HuiInit()
 
 	HuiPushMainLevel();
 
-	// make random numbers...well...random
-	Date d = get_current_date();
-	for (int j=0;j<d.milli_second+d.second;j++)
-		rand();
-
 	msg_db_l(1);
 }
 
-void HuiInitExtended(const string &program, const string &version, hui_callback *error_cleanup_function, bool load_res, const string &def_lang)
+void HuiInit(const string &program, bool load_res, const string &def_lang)
 {
 	HuiInitialWorkingDirectory = get_current_dir();
 	string s1, s2;
@@ -401,13 +407,13 @@ void HuiInitExtended(const string &program, const string &version, hui_callback 
 	//msg_write("HuiAppDirectory " + HuiAppDirectory);
 		
 
-	HuiInit();
+	HuiInitBase();
 #ifdef OS_LINUX
 	HuiAppDirectory = s1;
 	HuiAppDirectoryStatic = s2;
 	dir_create(HuiAppDirectory);
 #endif
-	HuiSetDefaultErrorHandler(program, version, error_cleanup_function);
+	HuiSetDefaultErrorHandler(NULL);
 	//msg_write("");
 
 	
@@ -428,14 +434,12 @@ void HuiInitExtended(const string &program, const string &version, hui_callback 
 
 	
 
-	if (version.num > 0)
-		HuiPropVersion = version;
 	if (file_test_existence(HuiAppDirectoryStatic + "Data/icon.svg"))
-		HuiPropLogo = HuiAppDirectoryStatic + "Data/icon.svg";
+		HuiSetProperty("logo", HuiAppDirectoryStatic + "Data/icon.svg");
 	else if (file_test_existence(HuiAppDirectoryStatic + "Data/icon.ico"))
-		HuiPropLogo = HuiAppDirectoryStatic + "Data/icon.ico";
+		HuiSetProperty("logo", HuiAppDirectoryStatic + "Data/icon.ico");
 	if (file_test_existence(HuiAppDirectoryStatic + "Data/license_small.txt"))
-		HuiPropLicense = FileRead(HuiAppDirectoryStatic + "Data/license_small.txt");
+		HuiSetProperty("license", FileRead(HuiAppDirectoryStatic + "Data/license_small.txt"));
 }
 
 

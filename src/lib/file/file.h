@@ -145,11 +145,11 @@ public:
 	bool Error,ErrorReported,DontReportErrors;
 };
 
-extern CFile *OpenFile(const string &filename);
-extern CFile *OpenFileSilent(const string &filename);
-extern CFile *CreateFile(const string &filename);
-extern CFile *CreateFileSilent(const string &filename);
-extern CFile *AppendFile(const string &filename);
+extern CFile *FileOpen(const string &filename);
+extern CFile *FileOpenSilent(const string &filename);
+extern CFile *FileCreate(const string &filename);
+extern CFile *FileCreateSilent(const string &filename);
+extern CFile *FileAppend(const string &filename);
 extern void FileClose(CFile *f);
 extern string FileRead(const string &filename);
 extern void FileWrite(const string &filename, const string &str);

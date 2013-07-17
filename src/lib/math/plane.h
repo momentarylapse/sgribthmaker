@@ -5,8 +5,9 @@
 class vector;
 class matrix;
 
-struct plane
+class plane
 {
+public:
 	vector n;
 	float d;
 

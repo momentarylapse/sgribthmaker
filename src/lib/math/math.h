@@ -14,14 +14,14 @@
 
 #include <math.h>
 
-struct color;
-struct vector;
-struct plane;
-struct complex;
-struct matrix;
-struct matrix3;
-struct quaternion;
-struct Ray;
+class color;
+class vector;
+class plane;
+class complex;
+class matrix;
+class matrix3;
+class quaternion;
+class Ray;
 
 
 #include "../base/base.h"

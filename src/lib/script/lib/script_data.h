@@ -23,7 +23,7 @@ namespace Script{
 extern string DataVersion;
 
 class SyntaxTree;
-struct Type;
+class Type;
 
 
 void script_make_super_array(Type *t, SyntaxTree *ps = NULL);
@@ -249,6 +249,13 @@ public:
 	void func(){}
 };
 
+class MFDummyClass
+{};
+
+typedef void (_cdecl MFDummyClass::*tmf)();
+typedef char *tcpa[4];
+void *mf(tmf vmf);
+
 enum
 {
 	AbiGnu32,
@@ -297,6 +304,7 @@ void LinkExternalClassFunc(const string &name, T pointer)
 }
 void DeclareClassSize(const string &class_name, int offset);
 void DeclareClassOffset(const string &class_name, const string &element, int offset);
+void DeclareClassVirtualIndex(const string &class_name, const string &func, void *p);
 
 void *GetExternalLink(const string &name);
 int ProcessClassOffset(const string &class_name, const string &element, int offset);

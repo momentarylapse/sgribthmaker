@@ -4,7 +4,7 @@
 
 class vector;
 
-struct matrix3
+class matrix3
 {
 public:
 	union{

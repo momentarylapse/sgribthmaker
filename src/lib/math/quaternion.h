@@ -5,7 +5,7 @@
 class vector;
 class matrix;
 
-struct quaternion
+class quaternion
 {
 public:
 	float x, y, z, w;

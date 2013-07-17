@@ -3,7 +3,7 @@
 #define _MATH_RECT_INCLUDED_
 
 // types
-struct rect
+class rect
 {
 public:
 	float x1, x2, y1, y2;

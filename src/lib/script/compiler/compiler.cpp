@@ -68,7 +68,7 @@ void try_init_global_var(Type *type, char* g_var)
 			try_init_global_var(type->parent, g_var + i * type->parent->size);
 		return;
 	}
-	ClassFunction *cf = type->GetConstructor();
+	ClassFunction *cf = type->GetDefaultConstructor();
 	if (!cf)
 		return;
 	typedef void init_func(void *);
@@ -99,9 +99,14 @@ void Script::AllocateMemory()
 		}
 		MemorySize += mem_align(s, 4);
 	}
-	if (MemorySize > 0)
+	if (MemorySize > 0){
+#ifdef OS_WINDOWS
+		Memory = (char*)VirtualAlloc(NULL, MemorySize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+#else
 		Memory = (char*)mmap(0, MemorySize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS | MAP_EXECUTABLE | MAP_32BIT, 0, 0);
+#endif
 		//Memory = new char[MemorySize];
+	}
 }
 
 void Script::AllocateStack()
@@ -111,7 +116,7 @@ void Script::AllocateStack()
 	Stack = NULL;
 	foreach(Command *cmd, syntax->Commands){
 		if (cmd->kind == KindCompilerFunction)
-			if ((cmd->link_nr == CommandWait) || (cmd->link_nr == CommandWaitRT) || (cmd->link_nr == CommandWaitOneFrame)){
+			if ((cmd->link_no == CommandWait) || (cmd->link_no == CommandWaitRT) || (cmd->link_no == CommandWaitOneFrame)){
 				Stack = new char[config.StackSize];
 				break;
 			}
@@ -370,7 +375,10 @@ void Script::Compiler()
 
 	//_expand(Opcode,OpcodeSize);
 
-	WaitingMode = WaitingModeFirst;
+	if (first_execution)
+		WaitingMode = WaitingModeFirst;
+	else
+		WaitingMode = WaitingModeNone;
 
 	if (ShowCompilerStats){
 		msg_write("--------------------------------");

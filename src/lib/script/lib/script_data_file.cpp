@@ -111,9 +111,9 @@ void SIAddPackageFile()
 
 
 	// file access
-	add_func("FileOpen",			TypeFileP,				(void*)&OpenFile);
+	add_func("FileOpen",			TypeFileP,				(void*)&FileOpen);
 		func_add_param("filename",		TypeString);
-	add_func("FileCreate",			TypeFileP,				(void*)&CreateFile);
+	add_func("FileCreate",			TypeFileP,				(void*)&FileCreate);
 		func_add_param("filename",		TypeString);
 	add_func("FileRead",			TypeString,				(void*)&FileRead);
 		func_add_param("filename",		TypeString);

@@ -7,7 +7,7 @@
 class matrix;
 class matrix3;
 
-struct vector
+class vector
 {
 public:
 	float x, y, z;

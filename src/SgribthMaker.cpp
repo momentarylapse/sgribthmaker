@@ -12,18 +12,18 @@
 #include "Parser/Parser.h"
 
 
-string Filename = "";
+string Filename;
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.3.26.0";
+string AppVersion = "0.3.27.0";
 
 #define ALLOW_LOGGING			true
 //#define ALLOW_LOGGING			false
 
 HuiWindow *MainWin;
 string LastCommand;
-int timer, CompileTimer;
+HuiTimer timer, CompileTimer;
 
 SourceView *source_view;
 
@@ -126,7 +126,7 @@ void New()
 bool LoadFromFile(const string &filename)
 {
 	msg_db_f("LoadFromFile", 1);
-	CFile *f = OpenFile(filename);
+	CFile *f = FileOpen(filename);
 	if (!f){
 		SetMessage(_("Datei l&asst sich nicht &offnen"));
 		return false;
@@ -160,7 +160,7 @@ bool LoadFromFile(const string &filename)
 bool WriteToFile(const string &filename)
 {
 	msg_db_f("WriteToFile", 1);
-	CFile *f = CreateFile(filename);
+	CFile *f = FileCreate(filename);
 	string temp = source_view->GetAll();
 	f->WriteBuffer(temp.data, temp.num);
 	FileClose(f);
@@ -267,14 +267,14 @@ void CompileKaba()
 	//HuiSetDirectory(SgribthDir);
 	msg_set_verbose(true);
 
-	HuiGetTime(CompileTimer);
+	CompileTimer.reset();
 
 	Script::config.CompileSilently = true;
 
 	try{
 		Script::Script *compile_script = Script::Load(Filename, true);
 
-		float dt = HuiGetTime(CompileTimer);
+		float dt = CompileTimer.get();
 
 		//compile_script->Show();
 
@@ -297,7 +297,7 @@ void CompileShader()
 {
 	msg_db_f("CompileShader",1);
 
-	HuiWindow *w = HuiCreateNixWindow("nix", -1, -1, 640, 480);
+	HuiWindow *w = new HuiNixWindow("nix", -1, -1, 640, 480);
 	w->Show();
 	NixInit("OpenGL", 640, 480, 32, false, w);
 
@@ -345,12 +345,12 @@ void CompileAndRun(bool verbose)
 		msg_set_verbose(true);
 
 	// compile
-	HuiGetTime(CompileTimer);
+	CompileTimer.reset();
 	Script::config.CompileSilently = true;
 
 	try{
 		Script::Script *compile_script = Script::Load(Filename);
-		float dt_compile = HuiGetTime(CompileTimer);
+		float dt_compile = CompileTimer.get();
 
 		if (!verbose)
 			msg_set_verbose(true);
@@ -363,7 +363,7 @@ void CompileAndRun(bool verbose)
 			HuiErrorBox(MainWin, _("Fehler"), _("Script nicht ausf&uhrbar. (#os)"));
 		else{
 			HuiPushMainLevel();
-			HuiGetTime(CompileTimer);
+			CompileTimer.reset();
 			if (!compile_script->syntax->FlagNoExecution){
 				typedef void void_func();
 				void_func *f = (void_func*)compile_script->MatchFunction("main", "void", 0);
@@ -371,7 +371,7 @@ void CompileAndRun(bool verbose)
 					f();
 				//compile_script->ShowVars(false);
 			}
-			dt_execute = HuiGetTime(CompileTimer);
+			dt_execute = CompileTimer.get();
 			HuiPopMainLevel();
 		}
 		
@@ -493,7 +493,7 @@ int hui_main(Array<string> arg)
 {
 	msg_init(false);
 	msg_db_f("main",1);
-	HuiInitExtended("sgribthmaker", AppVersion, NULL, true, "Deutsch");
+	HuiInit("sgribthmaker", true, "Deutsch");
 	msg_init(HuiAppDirectory + "message.txt", ALLOW_LOGGING);
 
 	HuiSetProperty("name", AppTitle);
@@ -502,11 +502,6 @@ int hui_main(Array<string> arg)
 	HuiSetProperty("website", "http://michisoft.michi.is-a-geek.org");
 	HuiSetProperty("copyright", "© 2006-2013 by MichiSoft TM");
 	HuiSetProperty("author", "Michael Ankele <michi@lupina.de>");
-
-	timer = HuiCreateTimer();
-	CompileTimer = HuiCreateTimer();
-
-	HuiGetTime(timer);
 
 	HuiRegisterFileType("kaba","MichiSoft Script Datei",HuiAppDirectory + "Data/kaba.ico",HuiAppFilename,"open",true);
 
@@ -541,7 +536,7 @@ int hui_main(Array<string> arg)
 	
 	HuiAddCommand("show_cur_line", "", KEY_F2, &ShowCurLine);
 
-	MainWin = HuiCreateControlWindow(AppTitle, -1, -1, width, height);
+	MainWin = new HuiWindow(AppTitle, -1, -1, width, height);
 	MainWin->AllowEvents("key");
 
 	MainWin->Event("about", &OnAbout);
@@ -576,7 +571,7 @@ int hui_main(Array<string> arg)
 	source_view->UpdateFont();
 	//g_object_set(tv, "wrap-mode", GTK_WRAP_WORD_CHAR, NULL);
 
-	HuiRunLaterM(50, source_view, &SourceView::UpdateTabSize);
+	HuiRunLaterM(0.050f, source_view, &SourceView::UpdateTabSize);
 
 	HighlightSchema schema = GetDefaultSchema();
 	HighlightSchemas.add(schema);
