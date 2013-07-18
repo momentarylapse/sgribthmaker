@@ -626,7 +626,7 @@ void HuiWindow::Show()
 {
 	gtk_widget_show(window);
 #ifdef OS_WINDOWS
-	hWnd = (HWND)gdk_win32_drawable_get_handle(window->window);
+	hWnd = (HWND)GDK_WINDOW_HWND(gtk_widget_get_root_window(window));
 #endif
 
 	allow_input = true;

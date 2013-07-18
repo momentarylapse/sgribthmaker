@@ -34,8 +34,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Program Files\gtk\include\atk-1.0;C:\Program Files\gtk\include\gdk-pixbuf-2.0;C:\Program Files\gtk\include\cairo;C:\Program Files\gtk\include\glib-2.0;C:\Program Files\gtk\include\gio-win32-2.0;C:\Program Files\gtk\include\pango-1.0;C:\Program Files\gtk\include\gtk-2.0;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files\gtk\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Program Files %28x86%29\GTK+-Bundle-3.6.1\include\atk-1.0;C:\Program Files %28x86%29\GTK+-Bundle-3.6.1\include\gdk-pixbuf-2.0;C:\Program Files %28x86%29\GTK+-Bundle-3.6.1\include\cairo;C:\Program Files %28x86%29\GTK+-Bundle-3.6.1\include\glib-2.0;C:\Program Files %28x86%29\GTK+-Bundle-3.6.1\include\gio-win32-2.0;C:\Program Files %28x86%29\GTK+-Bundle-3.6.1\include\pango-1.0;C:\Program Files %28x86%29\GTK+-Bundle-3.6.1\lib\glib-2.0\include;C:\Program Files %28x86%29\GTK+-Bundle-3.6.1\include\gtk-3.0;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files %28x86%29\GTK+-Bundle-3.6.1\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
@@ -52,6 +52,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>winmm.lib;gtk-win32-3.0.lib;glib-2.0.lib;pango-1.0.lib;pangowin32-1.0.lib;cairo.lib;pangocairo-1.0.lib;gdk-win32-3.0.lib;gdk_pixbuf-2.0.lib;gobject-2.0.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -190,7 +191,7 @@
     <ClCompile Include="src\lib\script\syntax\preprocessor.cpp" />
     <ClCompile Include="src\lib\script\syntax\syntax_tree.cpp" />
     <ClCompile Include="src\lib\script\syntax\type.cpp" />
-    <ClCompile Include="src\parser\Parser.cpp" />
+    <ClCompile Include="src\parser\BaseParser.cpp" />
     <ClCompile Include="src\parser\ParserC.cpp" />
     <ClCompile Include="src\parser\ParserKaba.cpp" />
     <ClCompile Include="src\parser\ParserShader.cpp" />
@@ -295,7 +296,7 @@
     <ClInclude Include="src\lib\script\syntax\lexical.h" />
     <ClInclude Include="src\lib\script\syntax\syntax_tree.h" />
     <ClInclude Include="src\lib\script\syntax\type.h" />
-    <ClInclude Include="src\parser\Parser.h" />
+    <ClInclude Include="src\parser\BaseParser.h" />
     <ClInclude Include="src\parser\ParserC.h" />
     <ClInclude Include="src\parser\ParserKaba.h" />
     <ClInclude Include="src\parser\ParserShader.h" />

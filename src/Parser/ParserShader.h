@@ -8,7 +8,7 @@
 #ifndef PARSERSHADER_H_
 #define PARSERSHADER_H_
 
-#include "Parser.h"
+#include "BaseParser.h"
 
 class ParserShader : public Parser
 {

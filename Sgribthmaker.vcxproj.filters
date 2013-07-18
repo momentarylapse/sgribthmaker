@@ -249,9 +249,6 @@
     <ClCompile Include="src\lib\script\syntax\syntax_tree.cpp">
       <Filter>lib\script\syntax</Filter>
     </ClCompile>
-    <ClCompile Include="src\parser\Parser.cpp">
-      <Filter>Source Files\Parser</Filter>
-    </ClCompile>
     <ClCompile Include="src\parser\ParserC.cpp">
       <Filter>Source Files\Parser</Filter>
     </ClCompile>
@@ -450,6 +447,9 @@
     <ClCompile Include="src\lib\hui\HuiWindowWin.cpp">
       <Filter>lib\hui</Filter>
     </ClCompile>
+    <ClCompile Include="src\parser\BaseParser.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\lib\nix\nix.h">
@@ -568,9 +568,6 @@
     </ClInclude>
     <ClInclude Include="src\lib\script\asm\asm.h">
       <Filter>lib\script\asm</Filter>
-    </ClInclude>
-    <ClInclude Include="src\parser\Parser.h">
-      <Filter>Source Files\Parser</Filter>
     </ClInclude>
     <ClInclude Include="src\parser\ParserText.h">
       <Filter>Source Files\Parser</Filter>
@@ -757,6 +754,9 @@
     </ClInclude>
     <ClInclude Include="src\lib\hui\HuiWindow.h">
       <Filter>lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\parser\BaseParser.h">
+      <Filter>Source Files\Parser</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

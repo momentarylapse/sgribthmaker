@@ -9,7 +9,7 @@
 #include "History.h"
 #include "HighlightSchema.h"
 #include "SourceView.h"
-#include "Parser/Parser.h"
+#include "Parser/BaseParser.h"
 
 
 string Filename;
@@ -491,7 +491,11 @@ void OnExit()
 
 int hui_main(Array<string> arg)
 {
-	msg_init(false);
+	msg_init();
+	msg_write("test");
+	HuiInfoBox(NULL, "test", "test");
+#if 0
+	msg_init(true);
 	msg_db_f("main",1);
 	HuiInit("sgribthmaker", true, "Deutsch");
 	msg_init(HuiAppDirectory + "message.txt", ALLOW_LOGGING);
@@ -594,5 +598,7 @@ int hui_main(Array<string> arg)
 		LoadFromFile(arg[1]);
 
 	return HuiRun();
+#endif
+	return 0;
 }
 

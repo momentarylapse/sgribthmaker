@@ -1,12 +1,12 @@
 /*
- * Parser.h
+ * BaseParser.h
  *
  *  Created on: 06.06.2013
  *      Author: michi
  */
 
-#ifndef PARSER_H_
-#define PARSER_H_
+#ifndef BASEPARSER_H_
+#define BASEPARSER_H_
 
 #include "../lib/base/base.h"
 
@@ -59,4 +59,4 @@ inline int char_type(char c)
 }
 
 
-#endif /* PARSER_H_ */
+#endif /* BASEPARSER_H_ */

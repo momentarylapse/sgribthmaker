@@ -28,13 +28,13 @@ string HuiVersion = "0.4.93.0";
 	#include <tchar.h>
 	#pragma comment(lib,"winmm.lib")
 	#ifdef HUI_API_GTK
-		#pragma comment(lib,"gtk-win32-2.0.lib")
+		#pragma comment(lib,"gtk-win32-3.0.lib")
 		#pragma comment(lib,"glib-2.0.lib")
 		#pragma comment(lib,"pango-1.0.lib")
 		#pragma comment(lib,"pangowin32-1.0.lib")
 		#pragma comment(lib,"cairo.lib")
 		#pragma comment(lib,"pangocairo-1.0.lib")
-		#pragma comment(lib,"gdk-win32-2.0.lib")
+		#pragma comment(lib,"gdk-win32-3.0.lib")
 		#pragma comment(lib,"gdk_pixbuf-2.0.lib")
 		#pragma comment(lib,"gobject-2.0.lib")
 	#else
