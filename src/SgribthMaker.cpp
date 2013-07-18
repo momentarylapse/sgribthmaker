@@ -488,13 +488,39 @@ void OnExit()
 	}
 }
 
+int aaa = 0;
+
+class TestClass
+{
+public:
+	int i;
+	virtual ~TestClass(){}
+	virtual void _cdecl f0(){ msg_write("TestClass.f0"); }
+	virtual void _cdecl f1(){ msg_write("TestClass.f1"); }
+	virtual void _cdecl f2(){ msg_write("TestClass.f2"); }
+	virtual void _cdecl f(){ msg_write("TestClass.f"); }
+	void _cdecl g(){ msg_write("TestClass.g"); }
+};
+
+class TestDerivedClass : public TestClass
+{
+public:
+	virtual ~TestDerivedClass(){}
+	virtual void _cdecl f(){ msg_write("TestDerivedClass.f"); }
+	void _cdecl g(){ msg_write("TestDerivedClass.g"); }
+};
+
+typedef void (_cdecl TestClass::*tmf)();
+
+void TestTest(TestClass *w, tmf p)
+{
+	aaa = 13;
+	(w->*p)();
+}
+
 
 int hui_main(Array<string> arg)
 {
-	msg_init();
-	msg_write("test");
-	HuiInfoBox(NULL, "test", "test");
-#if 0
 	msg_init(true);
 	msg_db_f("main",1);
 	HuiInit("sgribthmaker", true, "Deutsch");
@@ -503,7 +529,7 @@ int hui_main(Array<string> arg)
 	HuiSetProperty("name", AppTitle);
 	HuiSetProperty("version", AppVersion);
 	HuiSetProperty("comment", _("Texteditor und Kaba-Compiler"));
-	HuiSetProperty("website", "http://michisoft.michi.is-a-geek.org");
+	HuiSetProperty("website", "http://michi.is-a-geek.org/michisoft");
 	HuiSetProperty("copyright", "© 2006-2013 by MichiSoft TM");
 	HuiSetProperty("author", "Michael Ankele <michi@lupina.de>");
 
@@ -591,6 +617,27 @@ int hui_main(Array<string> arg)
 
 	Script::Init();
 
+//	Asm::Init();
+	/*msg_write(Asm::Disassemble(&TestTest));
+	
+	tmf p = &TestClass::f;
+	msg_write(string((char*)&p, sizeof(p)).hex());
+	p = &TestClass::g;
+	msg_write(string((char*)&p, sizeof(p)).hex());
+
+	TestDerivedClass w;
+	TestTest(&w, &TestClass::f);
+	TestTest(&w, &TestClass::g);
+
+	union{
+		tmf mp;
+		void *p;
+	} pp;
+	pp.mp = &TestClass::f;
+	msg_write(Asm::Disassemble(pp.p));
+
+	return 0;*/
+
 
 	New();
 
@@ -598,7 +645,5 @@ int hui_main(Array<string> arg)
 		LoadFromFile(arg[1]);
 
 	return HuiRun();
-#endif
-	return 0;
 }
 

@@ -149,21 +149,21 @@ public:
 	bool _SendEvent_(HuiEvent *e);
 
 	// events by overwriting
-	virtual void OnMouseMove(){}
-	virtual void OnLeftButtonDown(){}
-	virtual void OnMiddleButtonDown(){}
-	virtual void OnRightButtonDown(){}
-	virtual void OnLeftButtonUp(){}
-	virtual void OnMiddleButtonUp(){}
-	virtual void OnRightButtonUp(){}
-	virtual void OnDoubleClick(){}
-	virtual void OnMouseWheel(){}
-	virtual bool CanClose(){ return true; }
-	virtual void OnKeyDown(){}
-	virtual void OnKeyUp(){}
-	virtual void OnResize(){}
-	virtual void OnMove(){}
-	virtual void OnRedraw(){}
+	virtual void _cdecl OnMouseMove(){}
+	virtual void _cdecl OnLeftButtonDown(){}
+	virtual void _cdecl OnMiddleButtonDown(){}
+	virtual void _cdecl OnRightButtonDown(){}
+	virtual void _cdecl OnLeftButtonUp(){}
+	virtual void _cdecl OnMiddleButtonUp(){}
+	virtual void _cdecl OnRightButtonUp(){}
+	virtual void _cdecl OnDoubleClick(){}
+	virtual void _cdecl OnMouseWheel(){}
+	virtual bool _cdecl CanClose(){ return true; }
+	virtual void _cdecl OnKeyDown(){}
+	virtual void _cdecl OnKeyUp(){}
+	virtual void _cdecl OnResize(){}
+	virtual void _cdecl OnMove(){}
+	virtual void _cdecl OnRedraw(){}
 
 	// creating controls
 	void _cdecl AddButton(const string &title,int x,int y,int width,int height,const string &id);

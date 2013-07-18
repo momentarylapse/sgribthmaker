@@ -39,6 +39,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\Program Files %28x86%29\GTK+-Bundle-3.6.1\include\atk-1.0;C:\Program Files %28x86%29\GTK+-Bundle-3.6.1\include\gdk-pixbuf-2.0;C:\Program Files %28x86%29\GTK+-Bundle-3.6.1\include\cairo;C:\Program Files %28x86%29\GTK+-Bundle-3.6.1\include\glib-2.0;C:\Program Files %28x86%29\GTK+-Bundle-3.6.1\include\gio-win32-2.0;C:\Program Files %28x86%29\GTK+-Bundle-3.6.1\include\pango-1.0;C:\Program Files %28x86%29\GTK+-Bundle-3.6.1\lib\glib-2.0\include;C:\Program Files %28x86%29\GTK+-Bundle-3.6.1\include\gtk-3.0;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files %28x86%29\GTK+-Bundle-3.6.1\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
