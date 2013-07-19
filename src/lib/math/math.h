@@ -46,7 +46,7 @@ int _cdecl loopi(int i, int min, int max);
 int _cdecl randi(int m);
 
 // floats
-float sqr(float f);
+float _cdecl sqr(float f);
 float _cdecl clampf(float f, float min, float max);
 float _cdecl loopf(float f, float min, float max);
 float _cdecl randf(float m);

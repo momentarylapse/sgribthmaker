@@ -17,6 +17,7 @@ void func_add_param(const string &name, Type *type);
 void add_class(Type *root_type);
 void class_add_element(const string &name, Type *type, int offset);
 void class_add_func(const string &name, Type *return_type, void *func);
+void class_add_func_virtual(const string &name, Type *return_type, void *func);
 void add_const(const string &name, Type *type, void *value);
 void add_ext_var(const string &name, Type *type, void *var);
 void add_type_cast(int penalty, Type *source, Type *dest, const string &cmd, void *func);

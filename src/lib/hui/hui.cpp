@@ -142,6 +142,10 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
                      int       nCmdShow)
 {
 	Array<string> a;
+	a.add("-dummy-");
+	string s = lpCmdLine;
+	if (s.num > 0)
+		a.add(s);
 	return hui_main(a);
 }
 

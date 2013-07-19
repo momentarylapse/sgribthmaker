@@ -1057,7 +1057,7 @@ void SyntaxTree::MapLocalVariablesToStack()
 			}
 
 			foreachi(Variable &v, f->var, i){
-				if ((f->_class) && (v.name == "self") && (v.name == "super"))
+				if ((f->_class) && ((v.name == "self") || (v.name == "super")))
 					continue;
 				if (v.name == "-return-")
 					continue;

@@ -81,16 +81,16 @@ float _cdecl f_sqr(float f){	return f*f;	}
 class IntList : public Array<int>
 {
 public:
-	int sum()
+	int _cdecl sum()
 	{
 		int r = 0;
 		for (int i=0;i<num;i++)
 			r += (*this)[i];
 		return r;
 	}
-	void sort()
+	void _cdecl sort()
 	{	std::sort((int*)data, (int*)data + num);	}
-	void unique()
+	void _cdecl unique()
 	{
 		int ndiff = 0;
 		int i0 = 1;
@@ -106,52 +106,52 @@ public:
 	}
 	
 	// a += b
-	void iadd(IntList &b)	IMPLEMENT_IOP(+=, int)
-	void isub(IntList &b)	IMPLEMENT_IOP(-=, int)
-	void imul(IntList &b)	IMPLEMENT_IOP(*=, int)
-	void idiv(IntList &b)	IMPLEMENT_IOP(/=, int)
+	void _cdecl iadd(IntList &b)	IMPLEMENT_IOP(+=, int)
+	void _cdecl isub(IntList &b)	IMPLEMENT_IOP(-=, int)
+	void _cdecl imul(IntList &b)	IMPLEMENT_IOP(*=, int)
+	void _cdecl idiv(IntList &b)	IMPLEMENT_IOP(/=, int)
 
 	// a = b + c
-	IntList add(IntList &b)	IMPLEMENT_OP(+, int, IntList)
-	IntList sub(IntList &b)	IMPLEMENT_OP(-, int, IntList)
-	IntList mul(IntList &b)	IMPLEMENT_OP(*, int, IntList)
-	IntList div(IntList &b)	IMPLEMENT_OP(/, int, IntList)
+	IntList _cdecl add(IntList &b)	IMPLEMENT_OP(+, int, IntList)
+	IntList _cdecl sub(IntList &b)	IMPLEMENT_OP(-, int, IntList)
+	IntList _cdecl mul(IntList &b)	IMPLEMENT_OP(*, int, IntList)
+	IntList _cdecl div(IntList &b)	IMPLEMENT_OP(/, int, IntList)
 
 	// a += x
-	void add2(int x)	IMPLEMENT_IOP2(+=, int)
-	void sub2(int x)	IMPLEMENT_IOP2(-=, int)
-	void mul2(int x)	IMPLEMENT_IOP2(*=, int)
-	void div2(int x)	IMPLEMENT_IOP2(/=, int)
-	void assign_int(int x)	IMPLEMENT_IOP2(=, int)
+	void _cdecl add2(int x)	IMPLEMENT_IOP2(+=, int)
+	void _cdecl sub2(int x)	IMPLEMENT_IOP2(-=, int)
+	void _cdecl mul2(int x)	IMPLEMENT_IOP2(*=, int)
+	void _cdecl div2(int x)	IMPLEMENT_IOP2(/=, int)
+	void _cdecl assign_int(int x)	IMPLEMENT_IOP2(=, int)
 };
 
 
 
 
-void super_array_add_s_com(DynamicArray *a, DynamicArray *b)
+void _cdecl super_array_add_s_com(DynamicArray *a, DynamicArray *b)
 {	int n = min(a->num, b->num);	complex *pa = (complex*)a->data;	complex *pb = (complex*)b->data;	for (int i=0;i<n;i++)	*(pa ++) += *(pb ++);	}
-void super_array_sub_s_com(DynamicArray *a, DynamicArray *b)
+void _cdecl super_array_sub_s_com(DynamicArray *a, DynamicArray *b)
 {	int n = min(a->num, b->num);	complex *pa = (complex*)a->data;	complex *pb = (complex*)b->data;	for (int i=0;i<n;i++)	*(pa ++) -= *(pb ++);	}
-void super_array_mul_s_com(DynamicArray *a, DynamicArray *b)
+void _cdecl super_array_mul_s_com(DynamicArray *a, DynamicArray *b)
 {	int n = min(a->num, b->num);	complex *pa = (complex*)a->data;	complex *pb = (complex*)b->data;	for (int i=0;i<n;i++)	*(pa ++) *= *(pb ++);	}
-void super_array_div_s_com(DynamicArray *a, DynamicArray *b)
+void _cdecl super_array_div_s_com(DynamicArray *a, DynamicArray *b)
 {	int n = min(a->num, b->num);	complex *pa = (complex*)a->data;	complex *pb = (complex*)b->data;	for (int i=0;i<n;i++)	*(pa ++) /= *(pb ++);	}
 
-void super_array_add_s_com_com(DynamicArray *a, complex x)
+void _cdecl super_array_add_s_com_com(DynamicArray *a, complex x)
 {	complex *pa = (complex*)a->data;	for (int i=0;i<a->num;i++)	*(pa ++) += x;	}
-void super_array_sub_s_com_com(DynamicArray *a, complex x)
+void _cdecl super_array_sub_s_com_com(DynamicArray *a, complex x)
 {	complex *pa = (complex*)a->data;	for (int i=0;i<a->num;i++)	*(pa ++) -= x;	}
-void super_array_mul_s_com_com(DynamicArray *a, complex x)
+void _cdecl super_array_mul_s_com_com(DynamicArray *a, complex x)
 {	complex *pa = (complex*)a->data;	for (int i=0;i<a->num;i++)	*(pa ++) *= x;	}
-void super_array_div_s_com_com(DynamicArray *a, complex x)
+void _cdecl super_array_div_s_com_com(DynamicArray *a, complex x)
 {	complex *pa = (complex*)a->data;	for (int i=0;i<a->num;i++)	*(pa ++) /= x;	}
-void super_array_mul_s_com_float(DynamicArray *a, float x)
+void _cdecl super_array_mul_s_com_float(DynamicArray *a, float x)
 {	complex *pa = (complex*)a->data;	for (int i=0;i<a->num;i++)	*(pa ++) *= x;	}
 
 class FloatList : public Array<float>
 {
 public:
-	float _max()
+	float _cdecl _max()
 	{
 		float max = 0;
 		if (num > 0)
@@ -161,7 +161,7 @@ public:
 				max = (*this)[i];
 		return max;
 	}
-	float _min()
+	float _cdecl _min()
 	{
 		float min = 0;
 		if (num > 0)
@@ -171,14 +171,14 @@ public:
 				min = (*this)[i];
 		return min;
 	}
-	float sum()
+	float _cdecl sum()
 	{
 		float r = 0;
 		for (int i=0;i<num;i++)
 			r += (*this)[i];
 		return r;
 	}
-	float sum2()
+	float _cdecl sum2()
 	{
 		float r = 0;
 		for (int i=0;i<num;i++)
@@ -186,40 +186,40 @@ public:
 		return r;
 	}
 
-	void sort()
+	void _cdecl sort()
 	{	std::sort((float*)data, (float*)data + num);	}
 	
 	// a += b
-	void iadd(FloatList &b)	IMPLEMENT_IOP(+=, float)
-	void isub(FloatList &b)	IMPLEMENT_IOP(-=, float)
-	void imul(FloatList &b)	IMPLEMENT_IOP(*=, float)
-	void idiv(FloatList &b)	IMPLEMENT_IOP(/=, float)
+	void _cdecl iadd(FloatList &b)	IMPLEMENT_IOP(+=, float)
+	void _cdecl isub(FloatList &b)	IMPLEMENT_IOP(-=, float)
+	void _cdecl imul(FloatList &b)	IMPLEMENT_IOP(*=, float)
+	void _cdecl idiv(FloatList &b)	IMPLEMENT_IOP(/=, float)
 
 	// a = b + c
-	FloatList add(FloatList &b)	IMPLEMENT_OP(+, float, FloatList)
-	FloatList sub(FloatList &b)	IMPLEMENT_OP(-, float, FloatList)
-	FloatList mul(FloatList &b)	IMPLEMENT_OP(*, float, FloatList)
-	FloatList div(FloatList &b)	IMPLEMENT_OP(/, float, FloatList)
+	FloatList _cdecl add(FloatList &b)	IMPLEMENT_OP(+, float, FloatList)
+	FloatList _cdecl sub(FloatList &b)	IMPLEMENT_OP(-, float, FloatList)
+	FloatList _cdecl mul(FloatList &b)	IMPLEMENT_OP(*, float, FloatList)
+	FloatList _cdecl div(FloatList &b)	IMPLEMENT_OP(/, float, FloatList)
 
 	// a += x
-	void iadd2(float x)	IMPLEMENT_IOP2(+=, float)
-	void isub2(float x)	IMPLEMENT_IOP2(-=, float)
-	void imul2(float x)	IMPLEMENT_IOP2(*=, float)
-	void idiv2(float x)	IMPLEMENT_IOP2(/=, float)
-	void assign_float(float x)	IMPLEMENT_IOP2(=, float)
+	void _cdecl iadd2(float x)	IMPLEMENT_IOP2(+=, float)
+	void _cdecl isub2(float x)	IMPLEMENT_IOP2(-=, float)
+	void _cdecl imul2(float x)	IMPLEMENT_IOP2(*=, float)
+	void _cdecl idiv2(float x)	IMPLEMENT_IOP2(/=, float)
+	void _cdecl assign_float(float x)	IMPLEMENT_IOP2(=, float)
 };
 
 class ComplexList : public Array<complex>
 {
 public:
-	complex sum()
+	complex _cdecl sum()
 	{
 		complex r = complex(0, 0);
 		for (int i=0;i<num;i++)
 			r += (*this)[i];
 		return r;
 	}
-	float sum2()
+	float _cdecl sum2()
 	{
 		float r = 0;
 		for (int i=0;i<num;i++)
@@ -228,28 +228,28 @@ public:
 	}
 	
 	// a += b
-	void iadd(ComplexList &b)	IMPLEMENT_IOP(+=, complex)
-	void isub(ComplexList &b)	IMPLEMENT_IOP(-=, complex)
-	void imul(ComplexList &b)	IMPLEMENT_IOP(*=, complex)
-	void idiv(ComplexList &b)	IMPLEMENT_IOP(/=, complex)
+	void _cdecl iadd(ComplexList &b)	IMPLEMENT_IOP(+=, complex)
+	void _cdecl isub(ComplexList &b)	IMPLEMENT_IOP(-=, complex)
+	void _cdecl imul(ComplexList &b)	IMPLEMENT_IOP(*=, complex)
+	void _cdecl idiv(ComplexList &b)	IMPLEMENT_IOP(/=, complex)
 
 	// a = b + c
-	ComplexList add(ComplexList &b)	IMPLEMENT_OP(+, complex, ComplexList)
-	ComplexList sub(ComplexList &b)	IMPLEMENT_OP(-, complex, ComplexList)
-	ComplexList mul(ComplexList &b)	IMPLEMENT_OP(*, complex, ComplexList)
-	ComplexList div(ComplexList &b)	IMPLEMENT_OP(/, complex, ComplexList)
+	ComplexList _cdecl add(ComplexList &b)	IMPLEMENT_OP(+, complex, ComplexList)
+	ComplexList _cdecl sub(ComplexList &b)	IMPLEMENT_OP(-, complex, ComplexList)
+	ComplexList _cdecl mul(ComplexList &b)	IMPLEMENT_OP(*, complex, ComplexList)
+	ComplexList _cdecl div(ComplexList &b)	IMPLEMENT_OP(/, complex, ComplexList)
 
 	// a += x
-	void iadd2(complex x)	IMPLEMENT_IOP2(+=, complex)
-	void isub2(complex x)	IMPLEMENT_IOP2(-=, complex)
-	void imul2(complex x)	IMPLEMENT_IOP2(*=, complex)
-	void idiv2(complex x)	IMPLEMENT_IOP2(/=, complex)
-	void imul2f(float x)	IMPLEMENT_IOP2(*=, complex)
-	void idiv2f(float x)	IMPLEMENT_IOP2(/=, complex)
-	void assign_complex(complex x)	IMPLEMENT_IOP2(=, complex)
+	void _cdecl iadd2(complex x)	IMPLEMENT_IOP2(+=, complex)
+	void _cdecl isub2(complex x)	IMPLEMENT_IOP2(-=, complex)
+	void _cdecl imul2(complex x)	IMPLEMENT_IOP2(*=, complex)
+	void _cdecl idiv2(complex x)	IMPLEMENT_IOP2(/=, complex)
+	void _cdecl imul2f(float x)	IMPLEMENT_IOP2(*=, complex)
+	void _cdecl idiv2f(float x)	IMPLEMENT_IOP2(/=, complex)
+	void _cdecl assign_complex(complex x)	IMPLEMENT_IOP2(=, complex)
 };
 
-Array<int> int_range(int start, int end)
+Array<int> _cdecl int_range(int start, int end)
 {
 	Array<int> a;
 	//a.__init__(); // done by kaba-constructors for temp variables
@@ -258,7 +258,7 @@ Array<int> int_range(int start, int end)
 	return a;
 }
 
-Array<float> float_range(float start, float end, float step)
+Array<float> _cdecl float_range(float start, float end, float step)
 {
 	Array<float> a;
 	//a.__init__(); // done by kaba-constructors for temp variables
@@ -268,10 +268,10 @@ Array<float> float_range(float start, float end, float step)
 	return a;
 }
 
-float maxf(float a, float b)
+float _cdecl maxf(float a, float b)
 {	return (a > b) ? a : b;	}
 
-float minf(float a, float b)
+float _cdecl minf(float a, float b)
 {	return (a < b) ? a : b;	}
 
 string _cdecl ff2s(complex &x){	return x.str();	}

@@ -28,9 +28,9 @@ public:
 	{	return v*f;	}
 	bool operator == (const complex &v) const;
 	bool operator != (const complex &v) const;
-	float abs() const;
-	float abs_sqr() const;
-	string str() const;
+	float _cdecl abs() const;
+	float _cdecl abs_sqr() const;
+	string _cdecl str() const;
 };
 
 // complex

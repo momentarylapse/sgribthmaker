@@ -258,7 +258,7 @@ void class_add_element(const string &name, Type *type, int offset)
 
 int add_func(const string &name, Type *return_type, void *func, bool is_class);
 
-void class_add_func_normal(const string &tname, const string &name, Type *return_type, void *func)
+void _class_add_func_normal(const string &tname, const string &name, Type *return_type, void *func)
 {
 	int cmd = add_func(tname + "." + name, return_type, func, true);
 	cur_func->_class = cur_class;
@@ -266,7 +266,7 @@ void class_add_func_normal(const string &tname, const string &name, Type *return
 	cur_class_func = &cur_class->function.back();
 }
 
-void class_add_func_virtual(const string &tname, const string &name, Type *return_type, int index)
+void _class_add_func_virtual(const string &tname, const string &name, Type *return_type, int index)
 {
 	int cmd = -1;
 	cur_func = NULL;
@@ -292,8 +292,33 @@ void class_add_func(const string &name, Type *return_type, void *func)
 				tname = t->name;
 	}
 	if (config.abi == AbiWindows32){
+		_class_add_func_normal(tname, name, return_type, func);
+	}else{
+	
+		long p = (long)func;
+		if ((cur_class->vtable) && ((p & 1) > 0)){
+			// virtual function
+			int index = p / sizeof(void*);
+			_class_add_func_virtual(tname, name, return_type, index);
+		}else{
+			_class_add_func_normal(tname, name, return_type, func);
+		}
+
+	}
+}
+
+void class_add_func_virtual(const string &name, Type *return_type, void *func)
+{
+	msg_db_f("add_class_func_virtual", 4);
+	string tname = cur_class->name;
+	if (tname[0] == '-'){
+		foreach(Type *t, cur_package_script->syntax->Types)
+			if ((t->is_pointer) && (t->parent == cur_class))
+				tname = t->name;
+	}
+	if (config.abi == AbiWindows32){
 		if (!func){
-			class_add_func_normal(tname, name, return_type, func);
+			_class_add_func_virtual(tname, name, return_type, 0);
 			return;
 		}
 		unsigned char *pp = (unsigned char*)func;
@@ -302,13 +327,11 @@ void class_add_func(const string &name, Type *return_type, void *func)
 			// 8b.44.24.**    8b.00     ff.60.10
 			// virtual function
 			int index = (int)pp[8] / 4;
-			class_add_func_virtual(tname, name, return_type, index);
-		}else if (((pp[0] & 0xf0) == 0x50) || ((pp[0] & 0xf0) == 0x60) || (!cur_class->vtable)){
-			class_add_func_normal(tname, name, return_type, func);
+			_class_add_func_virtual(tname, name, return_type, index);
 		}else{
-			msg_error("Script class_add_func(" + tname + "." + name + "): neither virtual nor normal??");
+			msg_error("Script class_add_func_virtual(" + tname + "." + name + "):  can't read virtual index");
 			msg_write(string((char*)pp, 4).hex());
-			msg_write(Asm::Disassemble(func));
+			msg_write(Asm::Disassemble(func, 16));
 		}
 	}else{
 	
@@ -316,9 +339,9 @@ void class_add_func(const string &name, Type *return_type, void *func)
 		if ((cur_class->vtable) && ((p & 1) > 0)){
 			// virtual function
 			int index = p / sizeof(void*);
-			class_add_func_virtual(tname, name, return_type, index);
+			_class_add_func_virtual(tname, name, return_type, index);
 		}else{
-			class_add_func_normal(tname, name, return_type, func);
+			_class_add_func_virtual(tname, name, return_type, 0);
 		}
 
 	}
@@ -819,8 +842,8 @@ void SIAddPackageBase()
 		class_add_element("i", TypeInt, offsetof(VirtualTest, i));
 		class_add_func("__init__", TypeVoid, mf(&VirtualTest::__init__));
 		msg_write("e24");
-		class_add_func("__delete__", TypeVoid, mf(&VirtualTest::__delete__));
-		class_add_func("f_virtual", TypeVoid, mf(&VirtualTest::f_virtual));
+		class_add_func_virtual("__delete__", TypeVoid, mf(&VirtualTest::__delete__));
+		class_add_func_virtual("f_virtual", TypeVoid, mf(&VirtualTest::f_virtual));
 		class_add_func("f_normal", TypeVoid, mf(&VirtualTest::f_normal));
 		class_add_func("test", TypeVoid, mf(&VirtualTest::test));
 		msg_write("e3");
