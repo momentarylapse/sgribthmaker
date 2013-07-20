@@ -59,16 +59,16 @@ class string : public DynamicArray
 	string _cdecl extension() const;
 
 	// operators
-	void operator = (const string &s)
+	void _cdecl operator = (const string &s)
 	//{	printf("= assign %p = %p", data, s.data);	assign(&s);	printf(" /=  '%s\n", c_str());}
 	{	assign(&s);	}
-	void operator += (const string &s)
+	void _cdecl operator += (const string &s)
 	{	append(&s);	}
-	string operator + (const string &s) const
+	string _cdecl operator + (const string &s) const
 	{	string r = *this;	r += s;	return r;	}
-	friend string operator + (const char *s1, const string &s2)
+	friend string _cdecl operator + (const char *s1, const string &s2)
 	{	return string(s1) + s2;	}
-	bool operator == (const string &s) const
+	bool _cdecl operator == (const string &s) const
 	{
 		if (num != s.num)
 			return false;
@@ -82,15 +82,15 @@ class string : public DynamicArray
 		}
 		return true;
 	}
-	bool operator != (const string &s) const
+	bool _cdecl operator != (const string &s) const
 	{	return !(*this == s);	}
-	bool operator < (const string &s) const
+	bool _cdecl operator < (const string &s) const
 	{	return compare(s) < 0;	}
-	bool operator > (const string &s) const
+	bool _cdecl operator > (const string &s) const
 	{	return compare(s) > 0;	}
-	bool operator <= (const string &s) const
+	bool _cdecl operator <= (const string &s) const
 	{	return compare(s) <= 0;	}
-	bool operator >= (const string &s) const
+	bool _cdecl operator >= (const string &s) const
 	{	return compare(s) >= 0;	}
 	char operator[] (int index) const
 	{	return ((char*)data)[index];	}

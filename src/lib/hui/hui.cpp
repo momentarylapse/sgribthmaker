@@ -136,6 +136,15 @@ int hui_main(Array<string>);
 
 #ifdef OS_WINDOWS
 
+#ifdef _CONSOLE
+
+int _tmain(int NumArgs, _TCHAR *Args[])
+{
+	return hui_main(HuiMakeArgs(NumArgs, Args));
+}
+
+#else
+
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
                      LPTSTR    lpCmdLine,
@@ -148,6 +157,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 		a.add(s);
 	return hui_main(a);
 }
+
+#endif
 
 #endif
 #ifdef OS_LINUX

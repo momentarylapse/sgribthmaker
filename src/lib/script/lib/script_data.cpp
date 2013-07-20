@@ -273,8 +273,8 @@ void _class_add_func_virtual(const string &tname, const string &name, Type *retu
 	void *func = NULL;
 	if (cur_vtable)
 		func = cur_vtable[index];
-	msg_write("virtual: " + tname + "." + name);
-	msg_write(index);
+//	msg_write("virtual: " + tname + "." + name);
+//	msg_write(index);
 	cmd = add_func(tname + "." + name + "[virtual]", return_type, func, true);
 	cur_func->_class = cur_class;
 	cur_class->function.add(ClassFunction(name, return_type, cur_package_script, cmd));
@@ -650,8 +650,8 @@ void add_type_cast(int penalty, Type *source, Type *dest, const string &cmd, voi
 class StringList : public Array<string>
 {
 public:
-	void assign(StringList &s){	*this = s;	}
-	string join(const string &glue)
+	void _cdecl assign(StringList &s){	*this = s;	}
+	string _cdecl join(const string &glue)
 	{	return implode((Array<string>)*this, glue);	}
 };
 
@@ -659,36 +659,36 @@ class IntClass
 {
 	int i;
 public:
-	string str(){	return i2s(i);	}
+	string _cdecl str(){	return i2s(i);	}
 };
 
 class FloatClass
 {
 	float f;
 public:
-	string str(){	return f2s(f, 6);	}
-	string str2(int decimals){	return f2s(f, decimals);	}
+	string _cdecl str(){	return f2s(f, 6);	}
+	string _cdecl str2(int decimals){	return f2s(f, decimals);	}
 };
 
 class BoolClass
 {
 	bool b;
 public:
-	string str(){	return b2s(b);	}
+	string _cdecl str(){	return b2s(b);	}
 };
 
 class CharClass
 {
 	char c;
 public:
-	string str(){	string r;	r.add(c);	return r;	}
+	string _cdecl str(){	string r;	r.add(c);	return r;	}
 };
 
 class PointerClass
 {
 	void *p;
 public:
-	string str(){	return p2s(p);	}
+	string _cdecl str(){	return p2s(p);	}
 };
 
 class VirtualTest
@@ -711,7 +711,6 @@ void SIAddPackageBase()
 	msg_db_f("SIAddPackageBase", 3);
 
 	add_package("base", true);
-	msg_write("a");
 
 	// internal
 	TypeUnknown			= add_type  ("-unknown-",	0); // should not appear anywhere....or else we're screwed up!
@@ -721,7 +720,6 @@ void SIAddPackageBase()
 	TypeReg16			= add_type  ("-reg16-",		2, FLAG_CALL_BY_VALUE);
 	TypeReg8			= add_type  ("-reg8-",		1, FLAG_CALL_BY_VALUE);
 	TypeClass			= add_type  ("-class-",	0); // substitute for all class types
-	msg_write("b");
 
 	// "real"
 	TypeVoid			= add_type  ("void",		0, FLAG_CALL_BY_VALUE);
@@ -747,7 +745,6 @@ void SIAddPackageBase()
 	TypeString			= add_type_a("string",		TypeChar, -1);	// string := char[]
 	TypeStringList		= add_type_a("string[]",	TypeString, -1);
 
-	msg_write("c");
 	
 	Type *TypeVirtualTest=add_type  ("VirtualTest",	sizeof(VirtualTest));
 
@@ -815,7 +812,6 @@ void SIAddPackageBase()
 		class_add_func("dirname", TypeString, mf(&string::dirname));
 		class_add_func("basename", TypeString, mf(&string::basename));
 		class_add_func("extension", TypeString, mf(&string::extension));
-		msg_write("e");
 	add_class(TypeStringList);
 		class_add_func("__init__",	TypeVoid, mf(&StringList::__init__));
 		class_add_func("__delete__",	TypeVoid, mf(&StringList::clear));
@@ -831,24 +827,17 @@ void SIAddPackageBase()
 		class_add_func("join", TypeString, mf(&StringList::join));
 			func_add_param("glue",		TypeString);
 
-			msg_write("e2");
 	VirtualTest::enable_logging = false;
 	add_class(TypeVirtualTest);
-	msg_write("e21");
 		class_set_vtable(VirtualTest);
-		msg_write("e22");
 		cur_class->vtable = new VirtualTable[10];
-		msg_write("e23");
 		class_add_element("i", TypeInt, offsetof(VirtualTest, i));
 		class_add_func("__init__", TypeVoid, mf(&VirtualTest::__init__));
-		msg_write("e24");
 		class_add_func_virtual("__delete__", TypeVoid, mf(&VirtualTest::__delete__));
 		class_add_func_virtual("f_virtual", TypeVoid, mf(&VirtualTest::f_virtual));
 		class_add_func("f_normal", TypeVoid, mf(&VirtualTest::f_normal));
 		class_add_func("test", TypeVoid, mf(&VirtualTest::test));
-		msg_write("e3");
 		cur_class->LinkVirtualTable();
-		msg_write("e4");
 	VirtualTest::enable_logging = true;
 
 
@@ -856,7 +845,6 @@ void SIAddPackageBase()
 	// bool
 	add_const("false", TypeBool, (void*)false);
 	add_const("true",  TypeBool, (void*)true);
-	msg_write("f");
 }
 
 
