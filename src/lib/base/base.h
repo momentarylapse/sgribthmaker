@@ -59,4 +59,22 @@
 	#define min(a,b)	(((a) < (b)) ? (a) : (b))
 #endif
 
+	void msg_write(const string &);
+
+// base class for classes with virtual functions
+//  -> compatibility with kaba
+class VirtualBase
+{
+public:
+	virtual ~VirtualBase(){}
+	virtual void _cdecl __delete__(){ msg_write("virt.del"); this->~VirtualBase(); }
+};
+
+// only implement Derived::__delete__()
+//    call element destructors explicitly!
+//    make sure element destructors may be called twice without causing errors
+// implement virtual Derived::~Derived(){ __delete__(); }
+//         FIXME   wrong
+
+
 #endif

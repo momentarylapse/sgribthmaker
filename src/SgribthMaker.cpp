@@ -521,6 +521,16 @@ void _cdecl TestTest(int x, TestClass *w, tmf p)
 	w->f(x);
 }
 
+class TTest : public VirtualBase
+{
+public:
+	virtual ~TTest(){ msg_write("TTest.del");	}
+};
+
+void kabadel(VirtualBase *b)
+{
+	b->__delete__();
+}
 
 int hui_main(Array<string> arg)
 {
@@ -641,6 +651,14 @@ int hui_main(Array<string> arg)
 	msg_write(Asm::Disassemble(pp.p));
 
 	return 0;*/
+
+	{
+	TTest t;
+	TTest *tt = new TTest;
+	delete tt;
+	TTest *tt2 = new TTest;
+	kabadel(tt2);
+	}
 
 
 	New();
