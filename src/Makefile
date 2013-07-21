@@ -16,7 +16,7 @@ MODULES = \
  lib/base/base.a
 OBJ = lib/base/strings.o lib/file/msg.o lib/script/script.o \
  History.o CommandDialog.o SettingsDialog.o SourceView.o HighlightSchema.o \
- Parser/Parser.o Parser/ParserKaba.o Parser/ParserText.o \
+ Parser/BaseParser.o Parser/ParserKaba.o Parser/ParserText.o \
  Parser/ParserC.o Parser/ParserShader.o Parser/ParserPython.o
 CPP  = g++
 #GLOBALFLAGS = -O3
@@ -46,8 +46,8 @@ HighlightSchema.o : HighlightSchema.cpp
 SourceView.o : SourceView.cpp
 	$(CPP) -c SourceView.cpp -o $@ $(CXXFLAGS)
 
-Parser/Parser.o : Parser/Parser.cpp
-	$(CPP) -c Parser/Parser.cpp -o $@ $(CXXFLAGS)
+Parser/BaseParser.o : Parser/BaseParser.cpp
+	$(CPP) -c Parser/BaseParser.cpp -o $@ $(CXXFLAGS)
 
 Parser/ParserKaba.o : Parser/ParserKaba.cpp
 	$(CPP) -c Parser/ParserKaba.cpp -o $@ $(CXXFLAGS)
