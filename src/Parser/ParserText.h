@@ -8,7 +8,7 @@
 #ifndef PARSERTEXT_H_
 #define PARSERTEXT_H_
 
-#include "Parser.h"
+#include "BaseParser.h"
 
 class ParserText: public Parser
 {

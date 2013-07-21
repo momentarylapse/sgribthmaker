@@ -1,7 +1,7 @@
 #include "any.h"
 #include "../base/map.h"
 
-typedef Map<string, Any> AnyHashMap;
+typedef HashMap<string, Any> AnyHashMap;
 
 AnyHashMap _empty_dummy_hash_;
 DynamicArray _empty_dummy_array_ = {NULL, 0, 0, sizeof(Any)};
@@ -86,11 +86,11 @@ Any::Any(const Array<Any> &a)
 	*((Array<Any>*)data) = a;
 }
 
-/*Any::Any(const HashMap &a)
+/*Any::Any(const AnyHashMap &a)
 {
 	type = TYPE_HASH;
-	data = new HashMap;
-	*((HashMap*)data) = a;
+	data = new AnyHashMap;
+	*((AnyHashMap*)data) = a;
 }*/
 
 Any::~Any()

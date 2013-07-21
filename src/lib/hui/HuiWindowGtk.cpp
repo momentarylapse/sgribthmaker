@@ -163,6 +163,7 @@ bool process_key(GdkEventKey *event, GtkWidget *KeyReciever, HuiWindow *win, boo
 
 gboolean OnGtkWindowClose(GtkWidget *widget, GdkEvent *event, gpointer user_data)
 {
+	msg_write("on gtk close");
 	HuiWindow *win = (HuiWindow *)user_data;
 	HuiEvent e = HuiEvent("", "hui:close");
 	if (win->_SendEvent_(&e))
@@ -513,7 +514,9 @@ void HuiWindow::_Init_(const string &title, int x, int y, int width, int height,
 	gtk_box_pack_start(GTK_BOX(vbox), menubar, FALSE, FALSE, 0);
 
 	// tool bars
+#if GTK_MAJOR_VERSION >= 3
 	gtk_style_context_add_class(gtk_widget_get_style_context(toolbar[HuiToolbarTop]->widget), "primary-toolbar");
+#endif
 	gtk_box_pack_start(GTK_BOX(vbox), toolbar[HuiToolbarTop]->widget, FALSE, FALSE, 0);
 
 
@@ -589,22 +592,6 @@ void HuiWindow::_Init_(const string &title, int x, int y, int width, int height,
 
 HuiWindow::~HuiWindow()
 {
-	msg_db_f("~CHuiWindow",1);
-
-	if (!window)
-		return;
-
-	// quick'n'dirty fix (gtk destroys its widgets recursively)
-	foreach(HuiControl *c, control)
-		c->widget = NULL;
-
-	_CleanUp_();
-
-	gtk_widget_destroy(window);
-}
-
-void HuiWindow::__delete__()
-{
 	msg_db_f("HuiWindow.del",0);
 
 	if (!window)
@@ -624,7 +611,7 @@ void HuiWindow::Show()
 {
 	gtk_widget_show(window);
 #ifdef OS_WINDOWS
-	hWnd = (HWND)gdk_win32_drawable_get_handle(window->window);
+	hWnd = (HWND)GDK_WINDOW_HWND(gtk_widget_get_root_window(window));
 #endif
 
 	allow_input = true;
@@ -671,9 +658,10 @@ string HuiWindow::Run()
 	}
 #endif
 #ifdef HUI_API_GTK
-	if (GetParent())
+	if (GetParent()){
 		gtk_dialog_run(GTK_DIALOG(window));
-	else{
+		msg_write("Run/a0");
+	}else{
 		bool killed = false;
 		while(!killed){
 			HuiDoSingleMainLoop();
@@ -683,6 +671,7 @@ string HuiWindow::Run()
 		}
 	}
 #endif
+	msg_write("Run/a");
 	//msg_write("cleanup");
 
 	// clean up
@@ -691,6 +680,7 @@ string HuiWindow::Run()
 			last_id = cw.last_id;
 			_HuiClosedWindow_.erase(i);
 		}
+	msg_write("Run/b");
 	msg_db_l(1);
 	return last_id;
 }
@@ -988,7 +978,9 @@ void HuiWindow::SetCursorPos(int x, int y)
 		input.x = x;
 		input.y = y;
 		// TODO GTK3
+#ifdef OS_LINUX
 		XWarpPointer(hui_x_display, None, GDK_WINDOW_XID(gtk_widget_get_window(gl_widget)), 0, 0, 0, 0, x, y);
+#endif
 	}
 #if 0
 	irect ri = GetInterior();

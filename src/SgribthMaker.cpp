@@ -8,10 +8,10 @@
 #include "History.h"
 #include "HighlightSchema.h"
 #include "SourceView.h"
-#include "Parser/Parser.h"
+#include "Parser/BaseParser.h"
 
 
-string Filename = "";
+string Filename;
 
 
 string AppTitle = "SgribthMaker";
@@ -106,7 +106,7 @@ void New()
 bool LoadFromFile(const string &filename)
 {
 	msg_db_f("LoadFromFile", 1);
-	CFile *f = OpenFile(filename);
+	CFile *f = FileOpen(filename);
 	if (!f){
 		SetMessage(_("Datei l&asst sich nicht &offnen"));
 		return false;
@@ -131,7 +131,7 @@ bool LoadFromFile(const string &filename)
 bool WriteToFile(const string &filename)
 {
 	msg_db_f("WriteToFile", 1);
-	CFile *f = CreateFile(filename);
+	CFile *f = FileCreate(filename);
 	string temp = source_view->GetAll();
 	f->WriteBuffer(temp.data, temp.num);
 	FileClose(f);
@@ -460,10 +460,53 @@ void OnExit()
 	}
 }
 
+int aaa = 0;
+
+class TestClass
+{
+public:
+	int i;
+	virtual ~TestClass(){}
+	virtual void _cdecl f0(){ msg_write("TestClass.f0"); }
+	virtual void _cdecl f1(){ msg_write("TestClass.f1"); }
+	virtual void _cdecl f2(){ msg_write("TestClass.f2"); }
+	virtual void _cdecl f(int x){ msg_write("TestClass.f"); }
+	void _cdecl g(int x){ i = x; msg_write("TestClass.g"); }
+	void _cdecl g2(int x){ i = x; }
+};
+
+class TestDerivedClass : public TestClass
+{
+public:
+	virtual ~TestDerivedClass(){}
+	virtual void _cdecl f(int x){ msg_write("TestDerivedClass.f"); }
+	void _cdecl g(int x){ msg_write("TestDerivedClass.g"); }
+};
+
+typedef void (_cdecl TestClass::*tmf)();
+
+void _cdecl TestTest(int x, TestClass *w, tmf p)
+{
+	aaa = 13;
+	//(w->*p)();
+	//string s;
+	w->f(x);
+}
+
+class TTest : public VirtualBase
+{
+public:
+	virtual ~TTest(){ msg_write("TTest.del");	}
+};
+
+void kabadel(VirtualBase *b)
+{
+	b->__delete__();
+}
 
 int hui_main(Array<string> arg)
 {
-	msg_init(false);
+	msg_init(true);
 	msg_db_f("main",1);
 	HuiInit("sgribthmaker", true, "Deutsch");
 	msg_init(HuiAppDirectory + "message.txt", ALLOW_LOGGING);
@@ -554,7 +597,6 @@ int hui_main(Array<string> arg)
 	source_view = new SourceView(MainWin, "edit");
 	MainWin->Activate("edit");
 
-
 	HighlightSchema schema = GetDefaultSchema();
 	HighlightSchemas.add(schema);
 	schema.apply(source_view);
@@ -564,6 +606,28 @@ int hui_main(Array<string> arg)
 	MainWin->Show();
 
 	Script::Init();
+
+//	msg_write(Asm::Disassemble(&TestTest));
+//	msg_write(Asm::Disassemble(Script::mf(&TestClass::g2)));
+	
+	/*tmf p = &TestClass::f;
+	msg_write(string((char*)&p, sizeof(p)).hex());
+	p = &TestClass::g;
+	msg_write(string((char*)&p, sizeof(p)).hex());
+
+	TestDerivedClass w;
+	TestTest(&w, &TestClass::f);
+	TestTest(&w, &TestClass::g);
+
+	union{
+		tmf mp;
+		void *p;
+	} pp;
+	pp.mp = &TestClass::f;
+	msg_write(Asm::Disassemble(pp.p));
+
+	return 0;*/
+
 
 	New();
 
