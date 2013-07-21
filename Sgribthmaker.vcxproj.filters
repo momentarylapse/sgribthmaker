@@ -450,6 +450,9 @@
     <ClCompile Include="src\parser\BaseParser.cpp">
       <Filter>Source Files\Parser</Filter>
     </ClCompile>
+    <ClCompile Include="src\Parser\ParserPython.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\lib\nix\nix.h">
@@ -756,6 +759,9 @@
       <Filter>lib\hui</Filter>
     </ClInclude>
     <ClInclude Include="src\parser\BaseParser.h">
+      <Filter>Source Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Parser\ParserPython.h">
       <Filter>Source Files\Parser</Filter>
     </ClInclude>
   </ItemGroup>

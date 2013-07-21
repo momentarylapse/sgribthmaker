@@ -115,11 +115,13 @@ void populate_popup(GtkTextView *text_view, GtkMenu *menu, gpointer user_data)
 
 void SourceView::CreateTextColors(int first_line, int last_line)
 {
+	msg_db_f("CreateColors", 1);
 	parser->CreateTextColors(this, first_line, last_line);
 }
 
 void SourceView::CreateColorsIfNotBusy()
 {
+	msg_db_f("CreateColorsIfNotBusy", 1);
 	color_busy_level --;
 	if (color_busy_level == 0)
 		CreateTextColors();
@@ -131,7 +133,7 @@ void changed(GtkTextBuffer *textbuffer, gpointer user_data)
 	msg_db_f("changed", 1);
 	//printf("change\n");
 	sv->CreateTextColors(sv->NeedsUpdateStart, sv->NeedsUpdateEnd);
-	HuiRunLaterM(3, sv, &SourceView::CreateColorsIfNotBusy);
+	HuiRunLaterM(1, sv, &SourceView::CreateColorsIfNotBusy);
 	sv->color_busy_level ++;
 }
 

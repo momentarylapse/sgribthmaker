@@ -67,9 +67,9 @@ void Parser::CreateTextColors(SourceView *sv, int first_line, int last_line)
 
 void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_line)
 {
+	msg_db_f("CreateTextColors", 1);
 	if (gtk_text_buffer_get_char_count(sv->tb) > MAX_HIGHLIGHTING_SIZE)
 		return;
-	msg_db_f("CreateTextColors", 1);
 
 	int comment_level = 0;
 	int num_lines = sv->GetNumLines();

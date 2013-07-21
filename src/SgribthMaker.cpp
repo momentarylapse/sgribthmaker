@@ -300,8 +300,38 @@ void Compile()
 		SetMessage(_("nur *.kaba und *.glsl-Dateien k&onnen &ubersetzt werden!"));
 }
 
+class TestDialog : public HuiDialog
+{
+public:
+	TestDialog(const string &title, int x, int y, HuiWindow *p, bool b) : HuiDialog(title, x, y, p, b){}
+	virtual void _cdecl __delete__()
+	{
+		msg_write("testdia.del");
+	}
+};
+
+void On__()
+{
+	msg_write("..........");
+	delete(HuiCurWindow);
+}
+
 void CompileAndRun(bool verbose)
 {
+	/*HuiDialog *d = new TestDialog("test", 400, 300, MainWin, false);
+	d->Event("hui:close", &On__);
+	Script::VirtualTable *vt = *(Script::VirtualTable**)d;
+	Script::VirtualTable *vt2 = new Script::VirtualTable[17];
+	for (int i=0;i<17;i++){
+		msg_write(p2s(vt[i]));
+		vt2[i] = vt[i];
+	}
+	*(Script::VirtualTable**)d = vt2;
+	vt2[0] = Script::mf(&VirtualBase::__delete_win__);
+	d->Run();
+	return;*/
+
+
 	if (Filename.extension() != "kaba"){
 		SetMessage(_("nur *.kaba-Dateien k&onnen ausgef&uhrt werden!"));
 		return;

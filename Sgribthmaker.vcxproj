@@ -229,6 +229,7 @@
     <ClCompile Include="src\parser\BaseParser.cpp" />
     <ClCompile Include="src\parser\ParserC.cpp" />
     <ClCompile Include="src\parser\ParserKaba.cpp" />
+    <ClCompile Include="src\Parser\ParserPython.cpp" />
     <ClCompile Include="src\parser\ParserShader.cpp" />
     <ClCompile Include="src\parser\ParserText.cpp" />
     <ClCompile Include="src\SettingsDialog.cpp" />
@@ -334,6 +335,7 @@
     <ClInclude Include="src\parser\BaseParser.h" />
     <ClInclude Include="src\parser\ParserC.h" />
     <ClInclude Include="src\parser\ParserKaba.h" />
+    <ClInclude Include="src\Parser\ParserPython.h" />
     <ClInclude Include="src\parser\ParserShader.h" />
     <ClInclude Include="src\parser\ParserText.h" />
     <ClInclude Include="src\SettingsDialog.h" />
