@@ -73,7 +73,7 @@ void _so(int i)
 HuiCallback HuiIdleFunction;
 HuiCallback HuiErrorFunction;
 bool HuiHaveToExit;
-bool HuiRunning;
+bool HuiRunning = false;
 bool HuiEndKeepMsgAlive = false;
 int HuiMainLevel = -1;
 Array<bool> HuiMainLevelRunning;
@@ -87,7 +87,6 @@ bool _HuiScreenOpened_ = false;
 
 // HUI configuration
 string HuiComboBoxSeparator;
-bool HuiCreateHiddenWindows;
 
 string HuiAppFilename;
 string HuiAppDirectory;			// dir of changeable files (ie. ~/.app/)
@@ -145,8 +144,11 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	Array<string> a;
 	a.add("-dummy-");
 	string s = lpCmdLine;
-	if (s.num > 0)
+	if (s.num > 0){
+		if ((s[0] == '\"') && (s.back() == '\"'))
+			s = s.substr(1, -2);
 		a.add(s);
+	}
 	return hui_main(a);
 }
 
@@ -265,64 +267,9 @@ void _HuiMakeUsable_()
 	_HuiScreenOpened_ = true;
 }
 
-void HuiInitBase()
-{
-	#ifdef OS_WINDOWS
-#if 0
-		char *ttt = NULL;
-	msg_write("base0");
-	int r = _get_pgmptr(&ttt);
-	msg_write("base00");
-		msg_write(r);
-	msg_write(ttt);
-	msg_write("base01");
-		HuiAppFilename = ttt;
-	msg_write("base1");
-		HuiAppDirectory = HuiAppFilename.dirname();
-	msg_write("base12");
-#endif
-		hui_win_instance = (HINSTANCE)GetModuleHandle(NULL);
-	#endif
-	#ifdef OS_LINUX
-		if (HuiArgument.num > 0){
-			if (HuiArgument[0][0] == '.'){
-				HuiAppFilename = HuiArgument[0].substr(2, -1);
-				HuiAppDirectory = get_current_dir();
-			}else{
-				HuiAppFilename = HuiArgument[0];
-				HuiAppDirectory = HuiAppFilename.dirname();
-			}
-		}
-	#endif
-
-	HuiAppDirectoryStatic = HuiAppDirectory;
-
-	if (!msg_inited){
-		dir_create(HuiAppDirectory);
-		msg_init(HuiAppDirectory + "message.txt", true);
-	}
-	HuiRunning = false;
-
-	msg_db_f("Hui",1);
-	//msg_db_m(format("[%s]", HuiVersion),1);
-
-
-	HuiInitTimers();
-
-	_HuiInitInput_();
-
-	HuiComboBoxSeparator="\\";
-	HuiIdleFunction=NULL;
-	HuiErrorFunction=NULL;
-	HuiLanguaged=false;
-	HuiCreateHiddenWindows=false;
-	HuiPushMainLevel();
-}
-
 void HuiInit(const string &program, bool load_res, const string &def_lang)
 {
 	HuiInitialWorkingDirectory = get_current_dir();
-	string s1, s2;
 
 	#ifdef HUI_API_GTK
 		g_set_prgname(program.c_str());
@@ -353,10 +300,17 @@ void HuiInit(const string &program, bool load_res, const string &def_lang)
 				}
 			}
 		}
-		s1 = HuiAppDirectory;
-		s2 = HuiAppDirectoryStatic;
-	#else
-		HuiAppDirectory = HuiInitialWorkingDirectory;
+		dir_create(HuiAppDirectory);
+	#endif
+	#ifdef OS_WINDOWS
+		char *ttt = NULL;
+		int r = _get_pgmptr(&ttt);
+		HuiAppFilename = ttt;
+		HuiAppDirectory = HuiAppFilename.dirname();
+		HuiAppDirectory = HuiAppDirectory.replace("\\Release\\", "\\");
+		HuiAppDirectory = HuiAppDirectory.replace("\\Debug\\", "\\");
+		HuiAppDirectory = HuiAppDirectory.replace("\\Unoptimized\\", "\\");
+		hui_win_instance = (HINSTANCE)GetModuleHandle(NULL);
 		HuiAppDirectoryStatic = HuiAppDirectory;
 	#endif
 
@@ -364,16 +318,20 @@ void HuiInit(const string &program, bool load_res, const string &def_lang)
 		dir_create(HuiAppDirectory);
 		msg_init(HuiAppDirectory + "message.txt", true);
 	}
+	msg_db_f("Hui",1);
+	//msg_db_m(format("[%s]", HuiVersion),1);
 
 	//msg_write("HuiAppDirectory " + HuiAppDirectory);
-		
 
-	HuiInitBase();
-#ifdef OS_LINUX
-	HuiAppDirectory = s1;
-	HuiAppDirectoryStatic = s2;
-	dir_create(HuiAppDirectory);
-#endif
+
+
+	HuiInitTimers();
+
+	_HuiInitInput_();
+
+	HuiComboBoxSeparator = "\\";
+	HuiLanguaged = false;
+	HuiPushMainLevel();
 	HuiSetDefaultErrorHandler(NULL);
 	//msg_write("");
 
