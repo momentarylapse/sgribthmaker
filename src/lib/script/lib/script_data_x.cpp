@@ -18,13 +18,13 @@
 	#include "../../../meta.h"
 	#include "../../../networking.h"
 	#define x_p(p)		(void*)p
-	void ExitProgram();
-	void ScreenShot();
-	void LoadWorldSoon(const string &filename);
-	void LoadGameFromHostSoon(const HostData &host);
-	void SaveGameState(const string &filename);
-	void LoadGameStateSoon(const string &filename);
-	void DrawSplashScreen(const string &str, float per);
+	void _cdecl ExitProgram();
+	void _cdecl ScreenShot();
+	void _cdecl LoadWorldSoon(const string &filename);
+	void _cdecl LoadGameFromHostSoon(const HostData &host);
+	void _cdecl SaveGameState(const string &filename);
+	void _cdecl LoadGameStateSoon(const string &filename);
+	void _cdecl DrawSplashScreen(const string &str, float per);
 	using namespace Gui;
 	using namespace Fx;
 #else
@@ -126,9 +126,9 @@ extern Type *TypeSocketList;
 	class HostDataList : public Array<HostData>
 	{
 		public:
-			void __init__(){Array<HostData>::__init__();}
-			void __delete__(){clear();}
-			void __assign__(HostDataList &other){*this = other;}
+			void _cdecl __init__(){Array<HostData>::__init__();}
+			void _cdecl __delete__(){clear();}
+			void _cdecl __assign__(HostDataList &other){*this = other;}
 	};
 	static Camera *_camera;
 	#define	GetDACamera(x)		long(&_camera->x)-long(_camera)
@@ -336,7 +336,7 @@ void SIAddPackageX()
 		class_add_func_virtual("OnMouseEnter", TypeVoid, x_p(mf(&Text::OnMouseEnter)));
 		class_add_func_virtual("OnMouseLeave", TypeVoid, x_p(mf(&Text::OnMouseLeave)));
 		class_add_func_virtual("IsMouseOver", TypeBool, x_p(mf(&Text::IsMouseOver)));
-		class_set_vtable_x(Test);
+		class_set_vtable_x(Text);
 	
 	add_class(TypeParticle);
 		class_add_element("enabled",		TypeBool,		GetDAParticle(enabled));

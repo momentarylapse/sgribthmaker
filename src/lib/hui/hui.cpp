@@ -15,7 +15,7 @@
 #include "../file/file.h"
 
 
-string HuiVersion = "0.4.93.0";
+string HuiVersion = "0.4.94.0";
 
 #include <stdio.h>
 #include <signal.h>
@@ -70,10 +70,8 @@ void _so(int i)
 
 
 
-
-hui_callback *HuiIdleFunction = NULL, *HuiErrorFunction = NULL;
-HuiEventHandler *hui_idle_object = NULL;
-void (HuiEventHandler::*hui_idle_member_function)() = NULL;
+HuiCallback HuiIdleFunction;
+HuiCallback HuiErrorFunction;
 bool HuiHaveToExit;
 bool HuiRunning;
 bool HuiEndKeepMsgAlive = false;
@@ -99,11 +97,6 @@ Array<string> HuiArgument;
 
 
 
-#ifdef OS_WINDOWS
-	LONGLONG perf_cnt;
-	bool perf_flag=false;
-	float time_scale;
-#endif
 #ifdef HUI_API_GTK
 	void *invisible_cursor = NULL;
 #endif
@@ -185,48 +178,27 @@ int main(int NumArgs, char *Args[])
 	int idle_id = -1;
 	gboolean GtkIdleFunction(void*)
 	{
-		if (HuiIdleFunction)
-			HuiIdleFunction();
-		else if ((hui_idle_object) && (hui_idle_member_function))
-			(hui_idle_object->*hui_idle_member_function)();
+		if (HuiIdleFunction.is_set())
+			HuiIdleFunction.call();
 		else
 			HuiSleep(10);
 		return TRUE;
 	}
 
-	struct HuiRunLaterItem
-	{
-		hui_callback *function;
-		HuiEventHandler *member_object;
-		void (HuiEventHandler::*member_function)();
-
-		HuiRunLaterItem()
-		{
-			function = NULL;
-			member_object = NULL;
-			member_function = NULL;
-		}
-	};
-
 	gboolean GtkRunLaterFunction(gpointer data)
 	{
-		if (data){
-			HuiRunLaterItem *i = (HuiRunLaterItem*)data;
-			if (i->function)
-				i->function();
-			else if ((i->member_object) && (i->member_function))
-				(i->member_object->*i->member_function)();
-			delete(i);
-		}
+		HuiCallback *c = (HuiCallback*)data;
+		c->call();
+		delete(c);
 		return false;
 	}
 #endif
 
-void HuiSetIdleFunction(hui_callback *idle_function)
+void _HuiSetIdleFunction(HuiCallback c)
 {
 #ifdef HUI_API_GTK
-	bool old_idle = (HuiIdleFunction) || ((hui_idle_object) && (hui_idle_member_function));
-	bool new_idle = (bool)idle_function;
+	bool old_idle = HuiIdleFunction.is_set();
+	bool new_idle = c.is_set();
 	if ((new_idle) && (!old_idle))
 		idle_id = g_idle_add_full(300, GtkIdleFunction, NULL, NULL);
 	if ((!new_idle) && (old_idle) && (idle_id >= 0)){
@@ -234,51 +206,37 @@ void HuiSetIdleFunction(hui_callback *idle_function)
 		idle_id = -1;
 	}
 #endif
-	hui_idle_object = NULL;
-	hui_idle_member_function = NULL;
-	HuiIdleFunction = idle_function;
+	HuiIdleFunction = c;
+}
+
+void HuiSetIdleFunction(hui_callback *idle_function)
+{
+	_HuiSetIdleFunction(idle_function);
 }
 
 void _HuiSetIdleFunctionM(HuiEventHandler *object, void (HuiEventHandler::*function)())
 {
-#ifdef HUI_API_GTK
-	bool old_idle = (HuiIdleFunction) || ((hui_idle_object) && (hui_idle_member_function));
-	bool new_idle = ((object) && (function));
-	if ((new_idle) && (!old_idle))
-		idle_id = g_idle_add_full(300, GtkIdleFunction, NULL, NULL);
-	if ((!new_idle) && (old_idle) && (idle_id >= 0)){
-		g_source_remove(idle_id);
-		idle_id = -1;
-	}
-#endif
-	hui_idle_object = object;
-	hui_idle_member_function = function;
-	HuiIdleFunction = NULL;
+	_HuiSetIdleFunction(HuiCallback(object, function));
+}
+
+void _HuiRunLater(float time, HuiCallback *c)
+{
+	#ifdef HUI_API_WIN
+		msg_todo("HuiRunLater");
+	#endif
+	#ifdef HUI_API_GTK
+		g_timeout_add_full(300, (int)(time * 1000), &GtkRunLaterFunction, (void*)c, NULL);
+	#endif
 }
 
 void HuiRunLater(float time, hui_callback *function)
 {
-	#ifdef HUI_API_WIN
-		msg_todo("HuiRunLater");
-	#endif
-	#ifdef HUI_API_GTK
-		HuiRunLaterItem *i = new HuiRunLaterItem;
-		i->function = function;
-		g_timeout_add_full(300, time * 1000, &GtkRunLaterFunction, (void*)i, NULL);
-	#endif
+	_HuiRunLater(time, new HuiCallback(function));
 }
 
 void _HuiRunLaterM(float time, HuiEventHandler *object, void (HuiEventHandler::*function)())
 {
-	#ifdef HUI_API_WIN
-		msg_todo("HuiRunLater");
-	#endif
-	#ifdef HUI_API_GTK
-		HuiRunLaterItem *i = new HuiRunLaterItem;
-		i->member_function = function;
-		i->member_object = object;
-		g_timeout_add_full(300, time * 1000, &GtkRunLaterFunction, (void*)i, NULL);
-	#endif
+	_HuiRunLater(time, new HuiCallback(object, function));
 }
 
 void _HuiMakeUsable_()
@@ -349,15 +307,7 @@ void HuiInitBase()
 	//msg_db_m(format("[%s]", HuiVersion),1);
 
 
-	#ifdef OS_WINDOWS
-		// timers
-		if (QueryPerformanceFrequency((LARGE_INTEGER *) &perf_cnt)){
-			perf_flag=true;
-			time_scale=1.0f/perf_cnt;
-		}else 
-			time_scale=0.001f;
-
-	#endif
+	HuiInitTimers();
 
 	_HuiInitInput_();
 
@@ -531,19 +481,14 @@ void HuiDoSingleMainLoop()
 #ifdef HUI_API_GTK
 
 	// push idle function
-	hui_callback *_if_ = HuiIdleFunction;
-	HuiEventHandler *_io_ = hui_idle_object;
-	void (HuiEventHandler::*_imf_)() = hui_idle_member_function;
+	HuiCallback _if_ = HuiIdleFunction;
 
 	HuiSetIdleFunction(NULL);
 	while(gtk_events_pending())
 		gtk_main_iteration();
 
 	// pop idle function
-	if (_if_)
-		HuiSetIdleFunction(_if_);
-	else if ((_io_) && (_imf_))
-		HuiSetIdleFunctionM(_io_, _imf_);
+	_HuiSetIdleFunction(_if_);
 #endif
 }
 
