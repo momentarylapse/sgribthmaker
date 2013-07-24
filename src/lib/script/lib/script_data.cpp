@@ -265,6 +265,7 @@ void _class_add_func_virtual(const string &tname, const string &name, Type *retu
 	cur_class->function.add(ClassFunction(name, return_type, cur_package_script, cmd));
 	cur_class_func = &cur_class->function.back();
 	cur_class_func->virtual_index = index;
+	cur_class->num_virtual = max(cur_class->num_virtual, index + 1);
 }
 
 void class_add_func(const string &name, Type *return_type, void *func)

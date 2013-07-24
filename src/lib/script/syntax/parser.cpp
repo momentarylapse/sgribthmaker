@@ -1519,7 +1519,7 @@ void SyntaxTree::ParseClass()
 	_class->num_virtual += class_count_virtual_functions(this);
 	if (_class->num_virtual > 0){
 		if (_class->parent){
-			if (!_class->parent->vtable)
+			if (_class->parent->num_virtual == 0)
 				DoError("no virtual functions allowed when inheriting from class without virtual functions");
 			// element "-vtable-" being derived
 		}else{
