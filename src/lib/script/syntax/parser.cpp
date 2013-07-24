@@ -1406,7 +1406,32 @@ void SyntaxTree::ParseEnum()
 	Exp.cur_line --;
 }
 
-void SyntaxTree::ParseClassFunction(Type *t, bool as_extern, int virtual_index)
+bool class_func_match(ClassFunction &a, ClassFunction &b)
+{
+	if (a.name != b.name)
+		return false;
+	if (a.return_type != b.return_type)
+		return false;
+	if (a.param_type.num != b.param_type.num)
+		return false;
+	for (int i=0;i<a.param_type.num;i++)
+		if (a.param_type[i] != b.param_type[i])
+			return false;
+	return true;
+}
+
+string func_signature(Function *f)
+{
+	string r = f->literal_return_type->name + " " + f->name + "(";
+	for (int i=0;i<f->num_params;i++){
+		if (i > 0)
+			r += ", ";
+		r += f->literal_param_type[i]->name;
+	}
+	return r + ")";
+}
+
+void SyntaxTree::ParseClassFunction(Type *t, bool as_extern, int virtual_index, bool overwrite)
 {
 	ParseFunction(t, as_extern);
 
@@ -1421,16 +1446,19 @@ void SyntaxTree::ParseClassFunction(Type *t, bool as_extern, int virtual_index)
 	cf.virtual_index = ProcessClassOffset(t->name, cf.name, virtual_index);
 
 	// overwrite?
+	ClassFunction *orig = NULL;
 	foreach(ClassFunction &_cf, t->function)
-		if (_cf.name == cf.name)
-			if ((_cf.return_type == cf.return_type) && (_cf.param_type.num == cf.param_type.num)){
-				if ((virtual_index < 0) && (_cf.virtual_index >= 0))
-					DoError("can only overwrite a virtual function with another virtual function");
-				_cf.nr = cf.nr;
-				_cf.script = cf.script;
-				return;
-			}
-	t->function.add(cf);
+		if (class_func_match(_cf, cf))
+			orig = &_cf;
+	if (overwrite and !orig)
+		DoError(format("can not overwrite function '%s', no previous definition", func_signature(f).c_str()));
+	if (!overwrite and orig)
+		DoError(format("function '%s' is already defined, use 'overwrite' to overwrite", func_signature(f).c_str()));
+	if (overwrite){
+		orig->script = cf.script;
+		orig->nr = cf.nr;
+	}else
+		t->function.add(cf);
 }
 
 inline bool type_needs_alignment(Type *t)
@@ -1522,8 +1550,12 @@ void SyntaxTree::ParseClass()
 
 		// virtual?
 		bool next_virtual = false;
+		bool overwrite = false;
 		if (Exp.cur == "virtual"){
 			next_virtual = true;
+			Exp.next();
+		}else if (Exp.cur == "overwrite"){
+			overwrite = true;
 			Exp.next();
 		}
 		int ie = Exp.cur_exp;
@@ -1551,22 +1583,27 @@ void SyntaxTree::ParseClass()
 			if (is_function){
 				Exp.cur_exp = ie;
 				Exp.cur = Exp.cur_line->exp[Exp.cur_exp].name;
-				ParseClassFunction(_class, next_extern, next_virtual ? (cur_virtual_index ++) : -1);
+				ParseClassFunction(_class, next_extern, next_virtual ? (cur_virtual_index ++) : -1, overwrite);
 
 				break;
 			}
 
 			// overwrite?
-			bool overwrite = false;
-			if (_class->parent){
-				foreachi(ClassElement &e, _class->parent->element, i)
-					if ((e.name == el.name) && e.type->is_pointer && el.type->is_pointer){
-						_class->element[i].type = el.type;
-						overwrite = true;
-					}
-			}
-			if (overwrite)
+			ClassElement *orig = NULL;
+			foreachi(ClassElement &e, _class->element, i)
+				if (e.name == el.name) //&& e.type->is_pointer && el.type->is_pointer)
+						orig = &e;
+			if (overwrite and ! orig)
+				DoError(format("can not overwrite element '%s', not previous definition", el.name.c_str()));
+			if (!overwrite and orig)
+				DoError(format("element '%s' is already defined, use 'overwrite' to overwrite", el.name.c_str()));
+			if (overwrite){
+				if (orig->type->is_pointer and el.type->is_pointer)
+					orig->type = el.type;
+				else
+					DoError("can only overwrite pointer elements with other pointer type");
 				continue;
+			}
 
 
 			// add element

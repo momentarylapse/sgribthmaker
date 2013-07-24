@@ -74,6 +74,7 @@ int ParserKaba::WordType(const string &name)
 		(name == "or") ||
 		(name == "extern") ||
 		(name == "virtual") ||
+		(name == "overwrite") ||
 		(name == "const") ||
 		(name == "this") ||
 		(name == "self") ||
