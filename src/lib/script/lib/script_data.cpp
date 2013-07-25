@@ -26,7 +26,7 @@
 
 namespace Script{
 
-string DataVersion = "0.12.0.1";
+string DataVersion = "0.12.5.0";
 
 CompilerConfiguration config;
 
@@ -450,6 +450,7 @@ void script_make_super_array(Type *t, SyntaxTree *ps)
 			func_add_param("start",		TypeInt);
 			func_add_param("num",		TypeInt);
 
+		// FIXME  wrong for complicated classes
 		if (t->parent->is_simple_class()){
 			if (!t->parent->UsesCallByReference()){
 				if (t->parent->is_pointer){

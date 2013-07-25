@@ -327,16 +327,19 @@ bool SyntaxTree::GetSpecialFunctionCall(const string &f_name, Command *Operand, 
 		int nc = AddConstant(TypeInt);
 		CommandSetConst(this, Operand, nc);
 
-		int nt = WhichType(Exp.cur);
-		Type *type;
-		if (nt >= 0)
-			(*(int*)(Constants[nc].data)) = Types[nt]->size;
-		else if ((GetExistence(Exp.cur, f)) && ((GetExistenceLink.kind == KindVarGlobal) || (GetExistenceLink.kind == KindVarLocal)))
-			(*(int*)(Constants[nc].data)) = GetExistenceLink.type->size;
-		else if (type = GetConstantType())
+
+		Type *type = FindType(Exp.cur);
+		if (type){
 			(*(int*)(Constants[nc].data)) = type->size;
-		else
-			DoError("type-name or variable name expected in sizeof(...)");
+		}else if ((GetExistence(Exp.cur, f)) && ((GetExistenceLink.kind == KindVarGlobal) || (GetExistenceLink.kind == KindVarLocal))){
+			(*(int*)(Constants[nc].data)) = GetExistenceLink.type->size;
+		}else{
+			type = GetConstantType();
+			if (type)
+				(*(int*)(Constants[nc].data)) = type->size;
+			else
+				DoError("type-name or variable name expected in sizeof(...)");
+		}
 		Exp.next();
 		if (Exp.cur != ")")
 			DoError("\")\" expected after parameter list");
@@ -563,7 +566,7 @@ Command *SyntaxTree::GetOperand(Function *f)
 			// variables get linked directly...
 
 			// operand is executable
-			if ((Operand->kind == KindFunction) || (Operand->kind == KindCompilerFunction)){
+			if ((Operand->kind == KindFunction) || (Operand->kind == KindVirtualFunction) || (Operand->kind == KindCompilerFunction)){
 				GetFunctionCall(f_name, Operand, f);
 
 			}else if (Operand->kind == KindPrimitiveOperator){
