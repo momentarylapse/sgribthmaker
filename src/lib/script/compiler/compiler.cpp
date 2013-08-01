@@ -184,6 +184,14 @@ void Script::MapGlobalVariablesToMemory()
 	memset(Memory, 0, MemorySize); // reset all global variables to 0
 }
 
+void Script::AlignOpcode()
+{
+	int ocs_new = mem_align(OpcodeSize, config.FunctionAlign);
+	for (int i=OpcodeSize;i<ocs_new;i++)
+		Opcode[i] = 0x90;
+	OpcodeSize = ocs_new;
+}
+
 static int OCORA;
 void Script::CompileOsEntryPoint()
 {
@@ -199,36 +207,34 @@ void Script::CompileOsEntryPoint()
 
 	// put strings into Opcode!
 	foreachi(Constant &c, syntax->Constants, i){
-		if ((syntax->FlagCompileOS) || (c.type == TypeString)){
+		if (syntax->FlagCompileOS){// && (c.type == TypeCString)){
 			int offset = 0;
 			if (syntax->AsmMetaInfo)
-				offset = syntax->AsmMetaInfo->CodeOrigin;
+				offset = syntax->AsmMetaInfo->OverwriteCodeOrigin;
 			cnst[i] = (char*)(long)(OpcodeSize + offset);
 			int s = c.type->size;
-			if (c.type == TypeString)
+			if (c.type == TypeCString)
 				s = strlen(c.data) + 1;
 			memcpy(&Opcode[OpcodeSize], (void*)c.data, s);
 			OpcodeSize += s;
 		}
 	}
+
+	AlignOpcode();
 }
 
 void Script::LinkOsEntryPoint()
 {
-	int nf=-1;
+	int nf = -1;
 	foreachi(Function *ff, syntax->Functions, index)
 		if (ff->name == "main")
 			nf = index;
-	if (nf>=0){
-		int lll=((long)func[nf]-(long)&Opcode[TaskReturnOffset]);
-		if (syntax->FlagCompileInitialRealMode)
-			lll+=5;
-		else
-			lll+=3;
+	if (nf >= 0){
+		int lll = (long)func[nf] - (long)Opcode - TaskReturnOffset;
 		//printf("insert   %d  an %d\n", lll, OCORA);
 		//msg_write(lll);
 		//msg_write(d2h(&lll,4,false));
-		*(int*)&Opcode[OCORA]=lll;
+		*(int*)&Opcode[OCORA] = lll;
 	}
 }
 
@@ -328,14 +334,15 @@ void Script::Compiler()
 	AllocateOpcode();
 
 
-	syntax->PreProcessorAddresses(this);
-
-
 
 // compiling an operating system?
 //   -> create an entry point for execution... so we can just call Opcode like a function
-	if ((syntax->FlagCompileOS)||(syntax->FlagCompileInitialRealMode))
+	if (syntax->FlagAddEntryPoint)
 		CompileOsEntryPoint();
+
+
+
+	syntax->PreProcessorAddresses(this);
 
 
 // compile functions into Opcode
@@ -364,7 +371,7 @@ void Script::Compiler()
 
 
 
-	if (syntax->FlagCompileOS)
+	if (syntax->FlagAddEntryPoint)
 		LinkOsEntryPoint();
 
 
