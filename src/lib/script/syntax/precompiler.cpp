@@ -105,6 +105,8 @@ void SyntaxTree::HandleMacro(ExpressionBuffer::Line *l, int &line_no, int &NumIf
 			if ((d.Source.num > 4) && (d.Source.head(2) == "__") && (d.Source.tail(2) == "__")){
 				if (d.Source == "__OS__"){
 					FlagCompileOS = true;
+				}else if (d.Source == "__STRING_CONST_AS_CSTRING__"){
+					FlagStringConstAsCString = true;
 				}else if (d.Source == "__NO_FUNCTION_FRAME__"){
 					FlagNoFunctionFrame = true;
 				}else if (d.Source == "__ADD_ENTRY_POINT__"){
@@ -117,8 +119,7 @@ void SyntaxTree::HandleMacro(ExpressionBuffer::Line *l, int &line_no, int &NumIf
 				}else if (d.Source == "__CODE_ORIGIN__"){
 					if (d.Dest.num != 1)
 						DoError("offset value expected after __CODE_ORIGIN__");
-					CreateAsmMetaInfo();
-					((Asm::MetaInfo*)AsmMetaInfo)->OverwriteCodeOrigin = s2i2(d.Dest[0]);
+					AsmMetaInfo->CodeOrigin = s2i2(d.Dest[0]);
 				}else
 					DoError("unknown compiler flag (define starting and ending with \"__\"): " + d.Source);
 			}else
