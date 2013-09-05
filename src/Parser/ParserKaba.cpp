@@ -30,22 +30,21 @@ Array<Parser::Label> ParserKaba::FindLabels(SourceView *sv)
 		if (s.num < 4)
 			continue;
 		if (char_type(s[0]) == CharLetter){
-			bool ok = false;
 			if (s.find("class ") >= 0){
-				ok = true;
 				last_class = s.replace("\t", " ").replace(":", " ").explode(" ")[1];
 				s = "class " + last_class;
 			}else if (s.find("(") >= 0){
-				ok = true;
 				last_class = "";
-			}
+			}else
+				continue;
 			if (s.find("extern") >= 0)
-				ok = false;
-			if (ok)
-				labels.add(Label(s, l));
+				continue;
+			labels.add(Label(s, l));
 		}else if ((last_class.num > 0) && (s[0] == '\t') && (char_type(s[1]) == CharLetter)){
-			if (s.find("(") >= 0)
-				labels.add(Label(">" + s, l));
+			if (s.find("(") < 0)
+				continue;
+			s = s.replace("virtual ", "").replace("overwrite ", "");
+			labels.add(Label(">" + s, l));
 		}
 	}
 	return labels;
