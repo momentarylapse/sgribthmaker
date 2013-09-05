@@ -503,3 +503,42 @@ void SourceView::UpdateFont()
 	pango_font_description_free(font_desc);
 	UpdateTabSize();
 }
+
+
+bool SourceView::Find(const string &str)
+{
+	// find...
+	GtkTextIter ii, isb;
+	gtk_text_buffer_get_iter_at_mark(tb, &ii, gtk_text_buffer_get_insert(tb));
+	int off = gtk_text_iter_get_offset(&ii);
+	//int nn = gtk_text_buffer_get_char_count(tb);
+
+	string temp;
+	temp.resize(str.num);
+	for (int i=0;i<str.num;i++){
+		temp[i] = gtk_text_iter_get_char(&ii);
+		if (gtk_text_iter_forward_char(&ii))
+			break;
+	}
+
+	bool found = false;
+	while(true){
+		if (temp == str){
+			found = true;
+			break;
+		}
+		if (!gtk_text_iter_forward_char(&ii))
+			break;
+		for (int i=0;i<str.num - 1;i++)
+			temp[i] = temp[i + 1];
+		temp[str.num - 1] = gtk_text_iter_get_char(&ii);
+	}
+	if (found){
+		gtk_text_iter_forward_char(&ii);
+		isb = ii;
+		gtk_text_iter_backward_chars(&ii, str.num);
+		gtk_text_buffer_select_range(tb, &ii, &isb);
+		gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb));
+	}
+	return found;
+}

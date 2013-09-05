@@ -418,43 +418,10 @@ void ShowCurLine()
 
 void ExecuteCommand(const string &cmd)
 {
-#if 0
 	msg_db_f("ExecCmd", 1);
-	// find...
-	GtkTextIter ii, isb;
-	gtk_text_buffer_get_iter_at_mark(tb, &ii, gtk_text_buffer_get_insert(tb));
-	int off = gtk_text_iter_get_offset(&ii);
-	//int nn = gtk_text_buffer_get_char_count(tb);
-	
-	string temp;
-	temp.resize(cmd.num);
-	for (int i=0;i<cmd.num;i++){
-		temp[i] = gtk_text_iter_get_char(&ii);
-		if (gtk_text_iter_forward_char(&ii))
-			break;
-	}
-
-	bool found = false;
-	while(true){
-		if (temp == cmd){
-			found = true;
-			break;
-		}
-		if (!gtk_text_iter_forward_char(&ii))
-			break;
-		for (int i=0;i<cmd.num - 1;i++)
-			temp[i] = temp[i + 1];
-		temp[cmd.num - 1] = gtk_text_iter_get_char(&ii);
-	}
-	if (found){
-		gtk_text_iter_forward_char(&ii);
-		isb = ii;
-		gtk_text_iter_backward_chars(&ii, cmd.num);
-		gtk_text_buffer_select_range(tb, &ii, &isb);
-		gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb));
-	}else
+	bool found = source_view->Find(cmd);
+	if (!found)
 		SetMessage(format(_("\"%s\" nicht gefunden"), cmd.c_str()));
-#endif
 }
 
 void ExecuteCommandDialog()

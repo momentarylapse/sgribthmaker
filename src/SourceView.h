@@ -55,6 +55,7 @@ public:
 
 	void GetCurLinePos(int &line, int &pos);
 
+	bool Find(const string &str);
 
 	GtkTextBuffer *tb;
 	GtkWidget *tv;
