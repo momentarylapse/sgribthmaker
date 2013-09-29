@@ -268,9 +268,10 @@ void CompileShader()
 {
 	msg_db_f("CompileShader",1);
 
-	HuiWindow *w = new HuiNixWindow("nix", -1, -1, 640, 480);
+	HuiWindow *w = new HuiWindow("nix", -1, -1, 640, 480);
+	w->AddDrawingArea("", 0, 0, 0, 0, "nix-area");
 	w->Show();
-	NixInit("OpenGL", 640, 480, 32, false, w);
+	NixInit("OpenGL", w, "nix-area");
 
 	int shader = NixLoadShader(Filename);
 	if (shader < 0){
@@ -447,12 +448,11 @@ void OnConsoleClose()
 void OnExit()
 {
 	if (AllowTermination()){
-		irect r=MainWin->GetOuteriorDesired();
-		HuiConfigWriteInt("Width",r.x2-r.x1);
-		HuiConfigWriteInt("Height",r.y2-r.y1);
-		HuiConfigWriteInt("X",r.x1);
-		HuiConfigWriteInt("Y",r.y1);
-		HuiConfigWriteBool("Maximized",MainWin->IsMaximized());
+		int w, h;
+		MainWin->GetSizeDesired(w, h);
+		HuiConfigWriteInt("Window.Width", w);
+		HuiConfigWriteInt("Window.Height", h);
+		HuiConfigWriteBool("Window.Maximized", MainWin->IsMaximized());
 		HuiEnd();
 	}
 }
@@ -517,11 +517,9 @@ int hui_main(Array<string> arg)
 
 	HuiRegisterFileType("kaba","MichiSoft Script Datei",HuiAppDirectory + "Data/kaba.ico",HuiAppFilename,"open",true);
 
-	int width = HuiConfigReadInt("Width", 800);
-	int height = HuiConfigReadInt("Height", 600);
-	int x = HuiConfigReadInt("X", 0);
-	int y = HuiConfigReadInt("Y", 0);
-	bool maximized = HuiConfigReadBool("Maximized", false);
+	int width = HuiConfigReadInt("Window.Width", 800);
+	int height = HuiConfigReadInt("Window.Height", 600);
+	bool maximized = HuiConfigReadBool("Window.Maximized", false);
 
 	HuiAddCommand("new", "hui:new", KEY_N + KEY_CONTROL, &New);
 	//HuiAddKeyCode(HMM_NEW_HEX, KEY_F1 + 256);
@@ -630,6 +628,12 @@ int hui_main(Array<string> arg)
 
 	if (arg.num > 1)
 		LoadFromFile(arg[1]);
+
+	Image im;
+	im.Load("/home/michi/test.png");
+	im.Save("/home/michi/test.tga");
+	im.Load("/home/michi/alpha.png");
+	im.Save("/home/michi/alpha.tga");
 
 	return HuiRun();
 }

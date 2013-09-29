@@ -2,8 +2,13 @@
 #include "../file/file.h"
 #include "../math/math.h"
 
+#include "image_bmp.h"
+#include "image_tga.h"
+#include "image_jpg.h"
+#include "image_png.h"
 
-string ImageVersion = "0.2.3.0";
+
+string ImageVersion = "0.2.4.0";
 
 void Image::__init__()
 {
@@ -44,6 +49,8 @@ void Image::LoadFlipped(const string &filename)
 		image_load_tga(filename, *this);
 	else if (ext == "jpg")
 		image_load_jpg(filename, *this);
+	else if (ext == "png")
+		image_load_png(filename, *this);
 	else
 		msg_error("ImageLoad: unhandled file extension: " + ext);
 	
