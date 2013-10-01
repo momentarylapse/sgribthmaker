@@ -32,7 +32,9 @@
 #define NIX_ALLOW_API_OPENGL
 //#define NIX_ALLOW_VIDEO_TEXTURE			// allow Avi-videos as texture?
 
+// Image
 
+#define IMAGE_ALLOW_PNG
 
 
 

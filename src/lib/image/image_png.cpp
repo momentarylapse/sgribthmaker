@@ -8,6 +8,8 @@
 #include "image.h"
 #include <stdio.h>
 #include "../file/file.h"
+
+#ifdef IMAGE_ALLOW_PNG
 #include <zlib.h>
 
 int endian_big_to_little(int i)
@@ -151,4 +153,6 @@ void image_load_png(const string &filename, Image &image)
 	delete(f);
 }
 
-
+#else
+void image_load_png(const string &filename, Image &image){}
+#endif
