@@ -496,6 +496,14 @@ string color_to_hex(const color &c)
 	return "#" + string((char*)&r, 1).hex() + string((char*)&g, 1).hex() + string((char*)&b, 1).hex();
 }
 
+void color2gdkrgba(const color &c, GdkRGBA &g)
+{
+	g.alpha = 1;
+	g.red = c.r;
+	g.green = c.g;
+	g.blue = c.b;
+}
+
 void SourceView::ApplyScheme(HighlightScheme *s)
 {
 	for (int i=0; i<NumTagTypes; i++){
@@ -505,11 +513,14 @@ void SourceView::ApplyScheme(HighlightScheme *s)
 			SetTag(i, color_to_hex(s->context[i].fg).c_str(), NULL, s->context[i].bold, s->context[i].italic);
 	}
 	GdkRGBA _color;
-	_color.alpha = 1;
-	_color.red = s->bg.r;
-	_color.green = s->bg.g;
-	_color.blue = s->bg.b;
+	color2gdkrgba(s->bg, _color);
 	gtk_widget_override_background_color(tv, GTK_STATE_FLAG_NORMAL, &_color);
+	color2gdkrgba(s->context[InWord].fg, _color);
+	gtk_widget_override_background_color(tv, GTK_STATE_FLAG_SELECTED, &_color);
+	color2gdkrgba(s->bg, _color);
+	gtk_widget_override_color(tv, GTK_STATE_FLAG_SELECTED, &_color);
+	color2gdkrgba(Black, _color);
+	gtk_widget_override_color(tv, GTK_STATE_FLAG_NORMAL, &_color);
 	scheme = s;
 	HuiConfigWriteStr("HighlightScheme", s->name);
 }

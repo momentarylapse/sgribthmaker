@@ -13,11 +13,11 @@
 class SourceView;
 
 enum{
+	InWord,
 	InWordSpecial,
 	InWordCompilerFunction,
 	InWordGameVariable,
 	InWordType,
-	InWord,
 	InLineComment,
 	InCommentLevel1,
 	InCommentLevel2,

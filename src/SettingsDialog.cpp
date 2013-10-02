@@ -15,11 +15,11 @@ SettingsDialog::SettingsDialog(HuiWindow *parent) :
 {
 	SetInt("tab_width", HuiConfigReadInt("TabWidth", 8));
 	SetString("font", HuiConfigReadStr("Font", "Monospace 10"));
+	AddString("context_list", _("Text"));
 	AddString("context_list", _("reserviertes Wort"));
 	AddString("context_list", _("Api Funktion"));
 	AddString("context_list", _("Api Variable"));
 	AddString("context_list", _("Typ"));
-	AddString("context_list", _("Text"));
 	AddString("context_list", _("Kommentar Zeile"));
 	AddString("context_list", _("Kommentar Ebene 1"));
 	AddString("context_list", _("Kommentar Ebene 2"));
