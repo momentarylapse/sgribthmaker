@@ -28,7 +28,7 @@ void SIAddPackageSound()
 	Type *TypeSound = add_type("Sound",		sizeof(Sound));
 	Type *TypeSoundP = add_type_p("Sound*", TypeSound);
 	Type *TypeMusic = add_type("Music",		sizeof(Music));
-	Type *TypeMusicP = add_type_p("MusicP", TypeMusic);
+	Type *TypeMusicP = add_type_p("Music*", TypeMusic);
 
 	add_class(TypeSound);
 		class_add_func("SetData",							TypeVoid,	sound_p(mf(&Sound::SetData)));
