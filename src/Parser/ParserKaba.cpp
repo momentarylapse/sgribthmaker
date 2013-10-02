@@ -6,7 +6,7 @@
  */
 
 #include "ParserKaba.h"
-#include "../HighlightSchema.h"
+#include "../HighlightScheme.h"
 #include "../SourceView.h"
 #include "../lib/script/script.h"
 

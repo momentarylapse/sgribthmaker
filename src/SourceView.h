@@ -9,7 +9,7 @@
 #define SOURCEVIEW_H_
 
 #include "lib/hui/hui.h"
-#include "HighlightSchema.h"
+#include "HighlightScheme.h"
 
 class History;
 class Parser;
@@ -29,6 +29,7 @@ public:
 	void DeleteSelection();
 	void InsertAtCursor(const string &text);
 
+	void ApplyScheme(HighlightScheme *s);
 	void SetTag(int i, const char *fg_color, const char *bg_color, bool bold, bool italic);
 	void UpdateFont();
 	void UpdateTabSize();
@@ -79,6 +80,7 @@ public:
 
 	void SetParser(const string &filename);
 	Parser *parser;
+	HighlightScheme *scheme;
 };
 
 #endif /* SOURCEVIEW_H_ */

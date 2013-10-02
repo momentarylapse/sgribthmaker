@@ -16,9 +16,16 @@ public:
 	SettingsDialog(HuiWindow *parent);
 	virtual ~SettingsDialog();
 
+	void FillSchemeList();
+
 	void OnClose();
 	void OnFont();
 	void OnTabWidth();
+	void OnSchemes();
+	void OnCopyScheme();
+	void OnSaveScheme();
+	void OnContextListSelect();
+	void OnSchemeChange();
 };
 
 #endif /* SETTINGSDIALOG_H_ */

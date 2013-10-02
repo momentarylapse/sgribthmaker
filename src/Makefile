@@ -15,7 +15,7 @@ MODULES = \
  lib/algebra/algebra.a \
  lib/base/base.a
 OBJ = lib/base/strings.o lib/file/msg.o lib/script/script.o \
- History.o CommandDialog.o SettingsDialog.o SourceView.o HighlightSchema.o \
+ History.o CommandDialog.o SettingsDialog.o SourceView.o HighlightScheme.o \
  Parser/BaseParser.o Parser/ParserKaba.o Parser/ParserText.o \
  Parser/ParserC.o Parser/ParserShader.o Parser/ParserPython.o
 CPP  = g++
@@ -40,8 +40,8 @@ SettingsDialog.o : SettingsDialog.cpp
 CommandDialog.o : CommandDialog.cpp
 	$(CPP) -c CommandDialog.cpp -o $@ $(CXXFLAGS)
 
-HighlightSchema.o : HighlightSchema.cpp
-	$(CPP) -c HighlightSchema.cpp -o $@ $(CXXFLAGS)
+HighlightScheme.o : HighlightScheme.cpp
+	$(CPP) -c HighlightScheme.cpp -o $@ $(CXXFLAGS)
 
 SourceView.o : SourceView.cpp
 	$(CPP) -c SourceView.cpp -o $@ $(CXXFLAGS)

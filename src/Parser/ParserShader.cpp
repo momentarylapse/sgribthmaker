@@ -6,7 +6,7 @@
  */
 
 #include "ParserShader.h"
-#include "../HighlightSchema.h"
+#include "../HighlightScheme.h"
 
 ParserShader::ParserShader()
 {

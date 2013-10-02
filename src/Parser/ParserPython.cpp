@@ -6,7 +6,7 @@
  */
 
 #include "ParserPython.h"
-#include "../HighlightSchema.h"
+#include "../HighlightScheme.h"
 
 ParserPython::ParserPython()
 {

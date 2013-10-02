@@ -12,7 +12,7 @@
 #include "ParserShader.h"
 #include "ParserPython.h"
 #include "../SourceView.h"
-#include "../HighlightSchema.h"
+#include "../HighlightScheme.h"
 
 
 

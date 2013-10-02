@@ -6,7 +6,7 @@
  */
 
 #include "ParserC.h"
-#include "../HighlightSchema.h"
+#include "../HighlightScheme.h"
 
 ParserC::ParserC()
 {

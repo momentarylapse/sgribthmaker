@@ -149,6 +149,10 @@ SourceView::SourceView(HuiWindow *win, const string &id)
 	tv = win->_GetControl_("edit")->widget;
 	tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tv));
 
+
+	for (int i=0; i<NumTagTypes; i++)
+		tag[i] = gtk_text_buffer_create_tag(tb, NULL, NULL);
+
 	NeedsUpdateStart = 0;
 	NeedsUpdateEnd = 0;
 	color_busy_level = 0;
@@ -475,13 +479,39 @@ void SourceView::GetCurLinePos(int &line, int &pos)
 
 void SourceView::SetTag(int i, const char *fg_color, const char *bg_color, bool bold, bool italic)
 {
-	tag[i] = gtk_text_buffer_create_tag(tb, NULL, "foreground", fg_color, NULL);
+	g_object_set(tag[i], "foreground", fg_color, NULL);
 	if (bg_color)
 		g_object_set(tag[i], "background", bg_color, NULL);
-	if (bold)
-		g_object_set(tag[i], "weight", PANGO_WEIGHT_BOLD, NULL);
-	if (italic)
-		g_object_set(tag[i], "style", PANGO_STYLE_ITALIC, NULL);
+	else
+		g_object_steal_data(G_OBJECT(tag[i]), "background");
+	g_object_set(tag[i], "weight", bold ? PANGO_WEIGHT_BOLD : PANGO_WEIGHT_NORMAL, NULL);
+	g_object_set(tag[i], "style", italic ? PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL, NULL);
+}
+
+string color_to_hex(const color &c)
+{
+	int r = int(255.0f * c.r);
+	int g = int(255.0f * c.g);
+	int b = int(255.0f * c.b);
+	return "#" + string((char*)&r, 1).hex() + string((char*)&g, 1).hex() + string((char*)&b, 1).hex();
+}
+
+void SourceView::ApplyScheme(HighlightScheme *s)
+{
+	for (int i=0; i<NumTagTypes; i++){
+		if (s->context[i].set_bg)
+			SetTag(i, color_to_hex(s->context[i].fg).c_str(), color_to_hex(s->context[i].bg).c_str(), s->context[i].bold, s->context[i].italic);
+		else
+			SetTag(i, color_to_hex(s->context[i].fg).c_str(), NULL, s->context[i].bold, s->context[i].italic);
+	}
+	GdkRGBA _color;
+	_color.alpha = 1;
+	_color.red = s->bg.r;
+	_color.green = s->bg.g;
+	_color.blue = s->bg.b;
+	gtk_widget_override_background_color(tv, GTK_STATE_FLAG_NORMAL, &_color);
+	scheme = s;
+	HuiConfigWriteStr("HighlightScheme", s->name);
 }
 
 void SourceView::UpdateTabSize()

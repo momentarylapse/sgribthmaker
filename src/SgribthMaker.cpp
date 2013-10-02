@@ -6,7 +6,7 @@
 #include "SettingsDialog.h"
 #include "CommandDialog.h"
 #include "History.h"
-#include "HighlightSchema.h"
+#include "HighlightScheme.h"
 #include "SourceView.h"
 #include "Parser/BaseParser.h"
 
@@ -15,7 +15,7 @@ string Filename;
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.3.27.0";
+string AppVersion = "0.4.0.0";
 
 #define ALLOW_LOGGING			true
 //#define ALLOW_LOGGING			false
@@ -30,8 +30,6 @@ extern string NixShaderError;
 //------------------------------------------------------------------------------
 // Highlighting
 
-
-Array<HighlightSchema> HighlightSchemas;
 
 
 int status_count = 0;
@@ -592,9 +590,8 @@ int hui_main(Array<string> arg)
 	source_view = new SourceView(MainWin, "edit");
 	MainWin->Activate("edit");
 
-	HighlightSchema schema = GetDefaultSchema();
-	HighlightSchemas.add(schema);
-	schema.apply(source_view);
+	HighlightScheme *scheme = HighlightScheme::get(HuiConfigReadStr("HighlightScheme", "default"));
+	source_view->ApplyScheme(scheme);
 
 	MainWin->SetMenu(HuiCreateResourceMenu("menu"));
 	MainWin->SetMaximized(maximized);

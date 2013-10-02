@@ -1,12 +1,12 @@
 /*
- * HighlightSchema.h
+ * HighlightScheme.h
  *
  *  Created on: 06.06.2013
  *      Author: michi
  */
 
-#ifndef HIGHLIGHTSCHEMA_H_
-#define HIGHLIGHTSCHEMA_H_
+#ifndef HIGHLIGHTSCHEME_H_
+#define HIGHLIGHTSCHEME_H_
 
 #include "lib/image/color.h"
 
@@ -34,26 +34,24 @@ struct HighlightContext
 	color fg, bg;
 	bool set_bg;
 	bool bold, italic;
-	HighlightContext(){}
-	HighlightContext(const color &_fg, const color &_bg, bool _set_bg, bool _bold, bool _italic)
-	{
-		fg = _fg;
-		bg = _bg;
-		set_bg = _set_bg;
-		bold = _bold;
-		italic = _italic;
-	}
+	HighlightContext();
+	HighlightContext(const color &_fg, const color &_bg, bool _set_bg, bool _bold, bool _italic);
 };
 
-struct HighlightSchema
+struct HighlightScheme
 {
 	string name;
-	color fg, bg;
+	color bg;
 	HighlightContext context[NumTagTypes];
-	void apply(SourceView *sv);
+	bool is_default, changed;
+	HighlightScheme();
+	HighlightScheme *copy(const string &name);
+
+	static void init();
+	static HighlightScheme *get(const string &name);
+	static Array<HighlightScheme*> get_all();
 };
 
-HighlightSchema GetDefaultSchema();
 
 
-#endif /* HIGHLIGHTSCHEMA_H_ */
+#endif /* HIGHLIGHTSCHEME_H_ */
