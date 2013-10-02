@@ -629,12 +629,6 @@ int hui_main(Array<string> arg)
 	if (arg.num > 1)
 		LoadFromFile(arg[1]);
 
-	Image im;
-	im.Load("/home/michi/test.png");
-	im.Save("/home/michi/test.tga");
-	im.Load("/home/michi/alpha.png");
-	im.Save("/home/michi/alpha.tga");
-
 	return HuiRun();
 }
 

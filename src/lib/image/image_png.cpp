@@ -88,6 +88,7 @@ void image_load_png(const string &filename, Image &image)
 		if (name == "IHDR"){
 			int w = read_int_big_endian(f);
 			int h = read_int_big_endian(f);
+			image.Create(w, h, Black);
 			int bits_per_channel = f->ReadByte();
 			int type = f->ReadByte();
 			// 0 = gray, 2 = rgb, 6 = rgba
@@ -100,7 +101,6 @@ void image_load_png(const string &filename, Image &image)
 				image.alpha_used = true;
 			}else
 				throw string("unhandled color type: " + i2s(type));
-			image.Create(w, h, Black);
 
 			f->SetPos(size - 10, false);
 		}else if (name == "IDAT"){
