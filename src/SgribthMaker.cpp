@@ -15,7 +15,7 @@ string Filename;
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.0.0";
+string AppVersion = "0.4.0.1";
 
 #define ALLOW_LOGGING			true
 //#define ALLOW_LOGGING			false
@@ -556,15 +556,16 @@ int hui_main(Array<string> arg)
 	MainWin->SetBorderWidth(0);
 	MainWin->AddControlTable("", 0, 0, 1, 2, "table_main");
 	MainWin->SetTarget("table_main", 0);
-	MainWin->AddMultilineEdit("", 0, 0, 0, 0, "edit");
+	MainWin->AddMultilineEdit("!handlekeys", 0, 0, 0, 0, "edit");
+	MainWin->SetBorderWidth(5);
 	MainWin->AddControlTable("", 0, 1, 1, 2, "table_console");
 	MainWin->SetTarget("table_console", 0);
 	MainWin->AddMultilineEdit("", 0, 0, 0, 0, "log");
 	MainWin->Enable("log", false);
 	MainWin->AddControlTable("!noexpandy", 0, 1, 3, 1, "table_command");
 	MainWin->SetTarget("table_command", 0);
-	MainWin->AddEdit("", 0, 0, 0, 0, "console");
-	MainWin->AddButton("!noexpandx\\Ok", 1, 0, 0, 0, "console_ok");
+	MainWin->AddEdit("!expandx", 0, 0, 0, 0, "console");
+	MainWin->AddButton("OK", 1, 0, 0, 0, "console_ok");
 	MainWin->SetImage("console_ok", "hui:ok");
 	MainWin->AddButton("", 2, 0, 0, 0, "console_close");
 	MainWin->SetImage("console_close", "hui:close");

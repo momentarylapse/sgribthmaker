@@ -38,6 +38,7 @@ HuiControl::HuiControl(int _type, const string &_id)
 	widget = NULL;
 	frame = NULL;
 #endif
+	grab_focus = false;
 }
 
 HuiControl::~HuiControl()
