@@ -477,6 +477,7 @@ void SyntaxTree::CreateImplicitFunctions(Type *t, bool relocate_last_function)
 		return;
 	if (t->is_pointer)
 		return;
+	msg_write("implicit: " + t->name);
 
 	// needs complex functions?
 	/*bool needs_init = false;

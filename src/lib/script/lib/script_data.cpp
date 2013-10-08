@@ -446,10 +446,8 @@ void func_add_param(const string &name, Type *type)
 	}
 }
 
-void script_make_super_array(Type *t, SyntaxTree *ps)
+void script_make_super_array_func_headers(Type *t, SyntaxTree *ps, bool pre_define_funcs)
 {
-	msg_db_f("make_super_array", 4);
-
 	add_class(t);
 		class_add_element("num", TypeInt, config.PointerSize);
 
@@ -466,6 +464,42 @@ void script_make_super_array(Type *t, SyntaxTree *ps)
 		class_add_func("subarray", t, mf(&DynamicArray::ref_subarray));
 			func_add_param("start",		TypeInt);
 			func_add_param("num",		TypeInt);
+
+		// define later...
+		if (pre_define_funcs){
+		class_add_func("__init__",	TypeVoid, NULL);
+		class_add_func("add", TypeVoid, NULL);
+			func_add_param("x",		t->parent);
+		class_add_func("insert", TypeVoid, NULL);
+			func_add_param("x",		t->parent);
+			func_add_param("index",		TypeInt);
+		class_add_func("__delete__",	TypeVoid, NULL);
+		class_add_func("clear", TypeVoid, NULL);
+		class_add_func("__assign__", TypeVoid, NULL);
+			func_add_param("other",		t);
+		class_add_func("remove", TypeVoid, NULL);
+			func_add_param("index",		TypeInt);
+		class_add_func("resize", TypeVoid, NULL);
+			func_add_param("num",		TypeInt);
+		class_add_func("ensure_size", TypeVoid, NULL);
+			func_add_param("num",		TypeInt);
+		}
+
+		// low level operations
+		class_add_func("__mem_init__", TypeVoid, mf(&DynamicArray::init));
+			func_add_param("element_size",		TypeInt);
+		class_add_func("__mem_clear__", TypeVoid, mf(&DynamicArray::clear));
+		class_add_func("__mem_resize__", TypeVoid, mf(&DynamicArray::resize));
+			func_add_param("size",		TypeInt);
+		class_add_func("__mem_remove__", TypeVoid, mf(&DynamicArray::delete_single));
+			func_add_param("index",		TypeInt);
+}
+
+void script_make_super_array(Type *t, SyntaxTree *ps)
+{
+	msg_db_f("make_super_array", 4);
+
+	script_make_super_array_func_headers(t, ps, false);
 
 		// FIXME  wrong for complicated classes
 		if (t->parent->is_simple_class()){
@@ -520,15 +554,6 @@ void script_make_super_array(Type *t, SyntaxTree *ps)
 			class_add_func("ensure_size", TypeVoid, mf(&DynamicArray::ensure_size));
 				func_add_param("num",		TypeInt);
 		}
-
-		// low level operations
-		class_add_func("__mem_init__", TypeVoid, mf(&DynamicArray::init));
-			func_add_param("element_size",		TypeInt);
-		class_add_func("__mem_clear__", TypeVoid, mf(&DynamicArray::clear));
-		class_add_func("__mem_resize__", TypeVoid, mf(&DynamicArray::resize));
-			func_add_param("size",		TypeInt);
-		class_add_func("__mem_remove__", TypeVoid, mf(&DynamicArray::delete_single));
-			func_add_param("index",		TypeInt);
 }
 
 

@@ -107,6 +107,7 @@ struct Function
 	bool is_extern;
 	// for compilation...
 	int _var_size, _param_size;
+	int _logical_line_no;
 	Function(const string &name, Type *return_type);
 	int get_var(const string &name);
 };
@@ -154,11 +155,13 @@ public:
 	// syntax parsing
 	void Parser();
 	void ParseAllClassNames();
+	void ParseAllFunctionBodies();
 	void ParseImport();
 	void ParseEnum();
 	void ParseClass();
-	void ParseFunction(Type *class_type, bool as_extern);
-	void ParseClassFunction(Type *t, bool as_extern, int virtual_index, bool overwrite);
+	void ParseFunctionHeader(Type *class_type, bool as_extern);
+	void ParseFunctionBody(Function *f);
+	void ParseClassFunctionHeader(Type *t, bool as_extern, int virtual_index, bool overwrite);
 	bool ParseFunctionCommand(Function *f, ExpressionBuffer::Line *this_line);
 	Type *ParseVariableDefSingle(Type *type, Function *f, bool as_param = false);
 	void ParseVariableDef(bool single, Function *f);

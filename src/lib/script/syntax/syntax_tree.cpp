@@ -11,6 +11,8 @@ namespace Script{
 /*#define PRESCRIPT_DB_LEVEL	2
 #define db_f(msg,level)		msg_db_f(msg,level+PRESCRIPT_DB_LEVEL)*/
 
+void script_make_super_array_func_headers(Type *t, SyntaxTree *ps, bool pre_define_funcs);
+
 
 bool next_extern = false;
 bool next_const = false;
@@ -366,6 +368,7 @@ Function::Function(const string &_name, Type *_return_type)
 	is_extern = false;
 	_param_size = 0;
 	_var_size = 0;
+	_logical_line_no = -1;
 }
 
 int Function::get_var(const string &name)
@@ -662,8 +665,9 @@ void SyntaxTree::AddType(Type **type)
 	(*type) = t;
 	Types.add(t);
 
+
 	if (t->is_super_array)
-		script_make_super_array(t, this);
+		script_make_super_array_func_headers(t, this, true);
 }
 
 Type *SyntaxTree::CreateNewType(const string &name, int size, bool is_pointer, bool is_silent, bool is_array, int array_size, Type *sub)

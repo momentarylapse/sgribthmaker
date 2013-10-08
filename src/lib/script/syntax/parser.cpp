@@ -1320,7 +1320,6 @@ void SyntaxTree::TestArrayDefinition(Type **type, bool is_pointer)
 		if (array_size < 0){
 			(*type) = CreateNewType(or_name + "[]" +  (*type)->name.substr(or_name_length, -1),
 			                        config.SuperArraySize, false, false, true, array_size, (*type));
-			CreateImplicitFunctions((*type), cur_func);
 		}else{
 			(*type) = CreateNewType(or_name + format("[%d]", array_size) + (*type)->name.substr(or_name_length, -1),
 			                        (*type)->size * array_size, false, false, true, array_size, (*type));
@@ -1434,9 +1433,9 @@ string func_signature(Function *f)
 	return r + ")";
 }
 
-void SyntaxTree::ParseClassFunction(Type *t, bool as_extern, int virtual_index, bool overwrite)
+void SyntaxTree::ParseClassFunctionHeader(Type *t, bool as_extern, int virtual_index, bool overwrite)
 {
-	ParseFunction(t, as_extern);
+	ParseFunctionHeader(t, as_extern);
 
 	Function *f = Functions.back();
 	ClassFunction cf;
@@ -1582,7 +1581,7 @@ void SyntaxTree::ParseClass()
 			if (is_function){
 				Exp.cur_exp = ie;
 				Exp.cur = Exp.cur_line->exp[Exp.cur_exp].name;
-				ParseClassFunction(_class, next_extern, next_virtual ? (cur_virtual_index ++) : -1, overwrite);
+				ParseClassFunctionHeader(_class, next_extern, next_virtual ? (cur_virtual_index ++) : -1, overwrite);
 
 				break;
 			}
@@ -1625,9 +1624,6 @@ void SyntaxTree::ParseClass()
 			_offset = mem_align(_offset, 4);
 	_class->size = ProcessClassSize(_class->name, _offset);
 
-
-
-	CreateImplicitFunctions(_class, false);
 
 	Exp.cur_line --;
 }
@@ -1747,9 +1743,9 @@ bool SyntaxTree::ParseFunctionCommand(Function *f, ExpressionBuffer::Line *this_
 	return true;
 }
 
-void SyntaxTree::ParseFunction(Type *class_type, bool as_extern)
+void SyntaxTree::ParseFunctionHeader(Type *class_type, bool as_extern)
 {
-	msg_db_f("ParseFunction", 4);
+	msg_db_f("ParseFunctionHeader", 4);
 
 // return type
 	Type *return_type = GetType(Exp.cur, true);
@@ -1813,11 +1809,23 @@ void SyntaxTree::ParseFunction(Type *class_type, bool as_extern)
 		f->name = class_type->name + "." +  f->name;
 	}
 
-	if (as_extern){
-		f->is_extern = true;
-		cur_func = NULL;
-		return;
+	f->is_extern = as_extern;
+	f->_logical_line_no = Exp.get_line_no();
+	cur_func = NULL;
+
+	// skip function body
+	int indent0 = Exp.cur_line->indent;
+	while (!Exp.end_of_file()){
+		if (Exp.cur_line[1].indent <= indent0)
+			break;
+		Exp.next_line();
 	}
+}
+
+void SyntaxTree::ParseFunctionBody(Function *f)
+{
+	msg_write(f->_logical_line_no);
+	Exp.cur_line = &Exp.line[f->_logical_line_no];
 
 	ExpressionBuffer::Line *this_line = Exp.cur_line;
 	bool more_to_parse = true;
@@ -1827,9 +1835,9 @@ void SyntaxTree::ParseFunction(Type *class_type, bool as_extern)
 		if (peak_commands_super(Exp)){
 			more_to_parse = ParseFunctionCommand(f, this_line);
 
-			ImplementImplicitConstructor(f, class_type, false);
+			ImplementImplicitConstructor(f, f->_class, false);
 		}else
-			ImplementImplicitConstructor(f, class_type);
+			ImplementImplicitConstructor(f, f->_class);
 	}
 
 
@@ -1840,7 +1848,7 @@ void SyntaxTree::ParseFunction(Type *class_type, bool as_extern)
 
 	// auto implement destructor?
 	if (f->name.tail(11) == ".__delete__")
-		ImplementImplicitDestructor(f, class_type);
+		ImplementImplicitDestructor(f, f->_class);
 	cur_func = NULL;
 
 	Exp.cur_line --;
@@ -1863,6 +1871,13 @@ void SyntaxTree::ParseAllClassNames()
 		}
 		Exp.next_line();
 	}
+}
+
+void SyntaxTree::ParseAllFunctionBodies()
+{
+	foreach(Function *f, Functions)
+		if ((!f->is_extern) && (f->_logical_line_no >= 0))
+			ParseFunctionBody(f);
 }
 
 // convert text into script data
@@ -1918,9 +1933,9 @@ void SyntaxTree::Parser()
 				if (Exp.cur_line->exp[j].name == "(")
 				    is_function = true;
 
-			// own function?
+			// function?
 			if (is_function){
-				ParseFunction(NULL, next_extern);
+				ParseFunctionHeader(NULL, next_extern);
 
 			// global variables
 			}else{
@@ -1929,6 +1944,12 @@ void SyntaxTree::Parser()
 		}
 		Exp.next_line();
 	}
+
+
+	for (int i=0;i<Types.num;i++)
+		CreateImplicitFunctions(Types[i], false);
+
+	ParseAllFunctionBodies();
 }
 
 }
