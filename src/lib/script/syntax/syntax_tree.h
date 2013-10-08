@@ -153,6 +153,7 @@ public:
 	
 	// syntax parsing
 	void Parser();
+	void ParseAllClassNames();
 	void ParseImport();
 	void ParseEnum();
 	void ParseClass();

@@ -1499,12 +1499,7 @@ void SyntaxTree::ParseClass()
 	Exp.next();
 
 	// create class and type
-	int nt0 = Types.num;
 	Type *_class = CreateNewType(name, 0, false, false, false, 0, NULL);
-	if (nt0 == Types.num){
-		Exp.rewind();
-		DoError("class already exists");
-	}
 
 	// parent class
 	if (Exp.cur == ":"){
@@ -1851,6 +1846,25 @@ void SyntaxTree::ParseFunction(Type *class_type, bool as_extern)
 	Exp.cur_line --;
 }
 
+void SyntaxTree::ParseAllClassNames()
+{
+	msg_db_f("ParseAllClassNames", 4);
+
+	Exp.reset_parser();
+	while (!Exp.end_of_file()){
+		if ((Exp.cur_line->indent == 0) && (Exp.cur_line->exp.num >= 2)){
+			if (Exp.cur == "class"){
+				Exp.next();
+				int nt0 = Types.num;
+				CreateNewType(Exp.cur, 0, false, false, false, 0, NULL);
+				if (nt0 == Types.num)
+					DoError("class already exists");
+			}
+		}
+		Exp.next_line();
+	}
+}
+
 // convert text into script data
 void SyntaxTree::Parser()
 {
@@ -1860,6 +1874,8 @@ void SyntaxTree::Parser()
 	cur_func = NULL;
 
 	// syntax analysis
+
+	ParseAllClassNames();
 
 	Exp.reset_parser();
 
