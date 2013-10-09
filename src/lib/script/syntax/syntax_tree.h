@@ -104,12 +104,14 @@ struct Function
 	Type *_class;
 	Type *return_type;
 	Type *literal_return_type;
-	bool is_extern;
+	bool is_extern, implement_later;
 	// for compilation...
 	int _var_size, _param_size;
 	int _logical_line_no;
 	Function(const string &name, Type *return_type);
 	int get_var(const string &name);
+	int AddVar(const string &name, Type *type);
+	void Update(Type *class_type);
 };
 
 // single operand/command
@@ -177,16 +179,16 @@ public:
 	void HandleMacro(ExpressionBuffer::Line *l, int &line_no, int &NumIfDefs, bool *IfDefed, bool just_analyse);
 	void ImplementImplicitConstructor(Function *f, Type *t, bool allow_parent_constructor = true);
 	void ImplementImplicitDestructor(Function *f, Type *t);
-	void CreateImplicitDestructor(Type *t);
 	void ImplementAddVirtualTable(Command *self, Function *f, Type *t);
 	void ImplementAddChildConstructors(Command *self, Function *f, Type *t);
-	void CreateImplicitDefaultConstructor(Type *t);
-	void CreateImplicitComplexConstructor(Type *t);
-	void CreateImplicitAssign(Type *t);
-	void CreateImplicitArrayClear(Type *t);
-	void CreateImplicitArrayResize(Type *t);
-	void CreateImplicitArrayAdd(Type *t);
-	void CreateImplicitFunctions(Type *t, bool relocate_last_function);
+	void AddFunctionHeadersForClass(Type *t);
+	void ImplementImplicitDefaultConstructor(Function *f, Type *t);
+	void ImplementImplicitComplexConstructor(Function *f, Type *t);
+	void ImplementImplicitAssign(Function *f, Type *t);
+	void ImplementImplicitArrayClear(Function *f, Type *t);
+	void ImplementImplicitArrayResize(Function *f, Type *t);
+	void ImplementImplicitArrayAdd(Function *f, Type *t);
+	void ImplementImplicitFunctions(Type *t);
 
 	// syntax analysis
 	Type *GetConstantType();
@@ -195,7 +197,6 @@ public:
 	Type *GetType(const string &name, bool force);
 	void AddType(Type **type);
 	Type *CreateNewType(const string &name, int size, bool is_pointer, bool is_silent, bool is_array, int array_size, Type *sub);
-	Type *GetPointerType(Type *sub);
 	void TestArrayDefinition(Type **type, bool is_pointer);
 	bool GetExistence(const string &name, Function *f);
 	bool GetExistenceShared(const string &name);
@@ -230,7 +231,6 @@ public:
 	void MapLocalVariablesToStack();
 
 	// data creation
-	int AddVar(const string &name, Type *type, Function *f);
 	int AddConstant(Type *type);
 	Block *AddBlock();
 	Function *AddFunction(const string &name, Type *type);
@@ -238,7 +238,7 @@ public:
 	// command
 	Command *AddCommand(int kind, int link_no, Type *type);
 	Command *add_command_compilerfunc(int cf);
-	Command *add_command_classfunc(Type *class_type, ClassFunction &f, Command *inst);
+	Command *add_command_classfunc(Type *class_type, ClassFunction *f, Command *inst);
 	Command *add_command_const(int nc);
 	Command *add_command_operator(Command *p1, Command *p2, int op);
 	Command *add_command_local_var(int no, Type *type);

@@ -51,10 +51,13 @@ public:
 	bool is_simple_class();
 	bool IsDerivedFrom(Type *root) const;
 	bool DeriveFrom(Type *root);
-	int GetFunc(const string &name);
+	Type *GetPointer();
+	void AddFunction(SyntaxTree *s, int func_no, int virtual_index = -1, bool overwrite = false);
+	ClassFunction *GetFunc(const string &name, Type *return_type, int num_params);
 	ClassFunction *GetDefaultConstructor();
 	ClassFunction *GetComplexConstructor();
 	ClassFunction *GetDestructor();
+	ClassFunction *GetAssign();
 	ClassFunction *GetVirtualFunction(int virtual_index);
 	void LinkVirtualTable();
 	void LinkExternalVirtualTable(void *p);

@@ -141,7 +141,9 @@ string param_out(SerialCommandParam &p)
 		string n = p2s(p.p);
 		if ((p.kind == KindRegister) || (p.kind == KindDerefRegister))
 			n = Asm::GetRegName((long)p.p);
-		str = "  " + Kind2Str(p.kind) + " " + n + " (" + p.type->name + ")";
+		else if ((p.kind == KindVarLocal) || (p.kind == KindVarGlobal) || (p.kind == KindVarTemp) || (p.kind == KindDerefVarTemp))
+			n = i2s((long)p.p);
+		str = "  (" + p.type->name + ") " + Kind2Str(p.kind) + " " + n;
 		if (p.shift > 0)
 			str += format(" + shift %d", p.shift);
 	}
