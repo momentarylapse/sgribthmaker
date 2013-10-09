@@ -500,8 +500,15 @@ void script_make_super_array(Type *t, SyntaxTree *ps)
 {
 	msg_db_f("make_super_array", 4);
 
+	Type *parent = t->parent;
+	int size = t->size;
 	t->DeriveFrom(TypeDynamicArray);
+	t->parent = parent;
+	t->size = size;
 	add_class(t);
+
+	ClassFunction *sub = t->GetFunc("subarray", TypeDynamicArray, 2);
+	sub->return_type = t;
 
 		// FIXME  wrong for complicated classes
 		if (t->parent->is_simple_class()){
@@ -755,8 +762,33 @@ void SIAddPackageBase()
 	TypeInt				= add_type  ("int",			sizeof(int), FLAG_CALL_BY_VALUE);
 	TypeFloat			= add_type  ("float",		sizeof(float), FLAG_CALL_BY_VALUE);
 	TypeChar			= add_type  ("char",		sizeof(char), FLAG_CALL_BY_VALUE);
-	// derived   (must be defined after the primitive types!)
 	TypeDynamicArray	= add_type  ("@DynamicArray", config.SuperArraySize);
+
+
+	add_class(TypeDynamicArray);
+		class_add_element("num", TypeInt, config.PointerSize);
+		class_add_func("swap", TypeVoid, mf(&DynamicArray::swap));
+			func_add_param("i1", TypeInt);
+			func_add_param("i2", TypeInt);
+		class_add_func("iterate", TypeBool, mf(&DynamicArray::iterate));
+			func_add_param("pointer", TypePointerPs);
+		class_add_func("iterate_back", TypeBool, mf(&DynamicArray::iterate_back));
+			func_add_param("pointer", TypePointerPs);
+		class_add_func("index", TypeInt, mf(&DynamicArray::index));
+			func_add_param("pointer", TypePointer);
+		class_add_func("subarray", TypeDynamicArray, mf(&DynamicArray::ref_subarray));
+			func_add_param("start", TypeInt);
+			func_add_param("num", TypeInt);
+		// low level operations
+		class_add_func("__mem_init__", TypeVoid, mf(&DynamicArray::init));
+			func_add_param("element_size", TypeInt);
+		class_add_func("__mem_clear__", TypeVoid, mf(&DynamicArray::clear));
+		class_add_func("__mem_resize__", TypeVoid, mf(&DynamicArray::resize));
+			func_add_param("size", TypeInt);
+		class_add_func("__mem_remove__", TypeVoid, mf(&DynamicArray::delete_single));
+			func_add_param("index", TypeInt);
+
+	// derived   (must be defined after the primitive types!)
 	TypePointer			= add_type_p("void*",		TypeVoid, FLAG_CALL_BY_VALUE); // substitute for all pointer types
 	TypePointerPs		= add_type_p("void*&",		TypePointer, FLAG_SILENT);
 	TypePointerList		= add_type_a("void*[]",		TypePointer, -1);
@@ -791,28 +823,6 @@ void SIAddPackageBase()
 		class_add_func("str", TypeString, mf(&PointerClass::str));
 
 
-	add_class(TypeDynamicArray);
-		class_add_element("num", TypeInt, config.PointerSize);
-		class_add_func("swap", TypeVoid, mf(&DynamicArray::swap));
-			func_add_param("i1", TypeInt);
-			func_add_param("i2", TypeInt);
-		class_add_func("iterate", TypeBool, mf(&DynamicArray::iterate));
-			func_add_param("pointer", TypePointerPs);
-		class_add_func("iterate_back", TypeBool, mf(&DynamicArray::iterate_back));
-			func_add_param("pointer", TypePointerPs);
-		class_add_func("index", TypeInt, mf(&DynamicArray::index));
-			func_add_param("pointer", TypePointer);
-		class_add_func("subarray", TypeDynamicArray, mf(&DynamicArray::ref_subarray));
-			func_add_param("start", TypeInt);
-			func_add_param("num", TypeInt);
-		// low level operations
-		class_add_func("__mem_init__", TypeVoid, mf(&DynamicArray::init));
-			func_add_param("element_size", TypeInt);
-		class_add_func("__mem_clear__", TypeVoid, mf(&DynamicArray::clear));
-		class_add_func("__mem_resize__", TypeVoid, mf(&DynamicArray::resize));
-			func_add_param("size", TypeInt);
-		class_add_func("__mem_remove__", TypeVoid, mf(&DynamicArray::delete_single));
-			func_add_param("index", TypeInt);
 
 	add_class(TypePointerList);
 		class_add_func("__init__",	TypeVoid, mf(&Array<void*>::__init__));

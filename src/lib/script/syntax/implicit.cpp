@@ -245,7 +245,6 @@ void SyntaxTree::AutoImplementArrayClear(Function *f, Type *t)
 		Command *cmd_assign = add_command_operator(for_var, cmd_0, OperatorIntAssign);
 		f->block->command.add(cmd_assign);
 
-#if 0
 		// while(for_var < self.num)
 		Command *cmd_cmp = add_command_operator(for_var, self_num, OperatorIntSmaller);
 
@@ -269,7 +268,6 @@ void SyntaxTree::AutoImplementArrayClear(Function *f, Type *t)
 		Command *cmd_inc = add_command_operator(for_var, cmd_0 /*dummy*/, OperatorIntIncrease);
 		b->command.add(cmd_inc);
 		f->block->command.add(cb);
-#endif
 	}
 
 	// clear

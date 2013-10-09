@@ -669,13 +669,11 @@ void SyntaxTree::AddType(Type **type)
 
 	if (t->is_super_array){
 		Type *parent = t->parent;
+		int size = t->size;
 		t->DeriveFrom(TypeDynamicArray);
 		t->parent = parent;
+		t->size = size;
 		AddFunctionHeadersForClass(t);
-		/*t->function.add(ClassFunction("__init__", TypeVoid, script, -1));
-		t->function.add(ClassFunction("add", TypeVoid, script, -1));
-		t->function.add(ClassFunction("insert", TypeVoid, script, -1));
-		t->function.add(ClassFunction("__assign__", TypeVoid, script, -1));*/
 	}
 }
 

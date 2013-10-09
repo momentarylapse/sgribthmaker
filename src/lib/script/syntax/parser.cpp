@@ -1831,9 +1831,11 @@ void SyntaxTree::ParseAllClassNames()
 
 void SyntaxTree::ParseAllFunctionBodies()
 {
-	foreach(Function *f, Functions)
+	for (int i=0;i<Functions.num;i++){
+		Function *f = Functions[i];
 		if ((!f->is_extern) && (f->_logical_line_no >= 0))
 			ParseFunctionBody(f);
+	}
 }
 
 // convert text into script data
@@ -1902,11 +1904,10 @@ void SyntaxTree::Parser()
 			Exp.next_line();
 	}
 
+	ParseAllFunctionBodies();
 
 	for (int i=0;i<Types.num;i++)
 		AutoImplementFunctions(Types[i]);
-
-	ParseAllFunctionBodies();
 }
 
 }
