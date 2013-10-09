@@ -68,26 +68,21 @@ void SyntaxTree::AutoImplementDefaultConstructor(Function *f, Type *t, bool allo
 	}
 }
 
-#if 0
 void SyntaxTree::AutoImplementComplexConstructor(Function *f, Type *t)
 {
+	if (!f)
+		return;
+	if (!f->auto_implement)
+		return;
 	ClassFunction *pcc = t->parent->GetComplexConstructor();
-	Function *pcf = pcc->script->syntax->Functions[pcc->nr];
-	// create function
-	Function *f = AddFunction("__init__", TypeVoid);
-	for (int i=0;i<pcf->num_params;i++)
-		f->AddVar(pcf->var[i].name, pcf->var[i].type);
-	f->num_params = pcf->num_params;
-	int fn = Functions.num - 1;
-	f->Update(t);
 
 	Command *self = add_command_local_var(f->get_var("self"), t->GetPointer());
 
 	// parent constructor
-	Command *c = add_command_classfunc(t, *pcc, cp_command(self));
-	for (int i=0;i<pcf->num_params;i++)
-		c->param[i] = add_command_local_var(i, pcf->var[i].type);
-	c->num_params = pcf->num_params;
+	Command *c = add_command_classfunc(t, pcc, cp_command(self));
+	for (int i=0;i<pcc->param_type.num;i++)
+		c->param[i] = add_command_local_var(i, pcc->param_type[i]);
+	c->num_params = pcc->param_type.num;
 	f->block->command.add(c);
 
 	// add vtable reference
@@ -96,10 +91,7 @@ void SyntaxTree::AutoImplementComplexConstructor(Function *f, Type *t)
 
 	// call child constructors
 	AutoImplementAddChildConstructors(self, f, t);
-
-	t->AddFunction(this, fn);
 }
-#endif
 
 
 void SyntaxTree::AutoImplementDestructor(Function *f, Type *t)
@@ -439,6 +431,19 @@ void SyntaxTree::AddFunctionHeadersForClass(Type *t)
 			add_func_header(this, t, "__delete__", TypeVoid, TypeVoid, "");
 		if (!t->GetAssign()){
 			add_func_header(this, t, "__assign__", TypeVoid, t, "other");
+		if (!t->GetComplexConstructor())
+			if (t->parent)
+				if (t->parent->GetComplexConstructor()){
+					Function *f = AddFunction("__init__", TypeVoid);
+					f->auto_implement = true;
+
+					Function *b = t->parent->GetComplexConstructor()->GetFunc();
+					f->num_params = b->num_params;
+					f->var = b->var;
+					f->Update(t);
+					t->AddFunction(this, Functions.num - 1, -1, false);
+
+				}
 			// implement only if parent has also done so
 			/*if (t->parent){
 				msg_write(t->parent->GetFunc("__assign__"));
@@ -492,23 +497,9 @@ void SyntaxTree::AutoImplementFunctions(Type *t)
 		AutoImplementDefaultConstructor(class_get_func(t, "__init__", TypeVoid, 0), t, true);
 		AutoImplementDestructor(class_get_func(t, "__delete__", TypeVoid, 0), t);
 		AutoImplementAssign(class_get_func(t, "__assign__", TypeVoid, 1), t);
-		/*if (!t->GetComplexConstructor())
-			if (t->parent)
-				if (t->parent->GetComplexConstructor())
-					CreateImplicitComplexConstructor(t);
-		if (!t->GetDestructor())
-			CreateImplicitDestructor(t);
-		if (t->GetAssign()){
-			// implement only if parent has also done so
-			if (t->parent){
-				msg_write(t->parent->GetFunc("__assign__"));
-				if (t->parent->GetFunc("__assign__") >= 0)
-					CreateImplicitAssign(t);
-			}else{
-				msg_write("!p");
-				CreateImplicitAssign(t);
-			}
-		}*/
+		ClassFunction *cf = t->GetComplexConstructor();
+		if (cf)
+			AutoImplementComplexConstructor(cf->GetFunc(), t);
 	}
 }
 

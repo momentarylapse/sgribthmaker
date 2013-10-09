@@ -8,6 +8,7 @@ namespace Script{
 class Script;
 class SyntaxTree;
 class Type;
+struct Function;
 
 struct ClassElement{
 	string name;
@@ -24,6 +25,7 @@ struct ClassFunction{
 	int virtual_index;
 	ClassFunction(){}
 	ClassFunction(const string &name, Type *return_type, Script *s, int no);
+	Function *GetFunc();
 };
 
 typedef void *VirtualTable;

@@ -1465,23 +1465,6 @@ void SyntaxTree::ParseClass()
 
 	// virtual functions?     (derived -> _class->num_virtual)
 	int cur_virtual_index = _class->num_virtual;
-	_class->num_virtual += class_count_virtual_functions(this);
-	_class->num_virtual = ProcessClassNumVirtuals(_class->name, _class->num_virtual);
-	if (_class->num_virtual > 0){
-		if (_class->parent){
-			if (_class->parent->num_virtual == 0)
-				DoError("no virtual functions allowed when inheriting from class without virtual functions");
-			// element "-vtable-" being derived
-		}else{
-			ClassElement el;
-			el.name = "-vtable-";
-			el.type = TypePointer;
-			el.offset = 0;
-			_class->element.add(el);
-			_offset = config.PointerSize;
-		}
-		_class->vtable = new VirtualTable[_class->num_virtual];
-	}
 
 	// elements
 	for (int num=0;true;num++){
@@ -1571,6 +1554,32 @@ void SyntaxTree::ParseClass()
 			Exp.next();
 		}
 	}
+
+
+
+	// virtual functions?     (derived -> _class->num_virtual)
+	_class->num_virtual = cur_virtual_index;
+	//foreach(ClassFunction &cf, _class->function)
+	//	_class->num_virtual = max(_class->num_virtual, cf.virtual_index);
+	if (_class->num_virtual > 0){
+		if (_class->parent){
+			if (_class->parent->num_virtual == 0)
+				DoError("no virtual functions allowed when inheriting from class without virtual functions");
+			// element "-vtable-" being derived
+		}else{
+			foreach(ClassElement &e, _class->element)
+				e.offset += config.PointerSize;
+
+			ClassElement el;
+			el.name = "-vtable-";
+			el.type = TypePointer;
+			el.offset = 0;
+			_class->element.insert(el, 0);
+			_offset += config.PointerSize;
+		}
+		_class->vtable = new VirtualTable[_class->num_virtual + 2];
+	}
+
 	foreach(ClassElement &e, _class->element)
 		if (type_needs_alignment(e.type))
 			_offset = mem_align(_offset, 4);

@@ -15,6 +15,11 @@ ClassFunction::ClassFunction(const string &_name, Type *_return_type, Script *s,
 	virtual_index = -1;
 }
 
+Function* ClassFunction::GetFunc()
+{
+	return script->syntax->Functions[nr];
+}
+
 Type::Type()//const string &_name, int _size, SyntaxTree *_owner)
 {
 	//name = _name;
@@ -221,8 +226,10 @@ void Type::AddFunction(SyntaxTree *s, int func_no, int virtual_index, bool overw
 			orig = &_cf;
 	if (overwrite and !orig)
 		s->DoError(format("can not overwrite function '%s', no previous definition", func_signature(f).c_str()));
-	if (!overwrite and orig)
+	if (!overwrite and orig){
+		msg_write(orig->param_type.num);
 		s->DoError(format("function '%s' is already defined, use 'overwrite' to overwrite", func_signature(f).c_str()));
+	}
 	if (overwrite){
 		orig->script = cf.script;
 		orig->nr = cf.nr;
@@ -242,7 +249,7 @@ bool Type::DeriveFrom(Type* root)
 	if (parent->function.num > 0){
 		// inheritance of functions
 		foreach(ClassFunction &f, parent->function){
-			if ((f.name != "__init__") && (f.name != "__assign__"))
+			if ((f.name != "__init__") && (f.name != "__init_comp__") && (f.name != "__delete__") && (f.name != "__assign__"))
 				function.add(f);
 		}
 		found = true;
