@@ -26,7 +26,7 @@
 
 namespace Script{
 
-string DataVersion = "0.12.9.0";
+string DataVersion = "0.13.0.0";
 
 CompilerConfiguration config;
 
@@ -556,11 +556,7 @@ void script_make_super_array(Type *t, SyntaxTree *ps)
 				func_add_param("other",		t);
 			class_add_func("remove", TypeVoid, mf(&DynamicArray::delete_single));
 				func_add_param("index",		TypeInt);
-			class_add_func("removep", TypeVoid, mf(&DynamicArray::delete_single_by_pointer));
-				func_add_param("pointer",		TypePointer);
 			class_add_func("resize", TypeVoid, mf(&DynamicArray::resize));
-				func_add_param("num",		TypeInt);
-			class_add_func("ensure_size", TypeVoid, mf(&DynamicArray::ensure_size));
 				func_add_param("num",		TypeInt);
 		}
 }

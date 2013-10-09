@@ -186,6 +186,7 @@ public:
 	void AutoImplementArrayClear(Function *f, Type *t);
 	void AutoImplementArrayResize(Function *f, Type *t);
 	void AutoImplementArrayAdd(Function *f, Type *t);
+	void AutoImplementArrayRemove(Function *f, Type *t);
 	void AutoImplementFunctions(Type *t);
 	void AddFunctionHeadersForClass(Type *t);
 

@@ -199,10 +199,71 @@ void SyntaxTree::AutoImplementAssign(Function *f, Type *t)
 		Command *cmd_inc = add_command_operator(for_var, cmd_0 /*dummy*/, OperatorIntIncrease);
 		b->command.add(cmd_inc);
 		f->block->command.add(cb);
+	}else if (t->is_array){
+
+		// for int i, 0, other.num
+		//    self[i].__assign__(other[i])
+
+		f->AddVar("i", TypeInt);
+		int nc_num = AddConstant(TypeInt);
+		*(int*)Constants[nc_num].data = t->array_length;
+
+		Command *for_var = add_command_local_var(f->get_var("i"), TypeInt);
+		Command *c_num = add_command_const(nc_num);
+
+
+		// for_var = 0
+		int nc_0 = AddConstant(TypeInt);
+		(*(int*)Constants[nc_0].data) = 0;
+		Command *cmd_0 = add_command_const(nc_0);
+		Command *cmd_assign0 = add_command_operator(for_var, cmd_0, OperatorIntAssign);
+		f->block->command.add(cmd_assign0);
+
+		// while(for_var < self.num)
+		Command *cmd_cmp = add_command_operator(for_var, c_num, OperatorIntSmaller);
+
+		Command *cmd_while = add_command_compilerfunc(CommandFor);
+		cmd_while->param[0] = cmd_cmp;
+		f->block->command.add(cmd_while);
+
+		Block *b = AddBlock();
+		Command *cb = AddCommand(KindBlock, b->index, TypeVoid);
+
+		// el := self.data[for_var]
+		Command *cmd_el = add_command_parray(self, for_var, t->parent);
+
+		// el2 := other.data[for_var]
+		Command *cmd_el2 = add_command_parray(ref_command(other), for_var, t->parent);
+
+
+		Command *cmd_assign = LinkOperator(OperatorAssign, cmd_el, cmd_el2);
+		if (!cmd_assign)
+			DoError(format("%s.__assign__(): no %s.__assign__() found", t->name.c_str(), t->parent->name.c_str()));
+		b->command.add(cmd_assign);
+
+		// ...for_var += 1
+		Command *cmd_inc = add_command_operator(for_var, cmd_0 /*dummy*/, OperatorIntIncrease);
+		b->command.add(cmd_inc);
+		f->block->command.add(cb);
 	}else{
 
+		// parent assignment
+		if (t->parent){
+			Command *p = deref_command(cp_command(self));
+			Command *o = cp_command(other);
+			p->type = o->type = t->parent;
+
+			Command *cmd_assign = LinkOperator(OperatorAssign, p, o);
+			if (!cmd_assign)
+				DoError(format("%s.__assign__(): no parent %s.__assign__", t->name.c_str(), t->parent->name.c_str()));
+			f->block->command.add(cmd_assign);
+		}
+
 		// call child assignment
-		foreach(ClassElement &e, t->element){
+		int i0 = t->parent ? t->parent->element.num : 0;
+		foreachi(ClassElement &e, t->element, i){
+			if (i < i0)
+				continue;
 			Command *p = shift_command(self, true, e.offset, e.type);
 			Command *o = shift_command(cp_command(other), false, e.offset, e.type); // needed for call-by-ref conversion!
 
@@ -360,6 +421,36 @@ void SyntaxTree::AutoImplementArrayResize(Function *f, Type *t)
 	}
 }
 
+
+void SyntaxTree::AutoImplementArrayRemove(Function *f, Type *t)
+{
+	if (!f)
+		return;
+
+	Command *index = add_command_local_var(f->get_var("index"), TypeInt);
+	Command *self = add_command_local_var(f->get_var("self"), t->GetPointer());
+
+	// delete...
+	ClassFunction *f_del = t->parent->GetDestructor();
+	if (f_del){
+
+		// el := self.data[index]
+		Command *deref_self = deref_command(cp_command(self));
+		Command *self_data = shift_command(deref_self, false, 0, t->parent->GetPointer());
+		Command *cmd_el = add_command_parray(self_data, index, t->parent);
+
+		// __delete__
+		Command *cmd_delete = add_command_classfunc(t, f_del, ref_command(cmd_el));
+		f->block->command.add(cmd_delete);
+	}
+
+	// resize
+	Command *c_remove = add_command_classfunc(t, t->GetFunc("__mem_remove__", TypeVoid, 1), self);
+	c_remove->num_params = 1;
+	c_remove->param[0] = index;
+	f->block->command.add(c_remove);
+}
+
 void SyntaxTree::AutoImplementArrayAdd(Function *f, Type *t)
 {
 	if (!f)
@@ -423,6 +514,9 @@ void SyntaxTree::AddFunctionHeadersForClass(Type *t)
 		add_func_header(this, t, "clear", TypeVoid, TypeVoid, "");
 		add_func_header(this, t, "resize", TypeVoid, TypeInt, "num");
 		add_func_header(this, t, "add", TypeVoid, t->parent, "x");
+		add_func_header(this, t, "remove", TypeVoid, TypeInt, "index");
+		add_func_header(this, t, "__assign__", TypeVoid, t, "other");
+	}else if (t->is_array){
 		add_func_header(this, t, "__assign__", TypeVoid, t, "other");
 	}else /*if (!t->is_simple_class())*/{//needs_init){
 		if (!t->GetDefaultConstructor())
@@ -430,7 +524,15 @@ void SyntaxTree::AddFunctionHeadersForClass(Type *t)
 		if (!t->GetDestructor())
 			add_func_header(this, t, "__delete__", TypeVoid, TypeVoid, "");
 		if (!t->GetAssign()){
-			add_func_header(this, t, "__assign__", TypeVoid, t, "other");
+			//add_func_header(this, t, "__assign__", TypeVoid, t, "other");
+			// implement only if parent has also done so
+			if (t->parent){
+				if (t->parent->GetAssign())
+					add_func_header(this, t, "__assign__", TypeVoid, t, "other");
+			}else{
+				add_func_header(this, t, "__assign__", TypeVoid, t, "other");
+			}
+		}
 		if (!t->GetComplexConstructor())
 			if (t->parent)
 				if (t->parent->GetComplexConstructor()){
@@ -444,16 +546,6 @@ void SyntaxTree::AddFunctionHeadersForClass(Type *t)
 					t->AddFunction(this, Functions.num - 1, -1, false);
 
 				}
-			// implement only if parent has also done so
-			/*if (t->parent){
-				msg_write(t->parent->GetFunc("__assign__"));
-				if (t->parent->GetFunc("__assign__") >= 0)
-					CreateImplicitAssign(t);
-			}else{
-				msg_write("!p");
-				CreateImplicitAssign(t);
-			}*/
-		}
 	}
 }
 
@@ -466,7 +558,7 @@ Function* class_get_func(Type *t, const string &name, Type *return_type, int num
 			return f;
 		return NULL;
 	}
-	t->owner->DoError("class_get_func... " + t->name + "." + name);
+	//t->owner->DoError("class_get_func... " + t->name + "." + name);
 	return NULL;
 }
 
@@ -491,7 +583,10 @@ void SyntaxTree::AutoImplementFunctions(Type *t)
 		AutoImplementDestructor(class_get_func(t, "__delete__", TypeVoid, 0), t);
 		AutoImplementArrayClear(class_get_func(t, "clear", TypeVoid, 0), t);
 		AutoImplementArrayResize(class_get_func(t, "resize", TypeVoid, 1), t);
+		AutoImplementArrayRemove(class_get_func(t, "remove", TypeVoid, 1), t);
 		AutoImplementArrayAdd(class_get_func(t, "add", TypeVoid, 1), t);
+		AutoImplementAssign(class_get_func(t, "__assign__", TypeVoid, 1), t);
+	}else if (t->is_array){
 		AutoImplementAssign(class_get_func(t, "__assign__", TypeVoid, 1), t);
 	}else if (!t->is_simple_class()){//needs_init){
 		AutoImplementDefaultConstructor(class_get_func(t, "__init__", TypeVoid, 0), t, true);

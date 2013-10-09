@@ -201,14 +201,6 @@ void amd64_camera_unproject(vector &r, Camera *c, vector &v)
 void amd64_getg(vector &r, vector &v)
 {	r = GetG(v);	}
 #define amd64_wrap(orig, wrap)	((config.instruction_set == Asm::InstructionSetAMD64) ? ((void*)(wrap)) : ((void*)(orig)))
-class DummyModel
-{
-public:
-	void _cdecl __assign__(DummyModel *other){
-		msg_error("operator Model=Model not allowed");
-	}
-};
-
 #else
 #define amd64_wrap(a, b)	NULL
 #endif
@@ -544,9 +536,8 @@ void SIAddPackageX()
 		class_add_element("max",			TypeVector,		GetDAModel(max));
 		class_add_element("test_collisions",	TypeBool,		GetDAModel(test_collisions));
 		class_add_element("allow_shadow",	TypeBool,		GetDAModel(allow_shadow));
-		class_add_func("__init__",				TypeVoid,		x_p(mf(&Model::__init__)));
-		class_add_func_virtual("__delete__",				TypeVoid,		x_p(mf(&Model::__delete__)));
-		class_add_func("__assign__",				TypeVoid,		x_p(mf(&DummyModel::__assign__)));
+		class_add_func("__init__", TypeVoid, x_p(mf(&Model::__init__)));
+		class_add_func_virtual("__delete__", TypeVoid, x_p(mf(&Model::__delete__)));
 		class_add_func("AddForce",		TypeVoid,	x_p(mf(&Object::AddForce)));
 			func_add_param("force",		TypeVector);
 			func_add_param("rho",		TypeVector);

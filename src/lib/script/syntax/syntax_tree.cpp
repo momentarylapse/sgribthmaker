@@ -674,6 +674,8 @@ void SyntaxTree::AddType(Type **type)
 		t->parent = parent;
 		t->size = size;
 		AddFunctionHeadersForClass(t);
+	}else if (t->is_array){
+		AddFunctionHeadersForClass(t);
 	}
 }
 
