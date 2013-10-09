@@ -3195,6 +3195,7 @@ void InstructionWithParamsList::ShrinkJumps(void *oc, int ocs)
 	// first pass compilation (we need real jump distances)
 	int _ocs = ocs;
 	Compile(oc, _ocs);
+	wanted_label.clear();
 
 	// try shrinking
 	foreachi(InstructionWithParams &iwp, *this, i){

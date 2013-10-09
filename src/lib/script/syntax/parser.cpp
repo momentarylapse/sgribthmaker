@@ -1781,7 +1781,6 @@ void SyntaxTree::ParseFunctionHeader(Type *class_type, bool as_extern)
 
 void SyntaxTree::ParseFunctionBody(Function *f)
 {
-	msg_write(f->_logical_line_no);
 	Exp.cur_line = &Exp.line[f->_logical_line_no];
 
 	ExpressionBuffer::Line *this_line = Exp.cur_line;
@@ -1792,9 +1791,9 @@ void SyntaxTree::ParseFunctionBody(Function *f)
 		if (peak_commands_super(Exp)){
 			more_to_parse = ParseFunctionCommand(f, this_line);
 
-			ImplementImplicitConstructor(f, f->_class, false);
+			AutoImplementDefaultConstructor(f, f->_class, false);
 		}else
-			ImplementImplicitConstructor(f, f->_class);
+			AutoImplementDefaultConstructor(f, f->_class, true);
 	}
 
 
@@ -1805,7 +1804,7 @@ void SyntaxTree::ParseFunctionBody(Function *f)
 
 	// auto implement destructor?
 	if (f->name.tail(11) == ".__delete__")
-		ImplementImplicitDestructor(f, f->_class);
+		AutoImplementDestructor(f, f->_class);
 	cur_func = NULL;
 
 	Exp.cur_line --;
@@ -1905,7 +1904,7 @@ void SyntaxTree::Parser()
 
 
 	for (int i=0;i<Types.num;i++)
-		ImplementImplicitFunctions(Types[i]);
+		AutoImplementFunctions(Types[i]);
 
 	ParseAllFunctionBodies();
 }

@@ -104,7 +104,7 @@ struct Function
 	Type *_class;
 	Type *return_type;
 	Type *literal_return_type;
-	bool is_extern, implement_later;
+	bool is_extern, auto_implement;
 	// for compilation...
 	int _var_size, _param_size;
 	int _logical_line_no;
@@ -177,18 +177,17 @@ public:
 	// pre compiler
 	void PreCompiler(bool just_analyse);
 	void HandleMacro(ExpressionBuffer::Line *l, int &line_no, int &NumIfDefs, bool *IfDefed, bool just_analyse);
-	void ImplementImplicitConstructor(Function *f, Type *t, bool allow_parent_constructor = true);
-	void ImplementImplicitDestructor(Function *f, Type *t);
-	void ImplementAddVirtualTable(Command *self, Function *f, Type *t);
-	void ImplementAddChildConstructors(Command *self, Function *f, Type *t);
+	void AutoImplementAddVirtualTable(Command *self, Function *f, Type *t);
+	void AutoImplementAddChildConstructors(Command *self, Function *f, Type *t);
+	void AutoImplementDefaultConstructor(Function *f, Type *t, bool allow_parent_constructor);
+	void AutoImplementComplexConstructor(Function *f, Type *t);
+	void AutoImplementDestructor(Function *f, Type *t);
+	void AutoImplementAssign(Function *f, Type *t);
+	void AutoImplementArrayClear(Function *f, Type *t);
+	void AutoImplementArrayResize(Function *f, Type *t);
+	void AutoImplementArrayAdd(Function *f, Type *t);
+	void AutoImplementFunctions(Type *t);
 	void AddFunctionHeadersForClass(Type *t);
-	void ImplementImplicitDefaultConstructor(Function *f, Type *t);
-	void ImplementImplicitComplexConstructor(Function *f, Type *t);
-	void ImplementImplicitAssign(Function *f, Type *t);
-	void ImplementImplicitArrayClear(Function *f, Type *t);
-	void ImplementImplicitArrayResize(Function *f, Type *t);
-	void ImplementImplicitArrayAdd(Function *f, Type *t);
-	void ImplementImplicitFunctions(Type *t);
 
 	// syntax analysis
 	Type *GetConstantType();

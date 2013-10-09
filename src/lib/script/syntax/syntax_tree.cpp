@@ -366,7 +366,7 @@ Function::Function(const string &_name, Type *_return_type)
 	literal_return_type = _return_type;
 	_class = NULL;
 	is_extern = false;
-	implement_later = false;
+	auto_implement = false;
 	_param_size = 0;
 	_var_size = 0;
 	_logical_line_no = -1;

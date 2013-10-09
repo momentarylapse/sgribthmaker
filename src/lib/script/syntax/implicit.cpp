@@ -5,7 +5,7 @@
 
 namespace Script{
 
-void SyntaxTree::ImplementAddVirtualTable(Command *self, Function *f, Type *t)
+void SyntaxTree::AutoImplementAddVirtualTable(Command *self, Function *f, Type *t)
 {
 	if (t->vtable){
 		Command *p = shift_command(self, true, 0, TypePointer);
@@ -17,7 +17,7 @@ void SyntaxTree::ImplementAddVirtualTable(Command *self, Function *f, Type *t)
 	}
 }
 
-void SyntaxTree::ImplementAddChildConstructors(Command *self, Function *f, Type *t)
+void SyntaxTree::AutoImplementAddChildConstructors(Command *self, Function *f, Type *t)
 {
 	int i0 = t->parent ? t->parent->element.num : 0;
 	foreachi(ClassElement &e, t->element, i){
@@ -32,8 +32,10 @@ void SyntaxTree::ImplementAddChildConstructors(Command *self, Function *f, Type 
 	}
 }
 
-void SyntaxTree::ImplementImplicitConstructor(Function *f, Type *t, bool allow_parent_constructor)
+void SyntaxTree::AutoImplementDefaultConstructor(Function *f, Type *t, bool allow_parent_constructor)
 {
+	if (!f)
+		return;
 	Command *self = add_command_local_var(f->get_var("self"), t->GetPointer());
 
 	if (t->is_super_array){
@@ -59,15 +61,15 @@ void SyntaxTree::ImplementImplicitConstructor(Function *f, Type *t, bool allow_p
 
 		// add vtable reference
 		if (t->vtable)
-			ImplementAddVirtualTable(self, f, t);
+			AutoImplementAddVirtualTable(self, f, t);
 
 		// call child constructors
-		ImplementAddChildConstructors(self, f, t);
+		AutoImplementAddChildConstructors(self, f, t);
 	}
 }
 
 #if 0
-void SyntaxTree::CreateImplicitComplexConstructor(Function *f, Type *t)
+void SyntaxTree::AutoImplementComplexConstructor(Function *f, Type *t)
 {
 	ClassFunction *pcc = t->parent->GetComplexConstructor();
 	Function *pcf = pcc->script->syntax->Functions[pcc->nr];
@@ -90,26 +92,28 @@ void SyntaxTree::CreateImplicitComplexConstructor(Function *f, Type *t)
 
 	// add vtable reference
 	if (t->vtable)
-		ImplementAddVirtualTable(self, f, t);
+		AutoImplementAddVirtualTable(self, f, t);
 
 	// call child constructors
-	ImplementAddChildConstructors(self, f, t);
+	AutoImplementAddChildConstructors(self, f, t);
 
 	t->AddFunction(this, fn);
 }
 #endif
 
 
-void SyntaxTree::ImplementImplicitDestructor(Function *f, Type *t)
+void SyntaxTree::AutoImplementDestructor(Function *f, Type *t)
 {
+	if (!f)
+		return;
 	Command *self = add_command_local_var(f->get_var("self"), t->GetPointer());
 
 	if (t->is_super_array){
-		foreach(ClassFunction &ff, t->function)
-			if (ff.name == "clear"){
-				Command *c = add_command_classfunc(t, &ff, self);
-				f->block->command.add(c);
-			}
+		ClassFunction *f_clear = t->GetFunc("clear", TypeVoid, 0);
+		if (f_clear){
+			Command *c = add_command_classfunc(t, f_clear, self);
+			f->block->command.add(c);
+		}
 	}else{
 
 		// call child destructors
@@ -136,16 +140,17 @@ void SyntaxTree::ImplementImplicitDestructor(Function *f, Type *t)
 	}
 }
 
-void SyntaxTree::ImplementImplicitAssign(Function *f, Type *t)
+void SyntaxTree::AutoImplementAssign(Function *f, Type *t)
 {
+	if (!f)
+		return;
 	Command *other = add_command_local_var(f->get_var("other"), t);
-
 	Command *self = add_command_local_var(f->get_var("self"), t->GetPointer());
 
 	if (t->is_super_array){
 
-		ClassFunction *cf_resize = t->GetFunc("resize", TypeVoid, 1);
-		if (!cf_resize){
+		ClassFunction *f_resize = t->GetFunc("resize", TypeVoid, 1);
+		if (!f_resize){
 			DoError(format("%s.__assign__(): no %s.resize() found", t->name.c_str(), t->name.c_str()));
 			return;
 		}
@@ -153,7 +158,7 @@ void SyntaxTree::ImplementImplicitAssign(Function *f, Type *t)
 		// self.resize(other.num)
 		Command *other_num = shift_command(other, false, config.PointerSize, TypeInt);
 
-		Command *cmd_resize = add_command_classfunc(t, cf_resize, cp_command(self));
+		Command *cmd_resize = add_command_classfunc(t, f_resize, cp_command(self));
 		cmd_resize->num_params = 1;
 		cmd_resize->param[0] = other_num;
 		f->block->command.add(cmd_resize);
@@ -163,7 +168,7 @@ void SyntaxTree::ImplementImplicitAssign(Function *f, Type *t)
 
 		f->AddVar("i", TypeInt);
 
-		Command *for_var = add_command_local_var(2, TypeInt);
+		Command *for_var = add_command_local_var(f->get_var("i"), TypeInt);
 
 
 		// for_var = 0
@@ -218,15 +223,17 @@ void SyntaxTree::ImplementImplicitAssign(Function *f, Type *t)
 }
 
 
-void SyntaxTree::ImplementImplicitArrayClear(Function *f, Type *t)
+void SyntaxTree::AutoImplementArrayClear(Function *f, Type *t)
 {
+	if (!f)
+		return;
 	f->AddVar("for_var", TypeInt);
 
 	Command *self = add_command_local_var(f->get_var("self"), t->GetPointer());
 
 	Command *self_num = shift_command(cp_command(self), true, config.PointerSize, TypeInt);
 
-	Command *for_var = add_command_local_var(1, TypeInt);
+	Command *for_var = add_command_local_var(f->get_var("for_var"), TypeInt);
 
 // delete...
 	ClassFunction *f_del = t->parent->GetDestructor();
@@ -238,6 +245,7 @@ void SyntaxTree::ImplementImplicitArrayClear(Function *f, Type *t)
 		Command *cmd_assign = add_command_operator(for_var, cmd_0, OperatorIntAssign);
 		f->block->command.add(cmd_assign);
 
+#if 0
 		// while(for_var < self.num)
 		Command *cmd_cmp = add_command_operator(for_var, self_num, OperatorIntSmaller);
 
@@ -257,10 +265,11 @@ void SyntaxTree::ImplementImplicitArrayClear(Function *f, Type *t)
 		Command *cmd_delete = add_command_classfunc(t, f_del, ref_command(cmd_el));
 		b->command.add(cmd_delete);
 
-		// ...for_var += 1
+		// for_var ++
 		Command *cmd_inc = add_command_operator(for_var, cmd_0 /*dummy*/, OperatorIntIncrease);
 		b->command.add(cmd_inc);
 		f->block->command.add(cb);
+#endif
 	}
 
 	// clear
@@ -269,20 +278,22 @@ void SyntaxTree::ImplementImplicitArrayClear(Function *f, Type *t)
 }
 
 
-void SyntaxTree::ImplementImplicitArrayResize(Function *f, Type *t)
+void SyntaxTree::AutoImplementArrayResize(Function *f, Type *t)
 {
+	if (!f)
+		return;
 	f->AddVar("for_var", TypeInt);
 	f->AddVar("num_old", TypeInt);
 
-	Command *num = add_command_local_var(0, TypeInt);
+	Command *num = add_command_local_var(f->get_var("num"), TypeInt);
 
-	Command *self = add_command_local_var(1, t->GetPointer());
+	Command *self = add_command_local_var(f->get_var("self"), t->GetPointer());
 
 	Command *self_num = shift_command(cp_command(self), true, config.PointerSize, TypeInt);
 
-	Command *for_var = add_command_local_var(2, TypeInt);
+	Command *for_var = add_command_local_var(f->get_var("for_var"), TypeInt);
 
-	Command *num_old = add_command_local_var(3, TypeInt);
+	Command *num_old = add_command_local_var(f->get_var("num_old"), TypeInt);
 
 	// num_old = self.num
 	Command *cmd_copy_num = add_command_operator(num_old, self_num, OperatorIntAssign);
@@ -359,11 +370,13 @@ void SyntaxTree::ImplementImplicitArrayResize(Function *f, Type *t)
 	}
 }
 
-void SyntaxTree::ImplementImplicitArrayAdd(Function *f, Type *t)
+void SyntaxTree::AutoImplementArrayAdd(Function *f, Type *t)
 {
-	Command *item = add_command_local_var(0, t->parent);
+	if (!f)
+		return;
+	Command *item = add_command_local_var(f->get_var("x"), t->parent);
 
-	Command *self = add_command_local_var(1, t->GetPointer());
+	Command *self = add_command_local_var(f->get_var("self"), t->GetPointer());
 
 	Command *self_num = shift_command(cp_command(self), true, config.PointerSize, TypeInt);
 
@@ -395,7 +408,7 @@ void SyntaxTree::ImplementImplicitArrayAdd(Function *f, Type *t)
 void add_func_header(SyntaxTree *s, Type *t, const string &name, Type *return_type, Type *param_type, const string &param_name)
 {
 	Function *f = s->AddFunction(name, return_type);
-	f->implement_later = true;
+	f->auto_implement = true;
 	if (param_type != TypeVoid){
 		Variable v;
 		v.name = param_name;
@@ -413,8 +426,6 @@ void SyntaxTree::AddFunctionHeadersForClass(Type *t)
 		return;
 	if (t->is_pointer)
 		return;
-	msg_write("add funcs " + t->name);
-
 
 	if (t->is_super_array){
 		add_func_header(this, t, "__init__", TypeVoid, TypeVoid, "");
@@ -423,12 +434,12 @@ void SyntaxTree::AddFunctionHeadersForClass(Type *t)
 		add_func_header(this, t, "resize", TypeVoid, TypeInt, "num");
 		add_func_header(this, t, "add", TypeVoid, t->parent, "x");
 		add_func_header(this, t, "__assign__", TypeVoid, t, "other");
-	}else if (!t->is_simple_class()){//needs_init){
+	}else /*if (!t->is_simple_class())*/{//needs_init){
 		if (!t->GetDefaultConstructor())
 			add_func_header(this, t, "__init__", TypeVoid, TypeVoid, "");
 		if (!t->GetDestructor())
 			add_func_header(this, t, "__delete__", TypeVoid, TypeVoid, "");
-		if (!t->GetFunc("__assign__", TypeVoid, 1)){
+		if (!t->GetAssign()){
 			add_func_header(this, t, "__assign__", TypeVoid, t, "other");
 			// implement only if parent has also done so
 			/*if (t->parent){
@@ -446,20 +457,22 @@ void SyntaxTree::AddFunctionHeadersForClass(Type *t)
 Function* class_get_func(Type *t, const string &name, Type *return_type, int num_params)
 {
 	ClassFunction *cf = t->GetFunc(name, return_type, num_params);
-	if (cf)
-		return cf->script->syntax->Functions[cf->nr];
+	if (cf){
+		Function *f = cf->script->syntax->Functions[cf->nr];
+		if (f->auto_implement)
+			return f;
+		return NULL;
+	}
 	t->owner->DoError("class_get_func... " + t->name + "." + name);
 	return NULL;
 }
 
-void SyntaxTree::ImplementImplicitFunctions(Type *t)
+void SyntaxTree::AutoImplementFunctions(Type *t)
 {
 	if (t->owner != this)
 		return;
 	if (t->is_pointer)
 		return;
-
-	msg_write("implicit " + t->name);
 
 	// needs complex functions?
 	/*bool needs_init = false;
@@ -471,16 +484,16 @@ void SyntaxTree::ImplementImplicitFunctions(Type *t)
 		needs_init = true;*/
 
 	if (t->is_super_array){
-		ImplementImplicitConstructor(class_get_func(t, "__init__", TypeVoid, 0), t);
-		ImplementImplicitDestructor(class_get_func(t, "__delete__", TypeVoid, 0), t);
-		ImplementImplicitArrayClear(class_get_func(t, "clear", TypeVoid, 0), t);
-		ImplementImplicitArrayResize(class_get_func(t, "resize", TypeVoid, 1), t);
-		ImplementImplicitArrayAdd(class_get_func(t, "add", TypeVoid, 1), t);
-		ImplementImplicitAssign(class_get_func(t, "__assign__", TypeVoid, 1), t);
+		AutoImplementDefaultConstructor(class_get_func(t, "__init__", TypeVoid, 0), t, true);
+		AutoImplementDestructor(class_get_func(t, "__delete__", TypeVoid, 0), t);
+		AutoImplementArrayClear(class_get_func(t, "clear", TypeVoid, 0), t);
+		AutoImplementArrayResize(class_get_func(t, "resize", TypeVoid, 1), t);
+		AutoImplementArrayAdd(class_get_func(t, "add", TypeVoid, 1), t);
+		AutoImplementAssign(class_get_func(t, "__assign__", TypeVoid, 1), t);
 	}else if (!t->is_simple_class()){//needs_init){
-		ImplementImplicitConstructor(class_get_func(t, "__init__", TypeVoid, 0), t);
-		ImplementImplicitDestructor(class_get_func(t, "__delete__", TypeVoid, 0), t);
-		ImplementImplicitAssign(class_get_func(t, "__assign__", TypeVoid, 1), t);
+		AutoImplementDefaultConstructor(class_get_func(t, "__init__", TypeVoid, 0), t, true);
+		AutoImplementDestructor(class_get_func(t, "__delete__", TypeVoid, 0), t);
+		AutoImplementAssign(class_get_func(t, "__assign__", TypeVoid, 1), t);
 		/*if (!t->GetComplexConstructor())
 			if (t->parent)
 				if (t->parent->GetComplexConstructor())
