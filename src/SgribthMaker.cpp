@@ -545,7 +545,6 @@ int hui_main(Array<string> arg)
 	HuiAddCommand("show_cur_line", "", KEY_F2, &ShowCurLine);
 
 	MainWin = new HuiWindow(AppTitle, -1, -1, width, height);
-	MainWin->AllowEvents("key");
 
 	MainWin->Event("about", &OnAbout);
 	MainWin->Event("console_close", &OnConsoleClose);
