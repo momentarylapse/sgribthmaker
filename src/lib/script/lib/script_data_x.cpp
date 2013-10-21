@@ -494,7 +494,7 @@ void SIAddPackageX()
 		class_add_element("pos",			TypeVector,		GetDAModel(pos));
 		class_add_element("vel",			TypeVector,		GetDAModel(vel));
 		class_add_element("vel_surf",		TypeVector,		GetDAModel(vel_surf));
-		class_add_element("ang",			TypeVector,		GetDAModel(ang));
+		class_add_element("ang",			TypeQuaternion,	GetDAModel(ang));
 		class_add_element("rot",			TypeVector,		GetDAModel(rot));
 		class_add_element("name",			TypeString,		GetDAModel(name));
 		class_add_element("description",	TypeString,		GetDAModel(description));
@@ -603,7 +603,7 @@ void SIAddPackageX()
 		class_add_element("shader",			TypeInt,		GetDACamera(shader));
 		class_add_element("shaded_displays",TypeBool,		GetDACamera(shaded_displays));
 		class_add_element("pos",			TypeVector,		GetDACamera(pos));
-		class_add_element("ang",			TypeVector,		GetDACamera(ang));
+		class_add_element("ang",			TypeQuaternion,	GetDACamera(ang));
 		class_add_element("vel",			TypeVector,		GetDACamera(vel));
 		class_add_element("rot",			TypeVector,		GetDACamera(rot));
 		class_add_element("zoom",			TypeFloat,		GetDACamera(zoom));
@@ -616,7 +616,7 @@ void SIAddPackageX()
 		class_add_element("ignore",			TypeModelPList,	GetDACamera(ignore));
 		class_add_func("__init__",		TypeVoid,	x_p(mf(&Camera::__init_ext__)));
 			func_add_param("pos",		TypeVector);
-			func_add_param("ang",		TypeVector);
+			func_add_param("ang",		TypeQuaternion);
 			func_add_param("dest",		TypeRect);
 		class_add_func("__init__",		TypeVoid,	x_p(mf(&Camera::__init__)));
 		class_add_func_virtual("__delete__",		TypeVoid,	x_p(mf(&Camera::__delete__)));
