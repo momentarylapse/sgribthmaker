@@ -10,6 +10,7 @@
 	#include "../../../world/model_manager.h"
 	#include "../../../world/terrain.h"
 	#include "../../../world/camera.h"
+	#include "../../../world/controller.h"
 	#include "../../../physics/links.h"
 	#include "../../../gui/font.h"
 	#include "../../../gui/gui.h"
@@ -52,6 +53,7 @@ Type *TypeBeam;
 Type *TypeEffect;
 Type *TypeCamera;
 Type *TypeCameraP;
+Type *TypeController;
 Type *TypeSkin;
 Type *TypeSkinP;
 Type *TypeSkinPArray;
@@ -132,6 +134,8 @@ extern Type *TypeSocketList;
 	};
 	static Camera *_camera;
 	#define	GetDACamera(x)		long(&_camera->x)-long(_camera)
+	static Controller *_controller;
+	#define	GetDAController(x)		long(&_controller->x)-long(_controller)
 	static Terrain *_terrain;
 	#define	GetDATerrain(x)		long(&_terrain->x)-long(_terrain)
 	static TraceData *_tracedata;
@@ -148,6 +152,7 @@ extern Type *TypeSocketList;
 	typedef int ParticleRot;
 	typedef int Effect;
 	typedef int Camera;
+	typedef int Controller;
 	typedef int Fog;
 	namespace Light{
 	typedef int Light;
@@ -172,6 +177,7 @@ extern Type *TypeSocketList;
 	#define	GetDANetwork(x)		0
 	#define	GetDAHostData(x)	0
 	#define	GetDACamera(x)		0
+	#define	GetDAController(x)	0
 	#define	GetDATerrain(x)		0
 	#define	GetDATraceData(x)	0
 	#define	GetDALink(x)			0
@@ -230,6 +236,7 @@ void SIAddPackageX()
 	TypeEffect			= add_type  ("Effect",		sizeof(Effect));
 	TypeCamera			= add_type  ("Camera",		sizeof(Camera));
 	TypeCameraP			= add_type_p("Camera*",		TypeCamera);
+	TypeController		= add_type  ("Controller",	sizeof(Controller));
 	TypeSkin			= add_type  ("Skin",		sizeof(Skin));
 	TypeSkinP			= add_type_p("Skin*",		TypeSkin);
 	TypeSkinPArray		= add_type_a("Skin*[?]",	TypeSkinP, 1);
@@ -630,6 +637,26 @@ void SIAddPackageX()
 		class_add_func("Unproject",		TypeVector,	amd64_wrap(mf(&Camera::Unproject), &amd64_camera_unproject));
 			func_add_param("v",			TypeVector);
 		class_set_vtable_x(Camera);
+
+
+	add_class(TypeController);
+		class_add_element("enabled",		TypeBool,		GetDAController(enabled));
+		class_add_func("__init__",		TypeVoid,	x_p(mf(&Controller::__init__)));
+		class_add_func_virtual("__delete__",		TypeVoid,	x_p(mf(&Controller::__delete__)));
+		class_add_func_virtual("OnInit",		TypeVoid,	x_p(mf(&Controller::OnInit)));
+		class_add_func_virtual("OnDelete",		TypeVoid,	x_p(mf(&Controller::OnDelete)));
+		class_add_func_virtual("OnIterate",		TypeVoid,	x_p(mf(&Controller::OnIterate)));
+		class_add_func_virtual("OnMouseMove",		TypeVoid,	x_p(mf(&Controller::OnMouseMove)));
+		class_add_func_virtual("OnMouseWheel",		TypeVoid,	x_p(mf(&Controller::OnMouseWheel)));
+		class_add_func_virtual("OnLeftButtonDown",		TypeVoid,	x_p(mf(&Controller::OnLeftButtonDown)));
+		class_add_func_virtual("OnLeftButtonUp",		TypeVoid,	x_p(mf(&Controller::OnLeftButtonUp)));
+		class_add_func_virtual("OnRightButtonDown",		TypeVoid,	x_p(mf(&Controller::OnRightButtonDown)));
+		class_add_func_virtual("OnRightButtonUp",		TypeVoid,	x_p(mf(&Controller::OnRightButtonUp)));
+		class_add_func_virtual("OnMiddleButtonDown",		TypeVoid,	x_p(mf(&Controller::OnMiddleButtonDown)));
+		class_add_func_virtual("OnMiddleButtonUp",		TypeVoid,	x_p(mf(&Controller::OnMiddleButtonUp)));
+		class_add_func_virtual("OnKeyDown",		TypeVoid,	x_p(mf(&Controller::OnKeyDown)));
+		class_add_func_virtual("OnKeyUp",		TypeVoid,	x_p(mf(&Controller::OnKeyUp)));
+		class_set_vtable_x(Controller);
 
 
 	add_class(TypeLink);
