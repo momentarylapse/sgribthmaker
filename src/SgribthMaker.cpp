@@ -271,12 +271,12 @@ void CompileShader()
 	w->Show();
 	NixInit("OpenGL", w, "nix-area");
 
-	int shader = NixLoadShader(Filename);
-	if (shader < 0){
+	NixShader *shader = NixLoadShader(Filename);
+	if (!shader){
 		HuiErrorBox(MainWin, _("Fehler"), NixShaderError);
 	}else{
 		SetMessage(_("Shader ist fehler-frei &ubersetzbar!"));
-		NixUnrefShader(shader);
+		shader->unref();
 	}
 	delete(w);
 
