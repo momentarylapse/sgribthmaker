@@ -64,7 +64,6 @@ int ParserKaba::WordType(const string &name)
 		(name == "else") ||
 		(name == "while") ||
 		(name == "for") ||
-		(name == "forall") ||
 		(name == "in") ||
 		(name == "return") ||
 		(name == "break") ||

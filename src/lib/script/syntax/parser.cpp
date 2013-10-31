@@ -1004,11 +1004,11 @@ void SyntaxTree::ParseSpecialCommandForall(Block *block, Function *f)
 
 	// super array
 	if (Exp.cur != "in")
-		DoError("\"in\" expected after variable in forall");
+		DoError("\"in\" expected after variable in \"for . in .\"");
 	Exp.next();
 	Command *for_array = GetOperand(f);
 	if (!for_array->type->is_super_array)
-		DoError("list expected as second parameter in \"forall\"");
+		DoError("list expected as second parameter in \"for . in .\"");
 	//Exp.next();
 
 	// variable...
@@ -1176,10 +1176,10 @@ void SyntaxTree::ParseSpecialCommandIf(Block *block, Function *f)
 void SyntaxTree::ParseSpecialCommand(Block *block, Function *f)
 {
 	// special commands...
-	if (Exp.cur == "for"){
-		ParseSpecialCommandFor(block, f);
-	}else if (Exp.cur == "forall"){
+	if ((Exp.cur == "for") && (Exp.cur_line->exp.num >= 3) && (Exp.cur_line->exp[2].name == "in")){
 		ParseSpecialCommandForall(block, f);
+	}else if (Exp.cur == "for"){
+		ParseSpecialCommandFor(block, f);
 	}else if (Exp.cur == "while"){
 		ParseSpecialCommandWhile(block, f);
  	}else if (Exp.cur == "break"){
@@ -1265,7 +1265,7 @@ void SyntaxTree::ParseCompleteCommand(Block *block, Function *f)
 
 
 	// commands (the actual code!)
-		if ((Exp.cur == "for") || (Exp.cur == "forall") || (Exp.cur == "while") || (Exp.cur == "break") || (Exp.cur == "continue") || (Exp.cur == "return") || (Exp.cur == "if")){
+		if ((Exp.cur == "for") || (Exp.cur == "while") || (Exp.cur == "break") || (Exp.cur == "continue") || (Exp.cur == "return") || (Exp.cur == "if")){
 			ParseSpecialCommand(block, f);
 
 		}else{
