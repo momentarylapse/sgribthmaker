@@ -455,50 +455,6 @@ void OnExit()
 	}
 }
 
-int aaa = 0;
-
-class TestClass
-{
-public:
-	int i;
-	virtual ~TestClass(){}
-	virtual void _cdecl f0(){ msg_write("TestClass.f0"); }
-	virtual void _cdecl f1(){ msg_write("TestClass.f1"); }
-	virtual void _cdecl f2(){ msg_write("TestClass.f2"); }
-	virtual void _cdecl f(int x){ msg_write("TestClass.f"); }
-	void _cdecl g(int x){ i = x; msg_write("TestClass.g"); }
-	void _cdecl g2(int x){ i = x; }
-};
-
-class TestDerivedClass : public TestClass
-{
-public:
-	virtual ~TestDerivedClass(){}
-	virtual void _cdecl f(int x){ msg_write("TestDerivedClass.f"); }
-	void _cdecl g(int x){ msg_write("TestDerivedClass.g"); }
-};
-
-typedef void (_cdecl TestClass::*tmf)();
-
-void _cdecl TestTest(int x, TestClass *w, tmf p)
-{
-	aaa = 13;
-	//(w->*p)();
-	//string s;
-	w->f(x);
-}
-
-class TTest : public VirtualBase
-{
-public:
-	virtual ~TTest(){ msg_write("TTest.del");	}
-};
-
-void kabadel(VirtualBase *b)
-{
-	b->__delete__();
-}
-
 int hui_main(Array<string> arg)
 {
 	msg_init(true);
@@ -600,26 +556,6 @@ int hui_main(Array<string> arg)
 	Script::Init();
 
 //	msg_write(Asm::Disassemble(&TestTest));
-//	msg_write(Asm::Disassemble(Script::mf(&TestClass::g2)));
-	
-	/*tmf p = &TestClass::f;
-	msg_write(string((char*)&p, sizeof(p)).hex());
-	p = &TestClass::g;
-	msg_write(string((char*)&p, sizeof(p)).hex());
-
-	TestDerivedClass w;
-	TestTest(&w, &TestClass::f);
-	TestTest(&w, &TestClass::g);
-
-	union{
-		tmf mp;
-		void *p;
-	} pp;
-	pp.mp = &TestClass::f;
-	msg_write(Asm::Disassemble(pp.p));
-
-	return 0;*/
-
 
 	New();
 
