@@ -649,6 +649,7 @@ void SIAddPackageX()
 		class_add_func_virtual("onInit",		TypeVoid,	x_p(mf(&Controller::OnInit)));
 		class_add_func_virtual("onDelete",		TypeVoid,	x_p(mf(&Controller::OnDelete)));
 		class_add_func_virtual("onIterate",		TypeVoid,	x_p(mf(&Controller::OnIterate)));
+		class_add_func_virtual("onInput",		TypeVoid,	x_p(mf(&Controller::OnInput)));
 		class_add_func_virtual("onPreDraw",		TypeVoid,	x_p(mf(&Controller::OnPreDraw)));
 		class_add_func_virtual("onMouseWheel",		TypeVoid,	x_p(mf(&Controller::OnMouseWheel)));
 		class_add_func_virtual("onLeftButtonDown",		TypeVoid,	x_p(mf(&Controller::OnLeftButtonDown)));

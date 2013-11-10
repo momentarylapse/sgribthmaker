@@ -38,5 +38,7 @@ public:
 	void _cdecl addTriasIndexed(int num_points, int num_trias, const vector *p, const vector *n, const float *tu, const float *tv, const int *indices);
 };
 
+#define NixDraw3D(vb)  (vb)->draw()
+
 
 #endif
