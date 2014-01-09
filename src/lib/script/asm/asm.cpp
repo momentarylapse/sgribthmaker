@@ -1672,6 +1672,10 @@ inline void UnfuzzyParam(InstructionParam &p, InstructionParamFuzzy &pf)
 	p.reg2 = NULL;
 	p.disp = DispModeNone;
 	p.reg = pf.reg;
+	if ((p.reg) && (state.ExtendModRMBase)){
+		if ((p.reg->id >= RegRax) && (p.reg->id <= RegRbp))
+			p.reg = RegisterByID[p.reg->id + RegR8 - RegRax];
+	}
 	p.size = pf.size;
 	p.deref = false; // well... FIXME
 	p.value = 0;
@@ -2953,6 +2957,9 @@ bool InstructionParamFuzzy::match(InstructionParam &wanted_p)
 	if (wanted_p.type == ParamTRegister){
 		// direct match
 		if ((allow_register) && (reg)){
+			if (wanted_p.reg)
+				if ((reg->id >= RegRax) && (reg->id <= RegRbp) && (wanted_p.reg->id == reg->id + RegR8 - RegRax))
+					return true;
 			return ((reg == wanted_p.reg) && (_deref_match_(*this, wanted_p)));
 		}
 		// fuzzy match
@@ -3112,6 +3119,9 @@ void OpcodeAddInstruction(char *oc, int &ocs, CPUInstruction &inst, InstructionP
 
 	// REX prefix
 	char rex = mod_rm >> 8;
+	if ((inst.param1.reg) && (p1.reg))
+		if ((inst.param1.reg->id >= RegRax) && (inst.param1.reg->id <= RegRbp) && (inst.param1.reg->id == p1.reg->id + RegRax - RegR8))
+			rex = 0x01;
 	if (inst.has_big_param)//state.ParamSize == Size64)
 		rex |= 0x08;
 	if (rex != 0)

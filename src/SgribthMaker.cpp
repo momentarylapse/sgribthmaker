@@ -555,7 +555,7 @@ int hui_main(Array<string> arg)
 
 	Script::Init();
 
-//	msg_write(Asm::Disassemble(&TestTest));
+	//msg_write(Asm::Disassemble((void*)&TestTest));
 
 	New();
 
