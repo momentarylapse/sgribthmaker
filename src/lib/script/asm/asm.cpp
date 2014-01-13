@@ -558,6 +558,7 @@ struct CPUInstruction{
 	int inst;
 	int code, code_size, cap;
 	bool has_modrm, has_small_param, has_small_addr, has_big_param, has_big_addr, has_fixed_param;
+	bool ignore;
 	InstructionParamFuzzy param1, param2;
 	string name;
 
@@ -742,7 +743,7 @@ enum
 	OptMediumParam,
 };
 
-void add_inst(int inst, int code, int code_size, int cap, int param1, int param2, int opt = 0)
+void add_inst(int inst, int code, int code_size, int cap, int param1, int param2, int opt = 0, bool ignore = false)
 {
 	CPUInstruction i;
 	memset(&i.param1, 0, sizeof(i.param1));
@@ -751,6 +752,7 @@ void add_inst(int inst, int code, int code_size, int cap, int param1, int param2
 	i.code = code;
 	i.code_size = code_size;
 	i.cap = cap;
+	i.ignore = ignore;
 	bool m1 = _get_inst_param_(param1, i.param1);
 	bool m2 = _get_inst_param_(param2, i.param2);
 	i.has_modrm  = m1 || m2 || (cap >= 0);
@@ -1321,14 +1323,14 @@ void Init(int set)
 	add_inst(inst_xchg		,0x97	,1	,-1	,RegRax	,RegRdi, OptBigParam);
 	add_inst(inst_cbw_cwde	,0x98	,1	,-1	,-1 ,-1);
 	add_inst(inst_cgq_cwd	,0x99	,1	,-1	,-1 ,-1);
-	add_inst(inst_mov		,0xa0	,1	,-1	,RegAl	,Ob);
-	add_inst(inst_mov		,0xa1	,1	,-1	,RegAx	,Ow, OptSmallParam);
-	add_inst(inst_mov		,0xa1	,1	,-1	,RegEax	,Od, OptMediumParam);
-	add_inst(inst_mov		,0xa1	,1	,-1	,RegRax	,Oq, OptBigParam);
-	add_inst(inst_mov		,0xa2	,1	,-1	,Ob	,RegAl);
-	add_inst(inst_mov,	0xa3,	1,	-1,	Ow,	RegAx, OptSmallParam);
-	add_inst(inst_mov,	0xa3,	1,	-1,	Od,	RegEax, OptMediumParam);
-	add_inst(inst_mov,	0xa3,	1,	-1,	Oq,	RegRax, OptBigParam);
+	add_inst(inst_mov		,0xa0	,1	,-1	,RegAl	,Ob, true);
+	add_inst(inst_mov		,0xa1	,1	,-1	,RegAx	,Ow, OptSmallParam, true);
+	add_inst(inst_mov		,0xa1	,1	,-1	,RegEax	,Od, OptMediumParam, true);
+	add_inst(inst_mov		,0xa1	,1	,-1	,RegRax	,Oq, OptBigParam, true);
+	add_inst(inst_mov		,0xa2	,1	,-1	,Ob	,RegAl, true);
+	add_inst(inst_mov,	0xa3,	1,	-1,	Ow,	RegAx, OptSmallParam, true);
+	add_inst(inst_mov,	0xa3,	1,	-1,	Od,	RegEax, OptMediumParam, true);
+	add_inst(inst_mov,	0xa3,	1,	-1,	Oq,	RegRax, OptBigParam, true);
 	add_inst(inst_movs_b_ds_esi_es_edi	,0xa4	,1	,-1	,-1,-1);
 	add_inst(inst_movs_ds_esi_es_edi	,0xa5	,1	,-1	,-1,-1);
 	add_inst(inst_cmps_b_ds_esi_es_edi	,0xa6	,1	,-1	,-1,-1);
@@ -1870,7 +1872,7 @@ inline void ReadParamData(char *&cur, InstructionParam &p, bool has_modrm)
 	p.value = 0;
 	if (p.type == ParamTImmediate){
 		if (p.deref){
-			int size = has_modrm ? state.AddrSize : state.FullRegisterSize;
+			int size = has_modrm ? state.AddrSize : state.FullRegisterSize; // Ov/Mv...
 			memcpy(&p.value, cur, size);
 			cur += size;
 		}else{
@@ -2664,12 +2666,13 @@ void OpcodeAddImmideate(char *oc, int &ocs, InstructionParam &p, CPUInstruction 
 	if (p.type == ParamTImmediate){
 		size = p.size;
 		if (p.deref){
+			//---msg_write("deref....");
 			size = state.AddrSize; // inst.has_big_addr
 			if (InstructionSet.set == InstructionSetAMD64){
 				if (inst.has_modrm)
 					value -= (long)oc + ocs + size + next_param_size; // amd64 uses RIP-relative addressing!
 				else
-					size = Size64;
+					size = Size64; // Ov/Mv...
 			}
 		}
 	//}else if (p.type == ParamTImmediateExt){
@@ -2698,6 +2701,7 @@ void OpcodeAddImmideate(char *oc, int &ocs, InstructionParam &p, CPUInstruction 
 		value -= CurrentMetaInfo->CodeOrigin + ocs + size + next_param_size; // TODO ...first byte of next opcode
 	}
 
+	//---msg_write("imm " + i2s(size));
 	append_val(oc, ocs, value, size);
 }
 
@@ -3108,6 +3112,7 @@ int CreateModRMByte(CPUInstruction &inst, InstructionParam &p1, InstructionParam
 void OpcodeAddInstruction(char *oc, int &ocs, CPUInstruction &inst, InstructionParam &p1, InstructionParam &p2, InstructionWithParamsList &list)
 {
 	msg_db_f("OpcodeAddInstruction", 1+ASM_DB_LEVEL);
+	//---msg_write("add inst " + inst.name);
 
 	// 16/32 bit toggle prefix
 	if ((!inst.has_fixed_param) && (inst.has_small_param != (state.DefaultSize == Size16)))
@@ -3157,10 +3162,10 @@ void InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)
 	// test if any instruction matches our wishes
 	int ninst = -1;
 	bool has_mod_rm = false;
-	for (int i=0;i<CPUInstructions.num;i++)
-		if (CPUInstructions[i].match(iwp)){
-			if (((!CPUInstructions[i].has_modrm) && (has_mod_rm)) || (ninst < 0)){
-				has_mod_rm = CPUInstructions[i].has_modrm;
+	foreachi(CPUInstruction &c, CPUInstructions, i)
+		if ((!c.ignore) && (c.match(iwp))){
+			if (((!c.has_modrm) && (has_mod_rm)) || (ninst < 0)){
+				has_mod_rm = c.has_modrm;
 				ninst = i;
 			}
 		}
