@@ -11,13 +11,14 @@
 #include "lib/hui/hui.h"
 #include "HighlightScheme.h"
 
+class Document;
 class History;
 class Parser;
 
 class SourceView : public HuiEventHandler
 {
 public:
-	SourceView(HuiWindow *win, const string &id);
+	SourceView(HuiWindow *win, const string &id, Document *d);
 	virtual ~SourceView();
 
 	void Clear();
@@ -63,6 +64,8 @@ public:
 
 	GtkTextTag *tag[NumTagTypes];
 
+	//void SwitchToDocument(Document *d);
+	Document *doc;
 	History *history;
 
 	int NeedsUpdateStart, NeedsUpdateEnd;

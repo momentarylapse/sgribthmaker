@@ -7,6 +7,7 @@
 
 #include "SourceView.h"
 #include "History.h"
+#include "Document.h"
 #include "Parser/BaseParser.h"
 #include "lib/hui/Controls/HuiControl.h"
 
@@ -144,9 +145,9 @@ SourceView::JumpData::JumpData(SourceView *_sv, int _line)
 	line = _line;
 }
 
-SourceView::SourceView(HuiWindow *win, const string &id)
+SourceView::SourceView(HuiWindow *win, const string &id, Document *d)
 {
-	tv = win->_GetControl_("edit")->widget;
+	tv = win->_GetControl_(id)->widget;
 	tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tv));
 
 
@@ -170,7 +171,10 @@ SourceView::SourceView(HuiWindow *win, const string &id)
 	g_signal_connect(G_OBJECT(tv),"toggle-cursor-visible",G_CALLBACK(toggle_cursor_visible),this);
 	g_signal_connect(G_OBJECT(tv),"populate-popup",G_CALLBACK(populate_popup),this);
 
+	doc = d;
 	history = new History(this);
+	d->history = history;
+	d->source_view = this;
 
 	UpdateFont();
 	//g_object_set(tv, "wrap-mode", GTK_WRAP_WORD_CHAR, NULL);

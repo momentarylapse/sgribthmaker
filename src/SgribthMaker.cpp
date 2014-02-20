@@ -9,13 +9,12 @@
 #include "HighlightScheme.h"
 #include "SourceView.h"
 #include "Parser/BaseParser.h"
+#include "Document.h"
 
-
-string Filename;
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.0.2";
+string AppVersion = "0.4.1.0";
 
 #define ALLOW_LOGGING			true
 //#define ALLOW_LOGGING			false
@@ -23,9 +22,12 @@ string AppVersion = "0.4.0.2";
 HuiWindow *MainWin;
 string LastCommand;
 
-SourceView *source_view;
+Array<SourceView*> source_view;
 
 extern string NixShaderError;
+
+Array<Document*> documents;
+Document *cur_doc = NULL;
 
 //------------------------------------------------------------------------------
 // Highlighting
@@ -53,32 +55,48 @@ void SetMessage(const string &str)
 
 void SetWindowTitle()
 {
+	if (!cur_doc)
+		return;
 	msg_db_f("SetWinTitle", 1);
-	if (source_view->history->changed){
-		if (Filename.num > 0)
-			MainWin->SetTitle("*" + Filename + " - " + AppTitle);
-		else
-			MainWin->SetTitle("*neues Dokument - " + AppTitle);
-	}else{
-		if (Filename.num)
-			MainWin->SetTitle(Filename + " - " + AppTitle);
-		else
-			MainWin->SetTitle("neues Dokument - " + AppTitle);
+	MainWin->SetTitle(cur_doc->name(true) + " - " + AppTitle);
+}
+
+void UpdateDocList()
+{
+	MainWin->Reset("file_list");
+	foreachi(Document *d, documents, i){
+		MainWin->AddString("file_list", d->name(false));
+		if (cur_doc == d)
+			MainWin->SetInt("file_list", i);
 	}
 }
 
 void UpdateMenu()
 {
-	MainWin->Enable("undo", source_view->Undoable());
-	MainWin->Enable("redo", source_view->Redoable());
+	MainWin->Enable("undo", cur_doc->history->Undoable());
+	MainWin->Enable("redo", cur_doc->history->Redoable());
+	UpdateDocList();
 	SetWindowTitle();
+}
+
+void SetActiveDocument(Document *d)
+{
+	foreachi(Document *dd, documents, i)
+		if (dd == d){
+			MainWin->SetInt("tab", i);
+			MainWin->Activate("edit" + i2s(i));
+		}
+	cur_doc = d;
+	UpdateMenu();
 }
 
 bool Save();
 
 bool AllowTermination()
 {
-	if (source_view->history->changed){
+	foreach(Document *d, documents)
+	if (d->history->changed){
+		SetActiveDocument(d);
 		string answer = HuiQuestionBox(MainWin, _("dem&utige aber h&ofliche Frage"), _("Sie haben die Entropie erh&oht. Wollen Sie Ihr Werk speichern?"), true);
 		if (answer == "hui:cancel")
 			return false;
@@ -91,78 +109,63 @@ bool AllowTermination()
 
 void New()
 {
-	if (!AllowTermination())
-		return;
-
 	msg_db_f("New", 1);
-	source_view->Clear();
 
-	Filename = "";
-	SetWindowTitle();
+	if (documents.num == 1){
+		MainWin->SetTarget("table_doc", 0);
+		MainWin->AddListView("!nobar,select-single,noexpandx,width=180\\file", 1, 0, 0, 0, "file_list");
+	}
+
+	string id = "edit" + i2s(documents.num);
+
+	MainWin->SetBorderWidth(0);
+	if (documents.num > 0)
+		MainWin->AddString("tab", i2s(documents.num));
+	MainWin->SetTarget("tab", documents.num);
+	MainWin->AddMultilineEdit("!handlekeys", 0, 0, 0, 0, id);
+
+	documents.add(new Document);
+	SourceView *sv = new SourceView(MainWin, id, documents.back());
+
+	HighlightScheme *scheme = HighlightScheme::get(HuiConfigReadStr("HighlightScheme", "default"));
+	sv->ApplyScheme(scheme);
+	source_view.add(sv);
+
+	SetActiveDocument(documents.back());
+	UpdateMenu();
 }
 
 bool LoadFromFile(const string &filename)
 {
-	msg_db_f("LoadFromFile", 1);
-	CFile *f = FileOpen(filename);
-	if (!f){
-		SetMessage(_("Datei l&asst sich nicht &offnen"));
-		return false;
-	}
-	
-	source_view->Clear();
-
-	string temp = f->ReadComplete();
-	FileClose(f);
-
-	if (!source_view->Fill(temp))
-		SetMessage(_("Datei nicht UTF-8 kompatibel"));
-
-	Filename = filename;
-
-	source_view->SetParser(Filename);
-
-	SetWindowTitle();
-	return true;
+	New();
+	return documents.back()->load(filename);
 }
 
 bool WriteToFile(const string &filename)
 {
-	msg_db_f("WriteToFile", 1);
-	CFile *f = FileCreate(filename);
-	string temp = source_view->GetAll();
-	f->WriteBuffer(temp.data, temp.num);
-	FileClose(f);
-
-	Filename = filename;
-	source_view->history->DefineAsSaved();
-	source_view->SetParser(Filename);
-
+	bool ok = cur_doc->save(filename);
 	SetMessage(_("gespeichert"));
-	return true;
+	return ok;
 }
 
 bool Open()
 {
-	if (!AllowTermination())
-		return false;
-
-	if (HuiFileDialogOpen(MainWin, _("Datei &offnen"), Filename.dirname(), _("Alles (*.*)"), "*"))
+	if (HuiFileDialogOpen(MainWin, _("Datei &offnen"), cur_doc->filename.dirname(), _("Alles (*.*)"), "*"))
 		return LoadFromFile(HuiFilename);
 	return false;
 }
 
 bool SaveAs()
 {
-	if (HuiFileDialogSave(MainWin, _("Datei speichern"), Filename.dirname(), _("Alles (*.*)"), "*"))
+	if (HuiFileDialogSave(MainWin, _("Datei speichern"), cur_doc->filename.dirname(), _("Alles (*.*)"), "*"))
 		return WriteToFile(HuiFilename);
 	return false;
 }
 
 bool Save()
 {
-	if (Filename.num > 0)
-		return WriteToFile(Filename);
+	if (cur_doc->filename.num > 0)
+		return WriteToFile(cur_doc->filename);
 	else
 		return SaveAs();
 }
@@ -180,8 +183,8 @@ bool Reload()
 {
 	if (!AllowTermination())
 		return false;
-	if (Filename.num > 0){
-		bool r = LoadFromFile(Filename);
+	if (cur_doc->filename.num > 0){
+		bool r = cur_doc->load(cur_doc->filename);
 		if (r)
 			SetMessage(_("neu geladen"));
 		return r;
@@ -193,26 +196,26 @@ void OnReload()
 {	Reload();	}
 
 void OnUndo()
-{	source_view->Undo();	}
+{	cur_doc->history->Undo();	}
 
 void OnRedo()
-{	source_view->Redo();	}
+{	cur_doc->history->Redo();	}
 
 void OnCopy()
 {
-	HuiCopyToClipBoard(source_view->GetSelection());
+	HuiCopyToClipBoard(cur_doc->source_view->GetSelection());
 	SetMessage(_("kopiert"));
 }
 
 void OnPaste()
 {
-	source_view->InsertAtCursor(HuiPasteFromClipBoard());
+	cur_doc->source_view->InsertAtCursor(HuiPasteFromClipBoard());
 	SetMessage(_("eingef&ugt"));
 }
 
 void OnDelete()
 {
-	source_view->DeleteSelection();
+	cur_doc->source_view->DeleteSelection();
 }
 
 void OnCut()
@@ -241,7 +244,7 @@ void CompileKaba()
 	Script::config.CompileSilently = true;
 
 	try{
-		Script::Script *compile_script = Script::Load(Filename, true);
+		Script::Script *compile_script = Script::Load(cur_doc->filename, true);
 
 		float dt = CompileTimer.get();
 
@@ -252,7 +255,7 @@ void CompileKaba()
 	}catch(const Script::Exception &e){
 		e.print();
 		HuiErrorBox(MainWin, _("Fehler"), e.message);
-		source_view->MoveCursorTo(e.line, e.column);
+		cur_doc->source_view->MoveCursorTo(e.line, e.column);
 	}
 
 	//RemoveScript(compile_script);
@@ -271,7 +274,7 @@ void CompileShader()
 	w->Show();
 	NixInit("OpenGL", w, "nix-area");
 
-	NixShader *shader = NixLoadShader(Filename);
+	NixShader *shader = NixLoadShader(cur_doc->filename);
 	if (!shader){
 		HuiErrorBox(MainWin, _("Fehler"), NixShaderError);
 	}else{
@@ -286,7 +289,7 @@ void CompileShader()
 
 void Compile()
 {
-	string ext = Filename.extension();
+	string ext = cur_doc->filename.extension();
 
 	if (!Save())
 		return;
@@ -331,7 +334,7 @@ void CompileAndRun(bool verbose)
 	return;*/
 
 
-	if (Filename.extension() != "kaba"){
+	if (cur_doc->filename.extension() != "kaba"){
 		SetMessage(_("nur *.kaba-Dateien k&onnen ausgef&uhrt werden!"));
 		return;
 	}
@@ -341,7 +344,7 @@ void CompileAndRun(bool verbose)
 
 	msg_db_f("CompileAndRun",1);
 
-	HuiSetDirectory(Filename);
+	HuiSetDirectory(cur_doc->filename.dirname());
 	//if (verbose)
 		msg_set_verbose(true);
 
@@ -350,7 +353,7 @@ void CompileAndRun(bool verbose)
 	Script::config.CompileSilently = true;
 
 	try{
-		Script::Script *compile_script = Script::Load(Filename);
+		Script::Script *compile_script = Script::Load(cur_doc->filename);
 		float dt_compile = CompileTimer.get();
 
 		if (!verbose)
@@ -390,7 +393,7 @@ void CompileAndRun(bool verbose)
 	}catch(const Script::Exception &e){
 		e.print();
 		HuiErrorBox(MainWin, _("Fehler"), e.message);
-		source_view->MoveCursorTo(e.line, e.column);
+		cur_doc->source_view->MoveCursorTo(e.line, e.column);
 	}
 	
 
@@ -411,14 +414,14 @@ void ShowCurLine()
 {
 	msg_db_f("ShowCurLine", 1);
 	int line, off;
-	source_view->GetCurLinePos(line, off);
+	cur_doc->source_view->GetCurLinePos(line, off);
 	SetMessage(format(_("Zeile  %d : %d"), line + 1, off + 1));
 }
 
 void ExecuteCommand(const string &cmd)
 {
 	msg_db_f("ExecCmd", 1);
-	bool found = source_view->Find(cmd);
+	bool found = cur_doc->source_view->Find(cmd);
 	if (!found)
 		SetMessage(format(_("\"%s\" nicht gefunden"), cmd.c_str()));
 }
@@ -455,6 +458,13 @@ void OnExit()
 	}
 }
 
+void OnFileList()
+{
+	int s = MainWin->GetInt("");
+	if (s >= 0)
+		SetActiveDocument(documents[s]);
+}
+
 int hui_main(Array<string> arg)
 {
 	msg_init(true);
@@ -466,7 +476,7 @@ int hui_main(Array<string> arg)
 	HuiSetProperty("version", AppVersion);
 	HuiSetProperty("comment", _("Texteditor und Kaba-Compiler"));
 	HuiSetProperty("website", "http://michi.is-a-geek.org/michisoft");
-	HuiSetProperty("copyright", "© 2006-2013 by MichiSoft TM");
+	HuiSetProperty("copyright", "© 2006-2014 by MichiSoft TM");
 	HuiSetProperty("author", "Michael Ankele <michi@lupina.de>");
 
 	HuiRegisterFileType("kaba","MichiSoft Script Datei",HuiAppDirectory + "Data/kaba.ico",HuiAppFilename,"open",true);
@@ -511,9 +521,11 @@ int hui_main(Array<string> arg)
 	MainWin->SetBorderWidth(0);
 	MainWin->AddControlTable("", 0, 0, 1, 2, "table_main");
 	MainWin->SetTarget("table_main", 0);
-	MainWin->AddMultilineEdit("!handlekeys", 0, 0, 0, 0, "edit");
-	MainWin->SetBorderWidth(5);
+	MainWin->AddControlTable("", 0, 0, 33, 1, "table_doc");
 	MainWin->AddControlTable("", 0, 1, 1, 2, "table_console");
+	MainWin->SetTarget("table_doc", 0);
+	MainWin->AddTabControl("!nobar", 0, 0, 0, 0, "tab");
+	MainWin->SetBorderWidth(5);
 	MainWin->SetTarget("table_console", 0);
 	MainWin->AddMultilineEdit("", 0, 0, 0, 0, "log");
 	MainWin->Enable("log", false);
@@ -541,26 +553,23 @@ int hui_main(Array<string> arg)
 	MainWin->SetTooltip("open", _("eine Datei &offnen"));
 	MainWin->SetTooltip("save", _("Datei speichern"));
 
-
 	InitParser();
-	source_view = new SourceView(MainWin, "edit");
-	MainWin->Activate("edit");
-
-	HighlightScheme *scheme = HighlightScheme::get(HuiConfigReadStr("HighlightScheme", "default"));
-	source_view->ApplyScheme(scheme);
 
 	MainWin->SetMenu(HuiCreateResourceMenu("menu"));
 	MainWin->SetMaximized(maximized);
 	MainWin->Show();
 
+	MainWin->Event("file_list", &OnFileList);
+
+
 	Script::Init();
 
 	//msg_write(Asm::Disassemble((void*)&TestTest));
 
-	New();
-
 	if (arg.num > 1)
 		LoadFromFile(arg[1]);
+	else
+		New();
 
 	return HuiRun();
 }
