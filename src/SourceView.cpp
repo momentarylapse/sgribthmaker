@@ -164,6 +164,7 @@ SourceView::SourceView(HuiWindow *win, const string &_id, Document *d)
 	NeedsUpdateEnd = 0;
 	color_busy_level = 0;
 	change_return = true;
+	scheme = HighlightScheme::default_scheme;
 	SetParser("");
 
 	g_signal_connect(G_OBJECT(tb),"insert-text",G_CALLBACK(insert_text),this);

@@ -10,6 +10,7 @@
 #include "lib/hui/hui.h"
 
 static Array<HighlightScheme*> HighlightSchemas;
+HighlightScheme *HighlightScheme::default_scheme;
 
 HighlightContext::HighlightContext()
 {
@@ -66,6 +67,7 @@ void HighlightScheme::init()
 	schema->context[InOperator] = HighlightContext(color(1, 0.25f, 0.25f, 0), Black, false, false, false);
 	schema->context[InString] = HighlightContext(color(1, 1, 0, 0), Black, false, false, false);
 	schema->context[InMacro] = HighlightContext(color(1, 0, 0.5f, 0.5f), Black, false, false, false);
+	default_scheme = schema;
 	HighlightSchemas.add(schema);
 
 	schema = new HighlightScheme;

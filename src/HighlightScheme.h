@@ -50,6 +50,7 @@ struct HighlightScheme
 	static void init();
 	static HighlightScheme *get(const string &name);
 	static Array<HighlightScheme*> get_all();
+	static HighlightScheme *default_scheme;
 };
 
 

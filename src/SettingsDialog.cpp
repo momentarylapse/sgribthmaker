@@ -8,7 +8,7 @@
 #include "SettingsDialog.h"
 #include "SourceView.h"
 
-extern SourceView *source_view;
+extern Array<SourceView*> source_view;
 
 SettingsDialog::SettingsDialog(HuiWindow *parent) :
 	HuiWindow("settings_dialog", parent, false)
@@ -74,7 +74,7 @@ void SettingsDialog::FillSchemeList()
 	Array<HighlightScheme*> schemes = HighlightScheme::get_all();
 	foreachi(HighlightScheme *s, schemes, i){
 		AddString("schemes", get_scheme_name(s));
-		if (s == source_view->scheme)
+		if (s == HighlightScheme::default_scheme)
 			SetInt("schemes", i);
 	}
 }
@@ -84,20 +84,22 @@ void SettingsDialog::OnFont()
 	if (HuiSelectFont(this, _("Font w&ahlen"))){
 		SetString("font", HuiFontname);
 		HuiConfigWriteStr("Font", HuiFontname);
-		source_view->UpdateFont();
+		foreach(SourceView *sv, source_view)
+			sv->UpdateFont();
 	}
 }
 
 void SettingsDialog::OnTabWidth()
 {
 	HuiConfigWriteInt("TabWidth", GetInt("tab_width"));
-	source_view->UpdateTabSize();
+	foreach(SourceView *sv, source_view)
+		sv->UpdateTabSize();
 }
 
 void SettingsDialog::OnContextListSelect()
 {
 	int n = GetInt("context_list");
-	HighlightScheme *s = source_view->scheme;
+	HighlightScheme *s = HighlightScheme::default_scheme;
 	SetColor("scheme_background", s->bg);
 	HighlightContext c = s->context[n];
 	SetColor("color_text", c.fg);
@@ -118,15 +120,17 @@ void SettingsDialog::OnContextListSelect()
 void SettingsDialog::OnSchemeChange()
 {
 	int n = GetInt("context_list");
-	HighlightContext &c = source_view->scheme->context[n];
-	source_view->scheme->bg = GetColor("scheme_background");
+	HighlightScheme *s = HighlightScheme::default_scheme;
+	HighlightContext &c = s->context[n];
+	s->bg = GetColor("scheme_background");
 	c.fg = GetColor("color_text");
 	c.bg = GetColor("color_background");
 	c.set_bg = IsChecked("overwrite_background");
 	c.bold = IsChecked("bold");
 	c.italic = IsChecked("italic");
-	source_view->scheme->changed = true;
-	source_view->ApplyScheme(source_view->scheme);
+	s->changed = true;
+	foreach(SourceView *sv, source_view)
+		sv->ApplyScheme(s);
 	FillSchemeList();
 }
 
@@ -134,14 +138,17 @@ void SettingsDialog::OnSchemes()
 {
 	int n = GetInt("");
 	HighlightScheme *s = HighlightScheme::get_all()[n];
-	source_view->ApplyScheme(s);
+	HighlightScheme::default_scheme = s;
+	foreach(SourceView *sv, source_view)
+		sv->ApplyScheme(s);
 	OnContextListSelect();
 }
 
 void SettingsDialog::OnCopyScheme()
 {
-	HighlightScheme *s = source_view->scheme->copy(_("neues Schema"));
-	source_view->ApplyScheme(s);
+	HighlightScheme *s = HighlightScheme::default_scheme->copy(_("neues Schema"));
+	foreach(SourceView *sv, source_view)
+		sv->ApplyScheme(s);
 	FillSchemeList();
 	OnContextListSelect();
 }

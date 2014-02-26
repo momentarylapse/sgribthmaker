@@ -145,8 +145,7 @@ void New()
 	documents.add(new Document);
 	SourceView *sv = new SourceView(MainWin, id, documents.back());
 
-	HighlightScheme *scheme = HighlightScheme::get(HuiConfigReadStr("HighlightScheme", "default"));
-	sv->ApplyScheme(scheme);
+	sv->ApplyScheme(HighlightScheme::default_scheme);
 	source_view.add(sv);
 
 	SetActiveDocument(documents.back());
@@ -589,6 +588,7 @@ int hui_main(Array<string> arg)
 	MainWin->SetTooltip("save", _("Datei speichern"));
 
 	InitParser();
+	HighlightScheme::default_scheme = HighlightScheme::get(HuiConfigReadStr("HighlightScheme", "default"));
 
 	MainWin->SetMenu(HuiCreateResourceMenu("menu"));
 	MainWin->SetMaximized(maximized);
