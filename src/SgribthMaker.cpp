@@ -75,6 +75,7 @@ void UpdateMenu()
 {
 	MainWin->Enable("undo", cur_doc->history->Undoable());
 	MainWin->Enable("redo", cur_doc->history->Redoable());
+	MainWin->Enable("save", cur_doc->history->changed);
 	UpdateDocList();
 	SetWindowTitle();
 }
@@ -465,6 +466,30 @@ void OnFileList()
 		SetActiveDocument(documents[s]);
 }
 
+void OnNextDocument()
+{
+	foreachi(Document *d, documents, i)
+		if (d == cur_doc){
+			if (i < documents.num - 1)
+				SetActiveDocument(documents[i + 1]);
+			else
+				SetActiveDocument(documents[0]);
+			break;
+		}
+}
+
+void OnPreviousDocument()
+{
+	foreachi(Document *d, documents, i)
+		if (d == cur_doc){
+			if (i > 0)
+				SetActiveDocument(documents[i - 1]);
+			else
+				SetActiveDocument(documents.back());
+			break;
+		}
+}
+
 int hui_main(Array<string> arg)
 {
 	msg_init(true);
@@ -507,6 +532,8 @@ int hui_main(Array<string> arg)
 	HuiAddCommand("compile_and_run", "", KEY_F6, &OnCompileAndRunSilent);
 	HuiAddCommand("settings", "", -1, &ExecuteSettingsDialog);
 	//HuiAddCommand("script_help", "hui:help", KEY_F1 + KEY_SHIFT);
+	HuiAddCommand("next_document", "hui:down", KEY_PRIOR + KEY_CONTROL, &OnNextDocument);
+	HuiAddCommand("prev_document", "hui:up", KEY_NEXT + KEY_CONTROL, &OnPreviousDocument);
 	
 	HuiAddCommand("show_cur_line", "", KEY_F2, &ShowCurLine);
 
