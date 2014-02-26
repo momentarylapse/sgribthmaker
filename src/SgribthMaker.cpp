@@ -111,10 +111,8 @@ void New()
 {
 	msg_db_f("New", 1);
 
-	if (documents.num == 1){
-		MainWin->SetTarget("table_doc", 0);
-		MainWin->AddListView("!nobar,select-single,noexpandx,width=180\\file", 1, 0, 0, 0, "file_list");
-	}
+	if (documents.num > 0)
+		MainWin->HideControl("table_side", false);
 
 	string id = "edit" + i2s(documents.num);
 
@@ -521,10 +519,16 @@ int hui_main(Array<string> arg)
 	MainWin->SetBorderWidth(0);
 	MainWin->AddControlTable("", 0, 0, 1, 2, "table_main");
 	MainWin->SetTarget("table_main", 0);
-	MainWin->AddControlTable("", 0, 0, 33, 1, "table_doc");
+	MainWin->AddControlTable("", 0, 0, 2, 1, "table_doc");
 	MainWin->AddControlTable("", 0, 1, 1, 2, "table_console");
 	MainWin->SetTarget("table_doc", 0);
 	MainWin->AddTabControl("!nobar", 0, 0, 0, 0, "tab");
+	MainWin->AddControlTable("!noexpandx,width=180", 1, 0, 1, 2, "table_side");
+	MainWin->SetTarget("table_side", 0);
+	MainWin->AddListView("!nobar,select-single\\file", 0, 0, 0, 0, "file_list");
+	MainWin->AddExpander("Funktionen", 0, 1, 0, 0, "function_expander");
+	MainWin->SetTarget("function_expander", 0);
+	MainWin->AddTreeView("!nobar\\function", 0, 0, 0, 0, "function_list");
 	MainWin->SetBorderWidth(5);
 	MainWin->SetTarget("table_console", 0);
 	MainWin->AddMultilineEdit("", 0, 0, 0, 0, "log");
@@ -537,6 +541,7 @@ int hui_main(Array<string> arg)
 	MainWin->AddButton("", 2, 0, 0, 0, "console_close");
 	MainWin->SetImage("console_close", "hui:close");
 	MainWin->HideControl("table_console", true);
+	MainWin->HideControl("table_side", true);
 
 	MainWin->toolbar[0]->Enable(true);
 	MainWin->toolbar[0]->AddItem("", "hui:new", "new");
