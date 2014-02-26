@@ -16,6 +16,9 @@ void UpdateMenu();
 
 Document::Document()
 {
+	parser = NULL;
+	source_view = NULL;
+	history = NULL;
 	//history = new History;
 }
 

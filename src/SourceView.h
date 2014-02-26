@@ -59,6 +59,7 @@ public:
 
 	bool Find(const string &str);
 
+	string id;
 	GtkTextBuffer *tb;
 	GtkWidget *tv;
 

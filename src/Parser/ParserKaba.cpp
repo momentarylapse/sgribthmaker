@@ -39,12 +39,12 @@ Array<Parser::Label> ParserKaba::FindLabels(SourceView *sv)
 				continue;
 			if (s.find("extern") >= 0)
 				continue;
-			labels.add(Label(s, l));
+			labels.add(Label(s, l, 0));
 		}else if ((last_class.num > 0) && (s[0] == '\t') && (char_type(s[1]) == CharLetter)){
 			if (s.find("(") < 0)
 				continue;
-			s = s.replace("virtual ", "").replace("overwrite ", "");
-			labels.add(Label(">" + s, l));
+			s = s.replace("virtual ", "").replace("overwrite ", "").trim();
+			labels.add(Label(s, l, 1));
 		}
 	}
 	return labels;

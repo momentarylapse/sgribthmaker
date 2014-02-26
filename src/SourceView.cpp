@@ -107,7 +107,10 @@ void populate_popup(GtkTextView *text_view, GtkMenu *menu, gpointer user_data)
 	foreach(Parser::Label &l, labels)
 		sv->jump_data.add(SourceView::JumpData(sv, l.line));
 	foreachib(Parser::Label &l, labels, i){
-		m = gtk_menu_item_new_with_label(l.name.c_str());
+		if (l.level > 0)
+			m = gtk_menu_item_new_with_label(l.name.c_str());
+		else
+			m = gtk_menu_item_new_with_label((">\t" + l.name).c_str());
 		gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), m);
 		gtk_widget_show(m);
 		g_signal_connect(G_OBJECT(m), "activate", G_CALLBACK(CallbackJumpLine), (void*)&sv->jump_data[i]);
@@ -145,8 +148,11 @@ SourceView::JumpData::JumpData(SourceView *_sv, int _line)
 	line = _line;
 }
 
-SourceView::SourceView(HuiWindow *win, const string &id, Document *d)
+SourceView::SourceView(HuiWindow *win, const string &_id, Document *d)
 {
+	doc = d;
+	id = _id;
+
 	tv = win->_GetControl_(id)->widget;
 	tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tv));
 
@@ -171,7 +177,6 @@ SourceView::SourceView(HuiWindow *win, const string &id, Document *d)
 	g_signal_connect(G_OBJECT(tv),"toggle-cursor-visible",G_CALLBACK(toggle_cursor_visible),this);
 	g_signal_connect(G_OBJECT(tv),"populate-popup",G_CALLBACK(populate_popup),this);
 
-	doc = d;
 	history = new History(this);
 	d->history = history;
 	d->source_view = this;
@@ -262,6 +267,7 @@ void SourceView::Redo()
 void SourceView::SetParser(const string &filename)
 {
 	parser = GetParser(filename);
+	doc->parser = parser;
 	//msg_write("parser: " + parser->GetName());
 	CreateTextColors();
 }

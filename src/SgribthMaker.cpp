@@ -14,7 +14,7 @@
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.1.0";
+string AppVersion = "0.4.1.1";
 
 #define ALLOW_LOGGING			true
 //#define ALLOW_LOGGING			false
@@ -80,18 +80,37 @@ void UpdateMenu()
 	SetWindowTitle();
 }
 
+void UpdateFunctionList()
+{
+	MainWin->Reset("function_list");
+	if (!cur_doc->parser)
+		return;
+	Array<Parser::Label> labels = cur_doc->parser->FindLabels(cur_doc->source_view);
+	int last_parent = -1;
+	foreachi(Parser::Label &l, labels, i){
+		if (l.level > 0){
+			MainWin->AddChildString("function_list", last_parent, l.name);
+		}else{
+			last_parent = i;
+			MainWin->AddString("function_list", l.name);
+		}
+	}
+}
+
 void SetActiveDocument(Document *d)
 {
 	foreachi(Document *dd, documents, i)
 		if (dd == d){
 			MainWin->SetInt("tab", i);
 			MainWin->Activate("edit" + i2s(i));
+			break;
 		}
 	cur_doc = d;
 	UpdateMenu();
+	UpdateFunctionList();
 }
 
-bool Save();
+bool Save(Document *doc);
 
 bool AllowTermination()
 {
@@ -102,7 +121,7 @@ bool AllowTermination()
 		if (answer == "hui:cancel")
 			return false;
 		if (answer == "hui:yes")
-			return Save();
+			return Save(d);
 		return true;
 	}
 	return true;
@@ -140,10 +159,11 @@ bool LoadFromFile(const string &filename)
 	return documents.back()->load(filename);
 }
 
-bool WriteToFile(const string &filename)
+bool WriteToFile(Document *doc, const string &filename)
 {
-	bool ok = cur_doc->save(filename);
-	SetMessage(_("gespeichert"));
+	bool ok = doc->save(filename);
+	if (ok)
+		SetMessage(_("gespeichert"));
 	return ok;
 }
 
@@ -154,29 +174,29 @@ bool Open()
 	return false;
 }
 
-bool SaveAs()
+bool SaveAs(Document *doc)
 {
-	if (HuiFileDialogSave(MainWin, _("Datei speichern"), cur_doc->filename.dirname(), _("Alles (*.*)"), "*"))
-		return WriteToFile(HuiFilename);
+	if (HuiFileDialogSave(MainWin, _("Datei speichern"), doc->filename.dirname(), _("Alles (*.*)"), "*"))
+		return WriteToFile(doc, HuiFilename);
 	return false;
 }
 
-bool Save()
+bool Save(Document *doc)
 {
-	if (cur_doc->filename.num > 0)
-		return WriteToFile(cur_doc->filename);
+	if (doc->filename.num > 0)
+		return WriteToFile(doc, doc->filename);
 	else
-		return SaveAs();
+		return SaveAs(doc);
 }
 
 void OnOpen()
 {	Open();	}
 
 void OnSave()
-{	Save();	}
+{	Save(cur_doc);	}
 
 void OnSaveAs()
-{	SaveAs();	}
+{	SaveAs(cur_doc);	}
 
 bool Reload()
 {
@@ -290,7 +310,7 @@ void Compile()
 {
 	string ext = cur_doc->filename.extension();
 
-	if (!Save())
+	if (!Save(cur_doc))
 		return;
 
 	if (ext == "kaba")
@@ -301,44 +321,14 @@ void Compile()
 		SetMessage(_("nur *.kaba und *.glsl-Dateien k&onnen &ubersetzt werden!"));
 }
 
-class TestDialog : public HuiDialog
-{
-public:
-	TestDialog(const string &title, int x, int y, HuiWindow *p, bool b) : HuiDialog(title, x, y, p, b){}
-	virtual void _cdecl __delete__()
-	{
-		msg_write("testdia.del");
-	}
-};
-
-void On__()
-{
-	msg_write("..........");
-	delete(HuiCurWindow);
-}
-
 void CompileAndRun(bool verbose)
 {
-	/*HuiDialog *d = new TestDialog("test", 400, 300, MainWin, false);
-	d->Event("hui:close", &On__);
-	Script::VirtualTable *vt = *(Script::VirtualTable**)d;
-	Script::VirtualTable *vt2 = new Script::VirtualTable[17];
-	for (int i=0;i<17;i++){
-		msg_write(p2s(vt[i]));
-		vt2[i] = vt[i];
-	}
-	*(Script::VirtualTable**)d = vt2;
-	vt2[0] = Script::mf(&VirtualBase::__delete_win__);
-	d->Run();
-	return;*/
-
-
 	if (cur_doc->filename.extension() != "kaba"){
 		SetMessage(_("nur *.kaba-Dateien k&onnen ausgef&uhrt werden!"));
 		return;
 	}
 
-	if (!Save())
+	if (!Save(cur_doc))
 		return;
 
 	msg_db_f("CompileAndRun",1);
@@ -457,6 +447,16 @@ void OnExit()
 	}
 }
 
+void OnFunctionList()
+{
+	int n = MainWin->GetInt("");
+	Array<Parser::Label> labels = cur_doc->parser->FindLabels(cur_doc->source_view);
+	if ((n >= 0) && (n < labels.num)){
+		cur_doc->source_view->ShowLineOnScreen(labels[n].line);
+		MainWin->Activate(cur_doc->source_view->id);
+	}
+}
+
 void OnFileList()
 {
 	int s = MainWin->GetInt("");
@@ -544,6 +544,7 @@ int hui_main(Array<string> arg)
 
 
 	MainWin->SetBorderWidth(0);
+	MainWin->SetIndent(0);
 	MainWin->AddControlTable("", 0, 0, 1, 2, "table_main");
 	MainWin->SetTarget("table_main", 0);
 	MainWin->AddControlTable("", 0, 0, 2, 1, "table_doc");
@@ -552,8 +553,10 @@ int hui_main(Array<string> arg)
 	MainWin->AddTabControl("!nobar", 0, 0, 0, 0, "tab");
 	MainWin->AddControlTable("!noexpandx,width=180", 1, 0, 1, 2, "table_side");
 	MainWin->SetTarget("table_side", 0);
-	MainWin->AddListView("!nobar,select-single\\file", 0, 0, 0, 0, "file_list");
+	MainWin->AddGroup("Dokumente", 0, 0, 0, 0, "group_files");
 	MainWin->AddExpander("Funktionen", 0, 1, 0, 0, "function_expander");
+	MainWin->SetTarget("group_files", 0);
+	MainWin->AddListView("!nobar,select-single\\file", 0, 0, 0, 0, "file_list");
 	MainWin->SetTarget("function_expander", 0);
 	MainWin->AddTreeView("!nobar\\function", 0, 0, 0, 0, "function_list");
 	MainWin->SetBorderWidth(5);
@@ -591,16 +594,18 @@ int hui_main(Array<string> arg)
 	MainWin->SetMaximized(maximized);
 	MainWin->Show();
 
-	MainWin->Event("file_list", &OnFileList);
+	MainWin->EventX("file_list", "hui:select", &OnFileList);
+	MainWin->EventX("function_list", "hui:select", &OnFunctionList);
 
 
 	Script::Init();
 
 	//msg_write(Asm::Disassemble((void*)&TestTest));
 
-	if (arg.num > 1)
-		LoadFromFile(arg[1]);
-	else
+	if (arg.num > 1){
+		for (int i=1; i<arg.num; i++)
+			LoadFromFile(arg[i]);
+	}else
 		New();
 
 	return HuiRun();

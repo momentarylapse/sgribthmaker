@@ -31,10 +31,11 @@ struct ParserAssociation
 };
 static Array<ParserAssociation> ParserAssociations;
 
-Parser::Label::Label(const string &_name, int _line)
+Parser::Label::Label(const string &_name, int _line, int _level)
 {
 	name = _name;
 	line = _line;
+	level = _level;
 }
 
 Parser::Parser()

@@ -24,8 +24,9 @@ public:
 	{
 		string name;
 		int line;
+		int level;
 		Label(){}
-		Label(const string &name, int line);
+		Label(const string &name, int line, int level);
 	};
 
 	virtual Array<Label> FindLabels(SourceView *sv);
