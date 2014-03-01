@@ -13,8 +13,8 @@ extern Array<SourceView*> source_view;
 SettingsDialog::SettingsDialog(HuiWindow *parent) :
 	HuiWindow("settings_dialog", parent, false)
 {
-	SetInt("tab_width", HuiConfigReadInt("TabWidth", 8));
-	SetString("font", HuiConfigReadStr("Font", "Monospace 10"));
+	SetInt("tab_width", HuiConfig.getInt("TabWidth", 8));
+	SetString("font", HuiConfig.getStr("Font", "Monospace 10"));
 	AddString("context_list", _("Text"));
 	AddString("context_list", _("reserviertes Wort"));
 	AddString("context_list", _("Api Funktion"));
@@ -83,7 +83,7 @@ void SettingsDialog::OnFont()
 {
 	if (HuiSelectFont(this, _("Font w&ahlen"))){
 		SetString("font", HuiFontname);
-		HuiConfigWriteStr("Font", HuiFontname);
+		HuiConfig.setStr("Font", HuiFontname);
 		foreach(SourceView *sv, source_view)
 			sv->UpdateFont();
 	}
@@ -91,7 +91,7 @@ void SettingsDialog::OnFont()
 
 void SettingsDialog::OnTabWidth()
 {
-	HuiConfigWriteInt("TabWidth", GetInt("tab_width"));
+	HuiConfig.setInt("TabWidth", GetInt("tab_width"));
 	foreach(SourceView *sv, source_view)
 		sv->UpdateTabSize();
 }

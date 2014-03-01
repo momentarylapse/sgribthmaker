@@ -14,7 +14,7 @@
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.1.1";
+string AppVersion = "0.4.1.2";
 
 #define ALLOW_LOGGING			true
 //#define ALLOW_LOGGING			false
@@ -140,7 +140,7 @@ void New()
 	if (documents.num > 0)
 		MainWin->AddString("tab", i2s(documents.num));
 	MainWin->SetTarget("tab", documents.num);
-	MainWin->AddMultilineEdit("!handlekeys", 0, 0, 0, 0, id);
+	MainWin->AddMultilineEdit("!handlekeys,noframe", 0, 0, 0, 0, id);
 
 	documents.add(new Document);
 	SourceView *sv = new SourceView(MainWin, id, documents.back());
@@ -439,9 +439,9 @@ void OnExit()
 	if (AllowTermination()){
 		int w, h;
 		MainWin->GetSizeDesired(w, h);
-		HuiConfigWriteInt("Window.Width", w);
-		HuiConfigWriteInt("Window.Height", h);
-		HuiConfigWriteBool("Window.Maximized", MainWin->IsMaximized());
+		HuiConfig.setInt("Window.Width", w);
+		HuiConfig.setInt("Window.Height", h);
+		HuiConfig.setBool("Window.Maximized", MainWin->IsMaximized());
 		HuiEnd();
 	}
 }
@@ -503,9 +503,9 @@ int hui_main(Array<string> arg)
 
 	HuiRegisterFileType("kaba","MichiSoft Script Datei",HuiAppDirectory + "Data/kaba.ico",HuiAppFilename,"open",true);
 
-	int width = HuiConfigReadInt("Window.Width", 800);
-	int height = HuiConfigReadInt("Window.Height", 600);
-	bool maximized = HuiConfigReadBool("Window.Maximized", false);
+	int width = HuiConfig.getInt("Window.Width", 800);
+	int height = HuiConfig.getInt("Window.Height", 600);
+	bool maximized = HuiConfig.getBool("Window.Maximized", false);
 
 	HuiAddCommand("new", "hui:new", KEY_N + KEY_CONTROL, &New);
 	//HuiAddKeyCode(HMM_NEW_HEX, KEY_F1 + 256);
@@ -588,7 +588,7 @@ int hui_main(Array<string> arg)
 	MainWin->SetTooltip("save", _("Datei speichern"));
 
 	InitParser();
-	HighlightScheme::default_scheme = HighlightScheme::get(HuiConfigReadStr("HighlightScheme", "default"));
+	HighlightScheme::default_scheme = HighlightScheme::get(HuiConfig.getStr("HighlightScheme", "default"));
 
 	MainWin->SetMenu(HuiCreateResourceMenu("menu"));
 	MainWin->SetMaximized(maximized);

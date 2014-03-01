@@ -533,12 +533,12 @@ void SourceView::ApplyScheme(HighlightScheme *s)
 	color2gdkrgba(Black, _color);
 	gtk_widget_override_color(tv, GTK_STATE_FLAG_NORMAL, &_color);
 	scheme = s;
-	HuiConfigWriteStr("HighlightScheme", s->name);
+	HuiConfig.setStr("HighlightScheme", s->name);
 }
 
 void SourceView::UpdateTabSize()
 {
-	int tab_size = HuiConfigReadInt("TabWidth", 8);
+	int tab_size = HuiConfig.getInt("TabWidth", 8);
 	PangoLayout *layout = gtk_widget_create_pango_layout(tv, "W");
 	int width, height;
 	pango_layout_get_pixel_size(layout, &width, &height);
@@ -549,7 +549,7 @@ void SourceView::UpdateTabSize()
 
 void SourceView::UpdateFont()
 {
-	string font_name = HuiConfigReadStr("Font", "Monospace 10");
+	string font_name = HuiConfig.getStr("Font", "Monospace 10");
 	PangoFontDescription *font_desc = pango_font_description_from_string(font_name.c_str());
 	gtk_widget_modify_font(tv, font_desc);
 	pango_font_description_free(font_desc);
