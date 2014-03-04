@@ -8,7 +8,7 @@ namespace Script{
 
 //#define ScriptDebug
 
-static char Temp[1024];
+static char Temp[SCRIPT_MAX_STRING_CONST_LENGTH];
 static int ExpKind;
 
 char str_eol[] = "-eol-";

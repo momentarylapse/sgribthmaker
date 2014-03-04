@@ -78,6 +78,7 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 		first_line = 0;
 	if (last_line < 0)
 		last_line = num_lines - 1;
+	bool in_ml_string = false;
 
 	sv->ClearMarkings(first_line, last_line);
 
@@ -88,15 +89,23 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 		char *p0 = p;
 		int last_type = CharSpace;
 		int in_type = (comment_level > 1) ? InCommentLevel2 : ((comment_level > 0) ? InCommentLevel1 : InSpace);
+		if (in_ml_string)
+			in_type = InString;
 		int pos0 = 0;
 		int pos = 0;
 		int num_uchars = g_utf8_strlen(p, s.num);
+		bool prev_was_escape = false;
 		while(pos < num_uchars){
 			int type = char_type(*p);
 			// still in a string?
 			if (in_type == InString){
-				if (*p == '\"'){
+				if (prev_was_escape){
+					prev_was_escape = false;
+				}else if (*p == '\\'){
+					prev_was_escape = true;
+				}else if (*p == '\"'){
 					in_type = InOperator;
+					in_ml_string = false;
 					next_char();
 					sv->MarkWord(l, pos0, pos, InString, p0, p);
 					set_mark();
@@ -125,6 +134,7 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 				if (*p == '\"'){
 					sv->MarkWord(l, pos0, pos, in_type, p0, p);
 					set_mark();
+					in_ml_string = true;
 					in_type = InString;
 				}else if (last_type != type){
 					if ((in_type == InNumber) && ((*p == '.') || (*p == 'x') || ((*p >= 'a') && (*p <= 'f')))){
