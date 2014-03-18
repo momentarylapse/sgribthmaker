@@ -81,6 +81,7 @@ public:
 	void _cdecl EmbedDialog(const string &id, int x, int y);
 	void _cdecl EmbedSource(const string &source, const string &parent_id, int x, int y);
 	void EmbedResource(HuiResourceNew &c, const string &parent_id, int x, int y);
+	void _cdecl Embed(HuiPanel *panel, const string &parent_id, int x, int y);
 
 // using controls
 	// string
@@ -164,6 +165,8 @@ public:
 	int border_width;
 	int expander_indent;
 	HuiWindow *win;
+	HuiPanel *parent;
+	Array<HuiPanel*> children;
 };
 
 #endif /* HUIPANEL_H_ */

@@ -11,13 +11,22 @@
 
 HuiPanel::HuiPanel()
 {
-	// TODO Auto-generated constructor stub
+	win = NULL;
+	parent = NULL;
+	border_width = 5;
+	expander_indent = 20;
+	id = "";
+	num_float_decimals = 3;
+	tab_creation_page = -1;
+	root_control = NULL;
+	is_resizable = true;
+	plugable = NULL;
 
+	SetTarget("", 0);
 }
 
 HuiPanel::~HuiPanel()
 {
-	// TODO Auto-generated destructor stub
 }
 
 void HuiPanel::SetDecimals(int decimals)
@@ -75,6 +84,8 @@ void HuiPanel::RemoveEventHandlers(HuiEventHandler *handler)
 
 bool HuiPanel::_SendEvent_(HuiEvent *e)
 {
+	if (!win)
+		return false;
 	if (!win->allow_input)
 		return false;
 	msg_db_f("SendEvent", 2);
@@ -245,7 +256,8 @@ void HuiPanel::FromSource(const string &buffer)
 	HuiResourceNew res;
 	res.load(buffer);
 	if (res.type == "Dialog"){
-		win->SetSize(res.w, res.h);
+		if (win)
+			win->SetSize(res.w, res.h);
 
 		if (res.children.num > 0)
 			EmbedResource(res.children[0], "", 0, 0);
@@ -278,6 +290,17 @@ void HuiPanel::EmbedSource(const string &buffer, const string &parent_id, int x,
 	res.load(buffer);
 	EmbedResource(res, parent_id, x, y);
 
+}
+
+void HuiPanel::Embed(HuiPanel *panel, const string &parent_id, int x, int y)
+{
+	panel->parent = this;
+	panel->win = win;
+	children.add(panel);
+
+	SetTarget(parent_id, x);
+	_InsertControl_(panel->root_control, x, y, 0, 0);
+	panel->root_control->panel = panel;
 }
 
 

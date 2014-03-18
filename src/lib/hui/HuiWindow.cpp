@@ -122,8 +122,6 @@ void HuiWindow::_InitGeneric_(HuiWindow *_root, bool _allow_root, int _mode)
 	_HuiClosedWindow_.clear();
 
 	is_resizable = ((_mode & HuiWinModeResizable) > 0);
-	border_width = 5;
-	expander_indent = 20;
 	allowed = true;
 	allow_keys = true;
 	parent = _root;
@@ -138,16 +136,10 @@ void HuiWindow::_InitGeneric_(HuiWindow *_root, bool _allow_root, int _mode)
 	toolbar[HuiToolbarRight] = new HuiToolbar(this, true);
 	toolbar[HuiToolbarBottom] = new HuiToolbar(this);
 	input.reset();
-	tab_creation_page = -1;
-	root_control = NULL;
 
-	id = "";
-	num_float_decimals = 3;
 	unique_id = current_uid ++;
 	allow_input = false; // allow only if ->Show() was called
 	main_level = HuiMainLevel;
-
-	SetTarget("", 0);
 }
 
 void HuiWindow::_CleanUp_()

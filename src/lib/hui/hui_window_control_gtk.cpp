@@ -89,9 +89,7 @@ enum{
 
 void HuiPanel::_InsertControl_(HuiControl *c, int x, int y, int width, int height)
 {
-	GtkWidget *frame = c->frame;
-	if (!frame)
-		frame = c->widget;
+	GtkWidget *frame = c->get_frame();
 	c->panel = this;
 	c->is_button_bar = false;
 	if (is_resizable){
@@ -108,10 +106,14 @@ void HuiPanel::_InsertControl_(HuiControl *c, int x, int y, int width, int heigh
 				cur_control->add(c, 0, 0);
 			}
 		}else{
+			root_control = c;
 			// directly into the window...
 			//gtk_container_add(GTK_CONTAINER(plugable), frame);
-			gtk_box_pack_start(GTK_BOX(plugable), frame, true, true, 0);
-			gtk_container_set_border_width(GTK_CONTAINER(plugable), border_width);
+			if (plugable){
+				// this = HuiWindow...
+				gtk_box_pack_start(GTK_BOX(plugable), frame, true, true, 0);
+				gtk_container_set_border_width(GTK_CONTAINER(plugable), border_width);
+			}
 		}
 	}else{
 		if ((c->type == HuiKindButton) || (c->type == HuiKindColorButton) || (c->type == HuiKindComboBox)){
@@ -252,8 +254,9 @@ void HuiPanel::AddEdit(const string &title,int x,int y,int width,int height,cons
 void HuiPanel::AddMultilineEdit(const string &title,int x,int y,int width,int height,const string &id)
 {
 	_InsertControl_(new HuiControlMultilineEdit(title, id), x, y, width, height);
-	if ((!win->main_input_control) && ((HuiControlMultilineEdit*)control.back())->handle_keys)
-		win->main_input_control = control.back();
+	if (win)
+		if ((!win->main_input_control) && ((HuiControlMultilineEdit*)control.back())->handle_keys)
+			win->main_input_control = control.back();
 }
 
 void HuiPanel::AddSpinButton(const string &title,int x,int y,int width,int height,const string &id)

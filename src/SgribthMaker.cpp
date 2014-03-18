@@ -5,6 +5,7 @@
 #include "lib/script/script.h"
 #include "SettingsDialog.h"
 #include "CommandDialog.h"
+#include "Console.h"
 #include "History.h"
 #include "HighlightScheme.h"
 #include "SourceView.h"
@@ -23,6 +24,7 @@ HuiWindow *MainWin;
 string LastCommand;
 
 Array<SourceView*> source_view;
+Console *console;
 
 extern string NixShaderError;
 
@@ -373,10 +375,8 @@ void CompileAndRun(bool verbose)
 
 		// messages?
 		int msg_size = msg_get_buffer_size();
-		if (msg_size > msg_size0){
-			MainWin->HideControl("table_console", false);
-			MainWin->SetString("log", msg_get_buffer(msg_size - msg_size0));
-		}
+		if (msg_size > msg_size0)
+			console->set(msg_get_buffer(msg_size - msg_size0));
 
 	}catch(const Script::Exception &e){
 		e.print();
@@ -547,7 +547,6 @@ int hui_main(Array<string> arg)
 	MainWin->AddControlTable("", 0, 0, 1, 2, "table_main");
 	MainWin->SetTarget("table_main", 0);
 	MainWin->AddControlTable("", 0, 0, 2, 1, "table_doc");
-	MainWin->AddControlTable("", 0, 1, 1, 2, "table_console");
 	MainWin->SetTarget("table_doc", 0);
 	MainWin->AddTabControl("!nobar", 0, 0, 0, 0, "tab");
 	MainWin->AddControlTable("!noexpandx,width=180", 1, 0, 1, 2, "table_side");
@@ -559,18 +558,11 @@ int hui_main(Array<string> arg)
 	MainWin->SetTarget("function_expander", 0);
 	MainWin->AddTreeView("!nobar\\function", 0, 0, 0, 0, "function_list");
 	MainWin->SetBorderWidth(5);
-	MainWin->SetTarget("table_console", 0);
-	MainWin->AddMultilineEdit("", 0, 0, 0, 0, "log");
-	MainWin->Enable("log", false);
-	MainWin->AddControlTable("!noexpandy", 0, 1, 3, 1, "table_command");
-	MainWin->SetTarget("table_command", 0);
-	MainWin->AddEdit("!expandx", 0, 0, 0, 0, "console");
-	MainWin->AddButton("OK", 1, 0, 0, 0, "console_ok");
-	MainWin->SetImage("console_ok", "hui:ok");
-	MainWin->AddButton("", 2, 0, 0, 0, "console_close");
-	MainWin->SetImage("console_close", "hui:close");
-	MainWin->HideControl("table_console", true);
 	MainWin->HideControl("table_side", true);
+
+	console = new Console;
+	MainWin->Embed(console, "table_main", 0, 1);
+	console->show(false);
 
 	MainWin->toolbar[0]->Enable(true);
 	MainWin->toolbar[0]->AddItem("", "hui:new", "new");
