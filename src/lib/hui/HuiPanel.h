@@ -24,6 +24,7 @@ class HuiPanel : public HuiEventHandler
 public:
 	HuiPanel();
 	virtual ~HuiPanel();
+	void _ClearPanel_();
 
 	void _cdecl Activate(const string &control_id);
 	bool _cdecl IsActive(const string &control_id);

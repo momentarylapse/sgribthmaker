@@ -431,9 +431,6 @@ void ExecuteSettingsDialog()
 void OnAbout()
 {	HuiAboutBox(MainWin);	}
 
-void OnConsoleClose()
-{	MainWin->HideControl("table_console", true);	}
-
 void OnExit()
 {
 	if (AllowTermination()){
@@ -537,7 +534,6 @@ int hui_main(Array<string> arg)
 	MainWin = new HuiWindow(AppTitle, -1, -1, width, height);
 
 	MainWin->Event("about", &OnAbout);
-	MainWin->Event("console_close", &OnConsoleClose);
 	MainWin->Event("exit", &OnExit);
 	MainWin->Event("hui:close", &OnExit);
 

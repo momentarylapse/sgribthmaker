@@ -154,14 +154,7 @@ void HuiWindow::_CleanUp_()
 	for (int i=0;i<4;i++)
 		delete(toolbar[i]);
 
-	while (control.num > 0){
-		HuiControl *c = control[0];
-		control.erase(0);
-		delete(c);
-	}
-	id.clear();
-	cur_id.clear();
-	event.clear();
+	_ClearPanel_();
 	input.reset();
 	
 	// unregister window

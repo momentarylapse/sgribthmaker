@@ -27,6 +27,32 @@ HuiPanel::HuiPanel()
 
 HuiPanel::~HuiPanel()
 {
+	_ClearPanel_();
+}
+
+void HuiPanel::_ClearPanel_()
+{
+	if (parent){
+		// disconnect
+		for (int i=0; i<parent->children.num; i++)
+			if (parent->children[i] == this)
+				parent->children.erase(i);
+		parent = NULL;
+	}
+	while (children.num > 0){
+		HuiPanel *p = children[0];
+		children.erase(0);
+		delete(p);
+	}
+
+	while (control.num > 0){
+		HuiControl *c = control[0];
+		control.erase(0);
+		delete(c);
+	}
+	id.clear();
+	cur_id.clear();
+	event.clear();
 }
 
 void HuiPanel::SetDecimals(int decimals)
@@ -294,12 +320,17 @@ void HuiPanel::EmbedSource(const string &buffer, const string &parent_id, int x,
 
 void HuiPanel::Embed(HuiPanel *panel, const string &parent_id, int x, int y)
 {
+	if (!panel->root_control){
+		msg_error("trying to embed an empty panel");
+		return;
+	}
 	panel->parent = this;
 	panel->win = win;
 	children.add(panel);
 
 	SetTarget(parent_id, x);
 	_InsertControl_(panel->root_control, x, y, 0, 0);
+	control.pop(); // dont' really add to us
 	panel->root_control->panel = panel;
 }
 

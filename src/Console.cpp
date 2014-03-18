@@ -33,7 +33,7 @@ Console::~Console()
 
 void Console::onClose()
 {
-	HideControl("table_console", true);
+	show(false);
 }
 
 void Console::show(bool show)
