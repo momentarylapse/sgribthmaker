@@ -17,7 +17,7 @@ command_dialog
 
 5
 ControlTable
-rand_id_642267
+rand_id_193624
 
 1
 0
@@ -40,7 +40,7 @@ command
 -1
 0
 0
-rand_id_642267
+rand_id_193624
 
 ControlTable
 cmd_buttonbar
@@ -53,7 +53,7 @@ cmd_buttonbar
 -1
 0
 0
-rand_id_642267
+rand_id_193624
 
 Button
 cancel
@@ -515,7 +515,7 @@ settings_dialog
 
 26
 ControlTable
-rand_id_258622
+rand_id_398374
 
 1
 0
@@ -538,10 +538,10 @@ cdt_font
 -1
 0
 0
-rand_id_258622
+rand_id_398374
 
 ControlTable
-rand_id_518330
+rand_id_614031
 
 1
 0
@@ -564,10 +564,10 @@ font
 -1
 0
 0
-rand_id_518330
+rand_id_614031
 
 ControlTable
-rand_id_461768
+rand_id_414820
 
 1
 0
@@ -577,7 +577,7 @@ rand_id_461768
 -1
 0
 0
-rand_id_518330
+rand_id_614031
 
 Text
 cdt_tab
@@ -590,7 +590,7 @@ cdt_tab
 -1
 0
 0
-rand_id_461768
+rand_id_414820
 
 SpinButton
 tab_width
@@ -603,7 +603,7 @@ tab_width
 -1
 0
 0
-rand_id_461768
+rand_id_414820
 
 Group
 cdt_highlighting
@@ -616,10 +616,10 @@ cdt_highlighting
 -1
 0
 0
-rand_id_258622
+rand_id_398374
 
 ControlTable
-rand_id_59911
+rand_id_584
 
 1
 0
@@ -632,7 +632,7 @@ rand_id_59911
 cdt_highlighting
 
 ControlTable
-rand_id_644487
+rand_id_286417
 
 1
 0
@@ -642,7 +642,7 @@ rand_id_644487
 -1
 0
 0
-rand_id_59911
+rand_id_584
 
 ComboBox
 schemes
@@ -655,7 +655,7 @@ schemes
 -1
 0
 0
-rand_id_644487
+rand_id_286417
 
 Button
 copy_scheme
@@ -668,7 +668,7 @@ hui:copy
 -1
 0
 0
-rand_id_644487
+rand_id_286417
 
 Button
 save_scheme
@@ -681,10 +681,10 @@ hui:save
 -1
 0
 0
-rand_id_644487
+rand_id_286417
 
 ControlTable
-rand_id_20285
+rand_id_550158
 
 1
 0
@@ -694,7 +694,7 @@ rand_id_20285
 -1
 0
 0
-rand_id_59911
+rand_id_584
 
 Text
 cdt_scheme_bg
@@ -707,7 +707,7 @@ cdt_scheme_bg
 -1
 0
 0
-rand_id_20285
+rand_id_550158
 
 ColorButton
 scheme_background
@@ -720,7 +720,7 @@ scheme_background
 -1
 0
 0
-rand_id_20285
+rand_id_550158
 
 ListView
 context_list
@@ -733,10 +733,10 @@ context_list
 -1
 0
 0
-rand_id_59911
+rand_id_584
 
 ControlTable
-rand_id_326834
+rand_id_535731
 
 1
 0
@@ -746,7 +746,7 @@ rand_id_326834
 -1
 0
 0
-rand_id_59911
+rand_id_584
 
 Text
 cdt_col_text
@@ -759,7 +759,7 @@ cdt_col_text
 -1
 0
 0
-rand_id_326834
+rand_id_535731
 
 ColorButton
 color_text
@@ -772,7 +772,7 @@ color_text
 -1
 0
 0
-rand_id_326834
+rand_id_535731
 
 CheckBox
 overwrite_background
@@ -785,7 +785,7 @@ overwrite_background
 -1
 0
 0
-rand_id_326834
+rand_id_535731
 
 ColorButton
 color_background
@@ -798,7 +798,7 @@ color_background
 -1
 0
 0
-rand_id_326834
+rand_id_535731
 
 CheckBox
 bold
@@ -811,7 +811,7 @@ bold
 -1
 0
 0
-rand_id_326834
+rand_id_535731
 
 CheckBox
 italic
@@ -824,7 +824,7 @@ italic
 -1
 0
 0
-rand_id_326834
+rand_id_535731
 
 ControlTable
 cdt_buttonbar
@@ -837,7 +837,7 @@ cdt_buttonbar
 -1
 0
 0
-rand_id_258622
+rand_id_398374
 
 DefButton
 close
@@ -935,21 +935,21 @@ overwrite_background
 Hintergrund
 paste
 Einfügen
-rand_id_17095
+rand_id_202445
 
-rand_id_658080
+rand_id_320438
 
-rand_id_797621
+rand_id_56548
 
-rand_id_819310
+rand_id_60253
 
-rand_id_875933
+rand_id_832680
 
-rand_id_886968
+rand_id_871924
 
-rand_id_96350
+rand_id_904439
 
-rand_id_991645
+rand_id_918001
 
 redo
 Wiederherstellen

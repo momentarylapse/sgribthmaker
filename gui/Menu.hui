@@ -1,0 +1,33 @@
+Menu menu ""
+	Menu menu_file "Datei"
+		Item new "Neu" image=hui:new
+		Item open "Öffnen..." image=hui:open
+		Item save "Speichern" image=hui:save
+		Item save_as "Speichern unter..." image=hui:save-as
+		Separator "" ""
+		Item reload "Aktualisieren" image=hui:refresh
+		Item follow "Verfolgen"
+		Separator "" ""
+		Item exit "Beenden" image=hui:quit
+	Menu menu_edit "Bearbeiten"
+		Item undo "Rückgängig" image=hui:undo
+		Item redo "Wiederherstellen" image=hui:redo
+		Separator "" ""
+		Item cut "Ausschneiden" image=hui:cut
+		Item copy "Kopieren" image=hui:copy
+		Item paste "Einfügen" image=hui:paste
+		Separator "" ""
+		Item find "Suchen..." image=hui:find
+		Item execute_command "Befehl ausführen..." image=hui:execute
+		Separator "" ""
+		Item settings "Einstellungen" image=hui:preferences
+	Menu menu_script "Script"
+		Item show_data_type "Datentypen anzeigen" image=hui:find
+		Separator "" ""
+		Item compile "Übersetzen" image=hui:media-record
+		Item compile_and_run "Ausführen (schnell)" image=hui:media-play
+		Item compile_and_run_verbose "Ausführen (debug)" image=hui:media-play
+	Menu menu_help "Hilfe"
+		Item show_script_docu "Script Referenz" image=hui:help
+		Item about "Info..." image=hui:about
+
