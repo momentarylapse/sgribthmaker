@@ -9,6 +9,9 @@
 #include "hui_internal.h"
 #include "Controls/HuiControl.h"
 
+// for unique window identifiers
+static int current_uid = 0;
+
 HuiPanel::HuiPanel()
 {
 	win = NULL;
@@ -22,6 +25,8 @@ HuiPanel::HuiPanel()
 	is_resizable = true;
 	plugable = NULL;
 
+	unique_id = current_uid ++;
+
 	SetTarget("", 0);
 }
 
@@ -30,8 +35,24 @@ HuiPanel::~HuiPanel()
 	_ClearPanel_();
 }
 
+void HuiPanel::__init__()
+{
+	new(this) HuiPanel;
+}
+
+void HuiPanel::__delete__()
+{
+	_ClearPanel_();
+}
+
 void HuiPanel::_ClearPanel_()
 {
+	HuiClosedPanel c;
+	c.unique_id = unique_id;
+	c.panel = this;
+	c.last_id = cur_id;
+	HuiClosedPanels.add(c);
+
 	if (parent){
 		// disconnect
 		for (int i=0; i<parent->children.num; i++)
@@ -53,6 +74,16 @@ void HuiPanel::_ClearPanel_()
 	id.clear();
 	cur_id.clear();
 	event.clear();
+}
+
+void HuiPanel::SetBorderWidth(int width)
+{
+	border_width = width;
+}
+
+void HuiPanel::SetIndent(int indent)
+{
+	expander_indent = indent;
 }
 
 void HuiPanel::SetDecimals(int decimals)
@@ -150,8 +181,8 @@ bool HuiPanel::_SendEvent_(HuiEvent *e)
 		}
 
 		// window closed by callback?
-		foreach(HuiClosedWindow &cw, _HuiClosedWindow_)
-			if (cw.win == win)
+		foreach(HuiClosedPanel &cp, HuiClosedPanels)
+			if (cp.panel == this)
 				return sent;
 		_foreach_it_.update();
 	}
@@ -162,6 +193,29 @@ bool HuiPanel::_SendEvent_(HuiEvent *e)
 	win->input.dz = 0;
 
 	return sent;
+}
+
+int HuiPanel::_GetUniqueID_()
+{
+	return unique_id;
+}
+
+void HuiPanel::Show()
+{
+	if (this == win)
+		win->Show();
+	else if (root_control)
+		root_control->Hide(false);
+	OnShow();
+}
+
+void HuiPanel::Hide()
+{
+	if (this == win)
+		win->Hide();
+	else if (root_control)
+		root_control->Hide(true);
+	OnHide();
 }
 
 //----------------------------------------------------------------------------------
@@ -231,10 +285,12 @@ void HuiPanel::FromResource(const string &id)
 		return;
 
 	// title
-	win->SetTitle(HuiGetLanguage(res->id));
+	if (win)
+		win->SetTitle(HuiGetLanguage(res->id));
 
 	// size
-	win->SetSize(res->i_param[0], res->i_param[1]);
+	if (win)
+		win->SetSize(res->i_param[0], res->i_param[1]);
 
 
 	// dialog
@@ -245,11 +301,11 @@ void HuiPanel::FromResource(const string &id)
 		dlg = HuiCreateDialog(HuiGetLanguage(res->id), res->i_param[0], res->i_param[1], root, res->b_param[0]);*/
 
 	// menu?
-	if (res->s_param[0].num > 0)
+	if ((win) && (res->s_param[0].num > 0))
 		win->SetMenu(HuiCreateResourceMenu(res->s_param[0]));
 
 	// toolbar?
-	if (res->s_param[1].num > 0)
+	if ((win) && (res->s_param[1].num > 0))
 		win->toolbar[HuiToolbarTop]->SetByID(res->s_param[1]);
 
 	// controls
@@ -315,7 +371,6 @@ void HuiPanel::EmbedSource(const string &buffer, const string &parent_id, int x,
 	HuiResourceNew res;
 	res.load(buffer);
 	EmbedResource(res, parent_id, x, y);
-
 }
 
 void HuiPanel::Embed(HuiPanel *panel, const string &parent_id, int x, int y)
@@ -325,13 +380,20 @@ void HuiPanel::Embed(HuiPanel *panel, const string &parent_id, int x, int y)
 		return;
 	}
 	panel->parent = this;
-	panel->win = win;
+	panel->set_win(win);
 	children.add(panel);
 
 	SetTarget(parent_id, x);
 	_InsertControl_(panel->root_control, x, y, 0, 0);
 	control.pop(); // dont' really add to us
 	panel->root_control->panel = panel;
+}
+
+void HuiPanel::set_win(HuiWindow *_win)
+{
+	win = _win;
+	foreach(HuiPanel *p, children)
+		p->set_win(win);
 }
 
 
@@ -521,18 +583,6 @@ void HuiPanel::Reset(const string &_id)
 {
 	test_controls(_id, c)
 		c->Reset();
-}
-
-void HuiPanel::CompletionAdd(const string &_id, const string &text)
-{
-	test_controls(_id, c)
-		c->CompletionAdd(text);
-}
-
-void HuiPanel::CompletionClear(const string &_id)
-{
-	test_controls(_id, c)
-		c->CompletionClear();
 }
 
 // expand a single row

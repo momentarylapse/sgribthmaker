@@ -100,8 +100,6 @@ public:
 	void _cdecl GetSizeDesired(int &width, int &height);
 	void _cdecl SetMenu(HuiMenu *menu);
 	HuiMenu* _cdecl GetMenu();
-	void _cdecl SetBorderWidth(int width);
-	void _cdecl SetIndent(int indent);
 	HuiWindow* _cdecl GetParent();
 
 
@@ -135,7 +133,6 @@ public:
 
 	// hui internal
 	int _GetMainLevel_();
-	int _GetUniqueID_();
 	bool allow_input;
 	HuiInputData input;
 	int mouse_offset_x, mouse_offset_y;
@@ -174,7 +171,6 @@ private:
 	bool allowed, allow_keys;
 	HuiWindow *parent;
 
-	int unique_id;
 	int main_level;
 };
 

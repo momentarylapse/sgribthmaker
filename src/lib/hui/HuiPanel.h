@@ -24,6 +24,8 @@ class HuiPanel : public HuiEventHandler
 public:
 	HuiPanel();
 	virtual ~HuiPanel();
+	void _cdecl __init__();
+	virtual void _cdecl __delete__();
 	void _ClearPanel_();
 
 	void _cdecl Activate(const string &control_id);
@@ -31,6 +33,13 @@ public:
 	void _cdecl FromResource(const string &id);
 	void _cdecl FromSource(const string &source);
 
+	void _cdecl Show();
+	void _cdecl Hide();
+
+	virtual _cdecl void OnShow(){}
+	virtual _cdecl void OnHide(){}
+
+	void set_win(HuiWindow *win);
 
 	// events
 	void _cdecl Event(const string &id, hui_callback *function);
@@ -122,10 +131,6 @@ public:
 	void _cdecl RemoveControl(const string &id);
 	void _cdecl SetOptions(const string &id, const string &options);
 
-	// edit completion
-	void _cdecl CompletionAdd(const string &id, const string &text);
-	void _cdecl CompletionClear(const string &id);
-
 	// drawing
 	void _cdecl Redraw(const string &id);
 	void _cdecl RedrawRect(const string &_id, int x, int y, int w, int h);
@@ -137,6 +142,8 @@ public:
 #endif
 	string _GetCurID_();
 	void _SetCurID_(const string &id);
+	void _cdecl SetBorderWidth(int width);
+	void _cdecl SetIndent(int indent);
 
 
 protected:
@@ -160,8 +167,10 @@ protected:
 	Array<HuiEventListener> event;
 
 	string id;
+	int unique_id;
 	string cur_id;
 public:
+	int _GetUniqueID_();
 	int num_float_decimals;
 	int border_width;
 	int expander_indent;
