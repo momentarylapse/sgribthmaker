@@ -346,7 +346,7 @@ void SyntaxTree::FindFunctionSingleParameter(int p, Type **WantedType, Function 
 	}else if (cmd->kind == KindVirtualFunction){
 		ClassFunction *cf = cmd->instance->type->parent->GetVirtualFunction(cmd->link_no);
 		if (!cf)
-			DoError("FindFunctionSingleParameter: cant find virtual function...?!?");
+			DoError("FindFunctionSingleParameter: can't find virtual function...?!?");
 		if (p < cf->param_type.num)
 			WantedType[p] = cf->param_type[p];
 	}else if (cmd->kind == KindCompilerFunction){

@@ -246,22 +246,20 @@ void add_class(Type *root_type)//, PreScript *ps = NULL)
 	cur_class = root_type;
 }
 
-void class_add_element(const string &name, Type *type, int offset, bool hidden)
+void class_add_element(const string &name, Type *type, int offset, ScriptFlag flag)
 {
 	msg_db_f("add_class_el", 4);
 	ClassElement e;
 	e.name = name;
 	e.type = type;
 	e.offset = offset;
-	e.hidden = hidden;
+	e.hidden = ((flag & FLAG_HIDDEN) > 0);
 	cur_class->element.add(e);
 }
 
-int add_func(const string &name, Type *return_type, void *func, bool is_class);
-
-ClassFunction *_class_add_func(Type *c, const ClassFunction &f, bool overwrite)
+ClassFunction *_class_add_func(Type *c, const ClassFunction &f, ScriptFlag flag)
 {
-	if (overwrite){
+	if ((flag & FLAG_OVERWRITE) > 0){
 		foreachi(ClassFunction &ff, c->function, i)
 			if (ff.name == f.name){
 				ff = f;
@@ -273,19 +271,19 @@ ClassFunction *_class_add_func(Type *c, const ClassFunction &f, bool overwrite)
 	return &c->function.back();
 }
 
-void _class_add_func_virtual(const string &tname, const string &name, Type *return_type, int index, bool overwrite)
+void _class_add_func_virtual(const string &tname, const string &name, Type *return_type, int index, ScriptFlag flag)
 {
 	//msg_write("virtual: " + tname + "." + name);
 	//msg_write(index);
 	int cmd = add_func(tname + "." + name + "[virtual]", return_type, NULL, FLAG_CLASS);
 	cur_func->_class = cur_class;
-	cur_class_func = _class_add_func(cur_class, ClassFunction(name, return_type, cur_package_script, cmd), overwrite);
+	cur_class_func = _class_add_func(cur_class, ClassFunction(name, return_type, cur_package_script, cmd), flag);
 	cur_class_func->virtual_index = index;
 	if (index >= cur_class->vtable.num)
 		cur_class->vtable.resize(index + 1);
 }
 
-void class_add_func(const string &name, Type *return_type, void *func, bool overwrite)
+void class_add_func(const string &name, Type *return_type, void *func, ScriptFlag flag)
 {
 	msg_db_f("add_class_func", 4);
 	string tname = cur_class->name;
@@ -296,10 +294,10 @@ void class_add_func(const string &name, Type *return_type, void *func, bool over
 	}
 	int cmd = add_func(tname + "." + name, return_type, func, FLAG_CLASS);
 	cur_func->_class = cur_class;
-	cur_class_func = _class_add_func(cur_class, ClassFunction(name, return_type, cur_package_script, cmd), overwrite);
+	cur_class_func = _class_add_func(cur_class, ClassFunction(name, return_type, cur_package_script, cmd), flag);
 }
 
-void class_add_func_virtual(const string &name, Type *return_type, void *func, bool overwrite)
+void class_add_func_virtual(const string &name, Type *return_type, void *func, ScriptFlag flag)
 {
 	msg_db_f("add_class_func_virtual", 4);
 	string tname = cur_class->name;
@@ -310,7 +308,7 @@ void class_add_func_virtual(const string &name, Type *return_type, void *func, b
 	}
 	if (config.abi == AbiWindows32){
 		if (!func){
-			_class_add_func_virtual(tname, name, return_type, 0, overwrite);
+			_class_add_func_virtual(tname, name, return_type, 0, flag);
 			return;
 		}
 		unsigned char *pp = (unsigned char*)func;
@@ -320,7 +318,7 @@ void class_add_func_virtual(const string &name, Type *return_type, void *func, b
 				// 8b.44.24.**    8b.00     ff.60.10
 				// virtual function
 				int index = (int)pp[8] / 4;
-				_class_add_func_virtual(tname, name, return_type, index, overwrite);
+				_class_add_func_virtual(tname, name, return_type, index, flag);
 			}else if (pp[0] == 0xe9){
 				// jmp
 				//msg_write(Asm::Disassemble(func, 16));
@@ -330,7 +328,7 @@ void class_add_func_virtual(const string &name, Type *return_type, void *func, b
 					// 8b.44.24.**    8b.00     ff.60.10
 					// virtual function
 					int index = (int)pp[8] / 4;
-					_class_add_func_virtual(tname, name, return_type, index, overwrite);
+					_class_add_func_virtual(tname, name, return_type, index, flag);
 				}else
 					throw(1);
 			}else
@@ -346,9 +344,9 @@ void class_add_func_virtual(const string &name, Type *return_type, void *func, b
 		if ((p & 1) > 0){
 			// virtual function
 			int index = p / sizeof(void*);
-			_class_add_func_virtual(tname, name, return_type, index, overwrite);
+			_class_add_func_virtual(tname, name, return_type, index, flag);
 		}else if (!func){
-			_class_add_func_virtual(tname, name, return_type, 0, overwrite);
+			_class_add_func_virtual(tname, name, return_type, 0, flag);
 		}else{
 			msg_error("Script class_add_func_virtual(" + tname + "." + name + "):  can't read virtual index");
 		}
@@ -797,73 +795,91 @@ void SIAddPackageBase()
 	TypeString			= add_type_a("string",		TypeChar, -1);	// string := char[]
 	TypeStringList		= add_type_a("string[]",	TypeString, -1);
 
+
+	//	add_func_special("f2i",			TypeInt,	(void*)&_Float2Int);
+	add_func("f2i",			TypeInt,	(void*)&_Float2Int, FLAG_PURE);
+		func_set_inline(CommandInlineFloatToInt);    // sometimes causes floating point exceptions...
+		func_add_param("f",		TypeFloat);
+	add_func("i2f",			TypeFloat,	(void*)&_Int2Float, FLAG_PURE);
+		func_set_inline(CommandInlineIntToFloat);
+		func_add_param("i",		TypeInt);
+	add_func("i2c",			TypeChar,	(void*)&_Int2Char, FLAG_PURE);
+		func_set_inline(CommandInlineIntToChar);
+		func_add_param("i",		TypeInt);
+	add_func("c2i",			TypeInt,	(void*)&_Char2Int, FLAG_PURE);
+		func_set_inline(CommandInlineCharToInt);
+		func_add_param("c",		TypeChar);
+	add_func("p2b",			TypeBool,	(void*)&_Pointer2Bool, FLAG_PURE);
+		func_set_inline(CommandInlinePointerToBool);
+		func_add_param("p",		TypePointer);
+
 	
 	Type *TypeVirtualTest=add_type  ("VirtualTest",	sizeof(VirtualTest));
 
 	add_class(TypeInt);
-		class_add_func("str", TypeString, mf(&IntClass::str));
+		class_add_func("str", TypeString, mf(&IntClass::str), FLAG_PURE);
 	add_class(TypeFloat);
-		class_add_func("str", TypeString, mf(&FloatClass::str));
-		class_add_func("str2", TypeString, mf(&FloatClass::str2));
+		class_add_func("str", TypeString, mf(&FloatClass::str), FLAG_PURE);
+		class_add_func("str2", TypeString, mf(&FloatClass::str2), FLAG_PURE);
 			func_add_param("decimals",		TypeInt);
 	add_class(TypeBool);
-		class_add_func("str", TypeString, mf(&BoolClass::str));
+		class_add_func("str", TypeString, mf(&BoolClass::str), FLAG_PURE);
 	add_class(TypeChar);
-		class_add_func("str", TypeString, mf(&CharClass::str));
+		class_add_func("str", TypeString, mf(&CharClass::str), FLAG_PURE);
 	add_class(TypePointer);
-		class_add_func("str", TypeString, mf(&PointerClass::str));
+		class_add_func("str", TypeString, mf(&PointerClass::str), FLAG_PURE);
 
 	add_class(TypeString);
 		class_add_func("__iadd__", TypeVoid, mf(&string::operator+=));
 			func_add_param("x",		TypeString);
-		class_add_func("__add__", TypeString, mf(&string::operator+));
+		class_add_func("__add__", TypeString, mf(&string::operator+), FLAG_PURE);
 			func_add_param("x",		TypeString);
-		class_add_func("__eq__", TypeBool, mf(&string::operator==));
+		class_add_func("__eq__", TypeBool, mf(&string::operator==), FLAG_PURE);
 			func_add_param("x",		TypeString);
-		class_add_func("__ne__", TypeBool, mf(&string::operator!=));
+		class_add_func("__ne__", TypeBool, mf(&string::operator!=), FLAG_PURE);
 			func_add_param("x",		TypeString);
-		class_add_func("__lt__", TypeBool, mf(&string::operator<));
+		class_add_func("__lt__", TypeBool, mf(&string::operator<), FLAG_PURE);
 			func_add_param("x",		TypeString);
-		class_add_func("__gt__", TypeBool, mf(&string::operator>));
+		class_add_func("__gt__", TypeBool, mf(&string::operator>), FLAG_PURE);
 			func_add_param("x",		TypeString);
-		class_add_func("__le__", TypeBool, mf(&string::operator<=));
+		class_add_func("__le__", TypeBool, mf(&string::operator<=), FLAG_PURE);
 			func_add_param("x",		TypeString);
-		class_add_func("__ge__", TypeBool, mf(&string::operator>=));
+		class_add_func("__ge__", TypeBool, mf(&string::operator>=), FLAG_PURE);
 			func_add_param("x",		TypeString);
-		class_add_func("substr", TypeString, mf(&string::substr));
+		class_add_func("substr", TypeString, mf(&string::substr), FLAG_PURE);
 			func_add_param("start",		TypeInt);
 			func_add_param("length",	TypeInt);
-		class_add_func("head", TypeString, mf(&string::head));
+		class_add_func("head", TypeString, mf(&string::head), FLAG_PURE);
 			func_add_param("size",		TypeInt);
-		class_add_func("tail", TypeString, mf(&string::tail));
+		class_add_func("tail", TypeString, mf(&string::tail), FLAG_PURE);
 			func_add_param("size",		TypeInt);
-		class_add_func("find", TypeInt, mf(&string::find));
+		class_add_func("find", TypeInt, mf(&string::find), FLAG_PURE);
 			func_add_param("str",		TypeString);
 			func_add_param("start",		TypeInt);
-		class_add_func("compare", TypeInt, mf(&string::compare));
+		class_add_func("compare", TypeInt, mf(&string::compare), FLAG_PURE);
 			func_add_param("str",		TypeString);
-		class_add_func("icompare", TypeInt, mf(&string::icompare));
+		class_add_func("icompare", TypeInt, mf(&string::icompare), FLAG_PURE);
 			func_add_param("str",		TypeString);
-		class_add_func("replace", TypeString, mf(&string::replace));
+		class_add_func("replace", TypeString, mf(&string::replace), FLAG_PURE);
 			func_add_param("sub",		TypeString);
 			func_add_param("by",		TypeString);
-		class_add_func("explode", TypeStringList, mf(&string::explode));
+		class_add_func("explode", TypeStringList, mf(&string::explode), FLAG_PURE);
 			func_add_param("str",		TypeString);
-		class_add_func("lower", TypeString, mf(&string::lower));
-		class_add_func("upper", TypeString, mf(&string::upper));
-		class_add_func("reverse", TypeString, mf(&string::reverse));
-		class_add_func("hash", TypeInt, mf(&string::hash));
-		class_add_func("hex", TypeString, mf(&string::hex));
+		class_add_func("lower", TypeString, mf(&string::lower), FLAG_PURE);
+		class_add_func("upper", TypeString, mf(&string::upper), FLAG_PURE);
+		class_add_func("reverse", TypeString, mf(&string::reverse), FLAG_PURE);
+		class_add_func("hash", TypeInt, mf(&string::hash), FLAG_PURE);
+		class_add_func("hex", TypeString, mf(&string::hex), FLAG_PURE);
 			func_add_param("inverted",		TypeBool);
-		class_add_func("unhex", TypeString, mf(&string::unhex));
-		class_add_func("match", TypeBool, mf(&string::match));
+		class_add_func("unhex", TypeString, mf(&string::unhex), FLAG_PURE);
+		class_add_func("match", TypeBool, mf(&string::match), FLAG_PURE);
 			func_add_param("glob",		TypeString);
-		class_add_func("int", TypeInt, mf(&string::_int));
-		class_add_func("float", TypeFloat, mf(&string::_float));
-		class_add_func("trim", TypeString, mf(&string::trim));
-		class_add_func("dirname", TypeString, mf(&string::dirname));
-		class_add_func("basename", TypeString, mf(&string::basename));
-		class_add_func("extension", TypeString, mf(&string::extension));
+		class_add_func("int", TypeInt, mf(&string::_int), FLAG_PURE);
+		class_add_func("float", TypeFloat, mf(&string::_float), FLAG_PURE);
+		class_add_func("trim", TypeString, mf(&string::trim), FLAG_PURE);
+		class_add_func("dirname", TypeString, mf(&string::dirname), FLAG_PURE);
+		class_add_func("basename", TypeString, mf(&string::basename), FLAG_PURE);
+		class_add_func("extension", TypeString, mf(&string::extension), FLAG_PURE);
 
 	add_class(TypeStringList);
 		class_add_func("__init__",	TypeVoid, mf(&StringList::__init__));
@@ -877,7 +893,7 @@ void SIAddPackageBase()
 			func_add_param("num",		TypeInt);
 		class_add_func("__assign__",	TypeVoid, mf(&StringList::assign));
 			func_add_param("other",		TypeStringList);
-		class_add_func("join", TypeString, mf(&StringList::join));
+		class_add_func("join", TypeString, mf(&StringList::join), FLAG_PURE);
 			func_add_param("glue",		TypeString);
 
 	VirtualTest::enable_logging = false;
@@ -955,22 +971,6 @@ void SIAddBasicCommands()
 		func_add_param("time",	TypeFloat);
 	add_compiler_func("wait_of",		TypeVoid,	CommandWaitOneFrame);
 	add_compiler_func("-asm-",		TypeVoid,	CommandAsm);
-	//	add_func_special("f2i",			TypeInt,	(void*)&_Float2Int);
-	add_func("f2i",			TypeInt,	(void*)&_Float2Int, FLAG_PURE);
-		func_set_inline(CommandInlineFloatToInt);    // sometimes causes floating point exceptions...
-		func_add_param("f",		TypeFloat);
-	add_func("i2f",			TypeFloat,	(void*)&_Int2Float, FLAG_PURE);
-		func_set_inline(CommandInlineIntToFloat);
-		func_add_param("i",		TypeInt);
-	add_func("i2c",			TypeChar,	(void*)&_Int2Char, FLAG_PURE);
-		func_set_inline(CommandInlineIntToChar);
-		func_add_param("i",		TypeInt);
-	add_func("c2i",			TypeInt,	(void*)&_Char2Int, FLAG_PURE);
-		func_set_inline(CommandInlineCharToInt);
-		func_add_param("c",		TypeChar);
-	add_func("p2b",			TypeBool,	(void*)&_Pointer2Bool, FLAG_PURE);
-		func_set_inline(CommandInlinePointerToBool);
-		func_add_param("p",		TypePointer);
 }
 
 
