@@ -350,6 +350,14 @@ void amd64_col_hsb(color &r, float a, float h, float s, float b)
 {	r = SetColorHSB(a, h, s, b);	}
 void amd64_col_interpolate(color &r, color &a, color &b, float t)
 {	r = ColorInterpolate(a, b, t);	}
+void amd64_col_add(color &r, color &a, color &b)
+{	r = a + b;	}
+void amd64_col_sub(color &r, color &a, color &b)
+{	r = a - b;	}
+void amd64_col_mul_c(color &r, color &a, color &b)
+{	r = a * b;	}
+void amd64_col_mul_f(color &r, color &a, float b)
+{	r = a * b;	}
 
 #define amd64_wrap(orig, wrap)	((config.instruction_set == Asm::InstructionSetAMD64) ? ((void*)(wrap)) : ((void*)(orig)))
 
@@ -564,6 +572,18 @@ void SIAddPackageMath()
 		class_add_element("g",		TypeFloat,	4);
 		class_add_element("b",		TypeFloat,	8);
 		class_add_func("str",		TypeString,			mf(&color::str));
+		class_add_func("__add__",	TypeColor,	amd64_wrap(mf(&color::operator+), &amd64_col_add));
+			func_add_param("o",	TypeColor);
+		class_add_func("__adds__",	TypeVoid,	mf(&color::operator+=));
+			func_add_param("o",	TypeColor);
+		class_add_func("__sub__",	TypeColor,	amd64_wrap(mf(&color::operator-), &amd64_col_sub));
+			func_add_param("o",	TypeColor);
+		class_add_func("__subs__",	TypeVoid,	mf(&color::operator-=));
+			func_add_param("o",	TypeColor);
+		class_add_func("__mul__",	TypeColor,	(void*)&amd64_col_mul_f);
+			func_add_param("f",	TypeFloat);
+		class_add_func("__mul__",	TypeColor,	(void*)&amd64_col_mul_c);
+			func_add_param("c",	TypeColor);
 	
 	add_class(TypePlane);
 		class_add_element("a",		TypeFloat,	0);
