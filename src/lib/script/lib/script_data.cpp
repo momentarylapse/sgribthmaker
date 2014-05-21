@@ -122,7 +122,7 @@ void add_package(const string &name, bool used_by_default)
 	cur_package_index = Packages.num - 1;
 }
 
-Type *add_type(const string &name, int size, TypeFlag flag)
+Type *add_type(const string &name, int size, ScriptFlag flag)
 {
 	msg_db_f("add_type", 4);
 	Type *t = new Type;
@@ -134,7 +134,7 @@ Type *add_type(const string &name, int size, TypeFlag flag)
 	cur_package_script->syntax->Types.add(t);
 	return t;
 }
-Type *add_type_p(const string &name, Type *sub_type, TypeFlag flag)
+Type *add_type_p(const string &name, Type *sub_type, ScriptFlag flag)
 {
 	msg_db_f("add_type_p", 4);
 	Type *t = new Type;
@@ -277,7 +277,7 @@ void _class_add_func_virtual(const string &tname, const string &name, Type *retu
 {
 	//msg_write("virtual: " + tname + "." + name);
 	//msg_write(index);
-	int cmd = add_func(tname + "." + name + "[virtual]", return_type, NULL, true);
+	int cmd = add_func(tname + "." + name + "[virtual]", return_type, NULL, FLAG_CLASS);
 	cur_func->_class = cur_class;
 	cur_class_func = _class_add_func(cur_class, ClassFunction(name, return_type, cur_package_script, cmd), overwrite);
 	cur_class_func->virtual_index = index;
@@ -294,7 +294,7 @@ void class_add_func(const string &name, Type *return_type, void *func, bool over
 			if ((t->is_pointer) && (t->parent == cur_class))
 				tname = t->name;
 	}
-	int cmd = add_func(tname + "." + name, return_type, func, true);
+	int cmd = add_func(tname + "." + name, return_type, func, FLAG_CLASS);
 	cur_func->_class = cur_class;
 	cur_class_func = _class_add_func(cur_class, ClassFunction(name, return_type, cur_package_script, cmd), overwrite);
 }
@@ -407,16 +407,21 @@ void add_ext_var(const string &name, Type *type, void *var)
 void _cdecl _cstringout(char *str){	msg_write(str);	}
 void _cdecl _stringout(string &str){	msg_write(str);	}
 int _cdecl _Float2Int(float f){	return (int)f;	}
+float _cdecl _Int2Float(int i){	return (float)i;	}
+char _cdecl _Int2Char(int i){	return (char)i;	}
+int _cdecl _Char2Int(char c){	return (int)c;	}
+bool _cdecl _Pointer2Bool(void *p){	return (bool)p;	}
 
 
 Array<PreCommand> PreCommands;
 
-int add_func(const string &name, Type *return_type, void *func, bool is_class)
+int add_func(const string &name, Type *return_type, void *func, ScriptFlag flag)
 {
 	Function *f = new Function(name, return_type);
 	f->literal_return_type = return_type;
 	f->num_params = 0;
 	f->_class = NULL;
+	f->is_pure = ((flag & FLAG_PURE) > 0);
 	cur_package_script->syntax->Functions.add(f);
 	cur_package_script->func.add(config.allow_std_lib ? (void (*)())func : NULL);
 	cur_cmd = NULL;
@@ -438,6 +443,12 @@ int add_compiler_func(const string &name, Type *return_type, int index)
 	cur_cmd = &PreCommands[index];
 	cur_class_func = NULL;
 	return index;
+}
+
+void func_set_inline(int index)
+{
+	if (cur_func)
+		cur_func->inline_no = index;
 }
 
 void func_add_param(const string &name, Type *type)
@@ -943,18 +954,23 @@ void SIAddBasicCommands()
 	add_compiler_func("wait_rt",		TypeVoid,	CommandWaitRT);
 		func_add_param("time",	TypeFloat);
 	add_compiler_func("wait_of",		TypeVoid,	CommandWaitOneFrame);
-//	add_func_special("f2i",			TypeInt,	(void*)&_Float2Int);
-	add_compiler_func("f2i",			TypeInt,	CommandFloatToInt);    // sometimes causes floating point exceptions...
-		func_add_param("f",		TypeFloat);
-	add_compiler_func("i2f",			TypeFloat,	CommandIntToFloat);
-		func_add_param("i",		TypeInt);
-	add_compiler_func("i2c",			TypeChar,	CommandIntToChar);
-		func_add_param("i",		TypeInt);
-	add_compiler_func("c2i",			TypeInt,	CommandCharToInt);
-		func_add_param("c",		TypeChar);
-	add_compiler_func("p2b",			TypeBool,	CommandPointerToBool);
-		func_add_param("p",		TypePointer);
 	add_compiler_func("-asm-",		TypeVoid,	CommandAsm);
+	//	add_func_special("f2i",			TypeInt,	(void*)&_Float2Int);
+	add_func("f2i",			TypeInt,	(void*)&_Float2Int, FLAG_PURE);
+		func_set_inline(CommandInlineFloatToInt);    // sometimes causes floating point exceptions...
+		func_add_param("f",		TypeFloat);
+	add_func("i2f",			TypeFloat,	(void*)&_Int2Float, FLAG_PURE);
+		func_set_inline(CommandInlineIntToFloat);
+		func_add_param("i",		TypeInt);
+	add_func("i2c",			TypeChar,	(void*)&_Int2Char, FLAG_PURE);
+		func_set_inline(CommandInlineIntToChar);
+		func_add_param("i",		TypeInt);
+	add_func("c2i",			TypeInt,	(void*)&_Char2Int, FLAG_PURE);
+		func_set_inline(CommandInlineCharToInt);
+		func_add_param("c",		TypeChar);
+	add_func("p2b",			TypeBool,	(void*)&_Pointer2Bool, FLAG_PURE);
+		func_set_inline(CommandInlinePointerToBool);
+		func_add_param("p",		TypePointer);
 }
 
 

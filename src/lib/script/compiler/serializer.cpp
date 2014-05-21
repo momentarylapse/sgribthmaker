@@ -1426,11 +1426,11 @@ void Serializer::SerializeCompilerFunction(Command *com, Array<SerialCommandPara
 							add_cmd(Asm::inst_mov, p_mode, param_const(TypeInt, (void*)WaitingModeNone));
 					}
 					}break;
-		case CommandIntToFloat:
+		case CommandInlineIntToFloat:
 			add_cmd(Asm::inst_fild, param[0]);
 			add_cmd(Asm::inst_fstp, ret);
 			break;
-		case CommandFloatToInt:
+		case CommandInlineFloatToInt:
 			// round to nearest...
 			//add_cmd(Asm::inst_fld, param[0]);
 			//add_cmd(Asm::inst_fistp, ret);
@@ -1449,33 +1449,33 @@ void Serializer::SerializeCompilerFunction(Command *com, Array<SerialCommandPara
 			add_cmd(Asm::inst_fistp, ret);
 			add_cmd(Asm::inst_fldcw, t1);
 			break;
-		case CommandIntToChar:
+		case CommandInlineIntToChar:
 			add_cmd(Asm::inst_mov, p_eax_int, param[0]);
 			add_cmd(Asm::inst_mov, ret, p_al_char);
 			add_reg_channel(Asm::RegEax, cmd.num - 2, cmd.num - 1);
 			break;
-		case CommandCharToInt:
+		case CommandInlineCharToInt:
 			add_cmd(Asm::inst_mov, p_eax_int, param_const(TypeInt, (void*)0x0));
 			add_cmd(Asm::inst_mov, p_al_char, param[0]);
 			add_cmd(Asm::inst_mov, ret, p_eax);
 			add_reg_channel(Asm::RegEax, cmd.num - 3, cmd.num - 1);
 			break;
-		case CommandPointerToBool:
+		case CommandInlinePointerToBool:
 			add_cmd(Asm::inst_cmp, param[0], param_const(TypePointer, NULL));
 			add_cmd(Asm::inst_setnz, ret);
 			break;
 		case CommandAsm:
 			add_cmd(inst_asm);
 			break;
-		case CommandRectSet:
+		case CommandInlineRectSet:
 			add_cmd(Asm::inst_mov, param_shift(ret, 12, TypeFloat), param[3]);
-		case CommandVectorSet:
+		case CommandInlineVectorSet:
 			add_cmd(Asm::inst_mov, param_shift(ret, 8, TypeFloat), param[2]);
-		case CommandComplexSet:
+		case CommandInlineComplexSet:
 			add_cmd(Asm::inst_mov, param_shift(ret, 4, TypeFloat), param[1]);
 			add_cmd(Asm::inst_mov, param_shift(ret, 0, TypeFloat), param[0]);
 			break;
-		case CommandColorSet:
+		case CommandInlineColorSet:
 			add_cmd(Asm::inst_mov, param_shift(ret, 12, TypeFloat), param[0]);
 			add_cmd(Asm::inst_mov, param_shift(ret, 0, TypeFloat), param[1]);
 			add_cmd(Asm::inst_mov, param_shift(ret, 4, TypeFloat), param[2]);
@@ -1536,6 +1536,15 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, int level, int ind
 		SerializeOperator(com, param, ret);
 
 	}else if (com->kind == KindFunction){
+		// inline function?
+		if (com->script->syntax->Functions[com->link_no]->inline_no >= 0){
+			Command c = *com;
+			c.kind = KindCompilerFunction;
+			c.link_no = com->script->syntax->Functions[com->link_no]->inline_no;
+
+			SerializeCompilerFunction(&c, param, ret, level, index, marker_before_params);
+			return ret;
+		}
 
 		for (int p=0;p<com->num_params;p++)
 			AddFuncParam(param[p]);

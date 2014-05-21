@@ -210,17 +210,17 @@ enum{
 	CommandWait,
 	CommandWaitRT,
 	CommandWaitOneFrame,
-	CommandFloatToInt,
-	CommandIntToFloat,
-	CommandIntToChar,
-	CommandCharToInt,
-	CommandPointerToBool,
-	CommandComplexSet,
-	CommandVectorSet,
-	CommandRectSet,
-	CommandColorSet,
 	CommandAsm,
-	NUM_INTERN_PRE_COMMANDS
+	NUM_INTERN_PRE_COMMANDS,
+	CommandInlineFloatToInt,
+	CommandInlineIntToFloat,
+	CommandInlineIntToChar,
+	CommandInlineCharToInt,
+	CommandInlinePointerToBool,
+	CommandInlineComplexSet,
+	CommandInlineVectorSet,
+	CommandInlineRectSet,
+	CommandInlineColorSet,
 };
 
 
