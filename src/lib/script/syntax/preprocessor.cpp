@@ -8,7 +8,7 @@ typedef void op_func(string &r, string &a, string &b);
 
 //static Function *cur_func;
 
-bool call_function(Function *f, void *ff, void *ret, Array<void*> param)
+bool call_function(Function *f, void *ff, void *ret, void *inst, Array<void*> param)
 {
 	if (f->num_params == 0){
 		if (f->return_type == TypeInt){
@@ -208,13 +208,21 @@ void SyntaxTree::PreProcessCommand(Command *c)
 		bool all_const = true;
 		bool is_address = false;
 		bool is_local = false;
-		for (int i=0;i<c->num_params;i++)
+		for (int i=0;i<c->num_params;i++){
 			if (c->param[i]->kind == KindAddress)
 				is_address = true;
 			else if (c->param[i]->kind == KindLocalAddress)
 				is_address = is_local = true;
 			else if (c->param[i]->kind != KindConstant)
 				all_const = false;
+		}
+		void *inst = NULL;
+		if (c->instance){
+			return;
+			if (c->instance->kind != KindConstant)
+				all_const = false;
+			inst = Constants[c->instance->link_no].value.data;
+		}
 		if (!all_const)
 			return;
 		if (is_address)
@@ -224,7 +232,7 @@ void SyntaxTree::PreProcessCommand(Command *c)
 		Array<void*> p;
 		for (int i=0; i<c->num_params; i++)
 			p.add(Constants[c->param[i]->link_no].value.data);
-		if (!call_function(f, ff, temp.data, p))
+		if (!call_function(f, ff, temp.data, inst, p))
 			return;
 		int nc = AddConstant(f->return_type);
 		Constants[nc].value = temp;
@@ -252,6 +260,7 @@ void SyntaxTree::PreProcessCommand(Command *c)
 			c->num_params = 0;
 		}
 	}/*else if (c->kind == KindReference){
+	// no... we don't know the addresses of globals/constants yet...
 		if (s){
 			if ((c->Param[0]->Kind == KindVarGlobal) || (c->Param[0]->Kind == KindVarLocal) || (c->Param[0]->Kind == KindVarExternal) || (c->Param[0]->Kind == KindConstant)){
 				// pre process ref var

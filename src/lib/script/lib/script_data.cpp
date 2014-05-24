@@ -275,7 +275,7 @@ void _class_add_func_virtual(const string &tname, const string &name, Type *retu
 {
 	//msg_write("virtual: " + tname + "." + name);
 	//msg_write(index);
-	int cmd = add_func(tname + "." + name + "[virtual]", return_type, NULL, FLAG_CLASS);
+	int cmd = add_func(tname + "." + name + "[virtual]", return_type, NULL, ScriptFlag(flag | FLAG_CLASS));
 	cur_func->_class = cur_class;
 	cur_class_func = _class_add_func(cur_class, ClassFunction(name, return_type, cur_package_script, cmd), flag);
 	cur_class_func->virtual_index = index;
@@ -292,7 +292,7 @@ void class_add_func(const string &name, Type *return_type, void *func, ScriptFla
 			if ((t->is_pointer) && (t->parent == cur_class))
 				tname = t->name;
 	}
-	int cmd = add_func(tname + "." + name, return_type, func, FLAG_CLASS);
+	int cmd = add_func(tname + "." + name, return_type, func, ScriptFlag(flag | FLAG_CLASS));
 	cur_func->_class = cur_class;
 	cur_class_func = _class_add_func(cur_class, ClassFunction(name, return_type, cur_package_script, cmd), flag);
 }
