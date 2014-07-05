@@ -551,7 +551,7 @@ void SourceView::UpdateFont()
 {
 	string font_name = HuiConfig.getStr("Font", "Monospace 10");
 	PangoFontDescription *font_desc = pango_font_description_from_string(font_name.c_str());
-	gtk_widget_modify_font(tv, font_desc);
+	gtk_widget_override_font(tv, font_desc);
 	pango_font_description_free(font_desc);
 	UpdateTabSize();
 }
