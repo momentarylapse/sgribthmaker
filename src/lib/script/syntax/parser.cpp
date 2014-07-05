@@ -31,10 +31,10 @@ inline bool direct_type_match(Type *a, Type *b)
 inline bool type_match_with_cast(Type *type, bool is_class, bool is_modifiable, Type *wanted, int &penalty, int &cast);
 
 
-int s2i2(const string &str)
+long long s2i2(const string &str)
 {
 	if ((str.num > 1) && (str[0]=='0')&&(str[1]=='x')){
-		int r=0;
+		long long r=0;
 		for (int i=2;i<str.num;i++){
 			r *= 16;
 			if ((str[i]>='0')&&(str[i]<='9'))
@@ -46,7 +46,7 @@ int s2i2(const string &str)
 		}
 		return r;
 	}else
-		return	str._int();
+		return	str._int64();
 }
 
 // find the type of a (potential) constant
@@ -98,6 +98,10 @@ Type *SyntaxTree::GetConstantType()
 					return TypeUnknown;
 			}
 		}
+	if (type == TypeInt){
+		if ((s2i2(Exp.cur) >= 0x80000000) || (-s2i2(Exp.cur) > 0x80000000))
+			type = TypeInt64;
+	}
 
 	// super array [...]
 	if (Exp.cur == "["){
@@ -107,6 +111,7 @@ Type *SyntaxTree::GetConstantType()
 }
 
 static int _some_int_;
+static long long _some_int64_;
 static float _some_float_;
 
 string SyntaxTree::GetConstantValue()
@@ -126,6 +131,10 @@ string SyntaxTree::GetConstantValue()
 	if (type == TypeInt){
 		_some_int_ = s2i2(Exp.cur);
 		return string((char*)&_some_int_, sizeof(int));
+	}
+	if (type == TypeInt64){
+		_some_int64_ = s2i2(Exp.cur);
+		return string((char*)&_some_int64_, sizeof(long long));
 	}
 	if (type == TypeFloat){
 		_some_float_ = Exp.cur._float();
@@ -611,7 +620,7 @@ Command *SyntaxTree::GetOperand(Function *f)
 
 				if (!ok){
 					Exp.cur_exp = _ie;
-					DoError("unknown unitary operator  " + p2->name);
+					DoError("unknown unitary operator " + PrimitiveOperators[po].name + " " + p2->name);
 				}
 				return add_command_operator(sub_command, NULL, o);
 			}

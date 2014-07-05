@@ -81,6 +81,7 @@ extern Type *TypePointer;
 extern Type *TypeClass;
 extern Type *TypeBool;
 extern Type *TypeInt;
+extern Type *TypeInt64;
 extern Type *TypeFloat;
 extern Type *TypeChar;
 extern Type *TypeCString;

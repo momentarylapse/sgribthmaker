@@ -473,6 +473,33 @@ string i2s(int i)
 	return r;
 }
 
+string i642s(long long i)
+{
+	string r;
+	int l=0;
+	bool m=false;
+	if (i<0){
+		i=-i;
+		m=true;
+	}
+	char a[128];
+	while (1){
+		a[l]=(i%10)+48;
+		l++;
+		i=(long long)(i/10);
+		if (i==0)
+			break;
+	}
+	if (m){
+		a[l]='-';
+		l++;
+	}
+	r.resize(l);
+	for (int j=0;j<l;j++)
+		r[l-j-1]=a[j];
+	return r;
+}
+
 // convert a float to a string
 string f2s(float f,int dez)
 {
@@ -646,6 +673,20 @@ int string::_int() const
 {
 	bool minus=false;
 	int res=0;
+	for (int i=0;i<num;i++){
+		if ((*this)[i]=='-')
+			minus=true;
+		else res=res*10+((*this)[i]-48);
+	}
+	if (minus)
+		res=-res;
+	return res;
+}
+
+long long string::_int64() const
+{
+	bool minus=false;
+	long long res=0;
 	for (int i=0;i<num;i++){
 		if ((*this)[i]=='-')
 			minus=true;
