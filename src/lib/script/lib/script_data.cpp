@@ -26,7 +26,7 @@
 
 namespace Script{
 
-string DataVersion = "0.13.10.0";
+string DataVersion = "0.13.11.0";
 
 CompilerConfiguration config;
 
@@ -70,6 +70,7 @@ Type *TypeBool;
 Type *TypeInt;
 Type *TypeInt64;
 Type *TypeFloat;
+Type *TypeFloat64;
 Type *TypeChar;
 Type *TypeString;
 Type *TypeCString;
@@ -406,6 +407,8 @@ void add_ext_var(const string &name, Type *type, void *var)
 void _cdecl _cstringout(char *str){	msg_write(str);	}
 void _cdecl _stringout(string &str){	msg_write(str);	}
 int _cdecl _Float2Int(float f){	return (int)f;	}
+double _cdecl _Float2Float64(float f){	return (double)f;	}
+float _cdecl _Float642Float(double f){	return (float)f;	}
 float _cdecl _Int2Float(int i){	return (float)i;	}
 int _cdecl _Int642Int(long long i){	return (int)i;	}
 long long _cdecl _Int2Int64(int i){	return (long long)i;	}
@@ -595,6 +598,13 @@ string CastFloat2Int(string &s)
 	*(int*)r.data = *(float*)s.data;
 	return r;
 }
+string CastFloat2Float64(string &s)
+{
+	string r;
+	r.resize(8);
+	*(double*)r.data = *(float*)s.data;
+	return r;
+}
 string CastInt2Float(string &s)
 {
 	string r;
@@ -638,6 +648,10 @@ string CastInt642StringP(string &s)
 string CastFloat2StringP(string &s)
 {
 	return f2s(*(float*)s.data, 6);
+}
+string CastFloat642StringP(string &s)
+{
+	return f642s(*(double*)s.data, 6);
 }
 string CastBool2StringP(string &s)
 {
@@ -715,6 +729,14 @@ public:
 	string _cdecl str2(int decimals){	return f2s(f, decimals);	}
 };
 
+class Float64Class
+{
+	double f;
+public:
+	string _cdecl str(){	return f642s(f, 6);	}
+	string _cdecl str2(int decimals){	return f642s(f, decimals);	}
+};
+
 class BoolClass
 {
 	bool b;
@@ -772,6 +794,7 @@ void SIAddPackageBase()
 	TypeInt				= add_type  ("int",			sizeof(int), FLAG_CALL_BY_VALUE);
 	TypeInt64			= add_type  ("int64",		sizeof(long long), FLAG_CALL_BY_VALUE);
 	TypeFloat			= add_type  ("float",		sizeof(float), FLAG_CALL_BY_VALUE);
+	TypeFloat64			= add_type  ("float64",		sizeof(double), FLAG_CALL_BY_VALUE);
 	TypeChar			= add_type  ("char",		sizeof(char), FLAG_CALL_BY_VALUE);
 	TypeDynamicArray	= add_type  ("@DynamicArray", config.SuperArraySize);
 
@@ -825,6 +848,12 @@ void SIAddPackageBase()
 	add_func("i2f",			TypeFloat,	(void*)&_Int2Float, FLAG_PURE);
 		func_set_inline(CommandInlineIntToFloat);
 		func_add_param("i",		TypeInt);
+	add_func("f2f64",			TypeFloat64,	(void*)&_Float2Float64, FLAG_PURE);
+		func_set_inline(CommandInlineFloatToFloat64);
+		func_add_param("f",		TypeFloat);
+	add_func("f642f",			TypeFloat,	(void*)&_Float642Float, FLAG_PURE);
+		func_set_inline(CommandInlineFloat64ToFloat);
+		func_add_param("f",		TypeFloat);
 	add_func("i2i64",			TypeInt64,	(void*)&_Int2Int64, FLAG_PURE);
 		func_set_inline(CommandInlineIntToInt64);
 		func_add_param("i",		TypeInt);
@@ -848,9 +877,13 @@ void SIAddPackageBase()
 		class_add_func("str", TypeString, mf(&IntClass::str), FLAG_PURE);
 	add_class(TypeInt64);
 		class_add_func("str", TypeString, mf(&Int64Class::str), FLAG_PURE);
-	add_class(TypeFloat);
-		class_add_func("str", TypeString, mf(&FloatClass::str), FLAG_PURE);
-		class_add_func("str2", TypeString, mf(&FloatClass::str2), FLAG_PURE);
+		add_class(TypeFloat);
+			class_add_func("str", TypeString, mf(&FloatClass::str), FLAG_PURE);
+			class_add_func("str2", TypeString, mf(&FloatClass::str2), FLAG_PURE);
+				func_add_param("decimals",		TypeInt);
+	add_class(TypeFloat64);
+		class_add_func("str", TypeString, mf(&Float64Class::str), FLAG_PURE);
+		class_add_func("str2", TypeString, mf(&Float64Class::str2), FLAG_PURE);
 			func_add_param("decimals",		TypeInt);
 	add_class(TypeBool);
 		class_add_func("str", TypeString, mf(&BoolClass::str), FLAG_PURE);
@@ -905,7 +938,9 @@ void SIAddPackageBase()
 		class_add_func("match", TypeBool, mf(&string::match), FLAG_PURE);
 			func_add_param("glob",		TypeString);
 		class_add_func("int", TypeInt, mf(&string::_int), FLAG_PURE);
+		class_add_func("int64", TypeInt64, mf(&string::_int64), FLAG_PURE);
 		class_add_func("float", TypeFloat, mf(&string::_float), FLAG_PURE);
+		class_add_func("float64", TypeFloat64, mf(&string::_float64), FLAG_PURE);
 		class_add_func("trim", TypeString, mf(&string::trim), FLAG_PURE);
 		class_add_func("dirname", TypeString, mf(&string::dirname), FLAG_PURE);
 		class_add_func("basename", TypeString, mf(&string::basename), FLAG_PURE);
@@ -1042,6 +1077,14 @@ void op_int64_shr(string &r, string &a, string &b)
 {	*(long long*)r.data = *(long long*)a.data >> *(long long*)b.data;	}
 void op_int64_shl(string &r, string &a, string &b)
 {	*(long long*)r.data = *(long long*)a.data << *(long long*)b.data;	}
+void op_float64_add(string &r, string &a, string &b)
+{	*(double*)r.data = *(double*)a.data + *(double*)b.data;	}
+void op_float64_sub(string &r, string &a, string &b)
+{	*(double*)r.data = *(double*)a.data - *(double*)b.data;	}
+void op_float64_mul(string &r, string &a, string &b)
+{	*(double*)r.data = *(double*)a.data * *(double*)b.data;	}
+void op_float64_div(string &r, string &a, string &b)
+{	*(double*)r.data = *(double*)a.data / *(double*)b.data;	}
 
 void SIAddOperators()
 {
@@ -1135,7 +1178,25 @@ void SIAddOperators()
 	add_operator(OperatorGreaterEqual,	TypeBool,		TypeFloat,		TypeFloat);
 	add_operator(OperatorSmaller,		TypeBool,		TypeFloat,		TypeFloat);
 	add_operator(OperatorSmallerEqual,	TypeBool,		TypeFloat,		TypeFloat);
-	add_operator(OperatorSubtract,		TypeFloat,		TypeVoid,		TypeFloat);
+	add_operator(OperatorSubtract,		TypeFloat64,	TypeVoid,		TypeFloat);
+	add_operator(OperatorAssign,		TypeVoid,		TypeFloat64,	TypeFloat64);
+	add_operator(OperatorAdd,			TypeFloat64,	TypeFloat64,	TypeFloat64,	(void*)op_float64_add);
+	add_operator(OperatorSubtract,		TypeFloat64,	TypeFloat64,	TypeFloat64,	(void*)op_float64_sub);
+	add_operator(OperatorMultiply,		TypeFloat64,	TypeFloat64,	TypeFloat64,	(void*)op_float64_mul);
+	add_operator(OperatorMultiply,		TypeFloat64,	TypeFloat64,	TypeInt);
+	add_operator(OperatorMultiply,		TypeFloat64,	TypeInt,		TypeFloat64);
+	add_operator(OperatorDivide,		TypeFloat64,	TypeFloat64,	TypeFloat64,	(void*)op_float64_div);
+	add_operator(OperatorAddS,			TypeVoid,		TypeFloat64,	TypeFloat64);
+	add_operator(OperatorSubtractS,		TypeVoid,		TypeFloat64,	TypeFloat64);
+	add_operator(OperatorMultiplyS,		TypeVoid,		TypeFloat64,	TypeFloat64);
+	add_operator(OperatorDivideS,		TypeVoid,		TypeFloat64,	TypeFloat64);
+	add_operator(OperatorEqual,			TypeBool,		TypeFloat64,	TypeFloat64);
+	add_operator(OperatorNotEqual,		TypeBool,		TypeFloat64,	TypeFloat64);
+	add_operator(OperatorGreater,		TypeBool,		TypeFloat64,	TypeFloat64);
+	add_operator(OperatorGreaterEqual,	TypeBool,		TypeFloat64,	TypeFloat64);
+	add_operator(OperatorSmaller,		TypeBool,		TypeFloat64,	TypeFloat64);
+	add_operator(OperatorSmallerEqual,	TypeBool,		TypeFloat64,	TypeFloat64);
+	add_operator(OperatorSubtract,		TypeFloat,		TypeVoid,		TypeFloat64);
 //	add_operator(OperatorAssign,		TypeVoid,		TypeComplex,	TypeComplex);
 	add_operator(OperatorAdd,			TypeComplex,	TypeComplex,	TypeComplex);
 	add_operator(OperatorSubtract,		TypeComplex,	TypeComplex,	TypeComplex);
@@ -1184,6 +1245,8 @@ void SIAddCommands()
 		func_add_param("decimals",	TypeInt);
 	add_func("@f2sf",			TypeString,		(void*)&f2sf);
 		func_add_param("f",			TypeFloat);
+	add_func("@f642sf",			TypeString,		(void*)&f642sf);
+		func_add_param("f",			TypeFloat64);
 	add_func("@b2s",				TypeString,	(void*)&b2s);
 		func_add_param("b",		TypeBool);
 	add_func("p2s",				TypeString,	(void*)&p2s);
@@ -1289,6 +1352,7 @@ void Init(int instruction_set, int abi, bool allow_std_lib)
 
 	add_type_cast(10,	TypeInt,		TypeFloat,	"i2f",	(void*)&CastInt2Float);
 	add_type_cast(10,	TypeInt,		TypeInt64,	"i2i64",	(void*)&CastInt2Int64);
+	add_type_cast(10,	TypeFloat,		TypeFloat64,"f2f64",	(void*)&CastFloat2Float64);
 	add_type_cast(20,	TypeFloat,		TypeInt,	"f2i",	(void*)&CastFloat2Int);
 	add_type_cast(10,	TypeInt,		TypeChar,	"i2c",	(void*)&CastInt2Char);
 	add_type_cast(20,	TypeChar,		TypeInt,	"c2i",	(void*)&CastChar2Int);
@@ -1296,6 +1360,7 @@ void Init(int instruction_set, int abi, bool allow_std_lib)
 	add_type_cast(50,	TypeInt,		TypeString,	"@i2s",	(void*)&CastInt2StringP);
 	add_type_cast(50,	TypeInt64,		TypeString,	"@i642s",	(void*)&CastInt642StringP);
 	add_type_cast(50,	TypeFloat,		TypeString,	"@f2sf",	(void*)&CastFloat2StringP);
+	add_type_cast(50,	TypeFloat64,	TypeString,	"@f642sf",	(void*)&CastFloat642StringP);
 	add_type_cast(50,	TypeBool,		TypeString,	"@b2s",	(void*)&CastBool2StringP);
 	add_type_cast(50,	TypePointer,	TypeString,	"p2s",	(void*)&CastPointer2StringP);
 	//add_type_cast(50,	TypeClass,		TypeString,	"@f2s",	(void*)&CastFloat2StringP);
