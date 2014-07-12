@@ -82,7 +82,7 @@ extern Type *TypeClass;
 extern Type *TypeBool;
 extern Type *TypeInt;
 extern Type *TypeInt64;
-extern Type *TypeFloat;
+extern Type *TypeFloat32;
 extern Type *TypeFloat64;
 extern Type *TypeChar;
 extern Type *TypeCString;

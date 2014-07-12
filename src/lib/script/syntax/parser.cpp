@@ -92,15 +92,20 @@ Type *SyntaxTree::GetConstantType()
 				if ((c >= 2) && (Exp.cur[c] < 'a') && (Exp.cur[c] > 'f'))
 					return TypeUnknown;
 			}else if (Exp.cur[c] == '.'){
-				type = TypeFloat;
+				type = TypeFloat32;
 			}else{
 				if ((c != 0) || (Exp.cur[c] != '-')) // allow sign
 					return TypeUnknown;
 			}
 		}
 	if (type == TypeInt){
-		if ((s2i2(Exp.cur) >= 0x80000000) || (-s2i2(Exp.cur) > 0x80000000))
-			type = TypeInt64;
+		if (hex){
+			if ((s2i2(Exp.cur) >= 0x100000000) || (-s2i2(Exp.cur) > 0x00000000))
+				type = TypeInt64;
+		}else{
+			if ((s2i2(Exp.cur) >= 0x80000000) || (-s2i2(Exp.cur) > 0x80000000))
+				type = TypeInt64;
+		}
 	}
 
 	// super array [...]
@@ -136,7 +141,7 @@ string SyntaxTree::GetConstantValue()
 		_some_int64_ = s2i2(Exp.cur);
 		return string((char*)&_some_int64_, sizeof(long long));
 	}
-	if (type == TypeFloat){
+	if (type == TypeFloat32){
 		_some_float_ = Exp.cur._float();
 		return string((char*)&_some_float_, sizeof(float));
 	}
@@ -908,7 +913,7 @@ void SyntaxTree::ParseSpecialCommandFor(Block *block, Function *f)
 	// internally declared?
 	bool internally = false;
 	if ((Exp.cur == "int") || (Exp.cur == "float")){
-		Type *t = (Exp.cur == "int") ? TypeInt : TypeFloat;
+		Type *t = (Exp.cur == "int") ? TypeInt : TypeFloat32;
 		internally = true;
 		Exp.next();
 		int var_no = f->AddVar(Exp.cur, t);
@@ -917,7 +922,7 @@ void SyntaxTree::ParseSpecialCommandFor(Block *block, Function *f)
 	}else{
 		GetExistence(Exp.cur, f);
 			for_var = cp_command(&GetExistenceLink);
-		if ((!is_variable(for_var->kind)) || ((for_var->type != TypeInt) && (for_var->type != TypeFloat)))
+		if ((!is_variable(for_var->kind)) || ((for_var->type != TypeInt) && (for_var->type != TypeFloat32)))
 			DoError("int or float variable expected after \"for\"");
 	}
 	Exp.next();
@@ -970,7 +975,7 @@ void SyntaxTree::ParseSpecialCommandFor(Block *block, Function *f)
 			cmd_inc = add_command_operator(for_var, val1 /*dummy*/, OperatorIntIncrease);
 	}else{
 		if (!val_step){
-			int nc = AddConstant(TypeFloat);
+			int nc = AddConstant(TypeFloat32);
 			*(float*)Constants[nc].value.data = 1.0;
 			val_step = add_command_const(nc);
 		}

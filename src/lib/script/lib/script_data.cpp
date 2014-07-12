@@ -26,7 +26,7 @@
 
 namespace Script{
 
-string DataVersion = "0.13.11.0";
+string DataVersion = "0.13.11.1";
 
 CompilerConfiguration config;
 
@@ -70,6 +70,7 @@ Type *TypeBool;
 Type *TypeInt;
 Type *TypeInt64;
 Type *TypeFloat;
+Type *TypeFloat32;
 Type *TypeFloat64;
 Type *TypeChar;
 Type *TypeString;
@@ -374,7 +375,7 @@ void add_const(const string &name, Type *type, void *value)
 	c.type = type;
 	c.value.resize(max(type->size, 8));//config.PointerSize));
 	// config.PointerSize might be smaller than needed for the following assignment
-	if ((type == TypeInt) || (type == TypeFloat) || (type == TypeChar)  || (type == TypeBool) || (type->is_pointer))
+	if ((type == TypeInt) || (type == TypeFloat32) || (type == TypeChar)  || (type == TypeBool) || (type->is_pointer))
 		*(void**)c.value.data = value;
 	else
 		memcpy(c.value.data, value, type->size);
@@ -547,11 +548,18 @@ void script_make_super_array(Type *t, SyntaxTree *ps)
 					class_add_func("insert", TypeVoid, mf(&Array<void*>::insert));
 						func_add_param("x",		t->parent);
 						func_add_param("index",		TypeInt);
-				}else if (t->parent == TypeFloat){
+				}else if (t->parent == TypeFloat32){
 					class_add_func("__init__",	TypeVoid, mf(&Array<float>::__init__));
 					class_add_func("add", TypeVoid, mf(&DynamicArray::append_f_single));
 						func_add_param("x",		t->parent);
 					class_add_func("insert", TypeVoid, mf(&DynamicArray::insert_f_single));
+						func_add_param("x",		t->parent);
+						func_add_param("index",		TypeInt);
+				}else if (t->parent == TypeFloat64){
+					class_add_func("__init__",	TypeVoid, mf(&Array<double>::__init__));
+					class_add_func("add", TypeVoid, mf(&DynamicArray::append_d_single));
+						func_add_param("x",		t->parent);
+					class_add_func("insert", TypeVoid, mf(&DynamicArray::insert_d_single));
 						func_add_param("x",		t->parent);
 						func_add_param("index",		TypeInt);
 				}else if (t->parent->size == 4){
@@ -793,10 +801,17 @@ void SIAddPackageBase()
 	TypeBool			= add_type  ("bool",		sizeof(bool), FLAG_CALL_BY_VALUE);
 	TypeInt				= add_type  ("int",			sizeof(int), FLAG_CALL_BY_VALUE);
 	TypeInt64			= add_type  ("int64",		sizeof(long long), FLAG_CALL_BY_VALUE);
-	TypeFloat			= add_type  ("float",		sizeof(float), FLAG_CALL_BY_VALUE);
+	TypeFloat32			= add_type  ("float32",		sizeof(float), FLAG_CALL_BY_VALUE);
 	TypeFloat64			= add_type  ("float64",		sizeof(double), FLAG_CALL_BY_VALUE);
 	TypeChar			= add_type  ("char",		sizeof(char), FLAG_CALL_BY_VALUE);
 	TypeDynamicArray	= add_type  ("@DynamicArray", config.SuperArraySize);
+
+
+
+	// select default float type
+	TypeFloat = TypeFloat32;
+	TypeFloat->name = "float";
+
 
 
 	add_class(TypeDynamicArray);
@@ -844,16 +859,16 @@ void SIAddPackageBase()
 	//	add_func_special("f2i",			TypeInt,	(void*)&_Float2Int);
 	add_func("f2i",			TypeInt,	(void*)&_Float2Int, FLAG_PURE);
 		func_set_inline(CommandInlineFloatToInt);    // sometimes causes floating point exceptions...
-		func_add_param("f",		TypeFloat);
-	add_func("i2f",			TypeFloat,	(void*)&_Int2Float, FLAG_PURE);
+		func_add_param("f",		TypeFloat32);
+	add_func("i2f",			TypeFloat32,	(void*)&_Int2Float, FLAG_PURE);
 		func_set_inline(CommandInlineIntToFloat);
 		func_add_param("i",		TypeInt);
 	add_func("f2f64",			TypeFloat64,	(void*)&_Float2Float64, FLAG_PURE);
 		func_set_inline(CommandInlineFloatToFloat64);
-		func_add_param("f",		TypeFloat);
-	add_func("f642f",			TypeFloat,	(void*)&_Float642Float, FLAG_PURE);
+		func_add_param("f",		TypeFloat32);
+	add_func("f642f",			TypeFloat32,	(void*)&_Float642Float, FLAG_PURE);
 		func_set_inline(CommandInlineFloat64ToFloat);
-		func_add_param("f",		TypeFloat);
+		func_add_param("f",		TypeFloat32);
 	add_func("i2i64",			TypeInt64,	(void*)&_Int2Int64, FLAG_PURE);
 		func_set_inline(CommandInlineIntToInt64);
 		func_add_param("i",		TypeInt);
@@ -877,7 +892,7 @@ void SIAddPackageBase()
 		class_add_func("str", TypeString, mf(&IntClass::str), FLAG_PURE);
 	add_class(TypeInt64);
 		class_add_func("str", TypeString, mf(&Int64Class::str), FLAG_PURE);
-		add_class(TypeFloat);
+		add_class(TypeFloat32);
 			class_add_func("str", TypeString, mf(&FloatClass::str), FLAG_PURE);
 			class_add_func("str2", TypeString, mf(&FloatClass::str2), FLAG_PURE);
 				func_add_param("decimals",		TypeInt);
@@ -939,7 +954,7 @@ void SIAddPackageBase()
 			func_add_param("glob",		TypeString);
 		class_add_func("int", TypeInt, mf(&string::_int), FLAG_PURE);
 		class_add_func("int64", TypeInt64, mf(&string::_int64), FLAG_PURE);
-		class_add_func("float", TypeFloat, mf(&string::_float), FLAG_PURE);
+		class_add_func("float", TypeFloat32, mf(&string::_float), FLAG_PURE);
 		class_add_func("float64", TypeFloat64, mf(&string::_float64), FLAG_PURE);
 		class_add_func("trim", TypeString, mf(&string::trim), FLAG_PURE);
 		class_add_func("dirname", TypeString, mf(&string::dirname), FLAG_PURE);
@@ -1031,9 +1046,9 @@ void SIAddBasicCommands()
 		func_add_param("type",	TypeVoid);
 	
 	add_compiler_func("wait",		TypeVoid,	CommandWait);
-		func_add_param("time",	TypeFloat);
+		func_add_param("time",	TypeFloat32);
 	add_compiler_func("wait_rt",		TypeVoid,	CommandWaitRT);
-		func_add_param("time",	TypeFloat);
+		func_add_param("time",	TypeFloat32);
 	add_compiler_func("wait_of",		TypeVoid,	CommandWaitOneFrame);
 	add_compiler_func("-asm-",		TypeVoid,	CommandAsm);
 }
@@ -1136,8 +1151,8 @@ void SIAddOperators()
 	add_operator(OperatorShiftRight,	TypeInt,		TypeInt,		TypeInt,	(void*)op_int_shr);
 	add_operator(OperatorShiftLeft,		TypeInt,		TypeInt,		TypeInt,	(void*)op_int_shl);
 	add_operator(OperatorSubtract,		TypeInt,		TypeVoid,		TypeInt);
-	add_operator(OperatorIncrease,		TypeVoid,		TypeInt64,		TypeVoid);
-	add_operator(OperatorDecrease,		TypeVoid,		TypeInt64,		TypeVoid);
+	add_operator(OperatorIncrease,		TypeVoid,		TypeInt,		TypeVoid);
+	add_operator(OperatorDecrease,		TypeVoid,		TypeInt,		TypeVoid);
 	add_operator(OperatorAssign,		TypeVoid,		TypeInt64,		TypeInt64);
 	add_operator(OperatorAdd,			TypeInt64,		TypeInt64,		TypeInt64,	(void*)op_int64_add);
 	add_operator(OperatorSubtract,		TypeInt64,		TypeInt64,		TypeInt64,	(void*)op_int64_sub);
@@ -1161,24 +1176,24 @@ void SIAddOperators()
 	add_operator(OperatorSubtract,		TypeInt64,		TypeVoid,		TypeInt64);
 	add_operator(OperatorIncrease,		TypeVoid,		TypeInt64,		TypeVoid);
 	add_operator(OperatorDecrease,		TypeVoid,		TypeInt64,		TypeVoid);
-	add_operator(OperatorAssign,		TypeVoid,		TypeFloat,		TypeFloat);
-	add_operator(OperatorAdd,			TypeFloat,		TypeFloat,		TypeFloat,	(void*)op_float_add);
-	add_operator(OperatorSubtract,		TypeFloat,		TypeFloat,		TypeFloat,	(void*)op_float_sub);
-	add_operator(OperatorMultiply,		TypeFloat,		TypeFloat,		TypeFloat,	(void*)op_float_mul);
-	add_operator(OperatorMultiply,		TypeFloat,		TypeFloat,		TypeInt);
-	add_operator(OperatorMultiply,		TypeFloat,		TypeInt,		TypeFloat);
-	add_operator(OperatorDivide,		TypeFloat,		TypeFloat,		TypeFloat,	(void*)op_float_div);
-	add_operator(OperatorAddS,			TypeVoid,		TypeFloat,		TypeFloat);
-	add_operator(OperatorSubtractS,		TypeVoid,		TypeFloat,		TypeFloat);
-	add_operator(OperatorMultiplyS,		TypeVoid,		TypeFloat,		TypeFloat);
-	add_operator(OperatorDivideS,		TypeVoid,		TypeFloat,		TypeFloat);
-	add_operator(OperatorEqual,			TypeBool,		TypeFloat,		TypeFloat);
-	add_operator(OperatorNotEqual,		TypeBool,		TypeFloat,		TypeFloat);
-	add_operator(OperatorGreater,		TypeBool,		TypeFloat,		TypeFloat);
-	add_operator(OperatorGreaterEqual,	TypeBool,		TypeFloat,		TypeFloat);
-	add_operator(OperatorSmaller,		TypeBool,		TypeFloat,		TypeFloat);
-	add_operator(OperatorSmallerEqual,	TypeBool,		TypeFloat,		TypeFloat);
-	add_operator(OperatorSubtract,		TypeFloat64,	TypeVoid,		TypeFloat);
+	add_operator(OperatorAssign,		TypeVoid,		TypeFloat32,		TypeFloat32);
+	add_operator(OperatorAdd,			TypeFloat32,		TypeFloat32,		TypeFloat32,	(void*)op_float_add);
+	add_operator(OperatorSubtract,		TypeFloat32,		TypeFloat32,		TypeFloat32,	(void*)op_float_sub);
+	add_operator(OperatorMultiply,		TypeFloat32,		TypeFloat32,		TypeFloat32,	(void*)op_float_mul);
+	add_operator(OperatorMultiply,		TypeFloat32,		TypeFloat32,		TypeInt);
+	add_operator(OperatorMultiply,		TypeFloat32,		TypeInt,		TypeFloat32);
+	add_operator(OperatorDivide,		TypeFloat32,		TypeFloat32,		TypeFloat32,	(void*)op_float_div);
+	add_operator(OperatorAddS,			TypeVoid,		TypeFloat32,		TypeFloat32);
+	add_operator(OperatorSubtractS,		TypeVoid,		TypeFloat32,		TypeFloat32);
+	add_operator(OperatorMultiplyS,		TypeVoid,		TypeFloat32,		TypeFloat32);
+	add_operator(OperatorDivideS,		TypeVoid,		TypeFloat32,		TypeFloat32);
+	add_operator(OperatorEqual,			TypeBool,		TypeFloat32,		TypeFloat32);
+	add_operator(OperatorNotEqual,		TypeBool,		TypeFloat32,		TypeFloat32);
+	add_operator(OperatorGreater,		TypeBool,		TypeFloat32,		TypeFloat32);
+	add_operator(OperatorGreaterEqual,	TypeBool,		TypeFloat32,		TypeFloat32);
+	add_operator(OperatorSmaller,		TypeBool,		TypeFloat32,		TypeFloat32);
+	add_operator(OperatorSmallerEqual,	TypeBool,		TypeFloat32,		TypeFloat32);
+	add_operator(OperatorSubtract,		TypeFloat32,	TypeVoid,		TypeFloat32);
 	add_operator(OperatorAssign,		TypeVoid,		TypeFloat64,	TypeFloat64);
 	add_operator(OperatorAdd,			TypeFloat64,	TypeFloat64,	TypeFloat64,	(void*)op_float64_add);
 	add_operator(OperatorSubtract,		TypeFloat64,	TypeFloat64,	TypeFloat64,	(void*)op_float64_sub);
@@ -1196,13 +1211,13 @@ void SIAddOperators()
 	add_operator(OperatorGreaterEqual,	TypeBool,		TypeFloat64,	TypeFloat64);
 	add_operator(OperatorSmaller,		TypeBool,		TypeFloat64,	TypeFloat64);
 	add_operator(OperatorSmallerEqual,	TypeBool,		TypeFloat64,	TypeFloat64);
-	add_operator(OperatorSubtract,		TypeFloat,		TypeVoid,		TypeFloat64);
+	add_operator(OperatorSubtract,		TypeFloat32,		TypeVoid,		TypeFloat64);
 //	add_operator(OperatorAssign,		TypeVoid,		TypeComplex,	TypeComplex);
 	add_operator(OperatorAdd,			TypeComplex,	TypeComplex,	TypeComplex);
 	add_operator(OperatorSubtract,		TypeComplex,	TypeComplex,	TypeComplex);
 	add_operator(OperatorMultiply,		TypeComplex,	TypeComplex,	TypeComplex);
-	add_operator(OperatorMultiply,		TypeComplex,	TypeFloat,		TypeComplex);
-	add_operator(OperatorMultiply,		TypeComplex,	TypeComplex,	TypeFloat);
+	add_operator(OperatorMultiply,		TypeComplex,	TypeFloat32,		TypeComplex);
+	add_operator(OperatorMultiply,		TypeComplex,	TypeComplex,	TypeFloat32);
 	add_operator(OperatorDivide,		TypeComplex,	TypeComplex,	TypeComplex);
 	add_operator(OperatorAddS,			TypeVoid,		TypeComplex,	TypeComplex);
 	add_operator(OperatorSubtractS,		TypeVoid,		TypeComplex,	TypeComplex);
@@ -1216,14 +1231,14 @@ void SIAddOperators()
 	add_operator(OperatorAdd,			TypeVector,		TypeVector,		TypeVector);
 	add_operator(OperatorSubtract,		TypeVector,		TypeVector,		TypeVector);
 	add_operator(OperatorMultiply,		TypeVector,		TypeVector,		TypeVector);
-	add_operator(OperatorMultiply,		TypeVector,		TypeVector,		TypeFloat);
-	add_operator(OperatorMultiply,		TypeVector,		TypeFloat,		TypeVector);
+	add_operator(OperatorMultiply,		TypeVector,		TypeVector,		TypeFloat32);
+	add_operator(OperatorMultiply,		TypeVector,		TypeFloat32,		TypeVector);
 	add_operator(OperatorDivide,		TypeVector,		TypeVector,		TypeVector);
-	add_operator(OperatorDivide,		TypeVector,		TypeVector,		TypeFloat);
+	add_operator(OperatorDivide,		TypeVector,		TypeVector,		TypeFloat32);
 	add_operator(OperatorAddS,			TypeVoid,		TypeVector,		TypeVector);
 	add_operator(OperatorSubtractS,		TypeVoid,		TypeVector,		TypeVector);
-	add_operator(OperatorMultiplyS,		TypeVoid,		TypeVector,		TypeFloat);
-	add_operator(OperatorDivideS,		TypeVoid,		TypeVector,		TypeFloat);
+	add_operator(OperatorMultiplyS,		TypeVoid,		TypeVector,		TypeFloat32);
+	add_operator(OperatorDivideS,		TypeVoid,		TypeVector,		TypeFloat32);
 	add_operator(OperatorSubtract,		TypeVector,		TypeVoid,		TypeVector);
 }
 
@@ -1234,17 +1249,17 @@ void SIAddCommands()
 	// type casting
 	add_func("@s2i",				TypeInt,		(void*)&s2i);
 		func_add_param("s",		TypeString);
-	add_func("@s2f",				TypeFloat,		(void*)&s2f);
+	add_func("@s2f",				TypeFloat32,		(void*)&s2f);
 		func_add_param("s",		TypeString);
 	add_func("@i2s",				TypeString,	(void*)&i2s);
 		func_add_param("i",		TypeInt);
 	add_func("@i642s",				TypeString,	(void*)&i642s);
 		func_add_param("i",		TypeInt64);
 	add_func("@f2s",				TypeString,		(void*)&f2s);
-		func_add_param("f",			TypeFloat);
+		func_add_param("f",			TypeFloat32);
 		func_add_param("decimals",	TypeInt);
 	add_func("@f2sf",			TypeString,		(void*)&f2sf);
-		func_add_param("f",			TypeFloat);
+		func_add_param("f",			TypeFloat32);
 	add_func("@f642sf",			TypeString,		(void*)&f642sf);
 		func_add_param("f",			TypeFloat64);
 	add_func("@b2s",				TypeString,	(void*)&b2s);
@@ -1253,7 +1268,7 @@ void SIAddCommands()
 		func_add_param("p",		TypePointer);
 	add_func("@ia2s",			TypeString,	(void*)&ia2s);
 		func_add_param("a",		TypeIntList);
-	add_func("@fa2s",			TypeString,	(void*)&fa2s);
+	add_func("@fa2s",			TypeString,	(void*)&fa2s); // TODO...
 		func_add_param("a",		TypeFloatList);
 	add_func("@ba2s",			TypeString,	(void*)&ba2s);
 		func_add_param("a",		TypeBoolList);
@@ -1350,16 +1365,16 @@ void Init(int instruction_set, int abi, bool allow_std_lib)
 
 
 
-	add_type_cast(10,	TypeInt,		TypeFloat,	"i2f",	(void*)&CastInt2Float);
+	add_type_cast(10,	TypeInt,		TypeFloat32,	"i2f",	(void*)&CastInt2Float);
 	add_type_cast(10,	TypeInt,		TypeInt64,	"i2i64",	(void*)&CastInt2Int64);
-	add_type_cast(10,	TypeFloat,		TypeFloat64,"f2f64",	(void*)&CastFloat2Float64);
-	add_type_cast(20,	TypeFloat,		TypeInt,	"f2i",	(void*)&CastFloat2Int);
+	add_type_cast(10,	TypeFloat32,		TypeFloat64,"f2f64",	(void*)&CastFloat2Float64);
+	add_type_cast(20,	TypeFloat32,		TypeInt,	"f2i",	(void*)&CastFloat2Int);
 	add_type_cast(10,	TypeInt,		TypeChar,	"i2c",	(void*)&CastInt2Char);
 	add_type_cast(20,	TypeChar,		TypeInt,	"c2i",	(void*)&CastChar2Int);
 	add_type_cast(50,	TypePointer,	TypeBool,	"p2b",	(void*)&CastPointer2Bool);
 	add_type_cast(50,	TypeInt,		TypeString,	"@i2s",	(void*)&CastInt2StringP);
 	add_type_cast(50,	TypeInt64,		TypeString,	"@i642s",	(void*)&CastInt642StringP);
-	add_type_cast(50,	TypeFloat,		TypeString,	"@f2sf",	(void*)&CastFloat2StringP);
+	add_type_cast(50,	TypeFloat32,		TypeString,	"@f2sf",	(void*)&CastFloat2StringP);
 	add_type_cast(50,	TypeFloat64,	TypeString,	"@f642sf",	(void*)&CastFloat642StringP);
 	add_type_cast(50,	TypeBool,		TypeString,	"@b2s",	(void*)&CastBool2StringP);
 	add_type_cast(50,	TypePointer,	TypeString,	"p2s",	(void*)&CastPointer2StringP);

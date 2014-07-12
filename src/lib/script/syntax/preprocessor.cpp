@@ -14,7 +14,7 @@ bool call_function(Function *f, void *ff, void *ret, void *inst, Array<void*> pa
 		if (f->return_type == TypeInt){
 			*(int*)ret = ((int(*)())ff)();
 			return true;
-		}else if (f->return_type == TypeFloat){
+		}else if (f->return_type == TypeFloat32){
 			*(float*)ret = ((float(*)())ff)();
 			return true;
 		}else if (f->return_type->UsesReturnByMemory()){
@@ -27,8 +27,8 @@ bool call_function(Function *f, void *ff, void *ret, void *inst, Array<void*> pa
 				*(int*)ret = ((int(*)(int))ff)(*(int*)param[0]);
 				return true;
 			}
-		}else if (f->return_type == TypeFloat){
-			if (f->literal_param_type[0] == TypeFloat){
+		}else if (f->return_type == TypeFloat32){
+			if (f->literal_param_type[0] == TypeFloat32){
 				*(float*)ret = ((float(*)(float))ff)(*(float*)param[0]);
 				return true;
 			}
@@ -36,7 +36,7 @@ bool call_function(Function *f, void *ff, void *ret, void *inst, Array<void*> pa
 			if (f->literal_param_type[0] == TypeInt){
 				((void(*)(void*, int))ff)(ret, *(int*)param[0]);
 				return true;
-			}else if (f->literal_param_type[0] == TypeFloat){
+			}else if (f->literal_param_type[0] == TypeFloat32){
 				((void(*)(void*, float))ff)(ret, *(float*)param[0]);
 				return true;
 			}else if (f->literal_param_type[0]->UsesCallByReference()){
@@ -50,8 +50,8 @@ bool call_function(Function *f, void *ff, void *ret, void *inst, Array<void*> pa
 				*(int*)ret = ((int(*)(int, int))ff)(*(int*)param[0], *(int*)param[1]);
 				return true;
 			}
-		}else if (f->return_type == TypeFloat){
-			if ((f->literal_param_type[0] == TypeFloat) && (f->literal_param_type[1] == TypeFloat)){
+		}else if (f->return_type == TypeFloat32){
+			if ((f->literal_param_type[0] == TypeFloat32) && (f->literal_param_type[1] == TypeFloat32)){
 				*(float*)ret = ((float(*)(float, float))ff)(*(float*)param[0], *(float*)param[1]);
 				return true;
 			}
@@ -59,7 +59,7 @@ bool call_function(Function *f, void *ff, void *ret, void *inst, Array<void*> pa
 			if ((f->literal_param_type[0] == TypeInt) && (f->literal_param_type[1] == TypeInt)){
 				((void(*)(void*, int, int))ff)(ret, *(int*)param[0], *(int*)param[1]);
 				return true;
-			}else if ((f->literal_param_type[0] == TypeFloat) && (f->literal_param_type[1] == TypeFloat)){
+			}else if ((f->literal_param_type[0] == TypeFloat32) && (f->literal_param_type[1] == TypeFloat32)){
 				((void(*)(void*, float, float))ff)(ret, *(float*)param[0], *(float*)param[1]);
 				return true;
 			}else if ((f->literal_param_type[0]->UsesCallByReference()) && (f->literal_param_type[1]->UsesCallByReference())){
@@ -69,14 +69,14 @@ bool call_function(Function *f, void *ff, void *ret, void *inst, Array<void*> pa
 		}
 	}else if (f->num_params == 3){
 		if (f->return_type->UsesReturnByMemory()){
-			if ((f->literal_param_type[0] == TypeFloat) && (f->literal_param_type[1] == TypeFloat) && (f->literal_param_type[2] == TypeFloat)){
+			if ((f->literal_param_type[0] == TypeFloat32) && (f->literal_param_type[1] == TypeFloat32) && (f->literal_param_type[2] == TypeFloat32)){
 				((void(*)(void*, float, float, float))ff)(ret, *(float*)param[0], *(float*)param[1], *(float*)param[2]);
 				return true;
 			}
 		}
 	}else if (f->num_params == 4){
 		if (f->return_type->UsesReturnByMemory()){
-			if ((f->literal_param_type[0] == TypeFloat) && (f->literal_param_type[1] == TypeFloat) && (f->literal_param_type[2] == TypeFloat) && (f->literal_param_type[3] == TypeFloat)){
+			if ((f->literal_param_type[0] == TypeFloat32) && (f->literal_param_type[1] == TypeFloat32) && (f->literal_param_type[2] == TypeFloat32) && (f->literal_param_type[3] == TypeFloat32)){
 				((void(*)(void*, float, float, float, float))ff)(ret, *(float*)param[0], *(float*)param[1], *(float*)param[2], *(float*)param[3]);
 				return true;
 			}
