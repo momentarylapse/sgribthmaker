@@ -15,7 +15,7 @@
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.2.0";
+string AppVersion = "0.4.3.0";
 
 #define ALLOW_LOGGING			true
 //#define ALLOW_LOGGING			false
@@ -484,118 +484,120 @@ void OnPreviousDocument()
 		}
 }
 
-int hui_main(Array<string> arg)
+class SgribthMaker : public HuiApplication
 {
-	msg_init(true);
-	msg_db_f("main",1);
-	HuiInit("sgribthmaker", true, "Deutsch");
-	msg_init(HuiAppDirectory + "message.txt", ALLOW_LOGGING);
+public:
+	SgribthMaker(Array<string> arg) :
+		HuiApplication(arg, "sgribthmaker", "Deutsch", HUI_FLAG_LOAD_RESOURCE | HUI_FLAG_SILENT)
+	{
+		HuiSetProperty("name", AppTitle);
+		HuiSetProperty("version", AppVersion);
+		HuiSetProperty("comment", _("Texteditor und Kaba-Compiler"));
+		HuiSetProperty("website", "http://michi.is-a-geek.org/michisoft");
+		HuiSetProperty("copyright", "© 2006-2014 by MichiSoft TM");
+		HuiSetProperty("author", "Michael Ankele <michi@lupina.de>");
 
-	HuiSetProperty("name", AppTitle);
-	HuiSetProperty("version", AppVersion);
-	HuiSetProperty("comment", _("Texteditor und Kaba-Compiler"));
-	HuiSetProperty("website", "http://michi.is-a-geek.org/michisoft");
-	HuiSetProperty("copyright", "© 2006-2014 by MichiSoft TM");
-	HuiSetProperty("author", "Michael Ankele <michi@lupina.de>");
+		HuiRegisterFileType("kaba","MichiSoft Script Datei",HuiAppDirectory + "Data/kaba.ico",HuiAppFilename,"open",true);
 
-	HuiRegisterFileType("kaba","MichiSoft Script Datei",HuiAppDirectory + "Data/kaba.ico",HuiAppFilename,"open",true);
+		Script::Init();
+	}
 
-	int width = HuiConfig.getInt("Window.Width", 800);
-	int height = HuiConfig.getInt("Window.Height", 600);
-	bool maximized = HuiConfig.getBool("Window.Maximized", false);
+	virtual void onStartup(Array<string> arg)
+	{
+		HuiAddCommand("new", "hui:new", KEY_N + KEY_CONTROL, &New);
+		//HuiAddKeyCode(HMM_NEW_HEX, KEY_F1 + 256);
+		HuiAddCommand("open", "hui:open", KEY_O + KEY_CONTROL, &OnOpen);
+		//HuiAddKeyCode(HMM_OPEN_HEX, KEY_F9 + 256);
+		HuiAddCommand("save", "hui:save", KEY_S + KEY_CONTROL, &OnSave);
+		HuiAddCommand("save_as", "hui:save_as", KEY_S + KEY_SHIFT + KEY_CONTROL, &OnSaveAs);
+		HuiAddCommand("exit", "hui:quit", KEY_Q + KEY_CONTROL, &OnExit);
+		//HuiAddCommand("show_data", "", KEY_D + KEY_CONTROL, &ShowData);
+		HuiAddCommand("execute_command", "", KEY_E + KEY_CONTROL, &ExecuteCommandDialog);
+		HuiAddCommand("find", "", KEY_F + KEY_CONTROL, &ExecuteCommandDialog);
+		HuiAddCommand("cut", "hui:cut", KEY_X + KEY_CONTROL, &OnCut);
+		HuiAddCommand("copy", "hui:copy", KEY_C + KEY_CONTROL, &OnCopy);
+		HuiAddCommand("paste", "hui:paste", KEY_V + KEY_CONTROL, &OnPaste);
+		HuiAddCommand("reload", "hui:reload", KEY_R + KEY_CONTROL, &OnReload);
+		HuiAddCommand("undo", "hui:undo", KEY_Z + KEY_CONTROL, &OnUndo);
+		HuiAddCommand("redo", "hui:redo", KEY_Y + KEY_CONTROL, &OnRedo);
+		HuiAddKeyCode("redo", KEY_Z + KEY_SHIFT + KEY_CONTROL);
+		HuiAddCommand("compile", "", KEY_F7, &Compile);
+		HuiAddCommand("compile_and_run_verbose", "", KEY_F6 + KEY_CONTROL, &OnCompileAndRunVerbose);
+		HuiAddCommand("compile_and_run", "", KEY_F6, &OnCompileAndRunSilent);
+		HuiAddCommand("settings", "", -1, &ExecuteSettingsDialog);
+		//HuiAddCommand("script_help", "hui:help", KEY_F1 + KEY_SHIFT);
+		HuiAddCommand("next_document", "hui:down", KEY_PRIOR + KEY_CONTROL, &OnNextDocument);
+		HuiAddCommand("prev_document", "hui:up", KEY_NEXT + KEY_CONTROL, &OnPreviousDocument);
 
-	HuiAddCommand("new", "hui:new", KEY_N + KEY_CONTROL, &New);
-	//HuiAddKeyCode(HMM_NEW_HEX, KEY_F1 + 256);
-	HuiAddCommand("open", "hui:open", KEY_O + KEY_CONTROL, &OnOpen);
-	//HuiAddKeyCode(HMM_OPEN_HEX, KEY_F9 + 256);
-	HuiAddCommand("save", "hui:save", KEY_S + KEY_CONTROL, &OnSave);
-	HuiAddCommand("save_as", "hui:save_as", KEY_S + KEY_SHIFT + KEY_CONTROL, &OnSaveAs);
-	HuiAddCommand("exit", "hui:quit", KEY_Q + KEY_CONTROL, &OnExit);
-	//HuiAddCommand("show_data", "", KEY_D + KEY_CONTROL, &ShowData);
-	HuiAddCommand("execute_command", "", KEY_E + KEY_CONTROL, &ExecuteCommandDialog);
-	HuiAddCommand("find", "", KEY_F + KEY_CONTROL, &ExecuteCommandDialog);
-	HuiAddCommand("cut", "hui:cut", KEY_X + KEY_CONTROL, &OnCut);
-	HuiAddCommand("copy", "hui:copy", KEY_C + KEY_CONTROL, &OnCopy);
-	HuiAddCommand("paste", "hui:paste", KEY_V + KEY_CONTROL, &OnPaste);
-	HuiAddCommand("reload", "hui:reload", KEY_R + KEY_CONTROL, &OnReload);
-	HuiAddCommand("undo", "hui:undo", KEY_Z + KEY_CONTROL, &OnUndo);
-	HuiAddCommand("redo", "hui:redo", KEY_Y + KEY_CONTROL, &OnRedo);
-	HuiAddKeyCode("redo", KEY_Z + KEY_SHIFT + KEY_CONTROL);
-	HuiAddCommand("compile", "", KEY_F7, &Compile);
-	HuiAddCommand("compile_and_run_verbose", "", KEY_F6 + KEY_CONTROL, &OnCompileAndRunVerbose);
-	HuiAddCommand("compile_and_run", "", KEY_F6, &OnCompileAndRunSilent);
-	HuiAddCommand("settings", "", -1, &ExecuteSettingsDialog);
-	//HuiAddCommand("script_help", "hui:help", KEY_F1 + KEY_SHIFT);
-	HuiAddCommand("next_document", "hui:down", KEY_PRIOR + KEY_CONTROL, &OnNextDocument);
-	HuiAddCommand("prev_document", "hui:up", KEY_NEXT + KEY_CONTROL, &OnPreviousDocument);
-	
-	HuiAddCommand("show_cur_line", "", KEY_F2, &ShowCurLine);
-
-	MainWin = new HuiWindow(AppTitle, -1, -1, width, height);
-
-	MainWin->Event("about", &OnAbout);
-	MainWin->Event("exit", &OnExit);
-	MainWin->Event("hui:close", &OnExit);
+		HuiAddCommand("show_cur_line", "", KEY_F2, &ShowCurLine);
 
 
-	MainWin->SetBorderWidth(0);
-	MainWin->SetIndent(0);
-	MainWin->AddControlTable("", 0, 0, 1, 2, "table_main");
-	MainWin->SetTarget("table_main", 0);
-	MainWin->AddControlTable("", 0, 0, 2, 1, "table_doc");
-	MainWin->SetTarget("table_doc", 0);
-	MainWin->AddTabControl("!nobar", 0, 0, 0, 0, "tab");
-	MainWin->AddControlTable("!noexpandx,width=180", 1, 0, 1, 2, "table_side");
-	MainWin->SetTarget("table_side", 0);
-	MainWin->AddGroup("Dokumente", 0, 0, 0, 0, "group_files");
-	MainWin->AddExpander("Funktionen", 0, 1, 0, 0, "function_expander");
-	MainWin->SetTarget("group_files", 0);
-	MainWin->AddListView("!nobar,select-single\\file", 0, 0, 0, 0, "file_list");
-	MainWin->SetTarget("function_expander", 0);
-	MainWin->AddTreeView("!nobar\\function", 0, 0, 0, 0, "function_list");
-	MainWin->SetBorderWidth(5);
-	MainWin->HideControl("table_side", true);
+		int width = HuiConfig.getInt("Window.Width", 800);
+		int height = HuiConfig.getInt("Window.Height", 600);
+		bool maximized = HuiConfig.getBool("Window.Maximized", false);
 
-	console = new Console;
-	MainWin->Embed(console, "table_main", 0, 1);
-	console->show(false);
+		MainWin = new HuiWindow(AppTitle, -1, -1, width, height);
 
-	MainWin->toolbar[0]->Enable(true);
-	MainWin->toolbar[0]->AddItem("", "hui:new", "new");
-	MainWin->toolbar[0]->AddItem("", "hui:open", "open");
-	MainWin->toolbar[0]->AddItem("", "hui:save", "save");
-	MainWin->toolbar[0]->AddSeparator();
-	MainWin->toolbar[0]->AddItem("", "hui:undo", "undo");
-	MainWin->toolbar[0]->AddItem("", "hui:redo", "redo");
-	MainWin->toolbar[0]->AddSeparator();
-	MainWin->toolbar[0]->AddItem("", "hui:find", "compile");
-	MainWin->toolbar[0]->AddItem("", "hui:media-play", "compile_and_run");
-
-	MainWin->SetTooltip("new", _("neue Datei"));
-	MainWin->SetTooltip("open", _("eine Datei &offnen"));
-	MainWin->SetTooltip("save", _("Datei speichern"));
-
-	InitParser();
-	HighlightScheme::default_scheme = HighlightScheme::get(HuiConfig.getStr("HighlightScheme", "default"));
-
-	MainWin->SetMenu(HuiCreateResourceMenu("menu"));
-	MainWin->SetMaximized(maximized);
-	MainWin->Show();
-
-	MainWin->EventX("file_list", "hui:select", &OnFileList);
-	MainWin->EventX("function_list", "hui:select", &OnFunctionList);
+		MainWin->Event("about", &OnAbout);
+		MainWin->Event("exit", &OnExit);
+		MainWin->Event("hui:close", &OnExit);
 
 
-	Script::Init();
+		MainWin->SetBorderWidth(0);
+		MainWin->SetIndent(0);
+		MainWin->AddControlTable("", 0, 0, 1, 2, "table_main");
+		MainWin->SetTarget("table_main", 0);
+		MainWin->AddControlTable("", 0, 0, 2, 1, "table_doc");
+		MainWin->SetTarget("table_doc", 0);
+		MainWin->AddTabControl("!nobar", 0, 0, 0, 0, "tab");
+		MainWin->AddControlTable("!noexpandx,width=180", 1, 0, 1, 2, "table_side");
+		MainWin->SetTarget("table_side", 0);
+		MainWin->AddGroup("Dokumente", 0, 0, 0, 0, "group_files");
+		MainWin->AddExpander("Funktionen", 0, 1, 0, 0, "function_expander");
+		MainWin->SetTarget("group_files", 0);
+		MainWin->AddListView("!nobar,select-single\\file", 0, 0, 0, 0, "file_list");
+		MainWin->SetTarget("function_expander", 0);
+		MainWin->AddTreeView("!nobar\\function", 0, 0, 0, 0, "function_list");
+		MainWin->SetBorderWidth(5);
+		MainWin->HideControl("table_side", true);
 
-	//msg_write(Asm::Disassemble((void*)&TestTest));
+		console = new Console;
+		MainWin->Embed(console, "table_main", 0, 1);
+		console->show(false);
 
-	if (arg.num > 1){
-		for (int i=1; i<arg.num; i++)
-			LoadFromFile(arg[i]);
-	}else
-		New();
+		MainWin->toolbar[0]->Enable(true);
+		MainWin->toolbar[0]->AddItem("", "hui:new", "new");
+		MainWin->toolbar[0]->AddItem("", "hui:open", "open");
+		MainWin->toolbar[0]->AddItem("", "hui:save", "save");
+		MainWin->toolbar[0]->AddSeparator();
+		MainWin->toolbar[0]->AddItem("", "hui:undo", "undo");
+		MainWin->toolbar[0]->AddItem("", "hui:redo", "redo");
+		MainWin->toolbar[0]->AddSeparator();
+		MainWin->toolbar[0]->AddItem("", "hui:find", "compile");
+		MainWin->toolbar[0]->AddItem("", "hui:media-play", "compile_and_run");
 
-	return HuiRun();
-}
+		MainWin->SetTooltip("new", _("neue Datei"));
+		MainWin->SetTooltip("open", _("eine Datei &offnen"));
+		MainWin->SetTooltip("save", _("Datei speichern"));
 
+		InitParser();
+		HighlightScheme::default_scheme = HighlightScheme::get(HuiConfig.getStr("HighlightScheme", "default"));
+
+		MainWin->SetMenu(HuiCreateResourceMenu("menu"));
+		MainWin->SetMaximized(maximized);
+		MainWin->Show();
+
+		MainWin->EventX("file_list", "hui:select", &OnFileList);
+		MainWin->EventX("function_list", "hui:select", &OnFunctionList);
+
+		//msg_write(Asm::Disassemble((void*)&TestTest));
+
+		if (arg.num > 1){
+			for (int i=1; i<arg.num; i++)
+				LoadFromFile(arg[i]);
+		}else
+			New();
+	}
+};
+
+HuiExecute(SgribthMaker)
