@@ -217,9 +217,9 @@ public:
 	Command *GetPrimitiveOperator(Function *f);
 	void FindFunctionParameters(int &np, Type **WantedType, Function *f, Command *cmd);
 	void FindFunctionSingleParameter(int p, Type **WantedType, Function *f, Command *cmd);
-	void GetFunctionCall(const string &f_name, Command *Operand, Function *f);
+	Command *GetFunctionCall(const string &f_name, Command *Operand, Function *f);
 	Command *DoClassFunction(Command *ob, ClassFunction &cf, Function *f);
-	bool GetSpecialFunctionCall(const string &f_name, Command *Operand, Function *f);
+	Command *GetSpecialFunctionCall(const string &f_name, Command *Operand, Function *f);
 	Command *CheckParamLink(Command *link, Type *type, const string &f_name = "", int param_no = -1);
 	void ParseSpecialCommand(Block *block, Function *f);
 	void ParseSpecialCommandFor(Block *block, Function *f);
