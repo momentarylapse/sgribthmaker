@@ -219,6 +219,22 @@ Command *SyntaxTree::GetOperandExtensionArray(Command *Operand, Function *f)
 {
 	msg_db_f("GetOperandExtensionArray", 4);
 
+	// array index...
+	Exp.next();
+	Command *index = GetCommand(f);
+	if (Exp.cur != "]")
+		DoError("\"]\" expected after array index");
+	Exp.next();
+
+	// __get__() ?
+	ClassFunction *cf = Operand->type->GetGet(index->type);
+	if (cf){
+		Command *f = add_command_classfunc(Operand->type, cf, ref_command(Operand));
+		f->num_params = 1;
+		f->param[0] = index;
+		return f;
+	}
+
 	// allowed?
 	bool allowed = ((Operand->type->is_array) || (Operand->type->is_super_array));
 	bool pparray = false;
@@ -230,8 +246,7 @@ Command *SyntaxTree::GetOperandExtensionArray(Command *Operand, Function *f)
 			pparray = (Operand->type->parent->is_super_array);
 		}
 	if (!allowed)
-		DoError(format("type \"%s\" is neither an array nor a pointer to an array", Operand->type->name.c_str()));
-	Exp.next();
+		DoError(format("type \"%s\" is neither an array nor a pointer to an array nor does it have a function __get__(%s)", Operand->type->name.c_str(), index->type->name.c_str()));
 
 	Command *array;
 
@@ -256,15 +271,11 @@ Command *SyntaxTree::GetOperandExtensionArray(Command *Operand, Function *f)
 	array->num_params = 2;
 
 	// array index...
-	Command *index = GetCommand(f);
 	array->param[1] = index;
 	if (index->type != TypeInt){
 		Exp.rewind();
 		DoError(format("type of index for an array needs to be (int), not (%s)", index->type->name.c_str()));
 	}
-	if (Exp.cur != "]")
-		DoError("\"]\" expected after array index");
-	Exp.next();
 	return array;
 }
 
