@@ -10,12 +10,8 @@ static int FoundConstantNr;
 static Script *FoundConstantScript;
 
 
-void ref_command_old(SyntaxTree *ps, Command *c);
-void deref_command_old(SyntaxTree *ps, Command *c);
-void command_make_ref(SyntaxTree *ps, Command *c, Command *param);
-void CommandSetConst(SyntaxTree *ps, Command *c, int nc);
 void exlink_make_var_local(SyntaxTree *ps, Type *t, int var_no);
-void conv_cbr(SyntaxTree *ps, Command *&c, int var);
+Command *conv_cbr(SyntaxTree *ps, Command *c, int var);
 
 extern bool next_extern;
 extern bool next_const;
@@ -207,7 +203,7 @@ Command *SyntaxTree::GetOperandExtensionElement(Command *Operand, Function *f)
 	foreach(ClassFunction &cf, type->function)
 		if (Exp.cur == cf.name){
 			if (!deref)
-				ref_command_old(this, Operand);
+				Operand = ref_command(Operand);
 			Exp.next();
 			return DoClassFunction(Operand, cf, f);
 		}
@@ -535,8 +531,7 @@ Command *SyntaxTree::GetOperand(Function *f)
 		Exp.next();
 	}else if (Exp.cur == "&"){ // & -> address operator
 		Exp.next();
-		Operand = GetOperand(f);
-		ref_command_old(this, Operand);
+		Operand = ref_command(GetOperand(f));
 	}else if (Exp.cur == "*"){ // * -> dereference
 		Exp.next();
 		Operand = GetOperand(f);
@@ -544,7 +539,7 @@ Command *SyntaxTree::GetOperand(Function *f)
 			Exp.rewind();
 			DoError("only pointers can be dereferenced using \"*\"");
 		}
-		deref_command_old(this, Operand);
+		Operand = deref_command(Operand);
 	}else if (Exp.cur == "["){
 		Exp.next();
 		Array<Command*> el;
@@ -852,8 +847,7 @@ Command *SyntaxTree::LinkOperator(int op_no, Command *param1, Command *param2)
 		param1 = apply_type_cast(this, c1_best, param1);
 		param2 = apply_type_cast(this, c2_best, param2);
 		if (op_is_class_func){
-			Command *inst = param1;
-			ref_command_old(this, inst);
+			Command *inst = ref_command(param1);
 			op = add_command_classfunc(p1, &p1->function[op_found], inst);
 			op->num_params = 1;
 			op->param[0] = param2;
@@ -1071,16 +1065,14 @@ void SyntaxTree::ParseSpecialCommandForall(Block *block, Function *f)
 	loop_block->command.add(cmd_inc); // add to loop-block
 
 	// &for_var
-	Command *for_var_ref = AddCommand(KindUnknown, 0, TypeVoid); // TODO
-	command_make_ref(this, for_var_ref, for_var);
+	Command *for_var_ref = ref_command(for_var);
 
 	// &array.data[for_index]
 	Command *array_el = AddCommand(KindPointerAsArray, 0, var_type);
 	array_el->num_params = 2;
 	array_el->param[0] = shift_command(cp_command(for_array), false, 0, var_type->GetPointer());
 	array_el->param[1] = for_index;
-	Command *array_el_ref = AddCommand(KindUnknown, 0, TypeVoid); // TODO
-	command_make_ref(this, array_el_ref, array_el);
+	Command *array_el_ref = ref_command(array_el);
 
 	// &for_var = &array[for_index]
 	Command *cmd_var_assign = add_command_operator(for_var_ref, array_el_ref, OperatorPointerAssign);
@@ -1088,8 +1080,8 @@ void SyntaxTree::ParseSpecialCommandForall(Block *block, Function *f)
 
 	// ref...
 	f->var[var_no].type = var_type->GetPointer();
-	foreach(Command *c, loop_block->command)
-		conv_cbr(this, c, var_no);
+	foreachi(Command *c, loop_block->command, i)
+		loop_block->command[i] = conv_cbr(this, c, var_no);
 
 	// force for_var out of scope...
 	f->var[for_var->link_no].name = "-out-of-scope-";

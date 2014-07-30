@@ -235,7 +235,7 @@ public:
 	// neccessary conversions
 	void ConvertCallByReference();
 	void BreakDownComplicatedCommands();
-	void BreakDownComplicatedCommand(Command *c);
+	Command *BreakDownComplicatedCommand(Command *c);
 	void MapLocalVariablesToStack();
 
 	// data creation
@@ -255,7 +255,7 @@ public:
 	Command *cp_command(Command *c);
 	Command *cp_command_deep(Command *c);
 	Command *ref_command(Command *sub, Type *overwrite_type = NULL);
-	Command *deref_command(Command *sub);
+	Command *deref_command(Command *sub, Type *overwrite_type = NULL);
 	Command *shift_command(Command *sub, bool deref, int shift, Type *type);
 
 	// pre processor
