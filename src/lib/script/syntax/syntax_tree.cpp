@@ -99,7 +99,21 @@ Command *SyntaxTree::shift_command(Command *sub, bool deref, int shift, Type *ty
 Command *SyntaxTree::add_command_compilerfunc(int cf)
 {
 	Command *c = AddCommand(KindUnknown, 0, TypeVoid);
-	CommandSetCompilerFunction(cf, c);
+
+	//if (FlagCompileOS)
+	//	DoError(format("external function call (%s) not allowed with #os", PreCommands[CF].name.c_str()));
+
+// a function the compiler knows
+	c->kind = KindCompilerFunction;
+	c->link_no = cf;
+	c->script = Packages[0].script;
+	c->instance = NULL;
+
+	c->num_params = PreCommands[cf].param.num;
+	for (int p=0;p<c->num_params;p++){
+		c->param[p] = AddCommand(KindUnknown, 0, PreCommands[cf].param[p].type);
+	}
+	c->type = PreCommands[cf].return_type;
 	return c;
 }
 
@@ -109,6 +123,15 @@ Command *SyntaxTree::add_command_classfunc(Type *class_type, ClassFunction *f, C
 	Command *c = AddCommand(KindFunction, f->nr, f->return_type);
 	c->instance = inst;
 	c->script = f->script;
+	c->num_params = f->param_type.num;
+	return c;
+}
+
+Command *SyntaxTree::add_command_func(Script *script, int no, Type *return_type)
+{
+	Command *c = AddCommand(KindFunction, no, return_type);
+	c->script = script;
+	c->num_params = script->syntax->Functions[no]->num_params;
 	return c;
 }
 
@@ -578,25 +601,6 @@ bool SyntaxTree::GetExistence(const string &name, Function *func)
 	GetExistenceLink.kind = KindUnknown;
 	GetExistenceLink.link_no = 0;
 	return false;
-}
-
-void SyntaxTree::CommandSetCompilerFunction(int CF, Command *Com)
-{
-	msg_db_f("CommandSetCompilerFunction", 4);
-	//if (FlagCompileOS)
-	//	DoError(format("external function call (%s) not allowed with #os", PreCommands[CF].name.c_str()));
-	
-// a function the compiler knows
-	Com->kind = KindCompilerFunction;
-	Com->link_no = CF;
-	Com->script = Packages[0].script;
-	Com->instance = NULL;
-
-	Com->num_params = PreCommands[CF].param.num;
-	for (int p=0;p<Com->num_params;p++){
-		Com->param[p] = AddCommand(KindUnknown, 0, PreCommands[CF].param[p].type);
-	}
-	Com->type = PreCommands[CF].return_type;
 }
 
 // expression naming a type
