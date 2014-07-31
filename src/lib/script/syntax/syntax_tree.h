@@ -251,6 +251,7 @@ public:
 
 	// command
 	Command *AddCommand(int kind, int link_no, Type *type);
+	Command *AddCommand(int kind, int link_no, Type *type, Script *s);
 	Command *add_command_compilerfunc(int cf);
 	Command *add_command_classfunc(Type *class_type, ClassFunction *f, Command *inst);
 	Command *add_command_func(Script *script, int no, Type *return_type);
@@ -259,7 +260,6 @@ public:
 	Command *add_command_local_var(int no, Type *type);
 	Command *add_command_parray(Command *p, Command *index, Type *type);
 	Command *cp_command(Command *c);
-	Command *cp_command_deep(Command *c);
 	Command *ref_command(Command *sub, Type *overwrite_type = NULL);
 	Command *deref_command(Command *sub, Type *overwrite_type = NULL);
 	Command *shift_command(Command *sub, bool deref, int shift, Type *type);

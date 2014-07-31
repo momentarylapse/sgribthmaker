@@ -11,6 +11,7 @@
 #ifdef OS_WINDOWS
 	#include "windows.h"
 #endif
+#include <errno.h>
 
 namespace Script{
 
@@ -93,7 +94,10 @@ void Script::AllocateMemory()
 #ifdef OS_WINDOWS
 		Memory = (char*)VirtualAlloc(NULL, MemorySize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 #else
-		Memory = (char*)mmap(0, MemorySize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS | MAP_EXECUTABLE | MAP_32BIT, 0, 0);
+		//Memory = (char*)mmap(0, MemorySize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS /*| MAP_EXECUTABLE*/ | MAP_32BIT, -1, 0);
+		Memory = (char*)mmap(0, mem_align(MemorySize, 4096), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS /*| MAP_EXECUTABLE*/ | MAP_32BIT, -1, 0);
+		if (Memory == (char*)-1)
+			DoErrorInternal(format("can not allocate memory, (%d) ", errno) + strerror(errno));
 #endif
 		//Memory = new char[MemorySize];
 	}
@@ -123,11 +127,11 @@ void Script::AllocateOpcode()
 	Opcode=(char*)VirtualAlloc(NULL,max_opcode,MEM_COMMIT | MEM_RESERVE,PAGE_EXECUTE_READWRITE);
 	ThreadOpcode=(char*)VirtualAlloc(NULL,SCRIPT_MAX_THREAD_OPCODE,MEM_COMMIT | MEM_RESERVE,PAGE_EXECUTE_READWRITE);
 #else
-	Opcode = (char*)mmap(0, max_opcode, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS | MAP_EXECUTABLE | MAP_32BIT, 0, 0);
-	ThreadOpcode = (char*)mmap(0, SCRIPT_MAX_THREAD_OPCODE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS | MAP_EXECUTABLE | MAP_32BIT, 0, 0);
+	Opcode = (char*)mmap(0, max_opcode, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS | MAP_EXECUTABLE | MAP_32BIT, -1, 0);
+	ThreadOpcode = (char*)mmap(0, SCRIPT_MAX_THREAD_OPCODE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS | MAP_EXECUTABLE | MAP_32BIT, -1, 0);
 #endif
 	if (((long)Opcode==-1)||((long)ThreadOpcode==-1))
-		DoErrorInternal("CScript:  could not allocate executable memory");
+		DoErrorInternal("Script:  could not allocate executable memory");
 	if (syntax->AsmMetaInfo->CodeOrigin == 0)
 		syntax->AsmMetaInfo->CodeOrigin = (long)Opcode;
 	OpcodeSize=0;

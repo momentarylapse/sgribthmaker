@@ -44,8 +44,8 @@ void SyntaxTree::AutoImplementDefaultConstructor(Function *f, Type *t, bool allo
 				int nc = AddConstant(TypeInt);
 				Constants[nc].setInt(t->parent->size);
 				Command *c = add_command_classfunc(t, &ff, self);
-				c->param[0] = add_command_const(nc);
-				c->num_params = 1;
+				//c->set_num_params(1);
+				c->set_param(0, add_command_const(nc));
 				f->block->command.add(c);
 			}
 	}else{
@@ -81,8 +81,7 @@ void SyntaxTree::AutoImplementComplexConstructor(Function *f, Type *t)
 	// parent constructor
 	Command *c = add_command_classfunc(t, pcc, cp_command(self));
 	for (int i=0;i<pcc->param_type.num;i++)
-		c->param[i] = add_command_local_var(i, pcc->param_type[i]);
-	c->num_params = pcc->param_type.num;
+		c->set_param(i, add_command_local_var(i, pcc->param_type[i]));
 	f->block->command.add(c);
 
 	// add vtable reference
@@ -151,8 +150,8 @@ void SyntaxTree::AutoImplementAssign(Function *f, Type *t)
 		Command *other_num = shift_command(other, false, config.PointerSize, TypeInt);
 
 		Command *cmd_resize = add_command_classfunc(t, f_resize, cp_command(self));
-		cmd_resize->num_params = 1;
-		cmd_resize->param[0] = other_num;
+		cmd_resize->set_num_params(1);
+		cmd_resize->set_param(0, other_num);
 		f->block->command.add(cmd_resize);
 
 		// for int i, 0, other.num
@@ -171,10 +170,10 @@ void SyntaxTree::AutoImplementAssign(Function *f, Type *t)
 		f->block->command.add(cmd_assign0);
 
 		// while(for_var < self.num)
-		Command *cmd_cmp = add_command_operator(for_var, cp_command_deep(other_num), OperatorIntSmaller);
+		Command *cmd_cmp = add_command_operator(for_var, cp_command(other_num), OperatorIntSmaller);
 
 		Command *cmd_while = add_command_compilerfunc(CommandFor);
-		cmd_while->param[0] = cmd_cmp;
+		cmd_while->set_param(0, cmd_cmp);
 		f->block->command.add(cmd_while);
 
 		Block *b = AddBlock();
@@ -223,7 +222,7 @@ void SyntaxTree::AutoImplementAssign(Function *f, Type *t)
 		Command *cmd_cmp = add_command_operator(for_var, c_num, OperatorIntSmaller);
 
 		Command *cmd_while = add_command_compilerfunc(CommandFor);
-		cmd_while->param[0] = cmd_cmp;
+		cmd_while->set_param(0, cmd_cmp);
 		f->block->command.add(cmd_while);
 
 		Block *b = AddBlock();
@@ -302,7 +301,7 @@ void SyntaxTree::AutoImplementArrayClear(Function *f, Type *t)
 		Command *cmd_cmp = add_command_operator(for_var, self_num, OperatorIntSmaller);
 
 		Command *cmd_while = add_command_compilerfunc(CommandFor);
-		cmd_while->param[0] = cmd_cmp;
+		cmd_while->set_param(0, cmd_cmp);
 		f->block->command.add(cmd_while);
 
 		Block *b = AddBlock();
@@ -361,7 +360,7 @@ void SyntaxTree::AutoImplementArrayResize(Function *f, Type *t)
 		Command *cmd_cmp = add_command_operator(for_var, self_num, OperatorIntSmaller);
 
 		Command *cmd_while = add_command_compilerfunc(CommandFor);
-		cmd_while->param[0] = cmd_cmp;
+		cmd_while->set_param(0, cmd_cmp);
 		f->block->command.add(cmd_while);
 
 		Block *b = AddBlock();
@@ -384,8 +383,7 @@ void SyntaxTree::AutoImplementArrayResize(Function *f, Type *t)
 
 	// resize
 	Command *c_resize = add_command_classfunc(t, t->GetFunc("__mem_resize__", TypeVoid, 1), self);
-	c_resize->num_params = 1;
-	c_resize->param[0] = num;
+	c_resize->set_param(0, num);
 	f->block->command.add(c_resize);
 
 	// new...
@@ -399,7 +397,7 @@ void SyntaxTree::AutoImplementArrayResize(Function *f, Type *t)
 		Command *cmd_cmp = add_command_operator(for_var, self_num, OperatorIntSmaller);
 
 		Command *cmd_while = add_command_compilerfunc(CommandFor);
-		cmd_while->param[0] = cmd_cmp;
+		cmd_while->set_param(0, cmd_cmp);
 		f->block->command.add(cmd_while);
 
 		Block *b = AddBlock();
@@ -446,8 +444,7 @@ void SyntaxTree::AutoImplementArrayRemove(Function *f, Type *t)
 
 	// resize
 	Command *c_remove = add_command_classfunc(t, t->GetFunc("__mem_remove__", TypeVoid, 1), self);
-	c_remove->num_params = 1;
-	c_remove->param[0] = index;
+	c_remove->set_param(0, index);
 	f->block->command.add(c_remove);
 }
 
@@ -468,8 +465,7 @@ void SyntaxTree::AutoImplementArrayAdd(Function *f, Type *t)
 	Command *cmd_1 = add_command_const(nc);
 	Command *cmd_add = add_command_operator(self_num, cmd_1, OperatorIntAdd);
 	Command *cmd_resize = add_command_classfunc(t, t->GetFunc("resize", TypeVoid, 1), self);
-	cmd_resize->num_params = 1;
-	cmd_resize->param[0] = cmd_add;
+	cmd_resize->set_param(0, cmd_add);
 	f->block->command.add(cmd_resize);
 
 
