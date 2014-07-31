@@ -1614,8 +1614,7 @@ void SyntaxTree::ParseGlobalConst(const string &name, Type *type)
 	Exp.next();
 
 	// find const value
-	Command *cv = GetCommand(&RootOfAllEvil);
-	PreProcessCommand(cv);
+	Command *cv = PreProcessCommand(GetCommand(&RootOfAllEvil));
 
 	if ((cv->kind != KindConstant) || (cv->type != type))
 		DoError(format("only constants of type \"%s\" allowed as value for this constant", type->name.c_str()));

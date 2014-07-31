@@ -82,6 +82,8 @@ struct Block
 {
 	int index;
 	Array<Command*> command;
+	void add(Command *c);
+	void set(int index, Command *c);
 };
 
 struct Variable
@@ -123,6 +125,7 @@ struct Command
 {
 	int kind, link_no;
 	Script *script;
+	int ref_count;
 	// parameters
 	int num_params;
 	Command *param[SCRIPT_MAX_PARAMS];
@@ -132,6 +135,9 @@ struct Command
 	Type *type;
 	Command(int kind, int link_no, Script *script, Type *type);
 	Block *block() const;
+	void set_num_params(int n);
+	void set_param(int index, Command *p);
+	void set_instance(Command *p);
 };
 
 struct AsmBlock
@@ -259,9 +265,9 @@ public:
 	Command *shift_command(Command *sub, bool deref, int shift, Type *type);
 
 	// pre processor
-	void PreProcessCommand(Command *c);
+	Command *PreProcessCommand(Command *c);
 	void PreProcessor();
-	void PreProcessCommandAddresses(Command *c);
+	Command *PreProcessCommandAddresses(Command *c);
 	void PreProcessorAddresses();
 	void Simplify();
 
