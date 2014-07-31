@@ -255,21 +255,17 @@ Command *SyntaxTree::GetOperandExtensionArray(Command *Operand, Function *f)
 		deref_command_old(this, Operand);
 		array = Operand->param[0];*/
 	}else if (Operand->type->is_super_array){
-		array = AddCommand(KindPointerAsArray, 0, Operand->type->parent);
-		array->set_num_params(2);
-		array->set_param(0, shift_command(Operand, false, 0, array->type->GetPointer()));
+		array = add_command_parray(shift_command(Operand, false, 0, Operand->type->GetPointer()),
+		                           index, Operand->type->parent);
 	}else if (Operand->type->is_pointer){
-		array = AddCommand(KindPointerAsArray, 0, Operand->type->parent->parent);
-		array->set_num_params(2);
-		array->set_param(0, Operand);
+		array = add_command_parray(Operand, index, Operand->type->parent->parent);
 	}else{
 		array = AddCommand(KindArray, 0, Operand->type->parent);
 		array->set_num_params(2);
 		array->set_param(0, Operand);
+		array->set_param(1, index);
 	}
 
-	// array index...
-	array->set_param(1, index);
 	if (index->type != TypeInt){
 		Exp.rewind();
 		DoError(format("type of index for an array needs to be (int), not (%s)", index->type->name.c_str()));
@@ -1163,7 +1159,7 @@ void SyntaxTree::ParseSpecialCommandIf(Block *block, Function *f)
 			// parse the next if
 			ParseCompleteCommand(new_block, f);
 			// command for the found block
-			Command *cmd_block = AddCommand(KindBlock, new_block->index, TypeVoid);
+			Command *cmd_block = add_command_block(new_block);
 			// ...
 			block->command.add(cmd_block);
 			return;
@@ -1222,7 +1218,7 @@ void SyntaxTree::ParseCompleteCommand(Block *block, Function *f)
 		msg_db_f("Block", 4);
 		Block *new_block = AddBlock();
 
-		Command *c = AddCommand(KindBlock, new_block->index, TypeVoid);
+		Command *c = add_command_block(new_block);
 		block->command.add(c);
 
 		for (int i=0;true;i++){

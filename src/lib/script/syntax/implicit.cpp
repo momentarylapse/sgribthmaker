@@ -177,7 +177,7 @@ void SyntaxTree::AutoImplementAssign(Function *f, Type *t)
 		f->block->command.add(cmd_while);
 
 		Block *b = AddBlock();
-		Command *cb = AddCommand(KindBlock, b->index, TypeVoid);
+		Command *cb = add_command_block(b);
 
 		// el := self.data[for_var]
 		Command *deref_self = deref_command(cp_command(self));
@@ -226,7 +226,7 @@ void SyntaxTree::AutoImplementAssign(Function *f, Type *t)
 		f->block->command.add(cmd_while);
 
 		Block *b = AddBlock();
-		Command *cb = AddCommand(KindBlock, b->index, TypeVoid);
+		Command *cb = add_command_block(b);
 
 		// el := self.data[for_var]
 		Command *cmd_el = add_command_parray(self, for_var, t->parent);
@@ -305,7 +305,7 @@ void SyntaxTree::AutoImplementArrayClear(Function *f, Type *t)
 		f->block->command.add(cmd_while);
 
 		Block *b = AddBlock();
-		Command *cb = AddCommand(KindBlock, b->index, TypeVoid);
+		Command *cb = add_command_block(b);
 
 		// el := self.data[for_var]
 		Command *deref_self = deref_command(cp_command(self));
@@ -364,7 +364,7 @@ void SyntaxTree::AutoImplementArrayResize(Function *f, Type *t)
 		f->block->command.add(cmd_while);
 
 		Block *b = AddBlock();
-		Command *cb = AddCommand(KindBlock, b->index, TypeVoid);
+		Command *cb = add_command_block(b);
 
 		// el := self.data[for_var]
 		Command *deref_self = deref_command(cp_command(self));
@@ -401,7 +401,7 @@ void SyntaxTree::AutoImplementArrayResize(Function *f, Type *t)
 		f->block->command.add(cmd_while);
 
 		Block *b = AddBlock();
-		Command *cb = AddCommand(KindBlock, b->index, TypeVoid);
+		Command *cb = add_command_block(b);
 
 		// el := self.data[for_var]
 		Command *deref_self = deref_command(cp_command(self));

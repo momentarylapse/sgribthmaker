@@ -259,6 +259,7 @@ public:
 	Command *add_command_operator(Command *p1, Command *p2, int op);
 	Command *add_command_local_var(int no, Type *type);
 	Command *add_command_parray(Command *p, Command *index, Type *type);
+	Command *add_command_block(Block *b);
 	Command *cp_command(Command *c);
 	Command *ref_command(Command *sub, Type *overwrite_type = NULL);
 	Command *deref_command(Command *sub, Type *overwrite_type = NULL);

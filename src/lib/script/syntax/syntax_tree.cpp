@@ -114,9 +114,11 @@ Command *SyntaxTree::add_command_func(Script *script, int no, Type *return_type)
 Command *SyntaxTree::add_command_operator(Command *p1, Command *p2, int op)
 {
 	Command *cmd = AddCommand(KindOperator, op, PreOperators[op].return_type);
-	cmd->set_num_params( ((PreOperators[op].param_type_1 == TypeVoid) || (PreOperators[op].param_type_2 == TypeVoid)) ? 1 : 2); // unary / binary
+	bool unitary = ((PreOperators[op].param_type_1 == TypeVoid) || (PreOperators[op].param_type_2 == TypeVoid));
+	cmd->set_num_params( unitary ? 1 : 2); // unary / binary
 	cmd->set_param(0, p1);
-	cmd->set_param(1, p2);
+	if (!unitary)
+		cmd->set_param(1, p2);
 	return cmd;
 }
 
@@ -133,6 +135,11 @@ Command *SyntaxTree::add_command_parray(Command *p, Command *index, Type *type)
 	cmd_el->set_param(0, p);
 	cmd_el->set_param(1, index);
 	return cmd_el;
+}
+
+Command *SyntaxTree::add_command_block(Block *b)
+{
+	return AddCommand(KindBlock, b->index, TypeVoid);
 }
 
 SyntaxTree::SyntaxTree(Script *_script) :
@@ -329,7 +336,7 @@ inline void set_command(Command *&a, Command *b)
 		a->ref_count --;
 	if (b){
 		if (b->ref_count > 0){
-			msg_write(">> " + Kind2Str(b->kind));
+			//msg_write(">> " + Kind2Str(b->kind));
 		}
 		b->ref_count ++;
 	}
