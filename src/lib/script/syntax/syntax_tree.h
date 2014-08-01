@@ -253,7 +253,7 @@ public:
 	Command *AddCommand(int kind, int link_no, Type *type);
 	Command *AddCommand(int kind, int link_no, Type *type, Script *s);
 	Command *add_command_compilerfunc(int cf);
-	Command *add_command_classfunc(Type *class_type, ClassFunction *f, Command *inst);
+	Command *add_command_classfunc(ClassFunction *f, Command *inst, bool force_non_virtual = false);
 	Command *add_command_func(Script *script, int no, Type *return_type);
 	Command *add_command_const(int nc);
 	Command *add_command_operator(Command *p1, Command *p2, int op);

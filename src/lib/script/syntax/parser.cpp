@@ -152,19 +152,15 @@ Command *SyntaxTree::DoClassFunction(Command *ob, ClassFunction &cf, Function *f
 
 	// the function
 	Function *ff = cf.script->syntax->Functions[cf.nr];
-	if (cf.virtual_index >= 0){
+	/*if (cf.virtual_index >= 0){
 		Command *cmd = AddCommand(KindVirtualFunction, cf.virtual_index, ff->literal_return_type);
 		cmd->set_num_params(ff->num_params);
 		cmd->script = cf.script;
 		cmd->set_instance(ob);
 		return GetFunctionCall("(virtual)." + cf.name, cmd, f);
-	}
+	}*/
 
-	//Command *cmd = add_command_classfunc(, &cf, ob);
-	Command *cmd = AddCommand(KindFunction, cf.nr, ff->literal_return_type);
-	cmd->script = cf.script;
-	cmd->set_num_params(ff->num_params);
-	cmd->set_instance(ob);
+	Command *cmd = add_command_classfunc(&cf, ob);
 	cmd = GetFunctionCall(ff->name, cmd, f);
 	return cmd;
 }
@@ -226,7 +222,7 @@ Command *SyntaxTree::GetOperandExtensionArray(Command *Operand, Function *f)
 	// __get__() ?
 	ClassFunction *cf = Operand->type->GetGet(index->type);
 	if (cf){
-		Command *f = add_command_classfunc(Operand->type, cf, ref_command(Operand));
+		Command *f = add_command_classfunc(cf, ref_command(Operand));
 		f->set_param(0, index);
 		return f;
 	}
@@ -723,7 +719,7 @@ Command *apply_type_cast(SyntaxTree *ps, int tc, Command *param)
 	if (tc == TYPE_CAST_OWN_STRING){
 		ClassFunction *cf = param->type->GetFunc("str", TypeString, 0);
 		if (cf)
-			return ps->add_command_classfunc(param->type, cf, ps->ref_command(param));
+			return ps->add_command_classfunc(cf, ps->ref_command(param));
 		ps->DoError("automatic .str() not implemented yet");
 		return param;
 	}
@@ -785,9 +781,9 @@ Command *SyntaxTree::LinkOperator(int op_no, Command *param1, Command *param2)
 				if (direct_type_match(p2, f.param_type[0]->parent)){
 					Command *inst = ref_command(param1);
 					if (p1 == pp1)
-						op = add_command_classfunc(p1, &f, inst);
+						op = add_command_classfunc(&f, inst);
 					else
-						op = add_command_classfunc(pp1, &f, deref_command(inst));
+						op = add_command_classfunc(&f, deref_command(inst));
 					op->set_num_params(1);
 					op->set_param(0, ref_command(param2));
 					return op;
@@ -795,9 +791,9 @@ Command *SyntaxTree::LinkOperator(int op_no, Command *param1, Command *param2)
 			}else if (type_match(p2, equal_classes, f.param_type[0])){
 				Command *inst = ref_command(param1);
 				if (p1 == pp1)
-					op = add_command_classfunc(p1, &f, inst);
+					op = add_command_classfunc(&f, inst);
 				else
-					op = add_command_classfunc(pp1, &f, deref_command(inst));
+					op = add_command_classfunc(&f, deref_command(inst));
 				op->set_num_params(1);
 				op->set_param(0, param2);
 				return op;
@@ -843,7 +839,7 @@ Command *SyntaxTree::LinkOperator(int op_no, Command *param1, Command *param2)
 		param2 = apply_type_cast(this, c2_best, param2);
 		if (op_is_class_func){
 			Command *inst = ref_command(param1);
-			op = add_command_classfunc(p1, &p1->function[op_found], inst);
+			op = add_command_classfunc(&p1->function[op_found], inst);
 			op->set_num_params(1);
 			op->set_param(0, param2);
 		}else{
@@ -1063,10 +1059,8 @@ void SyntaxTree::ParseSpecialCommandForall(Block *block, Function *f)
 	Command *for_var_ref = ref_command(for_var);
 
 	// &array.data[for_index]
-	Command *array_el = AddCommand(KindPointerAsArray, 0, var_type);
-	array_el->set_num_params(2);
-	array_el->set_param(0, shift_command(cp_command(for_array), false, 0, var_type->GetPointer()));
-	array_el->set_param(1, for_index);
+	Command *array_el = add_command_parray(shift_command(cp_command(for_array), false, 0, var_type->GetPointer()),
+	                                       for_index, var_type);
 	Command *array_el_ref = ref_command(array_el);
 
 	// &for_var = &array[for_index]
@@ -1303,8 +1297,7 @@ void SyntaxTree::TestArrayDefinition(Type **type, bool is_pointer)
 		}else{
 
 			// find array index
-			Command *c = GetCommand(&RootOfAllEvil);
-			PreProcessCommand(c);
+			Command *c = PreProcessCommand(GetCommand(&RootOfAllEvil));
 
 			if ((c->kind != KindConstant) || (c->type != TypeInt))
 				DoError("only constants of type \"int\" allowed for size of arrays");

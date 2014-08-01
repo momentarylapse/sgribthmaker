@@ -85,17 +85,17 @@ Command *SyntaxTree::add_command_compilerfunc(int cf)
 	c->instance = NULL;
 
 	c->set_num_params(PreCommands[cf].param.num);
-	for (int p=0;p<c->num_params;p++){
-		c->set_param(p, AddCommand(KindUnknown, 0, PreCommands[cf].param[p].type));
-	}
 	c->type = PreCommands[cf].return_type;
 	return c;
 }
 
-// link as NON-VIRTUAL function!
-Command *SyntaxTree::add_command_classfunc(Type *class_type, ClassFunction *f, Command *inst)
+Command *SyntaxTree::add_command_classfunc(ClassFunction *f, Command *inst, bool force_non_virtual)
 {
-	Command *c = AddCommand(KindFunction, f->nr, f->return_type);
+	Command *c;
+	if ((f->virtual_index >= 0) && (!force_non_virtual))
+		c = AddCommand(KindVirtualFunction, f->virtual_index, f->return_type);
+	else
+		c = AddCommand(KindFunction, f->nr, f->return_type);
 	c->script = f->script;
 	c->set_instance(inst);
 	c->set_num_params(f->param_type.num);
@@ -780,8 +780,8 @@ Command *conv_calls(SyntaxTree *ps, Command *c, int tt)
 	// recursion...
 	TRANSFORM_COMMANDS_RECURSION(conv_calls, ps, tt, c)
 
-	if (c->kind == KindCompilerFunction)
-		if (c->link_no == CommandReturn){
+	if ((c->kind == KindCompilerFunction) && (c->link_no == CommandReturn))
+		if (c->num_params > 0){
 			if ((c->param[0]->type->is_array) /*|| (c->Param[j]->Type->IsSuperArray)*/){
 				c->set_param(0, ps->ref_command(c->param[0]));
 			}

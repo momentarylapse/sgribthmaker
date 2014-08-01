@@ -97,7 +97,8 @@ void Script::AllocateMemory()
 		//Memory = (char*)mmap(0, MemorySize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS /*| MAP_EXECUTABLE*/ | MAP_32BIT, -1, 0);
 		Memory = (char*)mmap(0, mem_align(MemorySize, 4096), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS /*| MAP_EXECUTABLE*/ | MAP_32BIT, -1, 0);
 		if (Memory == (char*)-1)
-			DoErrorInternal(format("can not allocate memory, (%d) ", errno) + strerror(errno));
+			Memory = new char[MemorySize];
+			//DoErrorInternal(format("can not allocate memory, (%d) ", errno) + strerror(errno));
 #endif
 		//Memory = new char[MemorySize];
 	}
@@ -129,6 +130,10 @@ void Script::AllocateOpcode()
 #else
 	Opcode = (char*)mmap(0, max_opcode, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS | MAP_EXECUTABLE | MAP_32BIT, -1, 0);
 	ThreadOpcode = (char*)mmap(0, SCRIPT_MAX_THREAD_OPCODE, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS | MAP_EXECUTABLE | MAP_32BIT, -1, 0);
+	if (((long)Opcode==-1)||((long)ThreadOpcode==-1)){
+		Opcode = new char[max_opcode];
+		ThreadOpcode = new char[SCRIPT_MAX_THREAD_OPCODE];
+	}
 #endif
 	if (((long)Opcode==-1)||((long)ThreadOpcode==-1))
 		DoErrorInternal("Script:  could not allocate executable memory");
