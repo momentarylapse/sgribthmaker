@@ -487,8 +487,8 @@ void OnPreviousDocument()
 class SgribthMaker : public HuiApplication
 {
 public:
-	SgribthMaker(Array<string> arg) :
-		HuiApplication(arg, "sgribthmaker", "Deutsch", HUI_FLAG_LOAD_RESOURCE | HUI_FLAG_SILENT)
+	SgribthMaker() :
+		HuiApplication("sgribthmaker", "Deutsch", HUI_FLAG_LOAD_RESOURCE | HUI_FLAG_SILENT)
 	{
 		HuiSetProperty("name", AppTitle);
 		HuiSetProperty("version", AppVersion);
@@ -502,7 +502,7 @@ public:
 		Script::Init();
 	}
 
-	virtual void onStartup(Array<string> arg)
+	virtual bool onStartup(const Array<string> &arg)
 	{
 		HuiAddCommand("new", "hui:new", KEY_N + KEY_CONTROL, &New);
 		//HuiAddKeyCode(HMM_NEW_HEX, KEY_F1 + 256);
@@ -597,6 +597,7 @@ public:
 				LoadFromFile(arg[i]);
 		}else
 			New();
+		return true;
 	}
 };
 
