@@ -85,7 +85,7 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 	for (int l=first_line;l<=last_line;l++){
 		string s = sv->GetLine(l);
 
-		char *p = &s[0];
+		char *p = (char*)&s[0];
 		char *p0 = p;
 		int last_type = CharSpace;
 		int in_type = (comment_level > 1) ? InCommentLevel2 : ((comment_level > 0) ? InCommentLevel1 : InSpace);
@@ -180,7 +180,7 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 			next_char();
 		}
 		if (s.num > 0)
-			sv->MarkWord(l, pos0, num_uchars, in_type, p0, &s[s.num]);
+			sv->MarkWord(l, pos0, num_uchars, in_type, p0, (char*)&s[s.num]);
 	}
 }
 
