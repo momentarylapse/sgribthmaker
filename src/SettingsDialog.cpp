@@ -13,39 +13,39 @@ extern Array<SourceView*> source_view;
 SettingsDialog::SettingsDialog(HuiWindow *parent) :
 	HuiWindow("settings_dialog", parent, false)
 {
-	SetInt("tab_width", HuiConfig.getInt("TabWidth", 8));
-	SetString("font", HuiConfig.getStr("Font", "Monospace 10"));
-	AddString("context_list", _("Text"));
-	AddString("context_list", _("reserviertes Wort"));
-	AddString("context_list", _("Api Funktion"));
-	AddString("context_list", _("Api Variable"));
-	AddString("context_list", _("Typ"));
-	AddString("context_list", _("Kommentar Zeile"));
-	AddString("context_list", _("Kommentar Ebene 1"));
-	AddString("context_list", _("Kommentar Ebene 2"));
-	AddString("context_list", _("Macro"));
-	AddString("context_list", _("Trennzeichen"));
-	AddString("context_list", _("String"));
-	AddString("context_list", _("Operator"));
-	AddString("context_list", _("Zahl"));
+	setInt("tab_width", HuiConfig.getInt("TabWidth", 8));
+	setString("font", HuiConfig.getStr("Font", "Monospace 10"));
+	addString("context_list", _("Text"));
+	addString("context_list", _("reserviertes Wort"));
+	addString("context_list", _("Api Funktion"));
+	addString("context_list", _("Api Variable"));
+	addString("context_list", _("Typ"));
+	addString("context_list", _("Kommentar Zeile"));
+	addString("context_list", _("Kommentar Ebene 1"));
+	addString("context_list", _("Kommentar Ebene 2"));
+	addString("context_list", _("Macro"));
+	addString("context_list", _("Trennzeichen"));
+	addString("context_list", _("String"));
+	addString("context_list", _("Operator"));
+	addString("context_list", _("Zahl"));
 
-	FillSchemeList();
+	fillSchemeList();
 
-	SetInt("context_list", 0);
-	OnContextListSelect();
+	setInt("context_list", 0);
+	onContextListSelect();
 
-	EventM("close", this, &SettingsDialog::OnClose);
-	EventM("font", this, &SettingsDialog::OnFont);
-	EventM("tab_width", this, &SettingsDialog::OnTabWidth);
-	EventMX("context_list", "hui:select", this, &SettingsDialog::OnContextListSelect);
-	EventM("schemes", this, &SettingsDialog::OnSchemes);
-	EventM("copy_scheme", this, &SettingsDialog::OnCopyScheme);
-	EventM("scheme_background", this, &SettingsDialog::OnSchemeChange);
-	EventM("color_text", this, &SettingsDialog::OnSchemeChange);
-	EventM("color_background", this, &SettingsDialog::OnSchemeChange);
-	EventM("overwrite_background", this, &SettingsDialog::OnSchemeChange);
-	EventM("bold", this, &SettingsDialog::OnSchemeChange);
-	EventM("italic", this, &SettingsDialog::OnSchemeChange);
+	event("close", this, &SettingsDialog::onClose);
+	event("font", this, &SettingsDialog::onFont);
+	event("tab_width", this, &SettingsDialog::onTabWidth);
+	eventX("context_list", "hui:select", this, &SettingsDialog::onContextListSelect);
+	event("schemes", this, &SettingsDialog::onSchemes);
+	event("copy_scheme", this, &SettingsDialog::onCopyScheme);
+	event("scheme_background", this, &SettingsDialog::onSchemeChange);
+	event("color_text", this, &SettingsDialog::onSchemeChange);
+	event("color_background", this, &SettingsDialog::onSchemeChange);
+	event("overwrite_background", this, &SettingsDialog::onSchemeChange);
+	event("bold", this, &SettingsDialog::onSchemeChange);
+	event("italic", this, &SettingsDialog::onSchemeChange);
 }
 
 SettingsDialog::~SettingsDialog()
@@ -53,7 +53,7 @@ SettingsDialog::~SettingsDialog()
 }
 
 
-void SettingsDialog::OnClose()
+void SettingsDialog::onClose()
 {
 	delete(this);
 }
@@ -68,88 +68,88 @@ string get_scheme_name(HighlightScheme *s)
 	return n;
 }
 
-void SettingsDialog::FillSchemeList()
+void SettingsDialog::fillSchemeList()
 {
-	Reset("schemes");
+	reset("schemes");
 	Array<HighlightScheme*> schemes = HighlightScheme::get_all();
 	foreachi(HighlightScheme *s, schemes, i){
-		AddString("schemes", get_scheme_name(s));
+		addString("schemes", get_scheme_name(s));
 		if (s == HighlightScheme::default_scheme)
-			SetInt("schemes", i);
+			setInt("schemes", i);
 	}
 }
 
-void SettingsDialog::OnFont()
+void SettingsDialog::onFont()
 {
 	if (HuiSelectFont(this, _("Font w&ahlen"))){
-		SetString("font", HuiFontname);
+		setString("font", HuiFontname);
 		HuiConfig.setStr("Font", HuiFontname);
 		foreach(SourceView *sv, source_view)
 			sv->UpdateFont();
 	}
 }
 
-void SettingsDialog::OnTabWidth()
+void SettingsDialog::onTabWidth()
 {
-	HuiConfig.setInt("TabWidth", GetInt("tab_width"));
+	HuiConfig.setInt("TabWidth", getInt("tab_width"));
 	foreach(SourceView *sv, source_view)
 		sv->UpdateTabSize();
 }
 
-void SettingsDialog::OnContextListSelect()
+void SettingsDialog::onContextListSelect()
 {
-	int n = GetInt("context_list");
+	int n = getInt("context_list");
 	HighlightScheme *s = HighlightScheme::default_scheme;
-	SetColor("scheme_background", s->bg);
+	setColor("scheme_background", s->bg);
 	HighlightContext c = s->context[n];
-	SetColor("color_text", c.fg);
-	SetColor("color_background", c.bg);
-	Check("overwrite_background", c.set_bg);
-	Check("bold", c.bold);
-	Check("italic", c.italic);
+	setColor("color_text", c.fg);
+	setColor("color_background", c.bg);
+	check("overwrite_background", c.set_bg);
+	check("bold", c.bold);
+	check("italic", c.italic);
 
 
-	Enable("scheme_background", !s->is_default);
-	Enable("color_text", !s->is_default);
-	Enable("overwrite_background", !s->is_default);
-	Enable("color_background", !s->is_default && c.set_bg);
-	Enable("bold", !s->is_default);
-	Enable("italic", !s->is_default);
+	enable("scheme_background", !s->is_default);
+	enable("color_text", !s->is_default);
+	enable("overwrite_background", !s->is_default);
+	enable("color_background", !s->is_default && c.set_bg);
+	enable("bold", !s->is_default);
+	enable("italic", !s->is_default);
 }
 
-void SettingsDialog::OnSchemeChange()
+void SettingsDialog::onSchemeChange()
 {
-	int n = GetInt("context_list");
+	int n = getInt("context_list");
 	HighlightScheme *s = HighlightScheme::default_scheme;
 	HighlightContext &c = s->context[n];
-	s->bg = GetColor("scheme_background");
-	c.fg = GetColor("color_text");
-	c.bg = GetColor("color_background");
-	c.set_bg = IsChecked("overwrite_background");
-	c.bold = IsChecked("bold");
-	c.italic = IsChecked("italic");
+	s->bg = getColor("scheme_background");
+	c.fg = getColor("color_text");
+	c.bg = getColor("color_background");
+	c.set_bg = isChecked("overwrite_background");
+	c.bold = isChecked("bold");
+	c.italic = isChecked("italic");
 	s->changed = true;
 	foreach(SourceView *sv, source_view)
 		sv->ApplyScheme(s);
-	FillSchemeList();
+	fillSchemeList();
 }
 
-void SettingsDialog::OnSchemes()
+void SettingsDialog::onSchemes()
 {
-	int n = GetInt("");
+	int n = getInt("");
 	HighlightScheme *s = HighlightScheme::get_all()[n];
 	HighlightScheme::default_scheme = s;
 	foreach(SourceView *sv, source_view)
 		sv->ApplyScheme(s);
-	OnContextListSelect();
+	onContextListSelect();
 }
 
-void SettingsDialog::OnCopyScheme()
+void SettingsDialog::onCopyScheme()
 {
 	HighlightScheme *s = HighlightScheme::default_scheme->copy(_("neues Schema"));
 	foreach(SourceView *sv, source_view)
 		sv->ApplyScheme(s);
-	FillSchemeList();
-	OnContextListSelect();
+	fillSchemeList();
+	onContextListSelect();
 }
 

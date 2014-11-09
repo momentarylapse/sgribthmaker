@@ -13,9 +13,9 @@ void ExecuteCommand(const string&);
 CommandDialog::CommandDialog(HuiWindow *parent) :
 	HuiWindow("command_dialog", parent, false)
 {
-	SetString("command", LastCommand);
-	EventM("ok", this, &CommandDialog::OnOk);
-	EventM("cancel", this, &CommandDialog::OnCancel);
+	setString("command", LastCommand);
+	event("ok", this, &CommandDialog::onOk);
+	event("cancel", this, &CommandDialog::onCancel);
 }
 
 CommandDialog::~CommandDialog()
@@ -23,13 +23,13 @@ CommandDialog::~CommandDialog()
 }
 
 
-void CommandDialog::OnOk()
+void CommandDialog::onOk()
 {
-	LastCommand = GetString("command");
+	LastCommand = getString("command");
 	ExecuteCommand(LastCommand);
 }
 
-void CommandDialog::OnCancel()
+void CommandDialog::onCancel()
 {
 	delete(this);
 }

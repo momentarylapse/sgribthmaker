@@ -153,7 +153,7 @@ SourceView::SourceView(HuiWindow *win, const string &_id, Document *d)
 	doc = d;
 	id = _id;
 
-	tv = win->_GetControl_(id)->widget;
+	tv = win->_get_control_(id)->widget;
 	tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tv));
 
 

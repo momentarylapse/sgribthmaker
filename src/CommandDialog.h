@@ -16,8 +16,8 @@ public:
 	CommandDialog(HuiWindow *parent);
 	virtual ~CommandDialog();
 
-	void OnOk();
-	void OnCancel();
+	void onOk();
+	void onCancel();
 };
 
 #endif /* COMMANDDIALOG_H_ */

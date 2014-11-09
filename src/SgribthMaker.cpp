@@ -15,7 +15,7 @@
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.3.0";
+string AppVersion = "0.4.3.1";
 
 #define ALLOW_LOGGING			true
 //#define ALLOW_LOGGING			false
@@ -43,14 +43,14 @@ void UpdateStatusBar()
 	msg_db_f("UpdateStatusBar", 2);
 	status_count --;
 	if (status_count == 0)
-		MainWin->EnableStatusbar(false);
+		MainWin->enableStatusbar(false);
 }
 
 void SetMessage(const string &str)
 {
 	msg_db_f("SetMessage", 2);
-	MainWin->SetStatusText(str);
-	MainWin->EnableStatusbar(true);
+	MainWin->setStatusText(str);
+	MainWin->enableStatusbar(true);
 	status_count ++;
 	HuiRunLater(5, &UpdateStatusBar);
 }
@@ -60,41 +60,41 @@ void SetWindowTitle()
 	if (!cur_doc)
 		return;
 	msg_db_f("SetWinTitle", 1);
-	MainWin->SetTitle(cur_doc->name(true) + " - " + AppTitle);
+	MainWin->setTitle(cur_doc->name(true) + " - " + AppTitle);
 }
 
 void UpdateDocList()
 {
-	MainWin->Reset("file_list");
+	MainWin->reset("file_list");
 	foreachi(Document *d, documents, i){
-		MainWin->AddString("file_list", d->name(false));
+		MainWin->addString("file_list", d->name(false));
 		if (cur_doc == d)
-			MainWin->SetInt("file_list", i);
+			MainWin->setInt("file_list", i);
 	}
 }
 
 void UpdateMenu()
 {
-	MainWin->Enable("undo", cur_doc->history->Undoable());
-	MainWin->Enable("redo", cur_doc->history->Redoable());
-	MainWin->Enable("save", cur_doc->history->changed);
+	MainWin->enable("undo", cur_doc->history->Undoable());
+	MainWin->enable("redo", cur_doc->history->Redoable());
+	MainWin->enable("save", cur_doc->history->changed);
 	UpdateDocList();
 	SetWindowTitle();
 }
 
 void UpdateFunctionList()
 {
-	MainWin->Reset("function_list");
+	MainWin->reset("function_list");
 	if (!cur_doc->parser)
 		return;
 	Array<Parser::Label> labels = cur_doc->parser->FindLabels(cur_doc->source_view);
 	int last_parent = -1;
 	foreachi(Parser::Label &l, labels, i){
 		if (l.level > 0){
-			MainWin->AddChildString("function_list", last_parent, l.name);
+			MainWin->addChildString("function_list", last_parent, l.name);
 		}else{
 			last_parent = i;
-			MainWin->AddString("function_list", l.name);
+			MainWin->addString("function_list", l.name);
 		}
 	}
 }
@@ -103,8 +103,8 @@ void SetActiveDocument(Document *d)
 {
 	foreachi(Document *dd, documents, i)
 		if (dd == d){
-			MainWin->SetInt("tab", i);
-			MainWin->Activate("edit" + i2s(i));
+			MainWin->setInt("tab", i);
+			MainWin->activate("edit" + i2s(i));
 			break;
 		}
 	cur_doc = d;
@@ -134,15 +134,15 @@ void New()
 	msg_db_f("New", 1);
 
 	if (documents.num > 0)
-		MainWin->HideControl("table_side", false);
+		MainWin->hideControl("table_side", false);
 
 	string id = "edit" + i2s(documents.num);
 
-	MainWin->SetBorderWidth(0);
+	MainWin->setBorderWidth(0);
 	if (documents.num > 0)
-		MainWin->AddString("tab", i2s(documents.num));
-	MainWin->SetTarget("tab", documents.num);
-	MainWin->AddMultilineEdit("!handlekeys,noframe", 0, 0, 0, 0, id);
+		MainWin->addString("tab", i2s(documents.num));
+	MainWin->setTarget("tab", documents.num);
+	MainWin->addMultilineEdit("!handlekeys,noframe", 0, 0, 0, 0, id);
 
 	documents.add(new Document);
 	SourceView *sv = new SourceView(MainWin, id, documents.back());
@@ -290,8 +290,8 @@ void CompileShader()
 	msg_db_f("CompileShader",1);
 
 	HuiWindow *w = new HuiWindow("nix", -1, -1, 640, 480);
-	w->AddDrawingArea("", 0, 0, 0, 0, "nix-area");
-	w->Show();
+	w->addDrawingArea("", 0, 0, 0, 0, "nix-area");
+	w->show();
 	NixInit("OpenGL", w, "nix-area");
 
 	NixShader *shader = NixLoadShader(cur_doc->filename);
@@ -417,13 +417,13 @@ void ExecuteCommand(const string &cmd)
 void ExecuteCommandDialog()
 {
 	CommandDialog *dlg = new CommandDialog(MainWin);
-	dlg->Run();
+	dlg->run();
 }
 
 void ExecuteSettingsDialog()
 {
 	SettingsDialog *dlg = new SettingsDialog(MainWin);
-	dlg->Run();
+	dlg->run();
 }
 
 
@@ -435,27 +435,27 @@ void OnExit()
 {
 	if (AllowTermination()){
 		int w, h;
-		MainWin->GetSizeDesired(w, h);
+		MainWin->getSizeDesired(w, h);
 		HuiConfig.setInt("Window.Width", w);
 		HuiConfig.setInt("Window.Height", h);
-		HuiConfig.setBool("Window.Maximized", MainWin->IsMaximized());
+		HuiConfig.setBool("Window.Maximized", MainWin->isMaximized());
 		HuiEnd();
 	}
 }
 
 void OnFunctionList()
 {
-	int n = MainWin->GetInt("");
+	int n = MainWin->getInt("");
 	Array<Parser::Label> labels = cur_doc->parser->FindLabels(cur_doc->source_view);
 	if ((n >= 0) && (n < labels.num)){
 		cur_doc->source_view->ShowLineOnScreen(labels[n].line);
-		MainWin->Activate(cur_doc->source_view->id);
+		MainWin->activate(cur_doc->source_view->id);
 	}
 }
 
 void OnFileList()
 {
-	int s = MainWin->GetInt("");
+	int s = MainWin->getInt("");
 	if (s >= 0)
 		SetActiveDocument(documents[s]);
 }
@@ -538,57 +538,57 @@ public:
 
 		MainWin = new HuiWindow(AppTitle, -1, -1, width, height);
 
-		MainWin->Event("about", &OnAbout);
-		MainWin->Event("exit", &OnExit);
-		MainWin->Event("hui:close", &OnExit);
+		MainWin->eventS("about", &OnAbout);
+		MainWin->eventS("exit", &OnExit);
+		MainWin->eventS("hui:close", &OnExit);
 
 
-		MainWin->SetBorderWidth(0);
-		MainWin->SetIndent(0);
-		MainWin->AddControlTable("", 0, 0, 1, 2, "table_main");
-		MainWin->SetTarget("table_main", 0);
-		MainWin->AddControlTable("", 0, 0, 2, 1, "table_doc");
-		MainWin->SetTarget("table_doc", 0);
-		MainWin->AddTabControl("!nobar", 0, 0, 0, 0, "tab");
-		MainWin->AddControlTable("!noexpandx,width=180", 1, 0, 1, 2, "table_side");
-		MainWin->SetTarget("table_side", 0);
-		MainWin->AddGroup("Dokumente", 0, 0, 0, 0, "group_files");
-		MainWin->AddExpander("Funktionen", 0, 1, 0, 0, "function_expander");
-		MainWin->SetTarget("group_files", 0);
-		MainWin->AddListView("!nobar,select-single\\file", 0, 0, 0, 0, "file_list");
-		MainWin->SetTarget("function_expander", 0);
-		MainWin->AddTreeView("!nobar\\function", 0, 0, 0, 0, "function_list");
-		MainWin->SetBorderWidth(5);
-		MainWin->HideControl("table_side", true);
+		MainWin->setBorderWidth(0);
+		MainWin->setIndent(0);
+		MainWin->addControlTable("", 0, 0, 1, 2, "table_main");
+		MainWin->setTarget("table_main", 0);
+		MainWin->addControlTable("", 0, 0, 2, 1, "table_doc");
+		MainWin->setTarget("table_doc", 0);
+		MainWin->addTabControl("!nobar", 0, 0, 0, 0, "tab");
+		MainWin->addControlTable("!noexpandx,width=180", 1, 0, 1, 2, "table_side");
+		MainWin->setTarget("table_side", 0);
+		MainWin->addGroup("Dokumente", 0, 0, 0, 0, "group_files");
+		MainWin->addExpander("Funktionen", 0, 1, 0, 0, "function_expander");
+		MainWin->setTarget("group_files", 0);
+		MainWin->addListView("!nobar,select-single\\file", 0, 0, 0, 0, "file_list");
+		MainWin->setTarget("function_expander", 0);
+		MainWin->addTreeView("!nobar\\function", 0, 0, 0, 0, "function_list");
+		MainWin->setBorderWidth(5);
+		MainWin->hideControl("table_side", true);
 
 		console = new Console;
-		MainWin->Embed(console, "table_main", 0, 1);
+		MainWin->embed(console, "table_main", 0, 1);
 		console->show(false);
 
-		MainWin->toolbar[0]->Enable(true);
-		MainWin->toolbar[0]->AddItem("", "hui:new", "new");
-		MainWin->toolbar[0]->AddItem("", "hui:open", "open");
-		MainWin->toolbar[0]->AddItem("", "hui:save", "save");
-		MainWin->toolbar[0]->AddSeparator();
-		MainWin->toolbar[0]->AddItem("", "hui:undo", "undo");
-		MainWin->toolbar[0]->AddItem("", "hui:redo", "redo");
-		MainWin->toolbar[0]->AddSeparator();
-		MainWin->toolbar[0]->AddItem("", "hui:find", "compile");
-		MainWin->toolbar[0]->AddItem("", "hui:media-play", "compile_and_run");
+		MainWin->toolbar[0]->enable(true);
+		MainWin->toolbar[0]->addItem("", "hui:new", "new");
+		MainWin->toolbar[0]->addItem("", "hui:open", "open");
+		MainWin->toolbar[0]->addItem("", "hui:save", "save");
+		MainWin->toolbar[0]->addSeparator();
+		MainWin->toolbar[0]->addItem("", "hui:undo", "undo");
+		MainWin->toolbar[0]->addItem("", "hui:redo", "redo");
+		MainWin->toolbar[0]->addSeparator();
+		MainWin->toolbar[0]->addItem("", "hui:find", "compile");
+		MainWin->toolbar[0]->addItem("", "hui:media-play", "compile_and_run");
 
-		MainWin->SetTooltip("new", _("neue Datei"));
-		MainWin->SetTooltip("open", _("eine Datei &offnen"));
-		MainWin->SetTooltip("save", _("Datei speichern"));
+		MainWin->setTooltip("new", _("neue Datei"));
+		MainWin->setTooltip("open", _("eine Datei &offnen"));
+		MainWin->setTooltip("save", _("Datei speichern"));
 
 		InitParser();
 		HighlightScheme::default_scheme = HighlightScheme::get(HuiConfig.getStr("HighlightScheme", "default"));
 
-		MainWin->SetMenu(HuiCreateResourceMenu("menu"));
-		MainWin->SetMaximized(maximized);
-		MainWin->Show();
+		MainWin->setMenu(HuiCreateResourceMenu("menu"));
+		MainWin->setMaximized(maximized);
+		MainWin->show();
 
-		MainWin->EventX("file_list", "hui:select", &OnFileList);
-		MainWin->EventX("function_list", "hui:select", &OnFunctionList);
+		MainWin->eventSX("file_list", "hui:select", &OnFileList);
+		MainWin->eventSX("function_list", "hui:select", &OnFunctionList);
 
 		//msg_write(Asm::Disassemble((void*)&TestTest));
 
