@@ -16,7 +16,7 @@
 #include "../hui/Controls/HuiControlDrawingArea.h"
 
 
-string NixVersion = "0.12.0.2";
+string NixVersion = "0.12.0.3";
 
 
 // libraries (in case Visual C++ is used)
@@ -311,7 +311,7 @@ XVisualInfo *choose_visual()
 	GtkWidget *gl_widget = c->widget;
 	if (gtk_widget_get_realized(gl_widget)){
 		msg_error("realized -> reset");
-		da->HardReset();
+		da->hardReset();
 		gl_widget = c->widget;
 	}
 
@@ -500,7 +500,7 @@ void NixInit(const string &api, HuiWindow *win, const string &id)
 
 	// more default values of the engine
 	if (NixWindow){
-		NixWindow->_get_control_(NixControlID)->GetSize(NixTargetWidth, NixTargetHeight);
+		NixWindow->_get_control_(NixControlID)->getSize(NixTargetWidth, NixTargetHeight);
 	}else{
 		NixTargetWidth = 800;
 		NixTargetHeight = 600;
@@ -1127,6 +1127,17 @@ void NixSetZ(bool Write, bool Test)
 		}
 	}
 	TestGLError("Setz");
+}
+
+void NixSetOffset(float offset)
+{
+	if (offset > 0){
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(1.0f, 1.0f);
+	}else{
+		glDisable(GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(0, 0);
+	}
 }
 
 void NixSetAlpha(int mode)
