@@ -69,9 +69,6 @@
     <ClCompile Include="src\CommandDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\HighlightSchema.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\History.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -381,9 +378,6 @@
     <ClCompile Include="src\lib\hui\hui_common_dlg_win.cpp">
       <Filter>lib\hui</Filter>
     </ClCompile>
-    <ClCompile Include="src\lib\hui\hui_config.cpp">
-      <Filter>lib\hui</Filter>
-    </ClCompile>
     <ClCompile Include="src\lib\hui\hui_error.cpp">
       <Filter>lib\hui</Filter>
     </ClCompile>
@@ -452,6 +446,36 @@
     </ClCompile>
     <ClCompile Include="src\Parser\ParserPython.cpp">
       <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lib\hui\HuiConfig.cpp">
+      <Filter>lib\hui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HighlightScheme.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Console.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Document.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lib\hui\HuiPanel.cpp">
+      <Filter>lib\hui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lib\hui\HuiApplication.cpp">
+      <Filter>lib\hui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lib\hui\Controls\HuiControlExpanderGtk.cpp">
+      <Filter>lib\hui\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lib\hui\Controls\HuiControlPanedGtk.cpp">
+      <Filter>lib\hui\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lib\hui\Controls\HuiControlScrollerGtk.cpp">
+      <Filter>lib\hui\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lib\hui\Controls\HuiControlSeparatorGtk.cpp">
+      <Filter>lib\hui\Controls</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -602,9 +626,6 @@
     <ClInclude Include="src\SourceView.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\HighlightSchema.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\History.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -719,9 +740,6 @@
     <ClInclude Include="src\lib\hui\hui_common_dlg.h">
       <Filter>lib\hui</Filter>
     </ClInclude>
-    <ClInclude Include="src\lib\hui\hui_config.h">
-      <Filter>lib\hui</Filter>
-    </ClInclude>
     <ClInclude Include="src\lib\hui\hui_error.h">
       <Filter>lib\hui</Filter>
     </ClInclude>
@@ -763,6 +781,36 @@
     </ClInclude>
     <ClInclude Include="src\Parser\ParserPython.h">
       <Filter>Source Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lib\hui\HuiConfig.h">
+      <Filter>lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HighlightScheme.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Console.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Document.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lib\hui\HuiPanel.h">
+      <Filter>lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lib\hui\HuiApplication.h">
+      <Filter>lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lib\hui\Controls\HuiControlExpander.h">
+      <Filter>lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lib\hui\Controls\HuiControlPaned.h">
+      <Filter>lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lib\hui\Controls\HuiControlScroller.h">
+      <Filter>lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lib\hui\Controls\HuiControlSeparator.h">
+      <Filter>lib\hui\Controls</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

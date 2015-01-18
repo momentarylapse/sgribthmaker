@@ -38,8 +38,9 @@ struct HighlightContext
 	HighlightContext(const color &_fg, const color &_bg, bool _set_bg, bool _bold, bool _italic);
 };
 
-struct HighlightScheme
+class HighlightScheme
 {
+public:
 	string name;
 	color bg;
 	HighlightContext context[NumTagTypes];

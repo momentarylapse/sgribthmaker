@@ -43,7 +43,7 @@ long long s2i2(const string &str)
 		}
 		return r;
 	}else
-		return	str._int64();
+		return	str.i64();
 }
 
 // find the type of a (potential) constant

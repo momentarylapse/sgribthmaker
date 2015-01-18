@@ -953,9 +953,9 @@ void SIAddPackageBase()
 		class_add_func("match", TypeBool, mf(&string::match), FLAG_PURE);
 			func_add_param("glob",		TypeString);
 		class_add_func("int", TypeInt, mf(&string::_int), FLAG_PURE);
-		class_add_func("int64", TypeInt64, mf(&string::_int64), FLAG_PURE);
+		class_add_func("int64", TypeInt64, mf(&string::i64), FLAG_PURE);
 		class_add_func("float", TypeFloat32, mf(&string::_float), FLAG_PURE);
-		class_add_func("float64", TypeFloat64, mf(&string::_float64), FLAG_PURE);
+		class_add_func("float64", TypeFloat64, mf(&string::f64), FLAG_PURE);
 		class_add_func("trim", TypeString, mf(&string::trim), FLAG_PURE);
 		class_add_func("dirname", TypeString, mf(&string::dirname), FLAG_PURE);
 		class_add_func("basename", TypeString, mf(&string::basename), FLAG_PURE);

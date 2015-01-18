@@ -107,7 +107,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\CommandDialog.cpp" />
-    <ClCompile Include="src\HighlightSchema.cpp" />
+    <ClCompile Include="src\Console.cpp" />
+    <ClCompile Include="src\Document.cpp" />
+    <ClCompile Include="src\HighlightScheme.cpp" />
     <ClCompile Include="src\History.cpp" />
     <ClCompile Include="src\lib\algebra\crypto.cpp" />
     <ClCompile Include="src\lib\algebra\vli.cpp" />
@@ -124,13 +126,17 @@
     <ClCompile Include="src\lib\hui\Controls\HuiControlComboBoxGtk.cpp" />
     <ClCompile Include="src\lib\hui\Controls\HuiControlDrawingAreaGtk.cpp" />
     <ClCompile Include="src\lib\hui\Controls\HuiControlEditGtk.cpp" />
+    <ClCompile Include="src\lib\hui\Controls\HuiControlExpanderGtk.cpp" />
     <ClCompile Include="src\lib\hui\Controls\HuiControlGridGtk.cpp" />
     <ClCompile Include="src\lib\hui\Controls\HuiControlGroupGtk.cpp" />
     <ClCompile Include="src\lib\hui\Controls\HuiControlLabelGtk.cpp" />
     <ClCompile Include="src\lib\hui\Controls\HuiControlListViewGtk.cpp" />
     <ClCompile Include="src\lib\hui\Controls\HuiControlMultilineEditGtk.cpp" />
+    <ClCompile Include="src\lib\hui\Controls\HuiControlPanedGtk.cpp" />
     <ClCompile Include="src\lib\hui\Controls\HuiControlProgressBarGtk.cpp" />
     <ClCompile Include="src\lib\hui\Controls\HuiControlRadioButtonGtk.cpp" />
+    <ClCompile Include="src\lib\hui\Controls\HuiControlScrollerGtk.cpp" />
+    <ClCompile Include="src\lib\hui\Controls\HuiControlSeparatorGtk.cpp" />
     <ClCompile Include="src\lib\hui\Controls\HuiControlSliderGtk.cpp" />
     <ClCompile Include="src\lib\hui\Controls\HuiControlSpinButtonGtk.cpp" />
     <ClCompile Include="src\lib\hui\Controls\HuiControlTabControlGtk.cpp" />
@@ -153,10 +159,13 @@
     <ClCompile Include="src\lib\hui\Controls\HuiToolItemToggleButtonGtk.cpp" />
     <ClCompile Include="src\lib\hui\Controls\HuiToolItemToggleButtonWin.cpp" />
     <ClCompile Include="src\lib\hui\hui.cpp" />
+    <ClCompile Include="src\lib\hui\HuiApplication.cpp" />
+    <ClCompile Include="src\lib\hui\HuiConfig.cpp" />
     <ClCompile Include="src\lib\hui\HuiMenu.cpp" />
     <ClCompile Include="src\lib\hui\HuiMenuGtk.cpp" />
     <ClCompile Include="src\lib\hui\HuiMenuWin.cpp" />
     <ClCompile Include="src\lib\hui\HuiPainterGtk.cpp" />
+    <ClCompile Include="src\lib\hui\HuiPanel.cpp" />
     <ClCompile Include="src\lib\hui\HuiTimer.cpp" />
     <ClCompile Include="src\lib\hui\HuiToolbar.cpp" />
     <ClCompile Include="src\lib\hui\HuiToolbarGtk.cpp" />
@@ -168,7 +177,6 @@
     <ClCompile Include="src\lib\hui\hui_common_dlg.cpp" />
     <ClCompile Include="src\lib\hui\hui_common_dlg_gtk.cpp" />
     <ClCompile Include="src\lib\hui\hui_common_dlg_win.cpp" />
-    <ClCompile Include="src\lib\hui\hui_config.cpp" />
     <ClCompile Include="src\lib\hui\hui_error.cpp" />
     <ClCompile Include="src\lib\hui\hui_input.cpp" />
     <ClCompile Include="src\lib\hui\hui_language.cpp" />
@@ -238,7 +246,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\CommandDialog.h" />
-    <ClInclude Include="src\HighlightSchema.h" />
+    <ClInclude Include="src\Console.h" />
+    <ClInclude Include="src\Document.h" />
+    <ClInclude Include="src\HighlightScheme.h" />
     <ClInclude Include="src\History.h" />
     <ClInclude Include="src\lib\algebra\algebra.h" />
     <ClInclude Include="src\lib\algebra\crypto.h" />
@@ -260,13 +270,17 @@
     <ClInclude Include="src\lib\hui\Controls\HuiControlComboBox.h" />
     <ClInclude Include="src\lib\hui\Controls\HuiControlDrawingArea.h" />
     <ClInclude Include="src\lib\hui\Controls\HuiControlEdit.h" />
+    <ClInclude Include="src\lib\hui\Controls\HuiControlExpander.h" />
     <ClInclude Include="src\lib\hui\Controls\HuiControlGrid.h" />
     <ClInclude Include="src\lib\hui\Controls\HuiControlGroup.h" />
     <ClInclude Include="src\lib\hui\Controls\HuiControlLabel.h" />
     <ClInclude Include="src\lib\hui\Controls\HuiControlListView.h" />
     <ClInclude Include="src\lib\hui\Controls\HuiControlMultilineEdit.h" />
+    <ClInclude Include="src\lib\hui\Controls\HuiControlPaned.h" />
     <ClInclude Include="src\lib\hui\Controls\HuiControlProgressBar.h" />
     <ClInclude Include="src\lib\hui\Controls\HuiControlRadioButton.h" />
+    <ClInclude Include="src\lib\hui\Controls\HuiControlScroller.h" />
+    <ClInclude Include="src\lib\hui\Controls\HuiControlSeparator.h" />
     <ClInclude Include="src\lib\hui\Controls\HuiControlSlider.h" />
     <ClInclude Include="src\lib\hui\Controls\HuiControlSpinButton.h" />
     <ClInclude Include="src\lib\hui\Controls\HuiControlTabControl.h" />
@@ -281,15 +295,17 @@
     <ClInclude Include="src\lib\hui\Controls\HuiToolItemSeparator.h" />
     <ClInclude Include="src\lib\hui\Controls\HuiToolItemToggleButton.h" />
     <ClInclude Include="src\lib\hui\hui.h" />
+    <ClInclude Include="src\lib\hui\HuiApplication.h" />
+    <ClInclude Include="src\lib\hui\HuiConfig.h" />
     <ClInclude Include="src\lib\hui\HuiMenu.h" />
     <ClInclude Include="src\lib\hui\HuiPainter.h" />
+    <ClInclude Include="src\lib\hui\HuiPanel.h" />
     <ClInclude Include="src\lib\hui\HuiTimer.h" />
     <ClInclude Include="src\lib\hui\HuiToolbar.h" />
     <ClInclude Include="src\lib\hui\HuiWindow.h" />
     <ClInclude Include="src\lib\hui\hui_clipboard.h" />
     <ClInclude Include="src\lib\hui\hui_common.h" />
     <ClInclude Include="src\lib\hui\hui_common_dlg.h" />
-    <ClInclude Include="src\lib\hui\hui_config.h" />
     <ClInclude Include="src\lib\hui\hui_error.h" />
     <ClInclude Include="src\lib\hui\hui_input.h" />
     <ClInclude Include="src\lib\hui\hui_internal.h" />
