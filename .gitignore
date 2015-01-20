@@ -6,10 +6,11 @@ message.txt
 Data/config.txt
 *.o
 *.a
+*.exe
 *~
 src/.anjuta/*
 src/.anjuta*
-Sgribthmaker.suo
-Sgribthmaker.sdf
-Sgribthmaker.opensdf
+*.suo
+*.sdf
+*.opensdf
 ipch

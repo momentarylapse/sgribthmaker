@@ -415,7 +415,7 @@ int _cdecl _Int642Int(long long i){	return (int)i;	}
 long long _cdecl _Int2Int64(int i){	return (long long)i;	}
 char _cdecl _Int2Char(int i){	return (char)i;	}
 int _cdecl _Char2Int(char c){	return (int)c;	}
-bool _cdecl _Pointer2Bool(void *p){	return (bool)p;	}
+bool _cdecl _Pointer2Bool(void *p){	return (p != NULL);	}
 
 
 Array<PreCommand> PreCommands;
@@ -603,7 +603,7 @@ string CastFloat2Int(string &s)
 {
 	string r;
 	r.resize(8);
-	*(int*)r.data = *(float*)s.data;
+	*(int*)r.data = (int)*(float*)s.data;
 	return r;
 }
 string CastFloat2Float64(string &s)
@@ -617,7 +617,7 @@ string CastInt2Float(string &s)
 {
 	string r;
 	r.resize(8);
-	*(float*)r.data = *(int*)s.data;
+	*(float*)r.data = (float)*(int*)s.data;
 	return r;
 }
 string CastInt2Int64(string &s)
@@ -642,7 +642,7 @@ string CastPointer2Bool(string &s)
 {
 	string r;
 	r.resize(8);
-	*(bool*)r.data = *(void**)s.data;
+	*(bool*)r.data = (*(void**)s.data != NULL);
 	return r;
 }
 string CastInt2StringP(string &s)
