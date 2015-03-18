@@ -332,6 +332,9 @@ InstructionName InstructionNames[NUM_INSTRUCTION_NAMES + 1] = {
 
 	{inst_movss,		"movss"},
 	{inst_movsd,		"movsd"},
+
+	{inst_b,		"b"},
+	{inst_bl,		"bl"},
 	
 	{-1,			"???"}
 };
@@ -773,6 +776,31 @@ void add_inst(int inst, int code, int code_size, int cap, int param1, int param2
 	CPUInstructions.add(i);
 }
 
+enum
+{
+	AP_NONE,
+	AP_REG_12,
+	AP_REG_16,
+	AP_OFFSET24_0,
+	AP_IMM12_0,
+	AP_SHIFTED12_0,
+};
+
+
+void add_inst_arm(int inst, int code, int param1, int param2 = AP_NONE, int param3 = AP_NONE)
+{
+	CPUInstruction i;
+	memset(&i.param1, 0, sizeof(i.param1));
+	memset(&i.param2, 0, sizeof(i.param2));
+	i.inst = inst;
+	i.code = code;
+	i.code_size = 4;
+	i.cap = 0;
+
+	i.name = GetInstructionName(inst);
+	CPUInstructions.add(i);
+}
+
 string GetInstructionName(int inst)
 {
 	for (int i=0;i<Asm::NUM_INSTRUCTION_NAMES;i++)
@@ -848,27 +876,53 @@ void SetInstructionSet(int set)
 }*/
 
 
-
-void Init(int set)
+int QueryInstructionSet()
 {
-	if (set < 0){
-		if (sizeof(void*) == 8)
-			set = InstructionSetAMD64;
-		else if (sizeof(void*) == 4)
-			set = InstructionSetX86;
-		else{
-			msg_error("Asm: unknown instruction set");
-			set = InstructionSetX86;
-		}
-	}
-	InstructionSet.set = set;
-	InstructionSet.pointer_size = 4;
-	if (set == InstructionSetAMD64)
-		InstructionSet.pointer_size = 8;
+	if (sizeof(void*) == 8)
+		return InstructionSetAMD64;
+	if (sizeof(void*) == 4)
+		return InstructionSetX86;
+	msg_error("Asm: unknown instruction set");
+	return InstructionSetX86;
+}
 
-	for (int i=0;i<NUM_REG_ROOTS;i++)
-		for (int j=0;j<=MAX_REG_SIZE;j++)
-			RegResize[i][j] = -1;
+
+void InitARM()
+{
+	Registers.clear();
+	add_reg("r0",	RegR0,	RegGroupGeneral,	Size32,	0);
+	add_reg("r1",	RegR1,	RegGroupGeneral,	Size32,	1);
+	add_reg("r2",	RegR2,	RegGroupGeneral,	Size32,	2);
+	add_reg("r3",	RegR3,	RegGroupGeneral,	Size32,	3);
+	add_reg("r4",	RegR4,	RegGroupGeneral,	Size32,	4);
+	add_reg("r5",	RegR5,	RegGroupGeneral,	Size32,	5);
+	add_reg("r6",	RegR6,	RegGroupGeneral,	Size32,	6);
+	add_reg("r7",	RegR7,	RegGroupGeneral,	Size32,	7);
+	add_reg("r8",	RegR8,	RegGroupGeneral,	Size32,	8);
+	add_reg("r9",	RegR9,	RegGroupGeneral,	Size32,	9);
+	add_reg("r10",	RegR10,	RegGroupGeneral,	Size32,	10);
+	add_reg("r11",	RegR11,	RegGroupGeneral,	Size32,	11);
+	add_reg("r12",	RegR12,	RegGroupGeneral,	Size32,	12);
+	add_reg("r13",	RegR13,	RegGroupGeneral,	Size32,	13);
+	add_reg("r14",	RegR14,	RegGroupGeneral,	Size32,	14);
+	add_reg("r15",	RegR15,	RegGroupGeneral,	Size32,	15);
+
+	// create easy to access array
+	RegisterByID.clear();
+	for (int i=0;i<Registers.num;i++){
+		if (RegisterByID.num <= Registers[i].id)
+			RegisterByID.resize(Registers[i].id + 1);
+		RegisterByID[Registers[i].id] = &Registers[i];
+	}
+
+	CPUInstructions.clear();
+	add_inst_arm(inst_b,    0x0a000000 ,0);
+	add_inst_arm(inst_bl,   0x0b000000 ,0);
+}
+
+void InitX86()
+{
+	int set = InstructionSet.set;
 
 	Registers.clear();
 	add_reg("rax",	RegRax,	RegGroupGeneral,	Size64,	0);
@@ -1553,6 +1607,28 @@ void Init(int set)
 	add_inst(inst_movsd,	0x110ff2,	3,	-1,	Eq, Xx);
 }
 
+
+
+void Init(int set)
+{
+	if (set < 0)
+		set = QueryInstructionSet();
+
+	InstructionSet.set = set;
+	InstructionSet.pointer_size = 4;
+	if (set == InstructionSetAMD64)
+		InstructionSet.pointer_size = 8;
+
+	for (int i=0;i<NUM_REG_ROOTS;i++)
+		for (int j=0;j<=MAX_REG_SIZE;j++)
+			RegResize[i][j] = -1;
+
+	if (set == InstructionSetARM)
+		InitARM();
+	else
+		InitX86();
+}
+
 // convert an asm parameter into a human readable expression
 string InstructionParam::str(bool hide_size)
 {
@@ -1903,11 +1979,223 @@ inline void ReadParamData(char *&cur, InstructionParam &p, bool has_modrm)
 	//msg_write((long)cur - (long)o);
 }
 
-// convert some opcode into (human readable) assembler language
-string Disassemble(void *_code_,int length,bool allow_comments)
+string arm_cond_to_str(int cond)
 {
-	msg_db_f("Disassemble", 1+ASM_DB_LEVEL);
+	if (cond == 0)
+		return "[=] ";
+	if (cond == 1)
+		return "[!=] ";
+	if (cond == 2)
+		return "[CS] ";
+	if (cond == 3)
+		return "[CC] ";
+	if (cond == 4)
+		return "[-] ";
+	if (cond == 5)
+		return "[+] ";
+	if (cond == 6)
+		return "[OF] ";
+	if (cond == 7)
+		return "[!OF] ";
+	if (cond == 8)
+		return "[HI] ";
+	if (cond == 9)
+		return "[LS] ";
+	if (cond == 10)
+		return "[>=] ";
+	if (cond == 11)
+		return "[<] ";
+	if (cond == 12)
+		return "[>] ";
+	if (cond == 13)
+		return "[<=] ";
+	if (cond == 14)
+		return "";
+	return "???";
+}
 
+string show_reg(int r)
+{
+	return format("r%d", r);
+}
+
+string show_opcode(int code)
+{
+	if (code == 0)
+		return("and");
+	if (code == 1)
+		return("eor");
+	if (code == 2)
+		return("sub");
+	if (code == 3)
+		return("rsb");
+	if (code == 4)
+		return("add");
+	if (code == 5)
+		return("adc");
+	if (code == 6)
+		return("sbc");
+	if (code == 7)
+		return("rsc");
+	if (code == 8)
+		return("tst");
+	if (code == 9)
+		return("teq");
+	if (code == 10)
+		return("cmp");
+	if (code == 11)
+		return("cmn");
+	if (code == 12)
+		return("orr");
+	if (code == 13)
+		return("mov");
+	if (code == 14)
+		return("bic");
+	if (code == 15)
+		return("mvn");
+	return "???";
+}
+
+string show_imm(int imm)
+{
+	int r = ((imm >> 8) & 0xf);
+	int n = (imm & 0xff);
+	return format("%d", n << r);
+}
+
+string show_shift_reg(int code)
+{
+	string s;
+	s += show_reg(code & 0xf);
+	if (((code >> 5) & 0x3) == 0)
+		s += "<<";
+	else
+		s += ">>";
+	if ((code >> 4) & 0x1){
+		s += show_reg((code >> 8) & 0xf);
+	}else{
+		int r = ((code >> 7) & 0x1f);
+		s += format("%d", r);
+	}
+	return s;
+}
+
+string show_data_opcode(int code)
+{
+	string s;
+	//printf("data ");
+	s += show_opcode((code >> 21) & 15);
+	if ((code >> 20) & 1)
+		s += " [S]";
+	s += " " + show_reg((code >> 16) & 15);
+	s += " " + show_reg((code >> 12) & 15);
+	if ((code >> 25) & 1)
+		s += " " + show_imm((code & 0xfff));
+	else
+		s += " " + show_shift_reg((code & 0xfff));
+	return s;
+}
+
+string show_branch(int code)
+{
+	string s;
+	if ((code >> 24) & 1)
+		s += "bl";
+	else
+		s += "b";
+	s += format(" %06x", (code & 0x00ffffff));
+	return s;
+}
+
+string show_data_transfer(int code)
+{
+	string s;
+	bool bb = ((code >> 22) & 1);
+	bool ll = ((code >> 20) & 1);
+	if (ll)
+		s += "ldr";
+	else
+		s += "str";
+	if (bb)
+		s += "b";
+	int Rn = (code >> 16) & 0xf;
+	int Rd = (code >> 12) & 0xf;
+	s += " " + show_reg(Rd);
+	bool imm = ((code >> 25) & 1);
+	bool pre = ((code >> 24) & 1);
+	bool up = ((code >> 23) & 1);
+	bool ww = ((code >> 21) & 1);
+	if (imm){
+		s += " --shifted reg--";
+	}else{
+		s += " [" + show_reg(Rn) + format("%s%d]", (up ? "+" : "-"), code & 0xfff);
+	}
+	return s;
+}
+
+string show_data_block_transfer(int code)
+{
+	string s;
+	if ((code >> 20) & 1)
+		s += "ldm";
+	else
+		s += "stm";
+	bool pp = ((code >> 24) & 1);
+	bool uu = ((code >> 23) & 1);
+	bool ww = ((code >> 21) & 1);
+	if (!pp and uu)
+		s += "ia";
+	else if (pp and uu)
+		s += "ib";
+	else if (!pp and !uu)
+		s += "da";
+	else if (pp and !uu)
+		s += "db";
+	s += " {";
+	int Rn = (code >> 16) & 0xf;
+	bool first = true;
+	for (int i=0; i<16; i++)
+		if (code & (1 << i)){
+			if (!first)
+				s += ",";
+			s += show_reg(i);
+			first = false;
+		}
+	s += "} [" + show_reg(Rn) + "]";
+	return s;
+}
+
+string DisassembleARM(void *_code_,int length,bool allow_comments)
+{
+	string buf;
+	int *code = (int*)_code_;
+	for (int ni=0; ni<length/4; ni++){
+		int cur = code[ni];
+
+		int x = (cur >> 25) & 0x7;
+
+		buf += string((char*)&cur, 4).hex(true).substr(2, -1);
+		buf += "  ";
+		buf += arm_cond_to_str((cur >> 28) & 0xf);
+
+
+		if (((cur >> 26) & 3) == 0)
+			buf += show_data_opcode(cur);
+		else if (((cur >> 26) & 0x3) == 0b01)
+			buf += show_data_transfer(cur);
+		else if (x == 0b100)
+			buf += show_data_block_transfer(cur);
+		else if (x == 0b101)
+			buf += show_branch(cur);
+
+
+		buf += "\n";
+	}
+	return buf;
+}
+
+string DisassembleX86(void *_code_,int length,bool allow_comments)
+{
 	char *code = (char*)_code_;
 
 	string param;
@@ -2116,230 +2404,6 @@ string Disassemble(void *_code_,int length,bool allow_comments)
 			bufstr += str;
 			bufstr += "\n";
 
-#if 0
-			
-			bool e_first=false;
-			char modRM;
-			int mod,Reg,rm;
-			if ((p1>=0)||(p2>=0)){
-				if ((p1==Ed)||(p1==Ew)||(p1==Eb)||(p1==Sw)||(p2==Ed)||(p2==Ew)||(p2==Eb)||(p2==Sw)){
-					e_first=((p1==Ed)||(p1==Ew)||(p1==Eb)) && (p1!=Sw);
-					if (!e_first){	int t=p1;		p1=p2;			p2=t;	}
-					if (!e_first){	int t=pp1;		pp1=pp2;		pp2=t;	}
-					if (!e_first){	int t=disp1;	disp1=disp2;	disp2=t;	}
-					cur++;
-					modRM=cur[0];
-					mod=(unsigned char)modRM/64;
-					Reg=((unsigned char)modRM/8)%8;
-					rm=(unsigned char)modRM%8;
-					if (mod==0){
-						if (mode16){
-							if (rm==0)	pp1=pBX_pSI;
-							if (rm==1)	pp1=pBX_pDI;
-							if (rm==2)	pp1=pBP_pSI;
-							if (rm==3)	pp1=pBP_pDI;
-							if (rm==4)	pp1=pSI;
-							if (rm==5)	pp1=pDI;
-							if (rm==6){	pp1=disp16;	disp1=*(short*)&cur[1];	cur+=2;	}
-							if (rm==7)	pp1=pBX;
-						}else{
-							if (rm==0)	pp1=peAX;
-							if (rm==1)	pp1=peCX;
-							if (rm==2)	pp1=peDX;
-							if (rm==3)	pp1=peBX;
-							if (rm==4){	pp1=pp;		disp1=cur[1];		cur++;	}
-							if (rm==5){	pp1=disp32;	disp1=*(int*)&cur[1];	cur+=4; }
-							if (rm==6)	pp1=peSI;
-							if (rm==7)	pp1=peDI;
-						}
-					}else if (mod==1){
-						if (mode16){
-							if (rm==0)	pp1=d8_pBX_pSI;
-							if (rm==1)	pp1=d8_pBX_pDI;
-							if (rm==2)	pp1=d8_pBP_pSI;
-							if (rm==3)	pp1=d8_pBP_pDI;
-							if (rm==4)	pp1=d8_pSI;
-							if (rm==5)	pp1=d8_pDI;
-							if (rm==6)	pp1=d8_pBP;
-							if (rm==7)	pp1=d8_pBX;
-							disp1=cur[1];	cur++;
-						}else{
-							if (rm==0)	pp1=d8_peAX;
-							if (rm==1)	pp1=d8_peCX;
-							if (rm==2)	pp1=d8_peDX;
-							if (rm==3)	pp1=d8_peBX;
-							if (rm==4){	pp1=d8_pp;		disp1=cur[1];		cur++;	}
-							if (rm==5)	pp1=d8_peBP;
-							if (rm==6)	pp1=d8_peSI;
-							if (rm==7)	pp1=d8_peDI;
-							disp1=cur[1];	cur++;
-						}
-					}else if (mod==2){
-						if (mode16){
-							if (rm==0)	pp1=d16_pBX_pSI;
-							if (rm==1)	pp1=d16_pBX_pDI;
-							if (rm==2)	pp1=d16_pBP_pSI;
-							if (rm==3)	pp1=d16_pBP_pDI;
-							if (rm==4)	pp1=d16_pSI;
-							if (rm==5)	pp1=d16_pDI;
-							if (rm==6)	pp1=d16_pBP;
-							if (rm==7)	pp1=d16_pBX;
-							disp1=*(short*)&cur[1];	cur+=2;
-						}else{
-							if (rm==0)	pp1=d32_peAX;
-							if (rm==1)	pp1=d32_peCX;
-							if (rm==2)	pp1=d32_peDX;
-							if (rm==3)	pp1=d32_peBX;
-							if (rm==4){	pp1=d32_pp;		disp1=cur[1];		cur++;	}
-							if (rm==5)	pp1=d32_peBP;
-							if (rm==6)	pp1=d32_peSI;
-							if (rm==7)	pp1=d32_peDI;
-							disp1=*(int*)&cur[1];	cur+=4;
-						}
-					}else if (mod==3){
-						if (p1==Eb){
-							if (rm==0)	pp1=AL;
-							if (rm==1)	pp1=CL;
-							if (rm==2)	pp1=DL;
-							if (rm==3)	pp1=BL;
-							if (rm==4)	pp1=AH;
-							if (rm==5)	pp1=CH;
-							if (rm==6)	pp1=DH;
-							if (rm==7)	pp1=BH;
-						}else if (p1==Ew){
-							if (rm==0)	pp1=AX;
-							if (rm==1)	pp1=CX;
-							if (rm==2)	pp1=DX;
-							if (rm==3)	pp1=BX;
-							if (rm==4)	pp1=SP;
-							if (rm==5)	pp1=BP;
-							if (rm==6)	pp1=SI;
-							if (rm==7)	pp1=DI;
-						}else if (p1==Ed){
-							if (rm==0)	pp1=eAX;
-							if (rm==1)	pp1=eCX;
-							if (rm==2)	pp1=eDX;
-							if (rm==3)	pp1=eBX;
-							if (rm==4)	pp1=eSP;
-							if (rm==5)	pp1=eBP;
-							if (rm==6)	pp1=eSI;
-							if (rm==7)	pp1=eDI;
-						}
-					}
-					if (p2==Gb){
-						if (Reg==0)	pp2=AL;
-						if (Reg==1)	pp2=CL;
-						if (Reg==2)	pp2=DL;
-						if (Reg==3)	pp2=BL;
-						if (Reg==4)	pp2=AH;
-						if (Reg==5)	pp2=CH;
-						if (Reg==6)	pp2=DH;
-						if (Reg==7)	pp2=BH;
-					}else if (p2==Gw){
-						if (Reg==0)	pp2=AX;
-						if (Reg==1)	pp2=CX;
-						if (Reg==2)	pp2=DX;
-						if (Reg==3)	pp2=BX;
-						if (Reg==4)	pp2=SP;
-						if (Reg==5)	pp2=BP;
-						if (Reg==6)	pp2=SI;
-						if (Reg==7)	pp2=DI;
-					}else if (p2==Gd){
-						if (Reg==0)	pp2=eAX;
-						if (Reg==1)	pp2=eCX;
-						if (Reg==2)	pp2=eDX;
-						if (Reg==3)	pp2=eBX;
-						if (Reg==4)	pp2=eSP;
-						if (Reg==5)	pp2=eBP;
-						if (Reg==6)	pp2=eSI;
-						if (Reg==7)	pp2=eDI;
-					}else if (p2==Sw){
-						if (Reg==0)	pp2=ES;
-						if (Reg==1)	pp2=CS;
-						if (Reg==2)	pp2=SS;
-						if (Reg==3)	pp2=DS;
-						if (Reg==4)	pp2=FS;
-						if (Reg==5)	pp2=GS;
-					}else if (p2==Cd){
-						if (Reg==0)	pp2=CR0;
-						if (Reg==1)	pp2=CR1;
-						if (Reg==2)	pp2=CR2;
-						if (Reg==3)	pp2=CR3;
-					}else if ((p2==Ob)||(p2==Ow)||(p2==Od)){
-						if (small_param){
-							pp2=disp16;
-							disp2=*(short*)&cur[1];	cur+=2;
-						}else{
-							pp2=disp32;
-							disp2=*(int*)&cur[1];	cur+=4;
-						}
-					}
-
-					if (!e_first){	int t=pp1;	pp1=pp2;	pp2=t;	}
-					if (!e_first){	int t=p1;	p1=p2;		p2=t;	}
-					if (!e_first){	int t=disp1;	disp1=disp2;	disp2=t;	}
-				}else if ((p1==Ob)||(p1==Ow)||(p1==Od)){
-					if (small_param){
-						pp1=disp16;
-						disp1=*(short*)&cur[1];	cur+=2;
-					}else{
-						pp1=disp32;
-						disp1=*(int*)&cur[1];	cur+=4;
-					}
-				}else if (p1==Ip){
-					if (small_param){	disp1=*(short*)&cur[1];	cur+=2;	}
-					else{				disp1=*(int*)&cur[1];	cur+=4;	}
-					ParamConstantDouble=*(short*)&cur[1];	cur+=2;
-				}else if (p1==Id){
-					disp1=*(int*)&cur[1];	cur+=4;
-				}else if (p1==Iw){
-					disp1=*(short*)&cur[1];	cur+=2;
-				}else if (p1==Ib){
-					disp1=cur[1];	cur++;
-				}
-				// Param2
-				if ((p2==Ob)||(p2==Ow)||(p2==Od)){
-					if (small_param){
-						pp2=disp16;
-						disp2=*(short*)&cur[1];	cur+=2;
-					}else{
-						pp2=disp32;
-						disp2=*(int*)&cur[1];	cur+=4;
-					}
-				}else if (p2==Id){
-					disp2=*(int*)&cur[1];	cur+=4;
-				}else if (p2==Iw){
-					disp2=*(short*)&cur[1];	cur+=2;
-				}else if (p2==Ib){
-					disp2=cur[1];	cur++;
-				}
-				//for (int i=0;i<32-l;i++)
-				//	strcat(str," ");
-				strcat(param," ");
-				AddParam(param,pp1,disp1);
-				if (p2>=0){
-					strcat(param,", ");
-					AddParam(param,pp2,disp2);
-				}
-			}
-			char str[128];		strcpy(str,"");
-			if (seg==CS)	strcat(str,"CS: ");
-			if (seg==SS)	strcat(str,"SS: ");
-			if (seg==DS)	strcat(str,"DS: ");
-			if (seg==ES)	strcat(str,"ES: ");
-			if (seg==FS)	strcat(str,"FS: ");
-			if (seg==GS)	strcat(str,"GS: ");
-			strcat(str,string(CPUInstructions[ae].name,param));
-			strcat(buffer,str);
-			if (allow_comments){
-				int l=strlen(str);
-				strcat(buffer," ");
-				for (int ii=0;ii<48-l;ii++)
-					strcat(buffer," ");
-				strcat(buffer,"// ");
-				strcat(buffer,d2h(code,1+long(cur)-long(code),false));
-			}
-#endif
 		}else{
 			//msg_write(string2("????? -                          unknown         // %s\n",d2h(code,1+long(cur)-long(code),false)));
 			bufstr += format("????? -                          unknown         // %s\n",d2h(code,1+long(cur)-long(code),false).c_str());
@@ -2351,6 +2415,18 @@ string Disassemble(void *_code_,int length,bool allow_comments)
 			break;
 	}
 	return bufstr;
+}
+
+
+
+// convert some opcode into (human readable) assembler language
+string Disassemble(void *code, int length, bool allow_comments)
+{
+	msg_db_f("Disassemble", 1+ASM_DB_LEVEL);
+
+	if (InstructionSet.set == InstructionSetARM)
+		return DisassembleARM(code, length, allow_comments);
+	return DisassembleX86(code, length, allow_comments);
 }
 
 // skip unimportant code (whitespace/comments)

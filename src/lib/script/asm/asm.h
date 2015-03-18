@@ -8,7 +8,8 @@ namespace Asm
 // instruction sets
 enum{
 	InstructionSetX86,
-	InstructionSetAMD64
+	InstructionSetAMD64,
+	InstructionSetARM
 };
 
 struct InstructionSetData
@@ -28,13 +29,14 @@ enum{
 	RegCr0, RegCr1, RegCr2, RegCr3,
 	RegSt0, RegSt1, RegSt2, RegSt3, RegSt4, RegSt5, RegSt6, RegSt7,
 	RegRax, RegRcx, RegRdx, RegRbx, RegRsp, RegRsi, RegRdi, RegRbp, // 8 byte
-	RegR8, RegR9, RegR10, RegR11, RegR12, RegR13, RegR14, RegR15,
+	RegR0, RegR1, RegR2, RegR3, RegR4, RegR5, RegR6, RegR7, // ARM
+	RegR8, RegR9, RegR10, RegR11, RegR12, RegR13, RegR14, RegR15, // ARM 4 byte / AMD64 8 byte
 	RegR8d, RegR9d, RegR10d, RegR11d, RegR12d, RegR13d, RegR14d, RegR15d,
 	RegXmm0, RegXmm1, RegXmm2, RegXmm3, RegXmm4, RegXmm5, RegXmm6, RegXmm7, // 16 byte
 	NUM_REGISTERS
 };
 
-const int NUM_REG_ROOTS = 32;
+const int NUM_REG_ROOTS = 40;
 const int MAX_REG_SIZE = 16;
 
 extern int RegRoot[];
@@ -211,6 +213,10 @@ enum{
 	inst_movss,
 	inst_movsd,
 	
+	// ARM
+	inst_b,
+	inst_bl,
+
 	NUM_INSTRUCTION_NAMES
 };
 

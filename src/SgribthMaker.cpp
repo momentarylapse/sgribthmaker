@@ -499,7 +499,7 @@ public:
 
 		HuiRegisterFileType("kaba","MichiSoft Script Datei",HuiAppDirectory + "Data/kaba.ico",HuiAppFilename,"open",true);
 
-		Script::Init();
+		//Script::Init();
 	}
 
 	virtual bool onStartup(const Array<string> &arg)
@@ -591,6 +591,17 @@ public:
 		MainWin->eventSX("function_list", "hui:select", &OnFunctionList);
 
 		//msg_write(Asm::Disassemble((void*)&TestTest));
+
+		msg_set_verbose(true);
+
+		Asm::Init(Asm::InstructionSetARM);
+		CFile *f = FileOpen("arm/arm-test");
+		f->SetBinaryMode(true);
+		string code = f->ReadComplete();
+		delete(f);
+		//msg_write(code.hex());
+		msg_write(Asm::Disassemble(&code[1024-12], 64, true));
+		exit(0);
 
 		if (arg.num > 1){
 			for (int i=1; i<arg.num; i++)
