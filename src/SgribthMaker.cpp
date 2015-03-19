@@ -508,15 +508,8 @@ public:
 	virtual bool onStartup(const Array<string> &arg)
 	{
 		int *fff = (int*)mmap(0, 100, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS | MAP_EXECUTABLE, -1, 0);
-		printf("p: %p\n", fff);
-		fff[0] = 0xe0800001;
-		fff[1] = 0xe12fff1e;
 		typedef int ifii(int, int);
 		ifii *fp = (ifii*)fff;
-
-		printf("run...\n");
-		int r = (*fp)(1,2);
-		printf("%d\n", r);
 
 
 
@@ -621,14 +614,21 @@ public:
 		msg_write(Asm::Disassemble(&code[1024-12], 64, true));
 
 		Asm::InstructionWithParamsList *l = new Asm::InstructionWithParamsList(0);
-		l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_REGISTER, Asm::REG_R2, 0);
+		l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R0, Asm::PK_REGISTER, Asm::REG_R1, 0);
+		l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_CONSTANT, Asm::REG_R2, 512);//2040);
+	//	l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_REGISTER, Asm::REG_R2, 0);
 		//l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_REGISTER_SHIFT, Asm::REG_R2, 5);
-		l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_CONSTANT, Asm::REG_R2, 2040);
-		char oc[128];
+	//	l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_CONSTANT, Asm::REG_R2, 2040);
 		int ocs = 0;
-		l->Compile(oc, ocs);
-		*(int*)&oc[ocs += 4] = 0xe12fff1e;
-		msg_write(Asm::Disassemble(oc, ocs, true));
+		l->Compile(fff, ocs);
+		fff[ocs / 4] = 0xe12fff1e;
+		ocs += 4;
+		msg_write(Asm::Disassemble(fff, ocs, true));
+
+
+		printf("run...\n");
+		int r = (*fp)(1,2);
+		printf("%d\n", r);
 
 		exit(0);
 

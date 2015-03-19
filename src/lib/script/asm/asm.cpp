@@ -2071,7 +2071,7 @@ int arm_decode_imm(int imm)
 {
 	int r = ((imm >> 8) & 0xf);
 	int n = (imm & 0xff);
-	return n << r;
+	return n >> (r*2) | n << (32 - r*2);
 }
 
 string show_shift_reg(int code)
@@ -3309,18 +3309,17 @@ int arm_reg_no(Register *r)
 	return -1;
 }
 
-int arm_encode_imm(int value)
+int arm_encode_imm(unsigned int value)
 {
-	if (value < 0)
-		SetError("ARM: no negative immediate value allowed: " + i2s(value));
-	for (int i=31; i>=8; i--)
-		if (value & (1<<i)){
-			int ex = i - 7;
-			if (value & (0xffffffff >> (31 - i + 8)))
-				SetError("ARM: immediate value not representable: " + i2s(value));
-			return (value >> ex) | (ex << 8);
+	for (int ex=0; ex<=30; ex+=2){
+		unsigned int mask = (0xffffff00 >> ex) | (0xffffff00 << (32-ex));
+		if ((value & mask) == 0){
+			unsigned int mant = (value << ex) | (value >> (32 - ex));
+			return mant | (ex << (8-1));
 		}
-	return value;
+	}
+	SetError("ARM: immediate value not representable: " + i2s(value));
+	return 0;
 }
 
 void InstructionWithParamsList::AddInstructionARM(char *oc, int &ocs, int n)
