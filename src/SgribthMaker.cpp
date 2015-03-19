@@ -594,7 +594,7 @@ public:
 
 		msg_set_verbose(true);
 
-		Asm::Init(Asm::InstructionSetARM);
+		Asm::Init(Asm::INSTRUCTION_SET_ARM);
 		CFile *f = FileOpen("arm/arm-test");
 		f->SetBinaryMode(true);
 		string code = f->ReadComplete();
