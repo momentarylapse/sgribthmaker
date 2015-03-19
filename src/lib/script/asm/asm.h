@@ -52,7 +52,8 @@ enum{
 	PK_EDX_REL,         // [edx + 0x0000]
 	PK_CONSTANT,        // 0x00000000
 	PK_DEREF_CONSTANT,  // [0x00000000]
-	PK_LABEL            // _label
+	PK_LABEL,           // _label
+	PK_REGISTER_SHIFT   // eAX + 0x0000
 };
 
 
@@ -217,7 +218,38 @@ enum{
 	inst_b,
 	inst_bl,
 
+	inst_eor,
+	inst_rsb,
+	inst_sbc,
+	inst_rsc,
+	inst_tst,
+	inst_teq,
+	inst_cmn,
+	inst_orr,
+	inst_bic,
+	inst_mvn,
+
 	NUM_INSTRUCTION_NAMES
+};
+
+enum
+{
+	ARM_COND_EQUAL,
+	ARM_COND_NOT_EQUAL,
+	ARM_COND_CARRY_SET,
+	ARM_COND_CARRY_CLEAR,
+	ARM_COND_NEGATIVE,
+	ARM_COND_POSITIVE,
+	ARM_COND_OVERFLOW,
+	ARM_COND_NO_OVERFLOW,
+	ARM_COND_UNSIGNED_HIGHER,
+	ARM_COND_UNSIGNED_LOWER_SAME,
+	ARM_COND_GREATER_EQUAL,
+	ARM_COND_LESS_THAN,
+	ARM_COND_GREATER_THAN,
+	ARM_COND_LESS_EQUAL,
+	ARM_COND_ALWAYS,
+	ARM_COND_UNKNOWN,
 };
 
 string GetInstructionName(int inst);
@@ -286,6 +318,7 @@ struct InstructionWithParamsList : public Array<InstructionWithParams>
 	~InstructionWithParamsList();
 
 	void add_easy(int inst, int param1_type = PK_NONE, int param1_size = -1, void *param1 = NULL, int param2_type = PK_NONE, int param2_size = -1, void *param2 = NULL);
+	void add_arm(int cond, int inst, int reg1, int reg2, int param3_type, int reg3, int immediate3 = 0);
 	int add_label(const string &name, bool declaring);
 
 	void add_func_intro(int stack_alloc_size);
@@ -297,6 +330,7 @@ struct InstructionWithParamsList : public Array<InstructionWithParams>
 	void Compile(void *oc, int &ocs);
 	void LinkWantedLabels(void *oc);
 	void AddInstruction(char *oc, int &ocs, int n);
+	void AddInstructionARM(char *oc, int &ocs, int n);
 
 	Array<Label> label;
 	Array<WantedLabel> wanted_label;

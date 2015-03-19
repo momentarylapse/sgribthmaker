@@ -601,6 +601,16 @@ public:
 		delete(f);
 		//msg_write(code.hex());
 		msg_write(Asm::Disassemble(&code[1024-12], 64, true));
+
+		Asm::InstructionWithParamsList *l = new Asm::InstructionWithParamsList(0);
+		l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_REGISTER, Asm::REG_R2, 0);
+		//l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_REGISTER_SHIFT, Asm::REG_R2, 5);
+		l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_CONSTANT, Asm::REG_R2, 2040);
+		char oc[128];
+		int ocs;
+		l->Compile(oc, ocs);
+		msg_write(Asm::Disassemble(oc, ocs, true));
+
 		exit(0);
 
 		if (arg.num > 1){
