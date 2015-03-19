@@ -13,6 +13,9 @@
 #include "Document.h"
 
 
+	#include <sys/mman.h>
+
+
 
 string AppTitle = "SgribthMaker";
 string AppVersion = "0.4.3.2";
@@ -504,6 +507,19 @@ public:
 
 	virtual bool onStartup(const Array<string> &arg)
 	{
+		int *fff = (int*)mmap(0, 100, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS | MAP_EXECUTABLE, -1, 0);
+		printf("p: %p\n", fff);
+		fff[0] = 0xe0800001;
+		fff[1] = 0xe12fff1e;
+		typedef int ifii(int, int);
+		ifii *fp = (ifii*)fff;
+
+		printf("run...\n");
+		int r = (*fp)(1,2);
+		printf("%d\n", r);
+
+
+
 		HuiAddCommand("new", "hui:new", KEY_N + KEY_CONTROL, &New);
 		//HuiAddKeyCode(HMM_NEW_HEX, KEY_F1 + 256);
 		HuiAddCommand("open", "hui:open", KEY_O + KEY_CONTROL, &OnOpen);
@@ -594,7 +610,9 @@ public:
 
 		msg_set_verbose(true);
 
+		msg_write("aaa");
 		Asm::Init(Asm::INSTRUCTION_SET_ARM);
+		msg_write("bbb");
 		CFile *f = FileOpen("arm/arm-test");
 		f->SetBinaryMode(true);
 		string code = f->ReadComplete();
@@ -607,8 +625,9 @@ public:
 		//l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_REGISTER_SHIFT, Asm::REG_R2, 5);
 		l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_CONSTANT, Asm::REG_R2, 2040);
 		char oc[128];
-		int ocs;
+		int ocs = 0;
 		l->Compile(oc, ocs);
+		*(int*)&oc[ocs += 4] = 0xe12fff1e;
 		msg_write(Asm::Disassemble(oc, ocs, true));
 
 		exit(0);
