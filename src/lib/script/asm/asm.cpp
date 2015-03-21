@@ -340,6 +340,20 @@ InstructionName InstructionNames[NUM_INSTRUCTION_NAMES + 1] = {
 	{inst_b,		"b"},
 	{inst_bl,		"bl"},
 
+	{inst_ldr,		"ldr"},
+	{inst_ldrb,		"ldrb"},
+//	{inst_str,		"str"},
+	{inst_strb,		"strb"},
+
+	{inst_ldmia,		"ldmia"},
+	{inst_ldmib,		"ldmib"},
+	{inst_ldmda,		"ldmda"},
+	{inst_ldmdb,		"ldmdb"},
+	{inst_stmia,		"stmia"},
+	{inst_stmib,		"stmib"},
+	{inst_stmda,		"stmda"},
+	{inst_stmdb,		"stmdb"},
+
 	{inst_eor,	"eor"},
 	{inst_rsb,	"rsb"},
 	{inst_sbc,	"sbc"},
@@ -453,8 +467,11 @@ void InstructionWithParamsList::add_arm(int cond, int inst, int reg1, int reg2, 
 	i.inst = inst;
 	i.condition = cond;
 	i.p1.reg = RegisterByID[reg1];
-	i.p1.reg2 = RegisterByID[reg2];
+	i.p1.reg2 = NULL;
+	if (reg2 >= REG_R0)
+		i.p1.reg2 = RegisterByID[reg2];
 	i.p2.type = PARAMT_NONE;
+	i.p2.value = 0;
 	if (param3_type == PK_REGISTER){
 		i.p2.type = PARAMT_REGISTER;
 		i.p2.reg = RegisterByID[reg3];
@@ -465,6 +482,20 @@ void InstructionWithParamsList::add_arm(int cond, int inst, int reg1, int reg2, 
 		i.p2.type = PARAMT_REGISTER_SHIFT;
 		i.p2.reg = RegisterByID[reg3];
 		i.p2.value = immediate3;
+	}else if (param3_type == PK_DEREF_REGISTER_SHIFT){
+		i.p2.type = PARAMT_IMMEDIATE;
+		i.p2.value = immediate3;
+	}else if (param3_type == PK_DEREF_REGISTER){
+		i.p2.type = PARAMT_IMMEDIATE;
+		i.p2.value = 0;
+	}else if (param3_type == PK_DEREF_REGISTER2_UP){
+		i.p2.type = PARAMT_REGISTER;
+		i.p2.reg = RegisterByID[reg3];
+		i.p2.value = 1;
+	}else if (param3_type == PK_DEREF_REGISTER2_DOWN){
+		i.p2.type = PARAMT_REGISTER;
+		i.p2.reg = RegisterByID[reg3];
+		i.p2.value = -1;
 	}
 	i.line = current_line;
 	i.col = current_col;
@@ -3303,8 +3334,9 @@ void InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)
 
 int arm_reg_no(Register *r)
 {
-	if ((r->id >= REG_R0) and (r->id <= REG_R15))
-		return r->id - REG_R0;
+	if (r)
+		if ((r->id >= REG_R0) and (r->id <= REG_R15))
+			return r->id - REG_R0;
 	SetError("ARM: invalid register: " + r->name);
 	return -1;
 }
@@ -3322,6 +3354,11 @@ int arm_encode_imm(unsigned int value)
 	return 0;
 }
 
+bool inline arm_is_load_store_reg(int inst)
+{
+	return (inst == inst_ldr) or (inst == inst_ldrb) or (inst == inst_str) or (inst == inst_strb);
+}
+
 void InstructionWithParamsList::AddInstructionARM(char *oc, int &ocs, int n)
 {
 	msg_db_f("AsmAddInstructionLowARM", 1+ASM_DB_LEVEL);
@@ -3337,7 +3374,7 @@ void InstructionWithParamsList::AddInstructionARM(char *oc, int &ocs, int n)
 	for (int i=0; i<16; i++)
 		if (iwp.inst == ARMDataInstructions[i])
 			nn = i;
-	if (n >= 0){
+	if (nn >= 0){
 		code |= 0x0 << 26;
 		code |= (nn << 21);
 		code |= arm_reg_no(iwp.p1.reg) << 12;
@@ -3351,6 +3388,31 @@ void InstructionWithParamsList::AddInstructionARM(char *oc, int &ocs, int n)
 			msg_write("TODO reg shift");
 			code |= arm_reg_no(iwp.p2.reg) << 0;
 			code |= (iwp.p2.value & 0xff) << 4;
+		}
+	}else if (arm_is_load_store_reg(iwp.inst)){
+		if (iwp.inst == inst_ldr)
+			code |= 0x04100000;
+		else if (iwp.inst == inst_ldrb)
+			code |= 0x04500000;
+		else if (iwp.inst == inst_str)
+			code |= 0x04000000;
+		else if (iwp.inst == inst_strb)
+			code |= 0x04400000;
+
+		code |= arm_reg_no(iwp.p1.reg) << 12;
+		code |= arm_reg_no(iwp.p1.reg2) << 16;
+
+		if (iwp.p2.type == PARAMT_IMMEDIATE){
+			if (iwp.p2.value >= 0)
+				code |= 0x01800000 | iwp.p2.value;
+			else
+				code |= 0x01000000 | (-iwp.p2.value);
+		}else if (iwp.p2.type == PARAMT_REGISTER){
+			if (iwp.p2.value >= 0)
+				code |= 0x03800000;
+			else
+				code |= 0x03000000;
+			code |= arm_reg_no(iwp.p2.reg);
 		}
 	}
 

@@ -151,9 +151,13 @@ string cmd2str(SerialCommand &c)
 		return format("-- Asm %d --", (long)c.p1.p);
 	if (c.inst == inst_call_label)
 		return "call  (by label) " + ((Function*)c.p1.p)->name;
-	string t = Asm::GetInstructionName(c.inst);
+	string t;
+	if (c.cond != Asm::ARM_COND_ALWAYS)
+		t += "[cond]";
+	t += Asm::GetInstructionName(c.inst);
 	t += param_out(c.p1);
 	t += param_out(c.p2);
+	t += param_out(c.p3);
 	return t;
 }
 
@@ -186,29 +190,36 @@ inline int get_reg(int root, int size)
 	return Asm::RegResize[root][size];
 }
 
-void Serializer::add_cmd(int inst, SerialCommandParam p1, SerialCommandParam p2)
+void Serializer::add_cmd(int cond, int inst, const SerialCommandParam &p1, const SerialCommandParam &p2, const SerialCommandParam &p3)
 {
 	SerialCommand c;
 	c.inst = inst;
+	c.cond = cond;
 	c.p1 = p1;
 	c.p2 = p2;
+	c.p3 = p3;
 	cmd.add(c);
 
 	// call violates all used registers...
-	if ((inst == Asm::inst_call) || (inst == inst_call_label))
+	if ((inst == Asm::inst_call) or (inst == inst_call_label))
 		for (int i=0;i<MapRegRoot.num;i++){
 			add_reg_channel(get_reg(i, 4), cmd.num - 1, cmd.num - 1);
 		}
 }
 
-void Serializer::add_cmd(int inst, SerialCommandParam p)
+void Serializer::add_cmd(int inst, const SerialCommandParam &p1, const SerialCommandParam &p2)
 {
-	add_cmd(inst, p, p_none);
+	add_cmd(Asm::ARM_COND_ALWAYS, inst, p1, p2, p_none);
+}
+
+void Serializer::add_cmd(int inst, const SerialCommandParam &p)
+{
+	add_cmd(Asm::ARM_COND_ALWAYS, inst, p, p_none, p_none);
 }
 
 void Serializer::add_cmd(int inst)
 {
-	add_cmd(inst, p_none, p_none);
+	add_cmd(Asm::ARM_COND_ALWAYS, inst, p_none, p_none, p_none);
 }
 
 void Serializer::move_last_cmd(int index)
@@ -355,7 +366,7 @@ void AddFuncInstance(const SerialCommandParam &inst)
 	CompilerFunctionInstance = inst;
 }
 
-int Serializer::fc_x86_begin()
+int SerializerX86::fc_begin()
 {
 	Type *type = CompilerFunctionReturn.type;
 
@@ -402,7 +413,7 @@ int Serializer::fc_x86_begin()
 	return push_size;
 }
 
-void Serializer::fc_x86_end(int push_size)
+void SerializerX86::fc_end(int push_size)
 {
 	Type *type = CompilerFunctionReturn.type;
 
@@ -425,11 +436,11 @@ void Serializer::fc_x86_end(int push_size)
 	}
 }
 
-void Serializer::add_function_call_x86(Script *script, int func_no)
+void SerializerX86::add_function_call(Script *script, int func_no)
 {
 	msg_db_f("AddFunctionCallX86", 4);
 
-	int push_size = fc_x86_begin();
+	int push_size = fc_begin();
 
 	void *func = (void*)script->func[func_no];
 	if (!func){
@@ -440,10 +451,10 @@ void Serializer::add_function_call_x86(Script *script, int func_no)
 		// function pointer will be shifted later...
 	}
 
-	fc_x86_end(push_size);
+	fc_end(push_size);
 }
 
-int Serializer::fc_amd64_begin()
+int SerializerAMD64::fc_begin()
 {
 	Type *type = CompilerFunctionReturn.type;
 
@@ -538,7 +549,7 @@ int Serializer::fc_amd64_begin()
 	return push_size;
 }
 
-void Serializer::fc_amd64_end(int push_size)
+void SerializerAMD64::fc_end(int push_size)
 {
 	Type *type = CompilerFunctionReturn.type;
 
@@ -561,11 +572,11 @@ void Serializer::fc_amd64_end(int push_size)
 	}
 }
 
-void Serializer::add_function_call_amd64(Script *script, int func_no)
+void SerializerAMD64::add_function_call(Script *script, int func_no)
 {
 	msg_db_f("AddFunctionCallAMD64", 4);
 
-	int push_size = fc_amd64_begin();
+	int push_size = fc_begin();
 
 	void *func = (void*)script->func[func_no];
 	if (!func){
@@ -577,14 +588,14 @@ void Serializer::add_function_call_amd64(Script *script, int func_no)
 	}
 	// function pointer will be shifted later...
 
-	fc_amd64_end(push_size);
+	fc_end(push_size);
 }
 
-void Serializer::add_virtual_function_call_x86(int virtual_index)
+void SerializerX86::add_virtual_function_call(int virtual_index)
 {
 	msg_db_f("AddFunctionCallX86", 4);
 
-	int push_size = fc_x86_begin();
+	int push_size = fc_begin();
 
 	add_cmd(Asm::inst_mov, p_eax, CompilerFunctionInstance);
 	add_cmd(Asm::inst_mov, p_eax, p_deref_eax);
@@ -592,15 +603,15 @@ void Serializer::add_virtual_function_call_x86(int virtual_index)
 	add_cmd(Asm::inst_mov, param_reg(TypePointer, Asm::REG_EDX), p_deref_eax);
 	add_cmd(Asm::inst_call, param_reg(TypePointer, Asm::REG_EDX)); // the actual call
 
-	fc_x86_end(push_size);
+	fc_end(push_size);
 }
 
-void Serializer::add_virtual_function_call_amd64(int virtual_index)
+void SerializerAMD64::add_virtual_function_call(int virtual_index)
 {
 	//DoError("virtual function call on amd64 not yet implemented!");
 	msg_db_f("AddFunctionCallAmd64", 4);
 
-	int push_size = fc_amd64_begin();
+	int push_size = fc_begin();
 
 	add_cmd(Asm::inst_mov, p_rax, CompilerFunctionInstance);
 	add_cmd(Asm::inst_mov, p_eax, p_deref_eax);
@@ -608,8 +619,540 @@ void Serializer::add_virtual_function_call_amd64(int virtual_index)
 	add_cmd(Asm::inst_mov, p_eax, p_deref_eax);
 	add_cmd(Asm::inst_call, p_eax); // the actual call
 
-	fc_amd64_end(push_size);
+	fc_end(push_size);
 }
+
+int SerializerARM::fc_begin(){ return 0; }
+void SerializerARM::fc_end(int push_size){}
+void SerializerARM::add_function_call(Script *script, int func_no){}
+void SerializerARM::add_virtual_function_call(int virtual_index){}
+void SerializerARM::SerializeCompilerFunction(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret, int level, int index, int marker_before_params){}
+
+void SerializerARM::SerializeOperator(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret)
+{
+	msg_db_f("SerializeOperatorARM", 4);
+	switch(com->link_no){
+		case OperatorIntAssign:
+		case OperatorInt64Assign:
+		case OperatorFloatAssign:
+		case OperatorFloat64Assign:
+		case OperatorPointerAssign:
+			add_cmd(Asm::inst_mov, param[0], param[1]);
+			break;
+		case OperatorCharAssign:
+		case OperatorBoolAssign:
+			add_cmd(Asm::inst_mov, param[0], param[1]);
+			break;
+		case OperatorClassAssign:
+			for (int i=0;i<signed(com->param[0]->type->size)/4;i++)
+				add_cmd(Asm::inst_mov, param_shift(param[0], i * 4, TypeInt), param_shift(param[1], i * 4, TypeInt));
+			for (int i=4*signed(com->param[0]->type->size/4);i<signed(com->param[0]->type->size);i++)
+				add_cmd(Asm::inst_mov, param_shift(param[0], i, TypeChar), param_shift(param[1], i, TypeChar));
+			break;
+// int
+		case OperatorIntAddS:
+		case OperatorInt64AddS:
+			add_cmd(Asm::inst_add, param[0], param[1]);
+			break;
+		case OperatorIntSubtractS:
+		case OperatorInt64SubtractS:
+			add_cmd(Asm::inst_sub, param[0], param[1]);
+			break;
+		case OperatorIntMultiplyS:
+		case OperatorInt64MultiplyS:
+			add_cmd(Asm::inst_imul, param[0], param[1]);
+			break;
+		case OperatorIntDivideS:
+			add_cmd(Asm::inst_mov, p_eax_int, param[0]);
+			add_cmd(Asm::inst_mov, param_reg(TypeInt, Asm::REG_EDX), p_eax_int);
+			add_cmd(Asm::inst_sar, param_reg(TypeInt, Asm::REG_EDX), param_const(TypeChar, (void*)0x1f));
+			add_cmd(Asm::inst_idiv, p_eax_int, param[1]);
+			add_cmd(Asm::inst_mov, param[0], p_eax_int);
+			add_reg_channel(Asm::REG_EAX, cmd.num - 5, cmd.num - 1);
+			add_reg_channel(Asm::REG_EDX, cmd.num - 2, cmd.num - 2);
+			break;
+		case OperatorInt64DivideS:
+			add_cmd(Asm::inst_mov, p_rax, param[0]);
+			add_cmd(Asm::inst_mov, param_reg(TypeInt64, Asm::REG_RDX), p_rax);
+			add_cmd(Asm::inst_sar, param_reg(TypeInt64, Asm::REG_RDX), param_const(TypeChar, (void*)0x1f));
+			add_cmd(Asm::inst_idiv, p_rax, param[1]);
+			add_cmd(Asm::inst_mov, param[0], p_rax);
+			add_reg_channel(Asm::REG_RAX, cmd.num - 5, cmd.num - 1);
+			add_reg_channel(Asm::REG_RDX, cmd.num - 2, cmd.num - 2);
+			break;
+		case OperatorIntAdd:
+		case OperatorInt64Add:
+			add_cmd(Asm::inst_mov, ret, param[0]);
+			add_cmd(Asm::inst_add, ret, param[1]);
+			break;
+		case OperatorIntSubtract:
+		case OperatorInt64Subtract:
+			add_cmd(Asm::inst_mov, ret, param[0]);
+			add_cmd(Asm::inst_sub, ret, param[1]);
+			break;
+		case OperatorIntMultiply:
+			add_cmd(Asm::inst_mov, p_eax_int, param[0]);
+			add_cmd(Asm::inst_imul, p_eax_int, param[1]);
+			add_cmd(Asm::inst_mov, ret, p_eax_int);
+			add_reg_channel(Asm::REG_EAX, cmd.num - 3, cmd.num - 1);
+			break;
+		case OperatorInt64Multiply:
+			add_cmd(Asm::inst_mov, p_rax, param[0]);
+			add_cmd(Asm::inst_imul, p_rax, param[1]);
+			add_cmd(Asm::inst_mov, ret, p_rax);
+			add_reg_channel(Asm::REG_RAX, cmd.num - 3, cmd.num - 1);
+			break;
+		case OperatorIntDivide:
+			add_cmd(Asm::inst_mov, p_eax_int, param[0]);
+			add_cmd(Asm::inst_mov, param_reg(TypeInt, Asm::REG_EDX), p_eax_int);
+			add_cmd(Asm::inst_sar, param_reg(TypeInt, Asm::REG_EDX), param_const(TypeChar, (void*)0x1f));
+			add_cmd(Asm::inst_idiv, p_eax_int, param[1]);
+			add_cmd(Asm::inst_mov, ret, p_eax_int);
+			add_reg_channel(Asm::REG_EAX, cmd.num - 5, cmd.num - 1);
+			add_reg_channel(Asm::REG_EDX, cmd.num - 2, cmd.num - 2);
+			break;
+		case OperatorInt64Divide:
+			add_cmd(Asm::inst_mov, p_rax, param[0]);
+			add_cmd(Asm::inst_mov, param_reg(TypeInt64, Asm::REG_RDX), p_rax);
+			add_cmd(Asm::inst_sar, param_reg(TypeInt64, Asm::REG_RDX), param_const(TypeChar, (void*)0x1f));
+			add_cmd(Asm::inst_idiv, p_rax, param[1]);
+			add_cmd(Asm::inst_mov, ret, p_rax);
+			add_reg_channel(Asm::REG_RAX, cmd.num - 5, cmd.num - 1);
+			add_reg_channel(Asm::REG_RDX, cmd.num - 2, cmd.num - 2);
+			break;
+		case OperatorIntModulo:
+			add_cmd(Asm::inst_mov, p_eax_int, param[0]);
+			add_cmd(Asm::inst_mov, param_reg(TypeInt, Asm::REG_EDX), p_eax_int);
+			add_cmd(Asm::inst_sar, param_reg(TypeInt, Asm::REG_EDX), param_const(TypeChar, (void*)0x1f));
+			add_cmd(Asm::inst_idiv, p_eax_int, param[1]);
+			add_cmd(Asm::inst_mov, ret, param_reg(TypeInt, Asm::REG_EDX));
+			add_reg_channel(Asm::REG_EAX, cmd.num - 5, cmd.num - 2);
+			add_reg_channel(Asm::REG_EDX, cmd.num - 2, cmd.num - 1);
+			break;
+		case OperatorInt64Modulo:
+			add_cmd(Asm::inst_mov, p_rax, param[0]);
+			add_cmd(Asm::inst_mov, param_reg(TypeInt64, Asm::REG_RDX), p_rax);
+			add_cmd(Asm::inst_sar, param_reg(TypeInt64, Asm::REG_RDX), param_const(TypeChar, (void*)0x1f));
+			add_cmd(Asm::inst_idiv, p_rax, param[1]);
+			add_cmd(Asm::inst_mov, ret, param_reg(TypeInt64, Asm::REG_RDX));
+			add_reg_channel(Asm::REG_RAX, cmd.num - 5, cmd.num - 2);
+			add_reg_channel(Asm::REG_RDX, cmd.num - 2, cmd.num - 1);
+			break;
+		case OperatorIntEqual:
+		case OperatorIntNotEqual:
+		case OperatorIntGreater:
+		case OperatorIntGreaterEqual:
+		case OperatorIntSmaller:
+		case OperatorIntSmallerEqual:
+		case OperatorInt64Equal:
+		case OperatorInt64NotEqual:
+		case OperatorInt64Greater:
+		case OperatorInt64GreaterEqual:
+		case OperatorInt64Smaller:
+		case OperatorInt64SmallerEqual:
+		case OperatorPointerEqual:
+		case OperatorPointerNotEqual:
+			add_cmd(Asm::inst_cmp, param[0], param[1]);
+			if (com->link_no==OperatorIntEqual)			add_cmd(Asm::inst_setz, ret);
+			if (com->link_no==OperatorIntNotEqual)		add_cmd(Asm::inst_setnz, ret);
+			if (com->link_no==OperatorIntGreater)		add_cmd(Asm::inst_setnle, ret);
+			if (com->link_no==OperatorIntGreaterEqual)	add_cmd(Asm::inst_setnl, ret);
+			if (com->link_no==OperatorIntSmaller)		add_cmd(Asm::inst_setl, ret);
+			if (com->link_no==OperatorIntSmallerEqual)	add_cmd(Asm::inst_setle, ret);
+			if (com->link_no==OperatorInt64Equal)		add_cmd(Asm::inst_setz, ret);
+			if (com->link_no==OperatorInt64NotEqual)	add_cmd(Asm::inst_setnz, ret);
+			if (com->link_no==OperatorInt64Greater)		add_cmd(Asm::inst_setnle, ret);
+			if (com->link_no==OperatorInt64GreaterEqual)add_cmd(Asm::inst_setnl, ret);
+			if (com->link_no==OperatorInt64Smaller)		add_cmd(Asm::inst_setl, ret);
+			if (com->link_no==OperatorInt64SmallerEqual)add_cmd(Asm::inst_setle, ret);
+			if (com->link_no==OperatorPointerEqual)		add_cmd(Asm::inst_setz, ret);
+			if (com->link_no==OperatorPointerNotEqual)	add_cmd(Asm::inst_setnz, ret);
+			break;
+		case OperatorIntBitAnd:
+		case OperatorInt64BitAnd:
+			add_cmd(Asm::inst_mov, ret, param[0]);
+			add_cmd(Asm::inst_and, ret, param[1]);
+			break;
+		case OperatorIntBitOr:
+		case OperatorInt64BitOr:
+			add_cmd(Asm::inst_mov, ret, param[0]);
+			add_cmd(Asm::inst_or, ret, param[1]);
+			break;
+		case OperatorIntShiftRight:
+			add_cmd(Asm::inst_mov, param_reg(TypeInt, Asm::REG_ECX), param[1]);
+			add_cmd(Asm::inst_mov, ret, param[0]);
+			add_cmd(Asm::inst_shr, ret, param_reg(TypeChar, Asm::REG_CL));
+			add_reg_channel(Asm::REG_ECX, cmd.num - 3, cmd.num - 1);
+			break;
+		case OperatorInt64ShiftRight:
+			add_cmd(Asm::inst_mov, param_reg(TypeInt64, Asm::REG_RCX), param[1]);
+			add_cmd(Asm::inst_mov, ret, param[0]);
+			add_cmd(Asm::inst_shr, ret, param_reg(TypeChar, Asm::REG_CL));
+			add_reg_channel(Asm::REG_RCX, cmd.num - 3, cmd.num - 1);
+			break;
+		case OperatorIntShiftLeft:
+			add_cmd(Asm::inst_mov, param_reg(TypeInt, Asm::REG_ECX), param[1]);
+			add_cmd(Asm::inst_mov, ret, param[0]);
+			add_cmd(Asm::inst_shl, ret, param_reg(TypeChar, Asm::REG_CL));
+			add_reg_channel(Asm::REG_ECX, cmd.num - 3, cmd.num - 1);
+			break;
+		case OperatorInt64ShiftLeft:
+			add_cmd(Asm::inst_mov, param_reg(TypeInt64, Asm::REG_RCX), param[1]);
+			add_cmd(Asm::inst_mov, ret, param[0]);
+			add_cmd(Asm::inst_shl, ret, param_reg(TypeChar, Asm::REG_CL));
+			add_reg_channel(Asm::REG_RCX, cmd.num - 3, cmd.num - 1);
+			break;
+		case OperatorIntNegate:
+			add_cmd(Asm::inst_mov, ret, param_const(TypeInt, (void*)0x0));
+			add_cmd(Asm::inst_sub, ret, param[0]);
+			break;
+		case OperatorInt64Negate:
+			add_cmd(Asm::inst_mov, ret, param_const(TypeInt64, (void*)0x0));
+			add_cmd(Asm::inst_sub, ret, param[0]);
+			break;
+		case OperatorIntIncrease:
+			add_cmd(Asm::inst_add, param[0], param_const(TypeInt, (void*)0x1));
+			break;
+		case OperatorInt64Increase:
+			add_cmd(Asm::inst_add, param[0], param_const(TypeInt64, (void*)0x1));
+			break;
+		case OperatorIntDecrease:
+			add_cmd(Asm::inst_sub, param[0], param_const(TypeInt, (void*)0x1));
+			break;
+		case OperatorInt64Decrease:
+			add_cmd(Asm::inst_sub, param[0], param_const(TypeInt64, (void*)0x1));
+			break;
+// float
+		case OperatorFloatAddS:
+		case OperatorFloatSubtractS:
+		case OperatorFloatMultiplyS:
+		case OperatorFloatDivideS:
+		case OperatorFloat64AddS:
+		case OperatorFloat64SubtractS:
+		case OperatorFloat64MultiplyS:
+		case OperatorFloat64DivideS:
+			add_cmd(Asm::inst_fld, param[0]);
+			if (com->link_no==OperatorFloatAddS)			add_cmd(Asm::inst_fadd, param[1]);
+			if (com->link_no==OperatorFloatSubtractS)	add_cmd(Asm::inst_fsub, param[1]);
+			if (com->link_no==OperatorFloatMultiplyS)	add_cmd(Asm::inst_fmul, param[1]);
+			if (com->link_no==OperatorFloatDivideS)		add_cmd(Asm::inst_fdiv, param[1]);
+			if (com->link_no==OperatorFloat64AddS)			add_cmd(Asm::inst_fadd, param[1]);
+			if (com->link_no==OperatorFloat64SubtractS)	add_cmd(Asm::inst_fsub, param[1]);
+			if (com->link_no==OperatorFloat64MultiplyS)	add_cmd(Asm::inst_fmul, param[1]);
+			if (com->link_no==OperatorFloat64DivideS)		add_cmd(Asm::inst_fdiv, param[1]);
+			add_cmd(Asm::inst_fstp, param[0]);
+			break;
+		case OperatorFloatAdd:
+		case OperatorFloatSubtract:
+		case OperatorFloatMultiply:
+		case OperatorFloatDivide:
+		case OperatorFloat64Add:
+		case OperatorFloat64Subtract:
+		case OperatorFloat64Multiply:
+		case OperatorFloat64Divide:
+			add_cmd(Asm::inst_fld, param[0]);
+			if (com->link_no==OperatorFloatAdd)			add_cmd(Asm::inst_fadd, param[1]);
+			if (com->link_no==OperatorFloatSubtract)		add_cmd(Asm::inst_fsub, param[1]);
+			if (com->link_no==OperatorFloatMultiply)		add_cmd(Asm::inst_fmul, param[1]);
+			if (com->link_no==OperatorFloatDivide)		add_cmd(Asm::inst_fdiv, param[1]);
+			if (com->link_no==OperatorFloat64Add)			add_cmd(Asm::inst_fadd, param[1]);
+			if (com->link_no==OperatorFloat64Subtract)		add_cmd(Asm::inst_fsub, param[1]);
+			if (com->link_no==OperatorFloat64Multiply)		add_cmd(Asm::inst_fmul, param[1]);
+			if (com->link_no==OperatorFloat64Divide)		add_cmd(Asm::inst_fdiv, param[1]);
+			add_cmd(Asm::inst_fstp, ret);
+			break;
+		case OperatorFloatMultiplyFI:
+		case OperatorFloat64MultiplyFI:
+			add_cmd(Asm::inst_fild, param[1]);
+			add_cmd(Asm::inst_fmul, param[0]);
+			add_cmd(Asm::inst_fstp, ret);
+			break;
+		case OperatorFloatMultiplyIF:
+		case OperatorFloat64MultiplyIF:
+			add_cmd(Asm::inst_fild, param[0]);
+			add_cmd(Asm::inst_fmul, param[1]);
+			add_cmd(Asm::inst_fstp, ret);
+			break;
+		case OperatorFloatEqual:
+		case OperatorFloat64Equal:
+			add_cmd(Asm::inst_fld, param[0]);
+			add_cmd(Asm::inst_fld, param[1]);
+			add_cmd(Asm::inst_fucompp, p_st0, p_st1);
+			add_cmd(Asm::inst_fnstsw, p_ax);
+			add_cmd(Asm::inst_and, p_ah, param_const(TypeChar, (void*)0x45));
+			add_cmd(Asm::inst_cmp, p_ah, param_const(TypeChar, (void*)0x40));
+			add_cmd(Asm::inst_setz, ret);
+			add_reg_channel(Asm::REG_EAX, cmd.num - 4, cmd.num - 2);
+			break;
+		case OperatorFloatNotEqual:
+		case OperatorFloat64NotEqual:
+			add_cmd(Asm::inst_fld, param[0]);
+			add_cmd(Asm::inst_fld, param[1]);
+			add_cmd(Asm::inst_fucompp, p_st0, p_st1);
+			add_cmd(Asm::inst_fnstsw, p_ax);
+			add_cmd(Asm::inst_and, p_ah, param_const(TypeChar, (void*)0x45));
+			add_cmd(Asm::inst_cmp, p_ah, param_const(TypeChar, (void*)0x40));
+			add_cmd(Asm::inst_setnz, ret);
+			add_reg_channel(Asm::REG_EAX, cmd.num - 4, cmd.num - 2);
+			break;
+		case OperatorFloatGreater:
+		case OperatorFloat64Greater:
+			add_cmd(Asm::inst_fld, param[1]);
+			add_cmd(Asm::inst_fld, param[0]);
+			add_cmd(Asm::inst_fucompp, p_st0, p_st1);
+			add_cmd(Asm::inst_fnstsw, p_ax);
+			add_cmd(Asm::inst_test, p_ah, param_const(TypeChar, (void*)0x45));
+			add_cmd(Asm::inst_setz, ret);
+			add_reg_channel(Asm::REG_EAX, cmd.num - 3, cmd.num - 2);
+			break;
+		case OperatorFloatGreaterEqual:
+		case OperatorFloat64GreaterEqual:
+			add_cmd(Asm::inst_fld, param[1]);
+			add_cmd(Asm::inst_fld, param[0]);
+			add_cmd(Asm::inst_fucompp, p_st0, p_st1);
+			add_cmd(Asm::inst_fnstsw, p_ax);
+			add_cmd(Asm::inst_test, p_ah, param_const(TypeChar, (void*)0x05));
+			add_cmd(Asm::inst_setz, ret);
+			add_reg_channel(Asm::REG_EAX, cmd.num - 3, cmd.num - 2);
+			break;
+		case OperatorFloatSmaller:
+		case OperatorFloat64Smaller:
+			add_cmd(Asm::inst_fld, param[0]);
+			add_cmd(Asm::inst_fld, param[1]);
+			add_cmd(Asm::inst_fucompp, p_st0, p_st1);
+			add_cmd(Asm::inst_fnstsw, p_ax);
+			add_cmd(Asm::inst_test, p_ah, param_const(TypeChar, (void*)0x45));
+			add_cmd(Asm::inst_setz, ret);
+			add_reg_channel(Asm::REG_EAX, cmd.num - 3, cmd.num - 2);
+			break;
+		case OperatorFloatSmallerEqual:
+		case OperatorFloat64SmallerEqual:
+			add_cmd(Asm::inst_fld, param[0]);
+			add_cmd(Asm::inst_fld, param[1]);
+			add_cmd(Asm::inst_fucompp, p_st0, p_st1);
+			add_cmd(Asm::inst_fnstsw, p_ax);
+			add_cmd(Asm::inst_test, p_ah, param_const(TypeChar, (void*)0x05));
+			add_cmd(Asm::inst_setz, ret);
+			add_reg_channel(Asm::REG_EAX, cmd.num - 3, cmd.num - 2);
+			break;
+		case OperatorFloatNegate:
+			add_cmd(Asm::inst_mov, ret, param[0]);
+			add_cmd(Asm::inst_xor, ret, param_const(TypeInt, (void*)0x80000000));
+			break;
+// complex
+		case OperatorComplexAddS:
+		case OperatorComplexSubtractS:
+		//case OperatorComplexMultiplySCF:
+		//case OperatorComplexDivideS:
+			add_cmd(Asm::inst_fld, param_shift(param[0], 0, TypeFloat32));
+			if (com->link_no == OperatorComplexAddS)			add_cmd(Asm::inst_fadd, param_shift(param[1], 0, TypeFloat32));
+			if (com->link_no == OperatorComplexSubtractS)	add_cmd(Asm::inst_fsub, param_shift(param[1], 0, TypeFloat32));
+			add_cmd(Asm::inst_fstp, param_shift(param[0], 0, TypeFloat32));
+			add_cmd(Asm::inst_fld, param_shift(param[0], 4, TypeFloat32));
+			if (com->link_no == OperatorComplexAddS)			add_cmd(Asm::inst_fadd, param_shift(param[1], 4, TypeFloat32));
+			if (com->link_no == OperatorComplexSubtractS)	add_cmd(Asm::inst_fsub, param_shift(param[1], 4, TypeFloat32));
+			add_cmd(Asm::inst_fstp, param_shift(param[0], 4, TypeFloat32));
+			break;
+		case OperatorComplexAdd:
+		case OperatorComplexSubtract:
+//		case OperatorFloatMultiply:
+//		case OperatorFloatDivide:
+			add_cmd(Asm::inst_fld, param_shift(param[0], 0, TypeFloat32));
+			if (com->link_no == OperatorComplexAdd)		add_cmd(Asm::inst_fadd, param_shift(param[1], 0, TypeFloat32));
+			if (com->link_no == OperatorComplexSubtract)	add_cmd(Asm::inst_fsub, param_shift(param[1], 0, TypeFloat32));
+			add_cmd(Asm::inst_fstp, param_shift(ret, 0, TypeFloat32));
+			add_cmd(Asm::inst_fld, param_shift(param[0], 4, TypeFloat32));
+			if (com->link_no == OperatorComplexAdd)		add_cmd(Asm::inst_fadd, param_shift(param[1], 4, TypeFloat32));
+			if (com->link_no == OperatorComplexSubtract)	add_cmd(Asm::inst_fsub, param_shift(param[1], 4, TypeFloat32));
+			add_cmd(Asm::inst_fstp, param_shift(ret, 4, TypeFloat32));
+			break;
+		case OperatorComplexMultiply:
+			// r.x = a.y * b.y
+			add_cmd(Asm::inst_fld, param_shift(param[0], 4, TypeFloat32));
+			add_cmd(Asm::inst_fmul, param_shift(param[1], 4, TypeFloat32));
+			add_cmd(Asm::inst_fstp, param_shift(ret, 0, TypeFloat32));
+			// r.x = a.x * b.x - r.x
+			add_cmd(Asm::inst_fld, param_shift(param[0], 0, TypeFloat32));
+			add_cmd(Asm::inst_fmul, param_shift(param[1], 0, TypeFloat32));
+			add_cmd(Asm::inst_fsub, param_shift(ret, 0, TypeFloat32));
+			add_cmd(Asm::inst_fstp, param_shift(ret, 0, TypeFloat32));
+			// r.y = a.y * b.x
+			add_cmd(Asm::inst_fld, param_shift(param[0], 4, TypeFloat32));
+			add_cmd(Asm::inst_fmul, param_shift(param[1], 0, TypeFloat32));
+			add_cmd(Asm::inst_fstp, param_shift(ret, 4, TypeFloat32));
+			// r.y += a.x * b.y
+			add_cmd(Asm::inst_fld, param_shift(param[0], 0, TypeFloat32));
+			add_cmd(Asm::inst_fmul, param_shift(param[1], 4, TypeFloat32));
+			add_cmd(Asm::inst_fadd, param_shift(ret, 4, TypeFloat32));
+			add_cmd(Asm::inst_fstp, param_shift(ret, 4, TypeFloat32));
+			break;
+		case OperatorComplexMultiplyFC:
+			add_cmd(Asm::inst_fld, param[0]);
+			add_cmd(Asm::inst_fmul, param_shift(param[1], 0, TypeFloat32));
+			add_cmd(Asm::inst_fstp, param_shift(ret, 0, TypeFloat32));
+			add_cmd(Asm::inst_fld, param[0]);
+			add_cmd(Asm::inst_fmul, param_shift(param[1], 4, TypeFloat32));
+			add_cmd(Asm::inst_fstp, param_shift(ret, 4, TypeFloat32));
+			break;
+		case OperatorComplexMultiplyCF:
+			add_cmd(Asm::inst_fld, param_shift(param[0], 0, TypeFloat32));
+			add_cmd(Asm::inst_fmul, param[1]);
+			add_cmd(Asm::inst_fstp, param_shift(ret, 0, TypeFloat32));
+			add_cmd(Asm::inst_fld, param_shift(param[0], 4, TypeFloat32));
+			add_cmd(Asm::inst_fmul, param[1]);
+			add_cmd(Asm::inst_fstp, param_shift(ret, 4, TypeFloat32));
+			break;
+		case OperatorComplexEqual:
+			add_cmd(Asm::inst_fld, param_shift(param[0], 0, TypeFloat32));
+			add_cmd(Asm::inst_fld, param_shift(param[1], 0, TypeFloat32));
+			add_cmd(Asm::inst_fucompp, p_st0, p_st1);
+			add_cmd(Asm::inst_fnstsw, p_ax);
+			add_cmd(Asm::inst_and, p_ah, param_const(TypeChar, (void*)0x45));
+			add_cmd(Asm::inst_cmp, p_ah, param_const(TypeChar, (void*)0x40));
+			add_cmd(Asm::inst_setz, ret);
+			add_reg_channel(Asm::REG_EAX, cmd.num - 4, cmd.num - 2);
+			add_cmd(Asm::inst_fld, param_shift(param[0], 4, TypeFloat32));
+			add_cmd(Asm::inst_fld, param_shift(param[1], 4, TypeFloat32));
+			add_cmd(Asm::inst_fucompp, p_st0, p_st1);
+			add_cmd(Asm::inst_fnstsw, p_ax);
+			add_cmd(Asm::inst_and, p_ah, param_const(TypeChar, (void*)0x45));
+			add_cmd(Asm::inst_cmp, p_ah, param_const(TypeChar, (void*)0x40));
+			add_cmd(Asm::inst_setz, p_ah);
+			add_cmd(Asm::inst_and, ret, p_ah);
+			add_reg_channel(Asm::REG_EAX, cmd.num - 5, cmd.num - 1);
+			break;
+// bool/char
+		case OperatorCharEqual:
+		case OperatorCharNotEqual:
+		case OperatorBoolEqual:
+		case OperatorBoolNotEqual:
+		case OperatorBoolGreater:
+		case OperatorBoolGreaterEqual:
+		case OperatorBoolSmaller:
+		case OperatorBoolSmallerEqual:
+			add_cmd(Asm::inst_cmp, param[0], param[1]);
+			if ((com->link_no == OperatorCharEqual) || (com->link_no == OperatorBoolEqual))
+				add_cmd(Asm::inst_setz, ret);
+			else if ((com->link_no ==OperatorCharNotEqual) || (com->link_no == OperatorBoolNotEqual))
+				add_cmd(Asm::inst_setnz, ret);
+			else if (com->link_no == OperatorBoolGreater)		add_cmd(Asm::inst_setnle, ret);
+			else if (com->link_no == OperatorBoolGreaterEqual)	add_cmd(Asm::inst_setnl, ret);
+			else if (com->link_no == OperatorBoolSmaller)		add_cmd(Asm::inst_setl, ret);
+			else if (com->link_no == OperatorBoolSmallerEqual)	add_cmd(Asm::inst_setle, ret);
+			break;
+		case OperatorBoolAnd:
+			add_cmd(Asm::inst_mov, ret, param[0]);
+			add_cmd(Asm::inst_and, ret, param[1]);
+			break;
+		case OperatorBoolOr:
+			add_cmd(Asm::inst_mov, ret, param[0]);
+			add_cmd(Asm::inst_or, ret, param[1]);
+			break;
+		case OperatorCharAddS:
+			add_cmd(Asm::inst_add, param[0], param[1]);
+			break;
+		case OperatorCharSubtractS:
+			add_cmd(Asm::inst_sub, param[0], param[1]);
+			break;
+		case OperatorCharAdd:
+			add_cmd(Asm::inst_mov, ret, param[0]);
+			add_cmd(Asm::inst_add, ret, param[1]);
+			break;
+		case OperatorCharSubtract:
+			add_cmd(Asm::inst_mov, ret, param[0]);
+			add_cmd(Asm::inst_sub, ret, param[1]);
+			break;
+		case OperatorCharBitAnd:
+			add_cmd(Asm::inst_mov, ret, param[0]);
+			add_cmd(Asm::inst_and, ret, param[1]);
+			break;
+		case OperatorCharBitOr:
+			add_cmd(Asm::inst_mov, ret, param[0]);
+			add_cmd(Asm::inst_or, ret, param[1]);
+			break;
+		case OperatorBoolNegate:
+			add_cmd(Asm::inst_mov, ret, param[0]);
+			add_cmd(Asm::inst_xor, ret, param_const(TypeBool, (char*)0x1));
+			break;
+		case OperatorCharNegate:
+			add_cmd(Asm::inst_mov, ret, param_const(TypeChar, (char*)0x0));
+			add_cmd(Asm::inst_sub, ret, param[0]);
+			break;
+// vector
+		case OperatorVectorAddS:
+			for (int i=0;i<3;i++){
+				add_cmd(Asm::inst_fld, param_shift(param[0], i * 4, TypeFloat32));
+				add_cmd(Asm::inst_fadd, param_shift(param[1], i * 4, TypeFloat32));
+				add_cmd(Asm::inst_fstp, param_shift(param[0], i * 4, TypeFloat32));
+			}
+			break;
+		case OperatorVectorMultiplyS:
+			for (int i=0;i<3;i++){
+				add_cmd(Asm::inst_fld, param_shift(param[0], i * 4, TypeFloat32));
+				add_cmd(Asm::inst_fmul, param[1]);
+				add_cmd(Asm::inst_fstp, param_shift(param[0], i * 4, TypeFloat32));
+			}
+			break;
+		case OperatorVectorDivideS:
+			for (int i=0;i<3;i++){
+				add_cmd(Asm::inst_fld, param_shift(param[0], i * 4, TypeFloat32));
+				add_cmd(Asm::inst_fdiv, param[1]);
+				add_cmd(Asm::inst_fstp, param_shift(param[0], i * 4, TypeFloat32));
+			}
+			break;
+		case OperatorVectorSubtractS:
+			for (int i=0;i<3;i++){
+				add_cmd(Asm::inst_fld, param_shift(param[0], i * 4, TypeFloat32));
+				add_cmd(Asm::inst_fsub, param_shift(param[1], i * 4, TypeFloat32));
+				add_cmd(Asm::inst_fstp, param_shift(param[0], i * 4, TypeFloat32));
+			}
+			break;
+		case OperatorVectorAdd:
+			for (int i=0;i<3;i++){
+				add_cmd(Asm::inst_fld, param_shift(param[0], i * 4, TypeFloat32));
+				add_cmd(Asm::inst_fadd, param_shift(param[1], i * 4, TypeFloat32));
+				add_cmd(Asm::inst_fstp, param_shift(ret, i * 4, TypeFloat32));
+			}
+			break;
+		case OperatorVectorSubtract:
+			for (int i=0;i<3;i++){
+				add_cmd(Asm::inst_fld, param_shift(param[0], i * 4, TypeFloat32));
+				add_cmd(Asm::inst_fsub, param_shift(param[1], i * 4, TypeFloat32));
+				add_cmd(Asm::inst_fstp, param_shift(ret, i * 4, TypeFloat32));
+			}
+			break;
+		case OperatorVectorMultiplyVF:
+			for (int i=0;i<3;i++){
+				add_cmd(Asm::inst_fld, param_shift(param[0], i * 4, TypeFloat32));
+				add_cmd(Asm::inst_fmul, param[1]);
+				add_cmd(Asm::inst_fstp, param_shift(ret, i * 4, TypeFloat32));
+			}
+			break;
+		case OperatorVectorMultiplyFV:
+			for (int i=0;i<3;i++){
+				add_cmd(Asm::inst_fld, param[0]);
+				add_cmd(Asm::inst_fmul, param_shift(param[1], i * 4, TypeFloat32));
+				add_cmd(Asm::inst_fstp, param_shift(ret, i * 4, TypeFloat32));
+			}
+			break;
+		case OperatorVectorDivideVF:
+			for (int i=0;i<3;i++){
+				add_cmd(Asm::inst_fld, param_shift(param[0], i * 4, TypeFloat32));
+				add_cmd(Asm::inst_fdiv, param[1]);
+				add_cmd(Asm::inst_fstp, param_shift(ret, i * 4, TypeFloat32));
+			}
+			break;
+		case OperatorVectorNegate:
+			for (int i=0;i<3;i++){
+				add_cmd(Asm::inst_mov, param_shift(ret, i * 4, TypeFloat32), param_shift(param[0], i * 4, TypeFloat32));
+				add_cmd(Asm::inst_xor, param_shift(ret, i * 4, TypeFloat32), param_const(TypeInt, (void*)0x80000000));
+			}
+			break;
+		default:
+			DoError("unimplemented operator: " + PreOperators[com->link_no].str());
+	}
+}
+
 
 void Serializer::AddFunctionCall(Script *script, int func_no)
 {
@@ -617,10 +1160,7 @@ void Serializer::AddFunctionCall(Script *script, int func_no)
 	if (!CompilerFunctionReturn.type)
 		CompilerFunctionReturn.type = TypeVoid;
 
-	if (config.instruction_set== Asm::INSTRUCTION_SET_AMD64)
-		add_function_call_amd64(script, func_no);
-	else if (config.instruction_set == Asm::INSTRUCTION_SET_X86)
-		add_function_call_x86(script, func_no);
+	add_function_call(script, func_no);
 
 	// clean up for next call
 	CompilerFunctionParam.clear();
@@ -638,10 +1178,7 @@ void Serializer::AddClassFunctionCall(ClassFunction *cf)
 	if (!CompilerFunctionReturn.type)
 		CompilerFunctionReturn.type = TypeVoid;
 
-	if (config.instruction_set== Asm::INSTRUCTION_SET_AMD64)
-		add_virtual_function_call_amd64(cf->virtual_index);
-	else if (config.instruction_set == Asm::INSTRUCTION_SET_X86)
-		add_virtual_function_call_x86(cf->virtual_index);
+	add_virtual_function_call(cf->virtual_index);
 
 	// clean up for next call
 	CompilerFunctionParam.clear();
@@ -780,7 +1317,7 @@ void Serializer::SerializeParameter(Command *link, int level, int index, SerialC
 }
 
 
-void Serializer::SerializeOperator(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret)
+void SerializerX86::SerializeOperator(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret)
 {
 	msg_db_f("SerializeOperator", 4);
 	switch(com->link_no){
@@ -1305,7 +1842,7 @@ void Serializer::SerializeOperator(Command *com, Array<SerialCommandParam> &para
 	}
 }
 
-void Serializer::SerializeCompilerFunction(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret, int level, int index, int marker_before_params)
+void SerializerX86::SerializeCompilerFunction(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret, int level, int index, int marker_before_params)
 {
 	switch(com->link_no){
 		/*case CommandSine:
@@ -3149,6 +3686,17 @@ Serializer::~Serializer()
 	delete(list);
 }
 
+Serializer *CreateSerializer(Script *s)
+{
+	if (config.instruction_set == Asm::INSTRUCTION_SET_AMD64)
+		return new SerializerAMD64(s);
+	if (config.instruction_set == Asm::INSTRUCTION_SET_X86)
+		return new SerializerX86(s);
+	if (config.instruction_set == Asm::INSTRUCTION_SET_ARM)
+		return new SerializerARM(s);
+	return NULL;
+}
+
 void Script::CompileFunction(Function *f, char *Opcode, int &OpcodeSize)
 {
 	msg_db_f("Compile Function", 2);
@@ -3157,19 +3705,20 @@ void Script::CompileFunction(Function *f, char *Opcode, int &OpcodeSize)
 		msg_write("serializing " + f->name + " -------------------");
 
 	cur_func = f;
-	Serializer d = Serializer(this);
+	Serializer *d = CreateSerializer(this);
 
 	try{
-		d.SerializeFunction(f);
-		d.DoMapping();
-		d.Assemble(Opcode, OpcodeSize);
+		d->SerializeFunction(f);
+		d->DoMapping();
+		d->Assemble(Opcode, OpcodeSize);
 	}catch(Exception &e){
 		throw e;
 	}catch(Asm::Exception &e){
 		throw Exception(e, this);
 	}
-	functions_to_link.append(d.list->wanted_label);
+	functions_to_link.append(d->list->wanted_label);
 	AlignOpcode();
+	delete(d);
 }
 
 };

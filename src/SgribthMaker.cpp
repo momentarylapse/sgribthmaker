@@ -615,7 +615,8 @@ public:
 
 		Asm::InstructionWithParamsList *l = new Asm::InstructionWithParamsList(0);
 		l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R0, Asm::PK_REGISTER, Asm::REG_R1, 0);
-		l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_CONSTANT, Asm::REG_R2, 512);//2040);
+		l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_CONSTANT, -1, 512);//2040);
+		l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_ldr, Asm::REG_R0, Asm::REG_R2, Asm::PK_DEREF_REGISTER_SHIFT, -1, 512);//2040);
 	//	l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_REGISTER, Asm::REG_R2, 0);
 		//l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_REGISTER_SHIFT, Asm::REG_R2, 5);
 	//	l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_CONSTANT, Asm::REG_R2, 2040);
@@ -626,9 +627,11 @@ public:
 		msg_write(Asm::Disassemble(fff, ocs, true));
 
 
+#ifdef CPU_ARM
 		printf("run...\n");
 		int r = (*fp)(1,2);
 		printf("%d\n", r);
+#endif
 
 		exit(0);
 

@@ -44,7 +44,8 @@ struct SerialCommandParam
 struct SerialCommand
 {
 	int inst;
-	SerialCommandParam p1, p2;
+	int cond;
+	SerialCommandParam p1, p2, p3;
 	int pos;
 };
 
@@ -67,10 +68,11 @@ enum{
 };
 
 
-struct Serializer
+class Serializer
 {
+public:
 	Serializer(Script *script);
-	~Serializer();
+	virtual ~Serializer();
 
 	Array<SerialCommand> cmd;
 	int NumMarkers;
@@ -103,8 +105,8 @@ struct Serializer
 	void SerializeBlock(Block *block, int level);
 	void SerializeParameter(Command *link, int level, int index, SerialCommandParam &param);
 	SerialCommandParam SerializeCommand(Command *com, int level, int index);
-	void SerializeCompilerFunction(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret, int level, int index, int marker_before_params);
-	void SerializeOperator(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret);
+	virtual void SerializeCompilerFunction(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret, int level, int index, int marker_before_params) = 0;
+	virtual void SerializeOperator(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret) = 0;
 	void AddFunctionIntro(Function *f);
 
 	void SimplifyIfStatements();
@@ -115,8 +117,9 @@ struct Serializer
 
 	void add_reg_channel(int reg, int first, int last);
 	void add_temp(Type *t, SerialCommandParam &param, bool add_constructor = true);
-	void add_cmd(int inst, SerialCommandParam p1, SerialCommandParam p2);
-	void add_cmd(int inst, SerialCommandParam p);
+	void add_cmd(int cond, int inst, const SerialCommandParam &p1, const SerialCommandParam &p2, const SerialCommandParam &p3);
+	void add_cmd(int inst, const SerialCommandParam &p1, const SerialCommandParam &p2);
+	void add_cmd(int inst, const SerialCommandParam &p);
 	void add_cmd(int inst);
 	void move_last_cmd(int index);
 	void remove_cmd(int index);
@@ -158,14 +161,10 @@ struct Serializer
 
 	void AddFunctionCall(Script *script, int func_no);
 	void AddClassFunctionCall(ClassFunction *cf);
-	void add_function_call_x86(Script *script, int func_no);
-	void add_function_call_amd64(Script *script, int func_no);
-	void add_virtual_function_call_x86(int virtual_index);
-	void add_virtual_function_call_amd64(int virtual_index);
-	int fc_x86_begin();
-	void fc_x86_end(int push_size);
-	int fc_amd64_begin();
-	void fc_amd64_end(int push_size);
+	virtual void add_function_call(Script *script, int func_no) = 0;
+	virtual void add_virtual_function_call(int virtual_index) = 0;
+	virtual int fc_begin() = 0;
+	virtual void fc_end(int push_size) = 0;
 	void AddReference(SerialCommandParam &param, Type *type, SerialCommandParam &ret);
 	void AddDereference(SerialCommandParam &param, SerialCommandParam &ret, Type *force_type = NULL);
 
@@ -176,6 +175,43 @@ struct Serializer
 
 	void FillInDestructors(bool from_temp);
 	void FillInConstructorsFunc();
+};
+
+class SerializerX86 : public Serializer
+{
+public:
+	SerializerX86(Script *script) : Serializer(script){};
+	virtual ~SerializerX86(){}
+	virtual void add_function_call(Script *script, int func_no);
+	virtual void add_virtual_function_call(int virtual_index);
+	virtual int fc_begin();
+	virtual void fc_end(int push_size);
+	virtual void SerializeCompilerFunction(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret, int level, int index, int marker_before_params);
+	virtual void SerializeOperator(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret);
+};
+
+class SerializerAMD64 : public SerializerX86
+{
+public:
+	SerializerAMD64(Script *script) : SerializerX86(script){};
+	virtual ~SerializerAMD64(){}
+	virtual void add_function_call(Script *script, int func_no);
+	virtual void add_virtual_function_call(int virtual_index);
+	virtual int fc_begin();
+	virtual void fc_end(int push_size);
+};
+
+class SerializerARM : public Serializer
+{
+public:
+	SerializerARM(Script *script) : Serializer(script){};
+	virtual ~SerializerARM(){}
+	virtual void add_function_call(Script *script, int func_no);
+	virtual void add_virtual_function_call(int virtual_index);
+	virtual int fc_begin();
+	virtual void fc_end(int push_size);
+	virtual void SerializeCompilerFunction(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret, int level, int index, int marker_before_params);
+	virtual void SerializeOperator(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret);
 };
 
 };

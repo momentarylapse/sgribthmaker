@@ -46,14 +46,17 @@ string GetRegName(int reg);
 enum{
 	PK_INVALID,
 	PK_NONE,
-	PK_REGISTER,        // eAX
-	PK_DEREF_REGISTER,  // [eAX]
-	PK_LOCAL,           // [ebp + 0x0000]
-	PK_EDX_REL,         // [edx + 0x0000]
-	PK_CONSTANT,        // 0x00000000
-	PK_DEREF_CONSTANT,  // [0x00000000]
-	PK_LABEL,           // _label
-	PK_REGISTER_SHIFT   // eAX + 0x0000
+	PK_REGISTER,              // eAX
+	PK_DEREF_REGISTER,        // [eAX]
+	PK_LOCAL,                 // [eBP + 0x0000]
+	PK_EDX_REL,               // [eDX + 0x0000]
+	PK_CONSTANT,              // 0x00000000
+	PK_DEREF_CONSTANT,        // [0x00000000]
+	PK_LABEL,                 // _label
+	PK_REGISTER_SHIFT,        // r0 + 0x0000
+	PK_DEREF_REGISTER_SHIFT,  // [r0 + 0x0000]
+	PK_DEREF_REGISTER2_UP,    // [r0 + r1]
+	PK_DEREF_REGISTER2_DOWN,  // [r0 - r1]
 };
 
 
@@ -217,6 +220,20 @@ enum{
 	// ARM
 	inst_b,
 	inst_bl,
+
+	inst_ldr,
+	inst_ldrb,
+//	inst_str,
+	inst_strb,
+
+	inst_ldmia,
+	inst_ldmib,
+	inst_ldmda,
+	inst_ldmdb,
+	inst_stmia,
+	inst_stmib,
+	inst_stmda,
+	inst_stmdb,
 
 	inst_eor,
 	inst_rsb,
