@@ -639,7 +639,41 @@ int SerializerARM::fc_begin(){ return 0; }
 void SerializerARM::fc_end(int push_size){}
 void SerializerARM::add_function_call(Script *script, int func_no){}
 void SerializerARM::add_virtual_function_call(int virtual_index){}
-void SerializerARM::SerializeCompilerFunction(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret, int level, int index, int marker_before_params){}
+
+void SerializerARM::SerializeCompilerFunction(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret, int level, int index, int marker_before_params)
+{
+
+	switch(com->link_no){
+		case CommandReturn:
+			if (com->num_params > 0){
+				if (cur_func->return_type->UsesReturnByMemory()){ // we already got a return address in [ebp+0x08] (> 4 byte)
+					FillInDestructors(false);
+					// internally handled...
+
+					AddFunctionOutro(cur_func);
+				}else{ // store return directly in eax / fpu stack (4 byte)
+					SerialCommandParam t;
+					add_temp(cur_func->return_type, t);
+					FillInDestructors(false);
+					if (cur_func->return_type == TypeInt){
+						add_cmd(Asm::inst_mov, param_reg(cur_func->return_type, Asm::REG_R0), param[0]);
+					}else{
+						DoError("return != int");
+					}
+					AddFunctionOutro(cur_func);
+				}
+			}else{
+				FillInDestructors(false);
+				AddFunctionOutro(cur_func);
+			}
+			break;
+		case CommandAsm:
+			add_cmd(inst_asm);
+			break;
+		default:
+			DoError("compiler function unimplemented: " + PreCommands[com->link_no].name);
+	}
+}
 
 void SerializerARM::SerializeOperator(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret)
 {

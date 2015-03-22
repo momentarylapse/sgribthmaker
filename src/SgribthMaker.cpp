@@ -630,7 +630,7 @@ public:
 
 		msg_write("kaba");
 		try{
-			Script::Script *s = Script::CreateForSource("#show\nint f(int a, int b)\n\tint c = a + b");
+			Script::Script *s = Script::CreateForSource("#show\nint f(int a, int b)\n\tint c = a + b\n\treturn c");
 			msg_write(Asm::Disassemble(s->Opcode, s->OpcodeSize, true));
 		}catch(Script::Exception &e){
 			e.print();
