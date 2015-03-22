@@ -39,14 +39,18 @@ struct SerialCommandParam
 	//int c_id, v_id;
 	bool operator == (const SerialCommandParam &param) const
 	{	return (kind == param.kind) && (p == param.p) && (type == param.type) && (shift == param.shift);	}
+	string str() const;
 };
+
+#define SERIAL_COMMAND_NUM_PARAMS	3
 
 struct SerialCommand
 {
 	int inst;
 	int cond;
-	SerialCommandParam p1, p2, p3;
+	SerialCommandParam p[SERIAL_COMMAND_NUM_PARAMS];
 	int pos;
+	string str() const;
 };
 
 struct TempVar
