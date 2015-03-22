@@ -603,9 +603,6 @@ public:
 
 		msg_set_verbose(true);
 
-		msg_write("aaa");
-//		Asm::Init(Asm::INSTRUCTION_SET_ARM);
-		msg_write("bbb");
 		CFile *f = FileOpen("arm/arm-test");
 		f->SetBinaryMode(true);
 		string code = f->ReadComplete();
@@ -613,19 +610,20 @@ public:
 		//msg_write(code.hex());
 		msg_write(Asm::Disassemble(&code[1024-12], 64, true));
 
-		Asm::InstructionWithParamsList *l = new Asm::InstructionWithParamsList(0);
-		l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R0, Asm::PK_REGISTER, Asm::REG_R1, 0);
-		l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_CONSTANT, -1, 512);//2040);
-		l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_ldr, Asm::REG_R0, Asm::REG_R2, Asm::PK_DEREF_REGISTER_SHIFT, -1, 512);//2040);
-		l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_ldr, Asm::REG_R0, Asm::REG_R2, Asm::PK_DEREF_REGISTER, -1, 0);//2040);
-	//	l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_REGISTER, Asm::REG_R2, 0);
-		//l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_REGISTER_SHIFT, Asm::REG_R2, 5);
-	//	l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_CONSTANT, Asm::REG_R2, 2040);
-		int ocs = 0;
-		l->Compile(fff, ocs);
-		fff[ocs / 4] = 0xe12fff1e;
-		ocs += 4;
-		msg_write(Asm::Disassemble(fff, ocs, true));
+		try{
+			Asm::InstructionWithParamsList *l = new Asm::InstructionWithParamsList(0);
+			l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::param_reg(Asm::REG_R0), Asm::param_reg(Asm::REG_R0), Asm::param_reg(Asm::REG_R1));
+			l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::param_reg(Asm::REG_R0), Asm::param_reg(Asm::REG_R1), Asm::param_imm(512, 4));//2040));
+			l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_ldr, Asm::param_reg(Asm::REG_R0), Asm::param_deref_reg_shift(Asm::REG_R13, 512, 4));//2040));
+			l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_ldr, Asm::param_reg(Asm::REG_R0), Asm::param_deref_reg(Asm::REG_R2, 4));
+			int ocs = 0;
+			l->Compile(fff, ocs);
+			fff[ocs / 4] = 0xe12fff1e;
+			ocs += 4;
+			msg_write(Asm::Disassemble(fff, ocs, true));
+		}catch(Asm::Exception &e){
+			e.print();
+		}
 
 
 		msg_write("kaba");

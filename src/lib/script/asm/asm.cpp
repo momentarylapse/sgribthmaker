@@ -11,19 +11,6 @@ int OCParam;
 
 
 
-enum
-{
-	SIZE_8 = 1,
-	SIZE_16 = 2,
-	SIZE_32 = 4,
-	SIZE_48 = 6,
-	SIZE_64 = 8,
-	SIZE_128 = 16,
-	/*SIZE_VARIABLE = -5,
-	SIZE_32OR48 = -6,*/
-	SIZE_UNKNOWN = -7,
-};
-
 InstructionSetData InstructionSet;
 
 struct ParserState
@@ -378,10 +365,12 @@ enum
 	PARAMT_REGISTER_OR_MEM, // ...
 	PARAMT_MEMORY,
 	//PARAMT_SIB,
-	PARAMT_REGISTER_SHIFT, // ARM
 	PARAMT_NONE,
 	PARAMT_INVALID
 };
+
+
+InstructionParam param_none = {PARAMT_NONE};
 
 // short parameter type
 enum
@@ -412,31 +401,6 @@ enum
 	DISP_MODE_16_REG2   // reg + reg2 + 16bit
 };
 
-// a real parameter (usable)
-struct InstructionParam
-{
-	int type;
-	int disp;
-	Register *reg, *reg2;
-	bool deref;
-	int size;
-	long long value; // disp or immediate
-	bool is_label;
-	bool immediate_is_relative;	// for jump
-	string str(bool hide_size = false);
-};
-
-struct InstructionWithParams
-{
-	int inst;
-	int condition; // ARM
-	InstructionParam p1, p2;
-	int line, col;
-	int size;
-	int addr_size;
-	int param_size;
-};
-
 
 InstructionParam _make_param_(int type, int size, long long param);
 
@@ -461,11 +425,93 @@ void InstructionWithParamsList::add_easy(int inst, int param1_type, int param1_s
 	add(i);
 };
 
-void InstructionWithParamsList::add_arm(int cond, int inst, int reg1, int reg2, int param3_type, int reg3, int immediate3)
+InstructionParam param_reg(int reg)
+{
+	InstructionParam p;
+	p.type = PARAMT_REGISTER;
+	p.reg = RegisterByID[reg];
+	p.size = p.reg->size;
+	p.reg2 = NULL;
+	p.deref = false;
+	p.value = 0;
+	p.disp = DISP_MODE_NONE;
+	return p;
+}
+
+InstructionParam param_deref_reg(int reg, int size)
+{
+	InstructionParam p;
+	p.type = PARAMT_REGISTER;
+	p.reg = RegisterByID[reg];
+	p.size = size;
+	p.reg2 = NULL;
+	p.deref = true;
+	p.value = 0;
+	p.disp = DISP_MODE_NONE;
+	return p;
+}
+
+InstructionParam param_deref_reg_shift(int reg, int shift, int size)
+{
+	InstructionParam p;
+	p.type = PARAMT_REGISTER;
+	p.reg = RegisterByID[reg];
+	p.size = size;
+	p.reg2 = NULL;
+	p.deref = true;
+	p.value = shift;
+	p.disp = ((shift < 120) && (shift > -120)) ? DISP_MODE_8 : DISP_MODE_32;
+	return p;
+}
+
+InstructionParam param_deref_reg_shift_reg(int reg, int reg2, int size)
+{
+	InstructionParam p;
+	p.type = PARAMT_REGISTER;
+	p.reg = RegisterByID[reg];
+	p.size = size;
+	p.reg2 = RegisterByID[reg2];
+	p.deref = true;
+	p.value = 1;
+	p.disp = DISP_MODE_REG2;
+	return p;
+}
+
+InstructionParam param_imm(long long value, int size)
+{
+	InstructionParam p;
+	p.type = PARAMT_IMMEDIATE;
+	p.reg = NULL;
+	p.reg2 = NULL;
+	p.size = size;
+	p.value = value;
+	p.deref = false;
+	p.disp = DISP_MODE_NONE;
+	return p;
+}
+
+InstructionParam param_deref_imm(long long value, int size)
+{
+	InstructionParam p;
+	p.type = PARAMT_IMMEDIATE;
+	p.reg = NULL;
+	p.size = size;
+	p.reg2 = NULL;
+	p.value = value;
+	p.deref = true;
+	p.disp = DISP_MODE_NONE;
+	return p;
+}
+
+void InstructionWithParamsList::add_arm(int cond, int inst, const InstructionParam &p1, const InstructionParam &p2, const InstructionParam &p3)
 {
 	InstructionWithParams i;
 	i.inst = inst;
 	i.condition = cond;
+	i.p1 = p1;
+	i.p2 = p2;
+	i.p3 = p3;
+	/*
 	i.p1.reg = RegisterByID[reg1];
 	i.p1.reg2 = NULL;
 	if (reg2 >= REG_R0)
@@ -496,7 +542,11 @@ void InstructionWithParamsList::add_arm(int cond, int inst, int reg1, int reg2, 
 		i.p2.type = PARAMT_REGISTER;
 		i.p2.reg = RegisterByID[reg3];
 		i.p2.value = -1;
-	}
+	}else if (param3_type == PK_LOCAL){
+		i.p1.reg2 = RegisterByID[REG_R13];
+		i.p2.type = PARAMT_IMMEDIATE;
+		i.p2.value = immediate3;
+	}*/
 	i.line = current_line;
 	i.col = current_col;
 	add(i);
@@ -531,6 +581,8 @@ int InstructionWithParamsList::add_label(const string &name, bool declaring)
 
 void InstructionWithParamsList::add_func_intro(int stack_alloc_size)
 {
+	if (InstructionSet.set == INSTRUCTION_SET_ARM)
+		return;
 	long reg_bp = (InstructionSet.set == INSTRUCTION_SET_AMD64) ? REG_RBP : REG_EBP;
 	long reg_sp = (InstructionSet.set == INSTRUCTION_SET_AMD64) ? REG_RSP : REG_ESP;
 	int s = InstructionSet.pointer_size;
@@ -3376,6 +3428,8 @@ void InstructionWithParamsList::AddInstructionARM(char *oc, int &ocs, int n)
 
 	int code = 0;
 
+	msg_write(GetInstructionName(iwp.inst));
+
 	code = iwp.condition << 28;
 	int nn = -1;
 	for (int i=0; i<16; i++)
@@ -3385,17 +3439,19 @@ void InstructionWithParamsList::AddInstructionARM(char *oc, int &ocs, int n)
 		code |= 0x0 << 26;
 		code |= (nn << 21);
 		code |= arm_reg_no(iwp.p1.reg) << 12;
-		code |= arm_reg_no(iwp.p1.reg2) << 16;
-		if (iwp.p2.type == PARAMT_REGISTER){
-			code |= arm_reg_no(iwp.p2.reg) << 0;
-		}else if (iwp.p2.type == PARAMT_IMMEDIATE){
-			code |= arm_encode_imm(iwp.p2.value) << 0;
+		code |= arm_reg_no(iwp.p2.reg) << 16;
+		if (iwp.p3.type == PARAMT_REGISTER){
+			code |= arm_reg_no(iwp.p3.reg) << 0;
+			if (iwp.p3.disp != DISP_MODE_NONE)
+				SetError("p3.disp != DISP_MODE_NONE");
+		}else if (iwp.p3.type == PARAMT_IMMEDIATE){
+			code |= arm_encode_imm(iwp.p3.value) << 0;
 			code |= 1 << 25;
-		}else if (iwp.p2.type == PARAMT_REGISTER_SHIFT){
+		}/*else if (iwp.p3.type == PARAMT_REGISTER_SHIFT){
 			msg_write("TODO reg shift");
-			code |= arm_reg_no(iwp.p2.reg) << 0;
-			code |= (iwp.p2.value & 0xff) << 4;
-		}
+			code |= arm_reg_no(iwp.p3.reg) << 0;
+			code |= (iwp.p3.value & 0xff) << 4;
+		}*/
 	}else if (arm_is_load_store_reg(iwp.inst)){
 		if (iwp.inst == inst_ldr)
 			code |= 0x04100000;
@@ -3407,19 +3463,19 @@ void InstructionWithParamsList::AddInstructionARM(char *oc, int &ocs, int n)
 			code |= 0x04400000;
 
 		code |= arm_reg_no(iwp.p1.reg) << 12;
-		code |= arm_reg_no(iwp.p1.reg2) << 16;
+		code |= arm_reg_no(iwp.p2.reg) << 16;
 
-		if (iwp.p2.type == PARAMT_IMMEDIATE){
+		if ((iwp.p2.disp == DISP_MODE_8) or (iwp.p2.disp == DISP_MODE_32)){
 			if (iwp.p2.value >= 0)
 				code |= 0x01800000 | iwp.p2.value;
 			else
 				code |= 0x01000000 | (-iwp.p2.value);
-		}else if (iwp.p2.type == PARAMT_REGISTER){
+		}else if (iwp.p2.disp == DISP_MODE_REG2){
 			if (iwp.p2.value >= 0)
 				code |= 0x03800000;
 			else
 				code |= 0x03000000;
-			code |= arm_reg_no(iwp.p2.reg);
+			code |= arm_reg_no(iwp.p2.reg2);
 		}
 	}
 
@@ -3459,7 +3515,8 @@ void InstructionWithParamsList::ShrinkJumps(void *oc, int ocs)
 
 void InstructionWithParamsList::Optimize(void *oc, int ocs)
 {
-	ShrinkJumps(oc, ocs);
+	if (InstructionSet.set != INSTRUCTION_SET_ARM)
+		ShrinkJumps(oc, ocs);
 }
 
 void InstructionWithParamsList::Compile(void *oc, int &ocs)

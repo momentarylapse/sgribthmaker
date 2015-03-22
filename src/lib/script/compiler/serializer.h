@@ -112,6 +112,7 @@ public:
 	virtual void SerializeCompilerFunction(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret, int level, int index, int marker_before_params) = 0;
 	virtual void SerializeOperator(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret) = 0;
 	virtual void AddFunctionIntro(Function *f) = 0;
+	virtual void AddFunctionOutro(Function *f) = 0;
 
 	void SimplifyIfStatements();
 	void SimplifyFloatStore();
@@ -155,6 +156,7 @@ public:
 	int temp_in_cmd(int c, int v);
 	void ScanTempVarUsage();
 	virtual void CorrectUnallowedParamCombis() = 0;
+	virtual void CorrectUnallowedParamCombis2(SerialCommand &c) = 0;
 
 	int find_unused_reg(int first, int last, int size, bool allow_eax);
 	void solve_deref_temp_local(int c, int np, bool is_local);
@@ -192,11 +194,13 @@ public:
 	virtual int fc_begin();
 	virtual void fc_end(int push_size);
 	virtual void AddFunctionIntro(Function *f);
+	virtual void AddFunctionOutro(Function *f);
 	virtual void SerializeCompilerFunction(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret, int level, int index, int marker_before_params);
 	virtual void SerializeOperator(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret);
 
 	virtual void DoMapping();
 	virtual void CorrectUnallowedParamCombis();
+	virtual void CorrectUnallowedParamCombis2(SerialCommand &c);
 };
 
 class SerializerAMD64 : public SerializerX86
@@ -209,6 +213,8 @@ public:
 	virtual int fc_begin();
 	virtual void fc_end(int push_size);
 	virtual void AddFunctionIntro(Function *f);
+	virtual void AddFunctionOutro(Function *f);
+	virtual void CorrectUnallowedParamCombis2(SerialCommand &c);
 };
 
 class SerializerARM : public Serializer
@@ -221,11 +227,13 @@ public:
 	virtual int fc_begin();
 	virtual void fc_end(int push_size);
 	virtual void AddFunctionIntro(Function *f);
+	virtual void AddFunctionOutro(Function *f);
 	virtual void SerializeCompilerFunction(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret, int level, int index, int marker_before_params);
 	virtual void SerializeOperator(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret);
 
 	virtual void DoMapping();
 	virtual void CorrectUnallowedParamCombis();
+	virtual void CorrectUnallowedParamCombis2(SerialCommand &c);
 };
 
 };

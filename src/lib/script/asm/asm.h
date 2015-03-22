@@ -328,14 +328,64 @@ struct MetaInfo
 };
 
 
-struct InstructionWithParams;
+struct Register;
+
+// a real parameter (usable)
+struct InstructionParam
+{
+	int type;
+	int disp;
+	Register *reg, *reg2;
+	bool deref;
+	int size;
+	long long value; // disp or immediate
+	bool is_label;
+	bool immediate_is_relative;	// for jump
+	string str(bool hide_size = false);
+};
+
+struct InstructionWithParams
+{
+	int inst;
+	int condition; // ARM
+	InstructionParam p1, p2, p3;
+	int line, col;
+	int size;
+	int addr_size;
+	int param_size;
+	string str(bool hide_size = false);
+};
+
+
+enum
+{
+	SIZE_8 = 1,
+	SIZE_16 = 2,
+	SIZE_32 = 4,
+	SIZE_48 = 6,
+	SIZE_64 = 8,
+	SIZE_128 = 16,
+	/*SIZE_VARIABLE = -5,
+	SIZE_32OR48 = -6,*/
+	SIZE_UNKNOWN = -7,
+};
+
+extern InstructionParam param_none;
+InstructionParam param_reg(int reg);
+InstructionParam param_deref_reg(int reg, int size);
+InstructionParam param_deref_reg_shift(int reg, int shift, int size);
+InstructionParam param_deref_reg_shift_reg(int reg, int reg2, int size);
+InstructionParam param_imm(long long value, int size);
+InstructionParam param_deref_imm(long long value, int size);
+
 struct InstructionWithParamsList : public Array<InstructionWithParams>
 {
 	InstructionWithParamsList(int line_offset);
 	~InstructionWithParamsList();
 
 	void add_easy(int inst, int param1_type = PK_NONE, int param1_size = -1, void *param1 = NULL, int param2_type = PK_NONE, int param2_size = -1, void *param2 = NULL);
-	void add_arm(int cond, int inst, int reg1, int reg2, int param3_type, int reg3, int immediate3 = 0);
+	void add2(int inst, const InstructionParam &p1 = param_none, const InstructionParam &p2 = param_none);
+	void add_arm(int cond, int inst, const InstructionParam &p1, const InstructionParam &p2 = param_none, const InstructionParam &p3 = param_none);
 	int add_label(const string &name, bool declaring);
 
 	void add_func_intro(int stack_alloc_size);
