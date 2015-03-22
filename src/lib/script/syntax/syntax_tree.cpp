@@ -254,10 +254,10 @@ string LinkNr2Str(SyntaxTree *s,int kind,int nr)
 	if (kind == KindDerefAddressShift)	return i2s(nr);
 	if (kind == KindType)				return s->Types[nr]->name;
 	if (kind == KindRegister)			return Asm::GetRegName(nr);
-	if (kind == KindAddress)			return d2h(&nr, config.PointerSize);
-	if (kind == KindMemory)				return d2h(&nr, config.PointerSize);
-	if (kind == KindLocalAddress)		return d2h(&nr, config.PointerSize);
-	if (kind == KindLocalMemory)		return d2h(&nr, config.PointerSize);
+	if (kind == KindAddress)			return d2h(&nr, config.pointer_size);
+	if (kind == KindMemory)				return d2h(&nr, config.pointer_size);
+	if (kind == KindLocalAddress)		return d2h(&nr, config.pointer_size);
+	if (kind == KindLocalMemory)		return d2h(&nr, config.pointer_size);
 	return i2s(nr);
 }
 
@@ -316,7 +316,7 @@ int SyntaxTree::AddConstant(Type *type)
 	Constant c;
 	c.name = "-none-";
 	c.type = type;
-	c.value.resize(max(type->size, config.PointerSize));
+	c.value.resize(max(type->size, config.pointer_size));
 	Constants.add(c);
 	return Constants.num - 1;
 }
@@ -696,7 +696,7 @@ Type *SyntaxTree::CreateArrayType(Type *element_type, int num_elements, const st
 		name_pre = element_type->name;
 	if (num_elements < 0){
 		return CreateNewType(name_pre + "[]" +  suffix,
-			config.SuperArraySize, false, false, true, num_elements, element_type);
+			config.super_array_size, false, false, true, num_elements, element_type);
 	}else{
 		return CreateNewType(name_pre + format("[%d]", num_elements) + suffix,
 			element_type->size * num_elements, false, false, true, num_elements, element_type);
@@ -1057,11 +1057,11 @@ void SyntaxTree::MapLocalVariablesToStack()
 {
 	msg_db_f("MapLocalVariablesToStack", 1);
 	foreach(Function *f, Functions){
-		f->_param_size = 2 * config.PointerSize; // space for return value and eBP
+		f->_param_size = 2 * config.pointer_size; // space for return value and eBP
 		if (config.instruction_set == Asm::INSTRUCTION_SET_X86){
 			f->_var_size = 0;
 
-			if (config.abi == AbiWindows32){
+			if (config.abi == ABI_WINDOWS_32){
 				// map "self" to the VERY first parameter
 				MapLVSX86Self(f);
 

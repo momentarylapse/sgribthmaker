@@ -86,7 +86,7 @@ void Script::AllocateMemory()
 		int s = c.type->size;
 		if (c.type == TypeString){
 			// const string -> variable length   (+ super array frame)
-			s = c.value.num + config.SuperArraySize;
+			s = c.value.num + config.super_array_size;
 		}
 		MemorySize += mem_align(s, 4);
 	}
@@ -112,7 +112,7 @@ void Script::AllocateStack()
 	foreach(Command *cmd, syntax->Commands){
 		if (cmd->kind == KindCompilerFunction)
 			if ((cmd->link_no == CommandWait) || (cmd->link_no == CommandWaitRT) || (cmd->link_no == CommandWaitOneFrame)){
-				Stack = new char[config.StackSize];
+				Stack = new char[config.stack_size];
 				break;
 			}
 	}
@@ -154,11 +154,11 @@ void Script::MapConstantsToMemory()
 			// const string -> variable length
 			s = syntax->Constants[i].value.num;
 
-			*(void**)&Memory[MemorySize] = &Memory[MemorySize + config.SuperArraySize]; // .data
-			*(int*)&Memory[MemorySize + config.PointerSize    ] = s; // .num
-			*(int*)&Memory[MemorySize + config.PointerSize + 4] = 0; // .reserved
-			*(int*)&Memory[MemorySize + config.PointerSize + 8] = 1; // .item_size
-			MemorySize += config.SuperArraySize;
+			*(void**)&Memory[MemorySize] = &Memory[MemorySize + config.super_array_size]; // .data
+			*(int*)&Memory[MemorySize + config.pointer_size    ] = s; // .num
+			*(int*)&Memory[MemorySize + config.pointer_size + 4] = 0; // .reserved
+			*(int*)&Memory[MemorySize + config.pointer_size + 8] = 1; // .item_size
+			MemorySize += config.super_array_size;
 		}
 		memcpy(&Memory[MemorySize], (void*)c.value.data, s);
 		MemorySize += mem_align(s, 4);
@@ -187,7 +187,7 @@ void Script::MapGlobalVariablesToMemory()
 
 void Script::AlignOpcode()
 {
-	int ocs_new = mem_align(OpcodeSize, config.FunctionAlign);
+	int ocs_new = mem_align(OpcodeSize, config.function_align);
 	for (int i=OpcodeSize;i<ocs_new;i++)
 		Opcode[i] = 0x90;
 	OpcodeSize = ocs_new;
@@ -215,11 +215,11 @@ void Script::CompileOsEntryPoint()
 				// const string -> variable length
 				s = syntax->Constants[i].value .num;
 
-				*(void**)&Opcode[OpcodeSize] = (char*)(OpcodeSize + syntax->AsmMetaInfo->code_origin + config.SuperArraySize); // .data
-				*(int*)&Opcode[OpcodeSize + config.PointerSize    ] = s; // .num
-				*(int*)&Opcode[OpcodeSize + config.PointerSize + 4] = 0; // .reserved
-				*(int*)&Opcode[OpcodeSize + config.PointerSize + 8] = 1; // .item_size
-				OpcodeSize += config.SuperArraySize;
+				*(void**)&Opcode[OpcodeSize] = (char*)(OpcodeSize + syntax->AsmMetaInfo->code_origin + config.super_array_size); // .data
+				*(int*)&Opcode[OpcodeSize + config.pointer_size    ] = s; // .num
+				*(int*)&Opcode[OpcodeSize + config.pointer_size + 4] = 0; // .reserved
+				*(int*)&Opcode[OpcodeSize + config.pointer_size + 8] = 1; // .item_size
+				OpcodeSize += config.super_array_size;
 			}else if (c.type == TypeCString){
 				s = syntax->Constants[i].value .num;
 			}
@@ -276,7 +276,7 @@ void Script::CompileTaskEntryPoint()
 	// intro
 	list->add2(Asm::inst_push, Asm::param_reg(Asm::REG_EBP)); // within the actual program
 	list->add2(Asm::inst_mov, Asm::param_reg(Asm::REG_EBP), Asm::param_reg(Asm::REG_ESP));
-	list->add2(Asm::inst_mov, Asm::param_reg(Asm::REG_ESP), Asm::param_deref_imm((long)&Stack[config.StackSize], 4)); // start of the script stack
+	list->add2(Asm::inst_mov, Asm::param_reg(Asm::REG_ESP), Asm::param_deref_imm((long)&Stack[config.stack_size], 4)); // start of the script stack
 	list->add2(Asm::inst_push, Asm::param_reg(Asm::REG_EBP)); // address of the old stack
 	AddEspAdd(list, -12); // space for wait() task data
 	list->add2(Asm::inst_mov, Asm::param_reg(Asm::REG_EBP), Asm::param_reg(Asm::REG_ESP));
@@ -299,8 +299,8 @@ void Script::CompileTaskEntryPoint()
 	// Intro
 	list->add2(Asm::inst_push, Asm::param_reg(Asm::REG_EBP)); // within the external program
 	list->add2(Asm::inst_mov, Asm::param_reg(Asm::REG_EBP), Asm::param_reg(Asm::REG_ESP));
-	list->add2(Asm::inst_mov, Asm::param_deref_imm((long)&Stack[config.StackSize - 4], 4), Asm::param_reg(Asm::REG_EBP)); // save the external ebp
-	list->add2(Asm::inst_mov, Asm::param_reg(Asm::REG_ESP), Asm::param_deref_imm((long)&Stack[config.StackSize - 16], 4)); // to the eIP of the script
+	list->add2(Asm::inst_mov, Asm::param_deref_imm((long)&Stack[config.stack_size - 4], 4), Asm::param_reg(Asm::REG_EBP)); // save the external ebp
+	list->add2(Asm::inst_mov, Asm::param_reg(Asm::REG_ESP), Asm::param_deref_imm((long)&Stack[config.stack_size - 16], 4)); // to the eIP of the script
 	list->add2(Asm::inst_pop, Asm::param_reg(Asm::REG_EAX));
 	list->add2(Asm::inst_add, Asm::param_reg(Asm::REG_EAX), Asm::param_imm(AfterWaitOCSize, 4));
 	list->add2(Asm::inst_jmp, Asm::param_reg(Asm::REG_EAX));
@@ -489,7 +489,7 @@ void Script::Compiler()
 	foreach(int n, function_vars_to_link){
 		void *p = (void*)(long)(n + 0xefef0000);
 		void *q = (void*)func[n];
-		if (!find_and_replace(Opcode, OpcodeSize, (char*)&p, config.PointerSize, (char*)&q))
+		if (!find_and_replace(Opcode, OpcodeSize, (char*)&p, config.pointer_size, (char*)&q))
 			DoErrorLink("could not link function as variable: " + syntax->Functions[n]->name);
 	}
 

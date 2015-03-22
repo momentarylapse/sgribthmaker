@@ -264,7 +264,7 @@ void CompileKaba()
 
 	HuiTimer CompileTimer;
 
-	Script::config.CompileSilently = true;
+	Script::config.compile_silently = true;
 
 	try{
 		Script::Script *compile_script = Script::Load(cur_doc->filename, true);
@@ -343,7 +343,7 @@ void CompileAndRun(bool verbose)
 
 	// compile
 	HuiTimer CompileTimer;
-	Script::config.CompileSilently = true;
+	Script::config.compile_silently = true;
 
 	try{
 		Script::Script *compile_script = Script::Load(cur_doc->filename);

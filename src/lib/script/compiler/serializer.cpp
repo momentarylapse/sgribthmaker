@@ -33,7 +33,7 @@ void Serializer::add_temp(Type *t, SerialCommandParam &param, bool add_construct
 		TempVar v;
 		v.first = -1;
 		v.type = t;
-		v.force_stack = (t->size > config.PointerSize) || (t->is_super_array) || (t->is_array) || (t->element.num > 0);
+		v.force_stack = (t->size > config.pointer_size) || (t->is_super_array) || (t->is_array) || (t->element.num > 0);
 		v.entangled = 0;
 		temp_var.add(v);
 		param.kind = KindVarTemp;
@@ -406,7 +406,7 @@ int SerializerX86::fc_begin()
 		}
 	}
 
-	if (config.abi == AbiWindows32){
+	if (config.abi == ABI_WINDOWS_32){
 		// more than 4 byte have to be returned -> give return address as very last parameter!
 		if (type->UsesReturnByMemory())
 			add_cmd(Asm::inst_push, ret_ref); // nachtraegliche eSP-Korrektur macht die Funktion
@@ -415,10 +415,10 @@ int SerializerX86::fc_begin()
 	// _cdecl: push class instance as first parameter
 	if (CompilerFunctionInstance.type){
 		add_cmd(Asm::inst_push, CompilerFunctionInstance);
-		push_size += config.PointerSize;
+		push_size += config.pointer_size;
 	}
 	
-	if (config.abi == AbiGnu32){
+	if (config.abi == ABI_GNU_32){
 		// more than 4 byte have to be returned -> give return address as very first parameter!
 		if (type->UsesReturnByMemory())
 			add_cmd(Asm::inst_push, ret_ref); // nachtraegliche eSP-Korrektur macht die Funktion
@@ -850,7 +850,7 @@ void Serializer::SerializeParameter(Command *link, int level, int index, SerialC
 
 		AddReference(param, link->type, p);
 	}else if (link->kind == KindConstant){
-		if ((config.UseConstAsGlobalVar) || (syntax_tree->FlagCompileOS))
+		if ((config.use_const_as_global_var) || (syntax_tree->FlagCompileOS))
 			p.kind = KindVarGlobal;
 		else
 			p.kind = KindRefToConst;
@@ -1561,11 +1561,11 @@ void SerializerX86::SerializeCompilerFunction(Command *com, Array<SerialCommandP
 					// stack[-16] = rbp
 					// stack[-24] = rsp
 					// stack[-32] = rip
-					add_cmd(Asm::inst_mov, p_rax, param_const(TypePointer, &script->Stack[config.StackSize-16]));
+					add_cmd(Asm::inst_mov, p_rax, param_const(TypePointer, &script->Stack[config.stack_size-16]));
 					add_cmd(Asm::inst_mov, p_deref_rax, param_reg(TypeReg64, Asm::REG_RBP));
-					add_cmd(Asm::inst_mov, p_rax, param_const(TypePointer, &script->Stack[config.StackSize-24]));
+					add_cmd(Asm::inst_mov, p_rax, param_const(TypePointer, &script->Stack[config.stack_size-24]));
 					add_cmd(Asm::inst_mov, p_deref_rax, param_reg(TypeReg64, Asm::REG_RSP));
-					add_cmd(Asm::inst_mov, param_reg(TypeReg64, Asm::REG_RSP), param_const(TypePointer, &script->Stack[config.StackSize-24]));
+					add_cmd(Asm::inst_mov, param_reg(TypeReg64, Asm::REG_RSP), param_const(TypePointer, &script->Stack[config.stack_size-24]));
 					add_cmd(Asm::inst_call, param_const(TypePointer, NULL)); // push rip
 				// load return
 					// mov rsp, &stack[-8]
@@ -1573,7 +1573,7 @@ void SerializerX86::SerializeCompilerFunction(Command *com, Array<SerialCommandP
 					// mov rbp, rsp
 					// leave
 					// ret
-					add_cmd(Asm::inst_mov, param_reg(TypeReg64, Asm::REG_RSP), param_const(TypePointer, &script->Stack[config.StackSize-8])); // start of the script stack
+					add_cmd(Asm::inst_mov, param_reg(TypeReg64, Asm::REG_RSP), param_const(TypePointer, &script->Stack[config.stack_size-8])); // start of the script stack
 					add_cmd(Asm::inst_pop, param_reg(TypeReg64, Asm::REG_RSP)); // old stackpointer (real program)
 					add_cmd(Asm::inst_mov, param_reg(TypeReg64, Asm::REG_RBP), param_reg(TypeReg64, Asm::REG_RSP));
 					add_cmd(Asm::inst_leave);
@@ -1584,9 +1584,9 @@ void SerializerX86::SerializeCompilerFunction(Command *com, Array<SerialCommandP
 					// rbp = &stack[-16]
 					// rsp = &stack[-24]
 					// GlobalWaitingMode = WaitingModeNone
-					add_cmd(Asm::inst_mov, p_rax, param_const(TypePointer, &script->Stack[config.StackSize-16]));
+					add_cmd(Asm::inst_mov, p_rax, param_const(TypePointer, &script->Stack[config.stack_size-16]));
 					add_cmd(Asm::inst_mov, param_reg(TypeReg64, Asm::REG_RBP), p_deref_rax);
-					add_cmd(Asm::inst_mov, p_rax, param_const(TypePointer, &script->Stack[config.StackSize-24]));
+					add_cmd(Asm::inst_mov, p_rax, param_const(TypePointer, &script->Stack[config.stack_size-24]));
 					add_cmd(Asm::inst_mov, param_reg(TypeReg64, Asm::REG_RSP), p_deref_rax);
 					add_cmd(Asm::inst_mov, p_mode, param_const(TypeInt, (void*)WaitingModeNone));
 
@@ -1596,11 +1596,11 @@ void SerializerX86::SerializeCompilerFunction(Command *com, Array<SerialCommandP
 							// stack[ -8] = ebp
 							// stack[-12] = esp
 							// stack[-16] = eip
-							add_cmd(Asm::inst_mov, p_eax, param_const(TypePointer, &script->Stack[config.StackSize-8]));
+							add_cmd(Asm::inst_mov, p_eax, param_const(TypePointer, &script->Stack[config.stack_size-8]));
 							add_cmd(Asm::inst_mov, p_deref_eax, param_reg(TypeReg32, Asm::REG_EBP));
-							add_cmd(Asm::inst_mov, p_eax, param_const(TypePointer, &script->Stack[config.StackSize-12]));
+							add_cmd(Asm::inst_mov, p_eax, param_const(TypePointer, &script->Stack[config.stack_size-12]));
 							add_cmd(Asm::inst_mov, p_deref_eax, param_reg(TypeReg32, Asm::REG_ESP));
-							add_cmd(Asm::inst_mov, param_reg(TypeReg32, Asm::REG_ESP), param_const(TypePointer, &script->Stack[config.StackSize-12]));
+							add_cmd(Asm::inst_mov, param_reg(TypeReg32, Asm::REG_ESP), param_const(TypePointer, &script->Stack[config.stack_size-12]));
 							add_cmd(Asm::inst_call, param_const(TypePointer, NULL)); // push eip
 						// load return
 							// mov esp, &stack[-4]
@@ -1608,7 +1608,7 @@ void SerializerX86::SerializeCompilerFunction(Command *com, Array<SerialCommandP
 							// mov ebp, esp
 							// leave
 							// ret
-							add_cmd(Asm::inst_mov, param_reg(TypeReg32, Asm::REG_ESP), param_const(TypePointer, &script->Stack[config.StackSize-4])); // start of the script stack
+							add_cmd(Asm::inst_mov, param_reg(TypeReg32, Asm::REG_ESP), param_const(TypePointer, &script->Stack[config.stack_size-4])); // start of the script stack
 							add_cmd(Asm::inst_pop, param_reg(TypeReg32, Asm::REG_ESP)); // old stackpointer (real program)
 							add_cmd(Asm::inst_mov, param_reg(TypeReg32, Asm::REG_EBP), param_reg(TypeReg32, Asm::REG_ESP));
 							add_cmd(Asm::inst_leave);
@@ -1619,9 +1619,9 @@ void SerializerX86::SerializeCompilerFunction(Command *com, Array<SerialCommandP
 							// ebp = &stack[-8]
 							// esp = &stack[-12]
 							// GlobalWaitingMode = WaitingModeNone
-							add_cmd(Asm::inst_mov, p_eax, param_const(TypePointer, &script->Stack[config.StackSize-8]));
+							add_cmd(Asm::inst_mov, p_eax, param_const(TypePointer, &script->Stack[config.stack_size-8]));
 							add_cmd(Asm::inst_mov, param_reg(TypeReg32, Asm::REG_EBP), p_deref_eax);
-							add_cmd(Asm::inst_mov, p_eax, param_const(TypePointer, &script->Stack[config.StackSize-12]));
+							add_cmd(Asm::inst_mov, p_eax, param_const(TypePointer, &script->Stack[config.stack_size-12]));
 							add_cmd(Asm::inst_mov, param_reg(TypeReg32, Asm::REG_ESP), p_deref_eax);
 							add_cmd(Asm::inst_mov, p_mode, param_const(TypeInt, (void*)WaitingModeNone));
 					}
@@ -2072,7 +2072,7 @@ void Serializer::solve_deref_temp_local(int c, int np, bool is_local)
 	p.shift = 0;
 	p.type = type_pointer;
 
-	int reg = find_unused_reg(c, c, config.PointerSize, true);
+	int reg = find_unused_reg(c, c, config.pointer_size, true);
 	if (reg < 0)
 		script->DoErrorInternal("solve_deref_temp_local... no registers available");
 	SerialCommandParam p_reg = param_reg(type_pointer, reg);
@@ -2201,7 +2201,7 @@ void Serializer::ResolveDerefTempAndLocal()
 			SerialCommandParam p_reg = param_reg(type_data, reg);
 			add_reg_channel(reg, i, i); // temp
 			
-			int reg2 = find_unused_reg(i, i, config.PointerSize, true);
+			int reg2 = find_unused_reg(i, i, config.pointer_size, true);
 			if (reg2 < 0)
 				DoError("deref temp/local... both sides... .no registers available");
 			SerialCommandParam p_reg2 = param_reg(type_pointer, reg2);
@@ -3307,7 +3307,7 @@ void SerializerX86::CorrectUnallowedParamCombis2(SerialCommand &c)
 	// push 8 bit -> push 32 bit
 	if (c.inst == Asm::inst_push)
 		if (c.p[0].kind == KindRegister)
-			c.p[0].p = (char*)(long)reg_resize((long)c.p[0].p, config.PointerSize);
+			c.p[0].p = (char*)(long)reg_resize((long)c.p[0].p, config.pointer_size);
 }
 
 void SerializerAMD64::CorrectUnallowedParamCombis2(SerialCommand &c)
@@ -3315,7 +3315,7 @@ void SerializerAMD64::CorrectUnallowedParamCombis2(SerialCommand &c)
 	// push 8 bit -> push 32 bit
 	if (c.inst == Asm::inst_push)
 		if (c.p[0].kind == KindRegister)
-			c.p[0].p = (char*)(long)reg_resize((long)c.p[0].p, config.PointerSize);
+			c.p[0].p = (char*)(long)reg_resize((long)c.p[0].p, config.pointer_size);
 
 
 	// FIXME
@@ -3403,7 +3403,7 @@ void Serializer::Assemble(char *Opcode, int &OpcodeSize)
 
 	// intro + allocate stack memory
 	StackMaxSize += MaxPushSize;
-	StackMaxSize = mem_align(StackMaxSize, config.StackFrameAlign);
+	StackMaxSize = mem_align(StackMaxSize, config.stack_frame_align);
 
 	if (!syntax_tree->FlagNoFunctionFrame)
 		list->add_func_intro(StackMaxSize);
