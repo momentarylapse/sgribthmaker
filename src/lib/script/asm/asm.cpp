@@ -2112,7 +2112,6 @@ InstructionParam disarm_shift_reg(int code)
 InstructionWithParams disarm_data_opcode(int code)
 {
 	InstructionWithParams i;
-	//printf("data ");
 	i.inst = ARMDataInstructions[(code >> 21) & 15];
 	if ((code >> 20) & 1)
 		msg_write(" [S]");
@@ -2122,6 +2121,18 @@ InstructionWithParams disarm_data_opcode(int code)
 		i.p3 = param_imm(arm_decode_imm(code & 0xfff), SIZE_32);
 	else
 		i.p3 = disarm_shift_reg(code & 0xfff);
+	return i;
+}
+
+InstructionWithParams disarm_data_opcode_mul(int code)
+{
+	InstructionWithParams i;
+	i.inst = inst_mul;
+	if ((code >> 20) & 1)
+		msg_write(" [S]");
+	i.p1 = param_reg(REG_R0 + ((code >> 16) & 15));
+	i.p2 = param_reg(REG_R0 + ((code >> 0) & 15));
+	i.p3 = param_reg(REG_R0 + ((code >> 8) & 15));
 	return i;
 }
 
@@ -2207,9 +2218,12 @@ string DisassembleARM(void *_code_,int length,bool allow_comments)
 		iwp.p1 = param_none;
 		iwp.p2 = param_none;
 		iwp.p3 = param_none;
-		if (((cur >> 26) & 3) == 0)
-			iwp = disarm_data_opcode(cur);
-		else if (((cur >> 26) & 0x3) == 0b01)
+		if (((cur >> 26) & 3) == 0){
+			if ((cur & 0x0fe000f0) == 0x00000090)
+				iwp = disarm_data_opcode_mul(cur);
+			else
+				iwp = disarm_data_opcode(cur);
+		}else if (((cur >> 26) & 0x3) == 0b01)
 			iwp = disarm_data_transfer(cur);
 		else if (x == 0b100)
 			iwp = disarm_data_block_transfer(cur);
@@ -3375,6 +3389,11 @@ void InstructionWithParamsList::AddInstructionARM(char *oc, int &ocs, int n)
 			code |= 0x00200000;
 		code |= arm_reg_no(iwp.p1.reg) << 16;
 		code |= iwp.p2.value & 0xffff;
+	}else if (iwp.inst == inst_mul){
+		code |= 0x00000090;
+		code |= arm_reg_no(iwp.p1.reg) << 16;
+		code |= arm_reg_no(iwp.p2.reg);
+		code |= arm_reg_no(iwp.p3.reg) << 8;
 	}
 
 	*(int*)&oc[ocs] = code;

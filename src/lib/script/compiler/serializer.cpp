@@ -2,6 +2,11 @@
 #include "serializer.h"
 #include "../../file/file.h"
 
+
+namespace Asm{
+	extern int ARMDataInstructions[16]; // -> asm.cpp
+};
+
 namespace Script{
 
 
@@ -711,6 +716,9 @@ void SerializerARM::SerializeOperator(Command *com, Array<SerialCommandParam> &p
 			break;
 		case OperatorIntSubtract:
 			add_cmd(Asm::inst_sub, ret, param[0], param[1]);
+			break;
+		case OperatorIntMultiply:
+			add_cmd(Asm::inst_mul, ret, param[0], param[1]);
 			break;
 		default:
 			DoError("unimplemented operator: " + PreOperators[com->link_no].str());
@@ -1984,7 +1992,7 @@ void SerializerX86::CorrectUnallowedParamCombis()
 	ScanTempVarUsage();
 }
 
-inline bool arm_param_combi_allowed(int inst, SerialCommandParam &p1, SerialCommandParam &p2, SerialCommandParam &p3)
+inline bool _____arm_param_combi_allowed(int inst, SerialCommandParam &p1, SerialCommandParam &p2, SerialCommandParam &p3)
 {
 //	if (inst >= Asm::inst_marker)
 //		return true;
@@ -2017,6 +2025,18 @@ void inline arm_transfer_by_reg_out(Serializer *s, SerialCommand &c, int i, int 
 	s->move_last_cmd(i+1);
 }
 
+inline bool is_data_op(int inst)
+{
+	if (inst == Asm::inst_mov)
+		return false;
+	if (inst == Asm::inst_mul)
+		return true;
+	for (int i=0; i<16; i++)
+		if (inst == Asm::ARMDataInstructions[i])
+			return true;
+	return false;
+}
+
 void SerializerARM::CorrectUnallowedParamCombis()
 {
 	msg_db_f("CorrectCombis", 3);
@@ -2028,7 +2048,7 @@ void SerializerARM::CorrectUnallowedParamCombis()
 			if ((cmd[i].p[0].kind != KindRegister) and (cmd[i].p[1].kind != KindRegister)){
 				arm_transfer_by_reg_in(this, cmd[i], i, 1);
 			}
-		}else if (cmd[i].inst == Asm::inst_add){
+		}else if (is_data_op(cmd[i].inst)){
 			if (cmd[i].p[1].kind != KindRegister){
 				arm_transfer_by_reg_in(this, cmd[i], i, 1);
 				i ++;
