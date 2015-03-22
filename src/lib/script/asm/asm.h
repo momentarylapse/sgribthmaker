@@ -318,6 +318,7 @@ struct Register;
 // a real parameter (usable)
 struct InstructionParam
 {
+	InstructionParam();
 	int type;
 	int disp;
 	Register *reg, *reg2;
@@ -325,6 +326,7 @@ struct InstructionParam
 	int size;
 	long long value; // disp or immediate
 	bool is_label;
+	bool write_back;
 	string str(bool hide_size = false);
 };
 
@@ -356,6 +358,7 @@ enum
 
 extern InstructionParam param_none;
 InstructionParam param_reg(int reg);
+InstructionParam param_reg_set(int set);
 InstructionParam param_deref_reg(int reg, int size);
 InstructionParam param_deref_reg_shift(int reg, int shift, int size);
 InstructionParam param_deref_reg_shift_reg(int reg, int reg2, int size);

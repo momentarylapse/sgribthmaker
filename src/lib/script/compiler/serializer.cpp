@@ -2841,7 +2841,7 @@ void SerializerAMD64::AddFunctionOutro(Function *f)
 void SerializerARM::AddFunctionIntro(Function *f)
 {
 	if (!syntax_tree->FlagNoFunctionFrame)
-		add_cmd(Asm::inst_stmdb, param_deref_reg(TypePointer, Asm::REG_R13), param_const(TypeInt, (void*)0x400f));
+		add_cmd(Asm::inst_stmdb, param_reg(TypePointer, Asm::REG_R13), param_const(TypeInt, (void*)0x400f));
 
 	// return, instance, params
 	Array<Variable> param;
@@ -2912,7 +2912,7 @@ void SerializerARM::AddFunctionIntro(Function *f)
 void SerializerARM::AddFunctionOutro(Function *f)
 {
 	//add_cmd(Asm::inst_ret);
-	add_cmd(Asm::inst_ldmia, param_deref_reg(TypePointer, Asm::REG_R13), param_const(TypeInt, (void*)0x800f));
+	add_cmd(Asm::inst_ldmia, param_reg(TypePointer, Asm::REG_R13), param_const(TypeInt, (void*)0x800f));
 }
 
 void init_serializing()

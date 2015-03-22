@@ -364,13 +364,14 @@ enum
 	PARAMT_REGISTER,
 	PARAMT_REGISTER_OR_MEM, // ...
 	PARAMT_MEMORY,
+	PARAMT_REGISTER_SET,
 	//PARAMT_SIB,
 	PARAMT_NONE,
 	PARAMT_INVALID
 };
 
 
-InstructionParam param_none = {PARAMT_NONE};
+InstructionParam param_none;
 
 // short parameter type
 enum
@@ -418,11 +419,6 @@ InstructionParam param_reg(int reg)
 	p.type = PARAMT_REGISTER;
 	p.reg = RegisterByID[reg];
 	p.size = p.reg->size;
-	p.reg2 = NULL;
-	p.deref = false;
-	p.value = 0;
-	p.disp = DISP_MODE_NONE;
-	p.is_label = false;
 	return p;
 }
 
@@ -432,11 +428,16 @@ InstructionParam param_deref_reg(int reg, int size)
 	p.type = PARAMT_REGISTER;
 	p.reg = RegisterByID[reg];
 	p.size = size;
-	p.reg2 = NULL;
 	p.deref = true;
-	p.value = 0;
-	p.disp = DISP_MODE_NONE;
-	p.is_label = false;
+	return p;
+}
+
+InstructionParam param_reg_set(int set)
+{
+	InstructionParam p;
+	p.type = PARAMT_REGISTER_SET;
+	p.size = SIZE_32;
+	p.value = set;
 	return p;
 }
 
@@ -446,11 +447,9 @@ InstructionParam param_deref_reg_shift(int reg, int shift, int size)
 	p.type = PARAMT_REGISTER;
 	p.reg = RegisterByID[reg];
 	p.size = size;
-	p.reg2 = NULL;
 	p.deref = true;
 	p.value = shift;
 	p.disp = ((shift < 120) && (shift > -120)) ? DISP_MODE_8 : DISP_MODE_32;
-	p.is_label = false;
 	return p;
 }
 
@@ -464,7 +463,6 @@ InstructionParam param_deref_reg_shift_reg(int reg, int reg2, int size)
 	p.deref = true;
 	p.value = 1;
 	p.disp = DISP_MODE_REG2;
-	p.is_label = false;
 	return p;
 }
 
@@ -472,13 +470,8 @@ InstructionParam param_imm(long long value, int size)
 {
 	InstructionParam p;
 	p.type = PARAMT_IMMEDIATE;
-	p.reg = NULL;
-	p.reg2 = NULL;
 	p.size = size;
 	p.value = value;
-	p.deref = false;
-	p.disp = DISP_MODE_NONE;
-	p.is_label = false;
 	return p;
 }
 
@@ -486,13 +479,9 @@ InstructionParam param_deref_imm(long long value, int size)
 {
 	InstructionParam p;
 	p.type = PARAMT_IMMEDIATE;
-	p.reg = NULL;
 	p.size = size;
-	p.reg2 = NULL;
 	p.value = value;
 	p.deref = true;
-	p.disp = DISP_MODE_NONE;
-	p.is_label = false;
 	return p;
 }
 
@@ -500,12 +489,8 @@ InstructionParam param_label(long long value, int size)
 {
 	InstructionParam p;
 	p.type = PARAMT_IMMEDIATE;
-	p.reg = NULL;
-	p.reg2 = NULL;
 	p.size = size;
 	p.value = value;
-	p.deref = false;
-	p.disp = DISP_MODE_NONE;
 	p.is_label = true;
 	return p;
 }
@@ -1724,6 +1709,19 @@ void Init(int set)
 		InitX86();
 }
 
+InstructionParam::InstructionParam()
+{
+	type = PARAMT_NONE;
+	disp = DISP_MODE_NONE;
+	reg = NULL;
+	reg2 = NULL;
+	deref = false;
+	size = SIZE_UNKNOWN;
+	value = 0;
+	is_label = false;
+	write_back = false;
+}
+
 // convert an asm parameter into a human readable expression
 string InstructionParam::str(bool hide_size)
 {
@@ -1734,6 +1732,9 @@ string InstructionParam::str(bool hide_size)
 	}else if (type == PARAMT_NONE){
 		return "";
 	}else if (type == PARAMT_REGISTER){
+		string post;
+		if (write_back)
+			post = "!";
 			//msg_write((long)reg);
 			//msg_write((long)disp);
 		if (deref){
@@ -1741,24 +1742,33 @@ string InstructionParam::str(bool hide_size)
 			string ss;
 			if (!hide_size)
 				ss = get_size_name(size) + " ";
-			if (disp == DISP_MODE_NONE)
-				return ss + "[" + reg->name + "]";
-			else if (disp == DISP_MODE_8)
-				return ss + format("[%s+0x%02x]", reg->name.c_str(), (value & 0xff));
-			else if (disp == DISP_MODE_16)
-				return ss + format("[%s+0x%04x]", reg->name.c_str(), (value & 0xffff));
+			string s = reg->name;
+			if (disp == DISP_MODE_8){
+				if (value > 0)
+					s += format("+0x%02x", (value & 0xff));
+				else
+					s += format("-0x%02x", ((-value) & 0xff));
+			}else if (disp == DISP_MODE_16)
+				s += format("+0x%04x", (value & 0xffff));
 			else if (disp == DISP_MODE_32)
-				return ss + format("[%s+0x%08x]", reg->name.c_str(), value);
+				s += format("+0x%08x", value);
 			else if (disp == DISP_MODE_SIB)
 				return "SIB[...][...]";
 			else if (disp == DISP_MODE_8_SIB)
-				return ss + format("[SIB...+0x%02x]", value);
+				s += format("::SIB...+0x%02x", value);
 			else if (disp == DISP_MODE_8_REG2)
-				return ss + format("[%s+%s+0x%02x]", reg->name.c_str(), reg2->name.c_str(), value);
+				s += format("%s+0x%02x", reg2->name.c_str(), value);
 			else if (disp == DISP_MODE_REG2)
-				return ss + "[" + reg->name + "+" + reg2->name + "]";
+				s += "+" + reg2->name;
+			return ss + "[" + s + "]";
 		}else
-			return reg->name;
+			return reg->name + post;
+	}else if (type == PARAMT_REGISTER_SET){
+		Array<string> s;
+		for (int i=0; i<16; i++)
+			if (value & (1<<i))
+				s.add(RegisterByID[REG_R0 + i]->name);
+		return "{" + implode(s, ",") + "}";
 	}else if (type == PARAMT_IMMEDIATE){
 		//msg_write("im");
 		if (deref)
@@ -2073,13 +2083,6 @@ int ARMDataInstructions[16] =
 	inst_mvn
 };
 
-string show_opcode(int code)
-{
-	if ((code >= 0) and (code < 16))
-			return GetInstructionName(ARMDataInstructions[code]);
-	return "???";
-}
-
 int arm_decode_imm(int imm)
 {
 	int r = ((imm >> 8) & 0xf);
@@ -2087,15 +2090,14 @@ int arm_decode_imm(int imm)
 	return n >> (r*2) | n << (32 - r*2);
 }
 
-string show_shift_reg(int code)
+InstructionParam disarm_shift_reg(int code)
 {
-	string s;
-	s += show_reg(code & 0xf);
+	InstructionParam p = param_reg(REG_R0 + (code & 0xf));
 	bool by_reg = (code >> 4) & 0x1;
 	int r = ((code >> 7) & 0x1f);
 	if (!by_reg and r == 0)
-		return s;
-	if (((code >> 5) & 0x3) == 0)
+		return p;
+	/*if (((code >> 5) & 0x3) == 0)
 		s += "<<";
 	else
 		s += ">>";
@@ -2103,100 +2105,89 @@ string show_shift_reg(int code)
 		s += show_reg((code >> 8) & 0xf);
 	}else{
 		s += format("%d", r);
-	}
-	return s;
+	}*/
+	return p;
 }
 
-string show_data_opcode(int code)
+InstructionWithParams disarm_data_opcode(int code)
 {
-	string s;
+	InstructionWithParams i;
 	//printf("data ");
-	s += show_opcode((code >> 21) & 15);
+	i.inst = ARMDataInstructions[(code >> 21) & 15];
 	if ((code >> 20) & 1)
-		s += " [S]";
-	s += " " + show_reg((code >> 12) & 15);
-	s += " " + show_reg((code >> 16) & 15);
+		msg_write(" [S]");
+	i.p1 = param_reg(REG_R0 + ((code >> 12) & 15));
+	i.p2 = param_reg(REG_R0 + ((code >> 16) & 15));
 	if ((code >> 25) & 1)
-		s += " " + i2s(arm_decode_imm(code & 0xfff));
+		i.p3 = param_imm(arm_decode_imm(code & 0xfff), SIZE_32);
 	else
-		s += " " + show_shift_reg(code & 0xfff);
-	return s;
+		i.p3 = disarm_shift_reg(code & 0xfff);
+	return i;
 }
 
-string show_branch(int code)
+InstructionWithParams disarm_branch(int code)
 {
-	string s;
+	InstructionWithParams i;
 	if ((code >> 24) & 1)
-		s += "bl";
+		i.inst = inst_bl;
 	else
-		s += "b";
-	s += format(" %06x", (code & 0x00ffffff));
-	return s;
+		i.inst = inst_b;
+	i.p1 = param_imm(code & 0x00ffffff, SIZE_32);
+	i.p2 = param_none;
+	i.p3 = param_none;
+	return i;
 }
 
-string show_data_transfer(int code)
+InstructionWithParams disarm_data_transfer(int code)
 {
-	string s;
+	InstructionWithParams i;
 	bool bb = ((code >> 22) & 1);
 	bool ll = ((code >> 20) & 1);
 	if (ll)
-		s += "ldr";
+		i.inst = bb ? inst_ldrb : inst_ldr;
 	else
-		s += "str";
-	if (bb)
-		s += "b";
+		i.inst = bb ? inst_strb : inst_str;
 	int Rn = (code >> 16) & 0xf;
 	int Rd = (code >> 12) & 0xf;
-	s += " " + show_reg(Rd);
+	i.p1 = param_reg(REG_R0 + Rd);
 	bool imm = ((code >> 25) & 1);
 	bool pre = ((code >> 24) & 1);
 	bool up = ((code >> 23) & 1);
 	bool ww = ((code >> 21) & 1);
 	if (imm){
-		s += " --shifted reg--";
+		msg_write( " --shifted reg--");
 	}else{
 		if (code & 0xfff)
-			s += " [" + show_reg(Rn) + format("%s%d]", (up ? "+" : "-"), code & 0xfff);
+			i.p2 = param_deref_reg_shift(REG_R0 + Rn, up ? (code & 0xfff) : (-(code & 0xfff)), SIZE_32);
 		else
-			s += " [" + show_reg(Rn) + "]";
+			i.p2 = param_deref_reg(REG_R0 + Rn, SIZE_32);
 	}
-	if (ww)
-		s += "!";
-	return s;
+	i.p2.write_back = ww;
+	i.p3 = param_none;
+	return i;
 }
 
-string show_data_block_transfer(int code)
+InstructionWithParams disarm_data_block_transfer(int code)
 {
-	string s;
-	if ((code >> 20) & 1)
-		s += "ldm";
-	else
-		s += "stm";
+	InstructionWithParams i;
+	bool ll = ((code >> 20) & 1);
 	bool pp = ((code >> 24) & 1);
 	bool uu = ((code >> 23) & 1);
 	bool ww = ((code >> 21) & 1);
 	if (!pp and uu)
-		s += "ia";
+		i.inst = ll ? inst_ldmia : inst_stmia;
 	else if (pp and uu)
-		s += "ib";
+		i.inst = ll ? inst_ldmib : inst_stmib;
 	else if (!pp and !uu)
-		s += "da";
+		i.inst = ll ? inst_ldmda : inst_stmda;
 	else if (pp and !uu)
-		s += "db";
-	s += " {";
+		i.inst = ll ? inst_ldmdb : inst_stmdb;
 	int Rn = (code >> 16) & 0xf;
-	bool first = true;
-	for (int i=0; i<16; i++)
-		if (code & (1 << i)){
-			if (!first)
-				s += ",";
-			s += show_reg(i);
-			first = false;
-		}
-	s += "} [" + show_reg(Rn) + "]";
-	if (ww)
-		s += "!";
-	return s;
+	i.p1 = param_reg(REG_R0 + Rn);
+	i.p2 = param_reg_set(code & 0xffff);
+	i.p1.write_back = ww;
+	i.p3 = param_none;
+	return i;
 }
 
 string DisassembleARM(void *_code_,int length,bool allow_comments)
@@ -2209,21 +2200,25 @@ string DisassembleARM(void *_code_,int length,bool allow_comments)
 		int x = (cur >> 25) & 0x7;
 
 		buf += string((char*)&cur, 4).hex(true).substr(2, -1);
-		buf += "  ";
-		buf += arm_cond_to_str((cur >> 28) & 0xf);
+		buf += "    ";
 
-
+		InstructionWithParams iwp;
+		iwp.inst = inst_nop;
+		iwp.p1 = param_none;
+		iwp.p2 = param_none;
+		iwp.p3 = param_none;
 		if (((cur >> 26) & 3) == 0)
-			buf += show_data_opcode(cur);
+			iwp = disarm_data_opcode(cur);
 		else if (((cur >> 26) & 0x3) == 0b01)
-			buf += show_data_transfer(cur);
+			iwp = disarm_data_transfer(cur);
 		else if (x == 0b100)
-			buf += show_data_block_transfer(cur);
+			iwp = disarm_data_block_transfer(cur);
 		else if (x == 0b101)
-			buf += show_branch(cur);
+			iwp = disarm_branch(cur);
+		iwp.condition = (cur >> 28) & 0xf;
 
 
-		buf += "\n";
+		buf += iwp.str() + "\n";
 	}
 	return buf;
 }
@@ -3297,6 +3292,15 @@ bool inline arm_is_load_store_reg(int inst)
 	return (inst == inst_ldr) or (inst == inst_ldrb) or (inst == inst_str) or (inst == inst_strb);
 }
 
+bool inline arm_is_load_store_multi(int inst)
+{
+	if ((inst == inst_ldmia) or (inst == inst_ldmib) or (inst == inst_ldmda) or (inst == inst_ldmdb))
+		return true;
+	if ((inst == inst_stmia) or (inst == inst_stmib) or (inst == inst_stmda) or (inst == inst_stmdb))
+		return true;
+	return false;
+}
+
 void InstructionWithParamsList::AddInstructionARM(char *oc, int &ocs, int n)
 {
 	msg_db_f("AsmAddInstructionLowARM", 1+ASM_DB_LEVEL);
@@ -3354,6 +3358,23 @@ void InstructionWithParamsList::AddInstructionARM(char *oc, int &ocs, int n)
 				code |= 0x03000000;
 			code |= arm_reg_no(iwp.p2.reg2);
 		}
+	}else if (arm_is_load_store_multi(iwp.inst)){
+		bool ll = ((iwp.inst == inst_ldmia) or (iwp.inst == inst_ldmib) or (iwp.inst == inst_ldmda) or (iwp.inst == inst_ldmdb));
+		bool uu = ((iwp.inst == inst_ldmia) or (iwp.inst == inst_ldmib) or (iwp.inst == inst_stmia) or (iwp.inst == inst_stmib));
+		bool pp = ((iwp.inst == inst_ldmib) or (iwp.inst == inst_ldmdb) or (iwp.inst == inst_stmib) or (iwp.inst == inst_stmdb));
+		bool ww = true;
+		if (ll)
+			code |= 0x08100000;
+		else
+			code |= 0x08000000;
+		if (uu)
+			code |= 0x00800000;
+		if (pp)
+			code |= 0x01000000;
+		if (ww)
+			code |= 0x00200000;
+		code |= arm_reg_no(iwp.p1.reg) << 16;
+		code |= iwp.p2.value & 0xffff;
 	}
 
 	*(int*)&oc[ocs] = code;
