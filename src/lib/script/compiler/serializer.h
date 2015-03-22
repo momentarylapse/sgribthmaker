@@ -118,6 +118,7 @@ public:
 	void add_reg_channel(int reg, int first, int last);
 	void add_temp(Type *t, SerialCommandParam &param, bool add_constructor = true);
 	void add_cmd(int cond, int inst, const SerialCommandParam &p1, const SerialCommandParam &p2, const SerialCommandParam &p3);
+	void add_cmd(int inst, const SerialCommandParam &p1, const SerialCommandParam &p2, const SerialCommandParam &p3);
 	void add_cmd(int inst, const SerialCommandParam &p1, const SerialCommandParam &p2);
 	void add_cmd(int inst, const SerialCommandParam &p);
 	void add_cmd(int inst);

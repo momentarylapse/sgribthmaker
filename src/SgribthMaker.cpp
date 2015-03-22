@@ -502,7 +502,7 @@ public:
 
 		HuiRegisterFileType("kaba","MichiSoft Script Datei",HuiAppDirectory + "Data/kaba.ico",HuiAppFilename,"open",true);
 
-		//Script::Init();
+		Script::Init(Asm::INSTRUCTION_SET_ARM);
 	}
 
 	virtual bool onStartup(const Array<string> &arg)
@@ -604,7 +604,7 @@ public:
 		msg_set_verbose(true);
 
 		msg_write("aaa");
-		Asm::Init(Asm::INSTRUCTION_SET_ARM);
+//		Asm::Init(Asm::INSTRUCTION_SET_ARM);
 		msg_write("bbb");
 		CFile *f = FileOpen("arm/arm-test");
 		f->SetBinaryMode(true);
@@ -617,6 +617,7 @@ public:
 		l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R0, Asm::PK_REGISTER, Asm::REG_R1, 0);
 		l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_CONSTANT, -1, 512);//2040);
 		l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_ldr, Asm::REG_R0, Asm::REG_R2, Asm::PK_DEREF_REGISTER_SHIFT, -1, 512);//2040);
+		l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_ldr, Asm::REG_R0, Asm::REG_R2, Asm::PK_DEREF_REGISTER, -1, 0);//2040);
 	//	l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_REGISTER, Asm::REG_R2, 0);
 		//l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_REGISTER_SHIFT, Asm::REG_R2, 5);
 	//	l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::REG_R0, Asm::REG_R1, Asm::PK_CONSTANT, Asm::REG_R2, 2040);
@@ -625,6 +626,15 @@ public:
 		fff[ocs / 4] = 0xe12fff1e;
 		ocs += 4;
 		msg_write(Asm::Disassemble(fff, ocs, true));
+
+
+		msg_write("kaba");
+		try{
+			Script::Script *s = Script::CreateForSource("#show\nint f(int a, int b)\n\tint c = a + b");
+			msg_write(Asm::Disassemble(s->Opcode, s->OpcodeSize, true));
+		}catch(Script::Exception &e){
+			e.print();
+		}
 
 
 #ifdef CPU_ARM

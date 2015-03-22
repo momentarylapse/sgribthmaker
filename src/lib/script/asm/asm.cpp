@@ -2173,8 +2173,13 @@ string show_data_transfer(int code)
 	if (imm){
 		s += " --shifted reg--";
 	}else{
-		s += " [" + show_reg(Rn) + format("%s%d]", (up ? "+" : "-"), code & 0xfff);
+		if (code & 0xfff)
+			s += " [" + show_reg(Rn) + format("%s%d]", (up ? "+" : "-"), code & 0xfff);
+		else
+			s += " [" + show_reg(Rn) + "]";
 	}
+	if (ww)
+		s += "!";
 	return s;
 }
 
@@ -2207,6 +2212,8 @@ string show_data_block_transfer(int code)
 			first = false;
 		}
 	s += "} [" + show_reg(Rn) + "]";
+	if (ww)
+		s += "!";
 	return s;
 }
 

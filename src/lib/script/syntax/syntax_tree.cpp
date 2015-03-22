@@ -303,6 +303,7 @@ int Function::AddVar(const string &name, Type *type)
 	Variable v;
 	v.name = name;
 	v.type = type;
+	v._offset = 0;
 	v.is_extern = next_extern;
 	var.add(v);
 	return var.num - 1;
@@ -1098,6 +1099,14 @@ void SyntaxTree::MapLocalVariablesToStack()
 				v._offset = - f->_var_size - s;
 				f->_var_size += s;
 			}
+		}else if (config.instruction_set == Asm::INSTRUCTION_SET_ARM){
+			f->_var_size = 0;
+
+			foreachi(Variable &v, f->var, i){
+				int s = mem_align(v.type->size, 4);
+				v._offset = - f->_var_size - s;
+				f->_var_size += s;
+			}
 		}
 	}
 }
@@ -1129,7 +1138,10 @@ SyntaxTree::~SyntaxTree()
 
 void SyntaxTree::ShowCommand(Command *c)
 {
-	msg_write("[" + Kind2Str(c->kind) + "] " + c->type->name + " " + LinkNr2Str(c->script->syntax,c->kind,c->link_no) + " << " + c->script->Filename);
+	string orig;
+	if (c->script->syntax != this)
+		orig = " << " + c->script->Filename;
+	msg_write("[" + Kind2Str(c->kind) + "] " + c->type->name + " " + LinkNr2Str(c->script->syntax,c->kind,c->link_no) + orig);
 	msg_right();
 	if (c->instance)
 		ShowCommand(c->instance);
