@@ -615,8 +615,8 @@ public:
 				Asm::InstructionWithParamsList *l = new Asm::InstructionWithParamsList(0);
 				l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::param_reg(Asm::REG_R0), Asm::param_reg(Asm::REG_R0), Asm::param_reg(Asm::REG_R1));
 				l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::param_reg(Asm::REG_R0), Asm::param_reg(Asm::REG_R1), Asm::param_imm(512, 4));//2040));
-				l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_ldr, Asm::param_reg(Asm::REG_R0), Asm::param_deref_reg_shift(Asm::REG_R13, 512, 4));//2040));
-				l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_ldr, Asm::param_reg(Asm::REG_R0), Asm::param_deref_reg(Asm::REG_R2, 4));
+//				l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_ldr, Asm::param_reg(Asm::REG_R0), Asm::param_deref_reg_shift(Asm::REG_R13, 512, 4));//2040));
+//				l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_ldr, Asm::param_reg(Asm::REG_R0), Asm::param_deref_reg(Asm::REG_R2, 4));
 				int ocs = 0;
 				l->Compile(fff, ocs);
 				fff[ocs / 4] = 0xe12fff1e;
@@ -632,6 +632,7 @@ public:
 		try{
 			Script::Script *s = Script::CreateForSource("#show\nint f(int a, int b)\n\tint c = a + b\n\treturn c");
 			msg_write(Asm::Disassemble(s->Opcode, s->OpcodeSize, true));
+			fp = (ifii*)s->func[0];
 		}catch(Script::Exception &e){
 			e.print();
 		}

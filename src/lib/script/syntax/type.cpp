@@ -242,13 +242,15 @@ void Type::LinkExternalVirtualTable(void *p)
 	// link script functions according to external vtable
 	VirtualTable *t = (VirtualTable*)p;
 	vtable.clear();
+	int max_vindex = 1;
 	foreach(ClassFunction &cf, function)
 		if (cf.virtual_index >= 0){
 			if (cf.nr >= 0)
 				cf.script->func[cf.nr] = (t_func*)t[cf.virtual_index];
 			if (cf.virtual_index >= vtable.num)
-				vtable.resize(cf.virtual_index + 1);
+				max_vindex = max(max_vindex, cf.virtual_index);
 		}
+	vtable.resize(max_vindex + 1);
 
 	for (int i=0;i<vtable.num;i++)
 		vtable[i] = t[i];
