@@ -107,7 +107,7 @@ public:
 	SerialCommandParam SerializeCommand(Command *com, int level, int index);
 	virtual void SerializeCompilerFunction(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret, int level, int index, int marker_before_params) = 0;
 	virtual void SerializeOperator(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret) = 0;
-	void AddFunctionIntro(Function *f);
+	virtual void AddFunctionIntro(Function *f) = 0;
 
 	void SimplifyIfStatements();
 	void SimplifyFloatStore();
@@ -136,7 +136,7 @@ public:
 	void add_cmd_constructor(SerialCommandParam &param, int modus);
 	void add_cmd_destructor(SerialCommandParam &param, bool ref = true);
 
-	void DoMapping();
+	virtual void DoMapping() = 0;
 	void FindReferencedTempVars();
 	void TryMapTempVarsRegisters();
 	void MapRemainingTempVarsToStack();
@@ -150,7 +150,7 @@ public:
 
 	int temp_in_cmd(int c, int v);
 	void ScanTempVarUsage();
-	void CorrectUnallowedParamCombis();
+	virtual void CorrectUnallowedParamCombis() = 0;
 
 	int find_unused_reg(int first, int last, int size, bool allow_eax);
 	void solve_deref_temp_local(int c, int np, bool is_local);
@@ -187,8 +187,12 @@ public:
 	virtual void add_virtual_function_call(int virtual_index);
 	virtual int fc_begin();
 	virtual void fc_end(int push_size);
+	virtual void AddFunctionIntro(Function *f);
 	virtual void SerializeCompilerFunction(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret, int level, int index, int marker_before_params);
 	virtual void SerializeOperator(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret);
+
+	virtual void DoMapping();
+	virtual void CorrectUnallowedParamCombis();
 };
 
 class SerializerAMD64 : public SerializerX86
@@ -200,6 +204,7 @@ public:
 	virtual void add_virtual_function_call(int virtual_index);
 	virtual int fc_begin();
 	virtual void fc_end(int push_size);
+	virtual void AddFunctionIntro(Function *f);
 };
 
 class SerializerARM : public Serializer
@@ -211,8 +216,12 @@ public:
 	virtual void add_virtual_function_call(int virtual_index);
 	virtual int fc_begin();
 	virtual void fc_end(int push_size);
+	virtual void AddFunctionIntro(Function *f);
 	virtual void SerializeCompilerFunction(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret, int level, int index, int marker_before_params);
 	virtual void SerializeOperator(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret);
+
+	virtual void DoMapping();
+	virtual void CorrectUnallowedParamCombis();
 };
 
 };
