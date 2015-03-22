@@ -3171,73 +3171,6 @@ void SerializerARM::DoMapping()
 		cmd_list_out();
 }
 
-inline void get_param(int inst, SerialCommandParam &p, int &param_type, int &param_size, void *&param, Asm::InstructionWithParamsList *list, Script *s)
-{
-	param_size = -1;
-	if (p.kind < 0){
-		param_type = Asm::PK_NONE;
-		param = NULL;
-	}else if (p.kind == KindMarker){
-		param_type = Asm::PK_LABEL;
-		param_size = 4;
-		param = (void*)(long)list->add_label("kaba:" + i2s((int)(long)p.p), false);
-	}else if (p.kind == KindRegister){
-		param_type = Asm::PK_REGISTER;
-		param = p.p;
-		param_size = p.type->size;
-		if (p.shift > 0)
-			s->DoErrorInternal("get_param: reg + shift");
-	}else if (p.kind == KindDerefRegister){
-		param_size = p.type->size;
-		param_type = Asm::PK_DEREF_REGISTER;
-		//if ((param_size != 1) && (param_size != 2) && (param_size != 4) && (param_size != 8))
-		//	s->DoErrorInternal("get_param: evil deref reg of type " + p.type->name);
-		param = p.p;
-		if (p.shift > 0){
-			if ((long)p.p == Asm::REG_EDX){
-				param_type = Asm::PK_EDX_REL;
-				param = (void*)(long)p.shift;
-			}else
-				s->DoErrorInternal("get_param: [reg] + shift");
-		}
-	}else if (p.kind == KindVarGlobal){
-		param_type = Asm::PK_DEREF_CONSTANT;
-		param_size = p.type->size;
-		if ((param_size != 1) && (param_size != 2) && (param_size != 4) && (param_size != 8))
-			s->DoErrorInternal("get_param: evil global of type " + p.type->name);
-		param = p.p + p.shift;
-	}else if (p.kind == KindVarLocal){
-		param_size = p.type->size;
-		param_type = Asm::PK_LOCAL;
-		if ((param_size != 1) && (param_size != 2) && (param_size != 4) && (param_size != 8))
-			param_size = -1; // lea doesn't need size...
-			//s->DoErrorInternal("get_param: evil local of type " + p.type->name);
-		param = p.p + p.shift;
-	}else if (p.kind == KindRefToConst){
-		bool imm_allowed = Asm::GetInstructionAllowConst(inst);
-		if ((imm_allowed) && (p.type->is_pointer)){
-			param_type = Asm::PK_CONSTANT;
-			param_size = 4;
-			param = (char*)(long)*(int*)(p.p + p.shift);
-		}else if ((p.type->size <= 4) && (imm_allowed)){
-			param_type = Asm::PK_CONSTANT;
-			param_size = p.type->size;
-			param = (char*)(long)*(int*)(p.p + p.shift);
-		}else{
-			param_type = Asm::PK_DEREF_CONSTANT;
-			param_size = p.type->size;//4;
-			param = p.p + p.shift;
-		}
-	}else if (p.kind == KindConstant){
-		param_type = Asm::PK_CONSTANT;
-		param_size = p.type->size;
-		param = p.p;
-		if (p.shift > 0)
-			s->DoErrorInternal("get_param: const + shift");
-	}else
-		s->DoErrorInternal("get_param: unexpected param..." + Kind2Str(p.kind));
-}
-
 
 inline Asm::InstructionParam get_param(int inst, SerialCommandParam &p, Asm::InstructionWithParamsList *list, Script *s)
 {
@@ -3293,19 +3226,16 @@ void assemble_cmd(Asm::InstructionWithParamsList *list, SerialCommand &c, Script
 	if (c.inst == inst_call_label){
 		//msg_write("marker kaba:" + i2s((long)cmd[i].p[0].p));
 		Function *f = (Function*)c.p[0].p;
-		list->add_easy(Asm::inst_call, Asm::PK_LABEL, 4, (void*)(long)list->add_label("kaba-func:" + f->name, false));
+		list->add2(Asm::inst_call, Asm::param_label((long)list->add_label("kaba-func:" + f->name, false), 4));
 		return;
 	}
 	// translate parameters
-	int param1_type, param2_type;
-	int param1_size, param2_size;
-	void *param1, *param2;
-	get_param(c.inst, c.p[0], param1_type, param1_size, param1, list, s);
-	get_param(c.inst, c.p[1], param2_type, param2_size, param2, list, s);
+	Asm::InstructionParam p1 = get_param(c.inst, c.p[0], list, s);
+	Asm::InstructionParam p2 = get_param(c.inst, c.p[1], list, s);
 
 	// assemble instruction
 	//list->current_line = c.
-	list->add_easy(c.inst, param1_type, param1_size, param1, param2_type, param2_size, param2);
+	list->add2(c.inst, p1, p2);
 }
 
 void assemble_cmd_arm(Asm::InstructionWithParamsList *list, SerialCommand &c, Script *s)
@@ -3313,12 +3243,17 @@ void assemble_cmd_arm(Asm::InstructionWithParamsList *list, SerialCommand &c, Sc
 	if (c.inst == inst_call_label){
 		//msg_write("marker kaba:" + i2s((long)cmd[i].p[0].p));
 		Function *f = (Function*)c.p[0].p;
-		list->add_easy(Asm::inst_call, Asm::PK_LABEL, 4, (void*)(long)list->add_label("kaba-func:" + f->name, false));
+		list->add2(Asm::inst_call, Asm::param_label((long)list->add_label("kaba-func:" + f->name, false), 4));
 		return;
 	}
-	if (c.inst == Asm::inst_ldr){
-		//list->add_arm(c.cond, c.inst, Asm::param_reg())
-	}
+	// translate parameters
+	Asm::InstructionParam p1 = get_param(c.inst, c.p[0], list, s);
+	Asm::InstructionParam p2 = get_param(c.inst, c.p[1], list, s);
+	Asm::InstructionParam p3 = get_param(c.inst, c.p[2], list, s);
+
+	// assemble instruction
+	//list->current_line = c.
+	list->add_arm(c.cond, c.inst, p1, p2, p3);
 }
 
 void AddAsmBlock(Asm::InstructionWithParamsList *list, Script *s)
@@ -3456,6 +3391,9 @@ void Serializer::Assemble(char *Opcode, int &OpcodeSize)
 	}
 
 	//msg_write(Opcode2Asm(Opcode, OpcodeSize));
+
+
+	list->show();
 
 	list->Optimize(Opcode, OpcodeSize);
 	list->Compile(Opcode, OpcodeSize);

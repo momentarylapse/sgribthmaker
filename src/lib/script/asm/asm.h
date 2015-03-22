@@ -43,21 +43,6 @@ extern int RegRoot[];
 extern int RegResize[NUM_REG_ROOTS][MAX_REG_SIZE + 1];
 string GetRegName(int reg);
 
-enum{
-	PK_INVALID,
-	PK_NONE,
-	PK_REGISTER,              // eAX
-	PK_DEREF_REGISTER,        // [eAX]
-	PK_LOCAL,                 // [eBP + 0x0000]
-	PK_EDX_REL,               // [eDX + 0x0000]
-	PK_CONSTANT,              // 0x00000000
-	PK_DEREF_CONSTANT,        // [0x00000000]
-	PK_LABEL,                 // _label
-	PK_REGISTER_SHIFT,        // r0 + 0x0000
-	PK_DEREF_REGISTER_SHIFT,  // [r0 + 0x0000]
-	PK_DEREF_REGISTER2_UP,    // [r0 + r1]
-	PK_DEREF_REGISTER2_DOWN,  // [r0 - r1]
-};
 
 
 enum{
@@ -340,7 +325,6 @@ struct InstructionParam
 	int size;
 	long long value; // disp or immediate
 	bool is_label;
-	bool immediate_is_relative;	// for jump
 	string str(bool hide_size = false);
 };
 
@@ -377,13 +361,14 @@ InstructionParam param_deref_reg_shift(int reg, int shift, int size);
 InstructionParam param_deref_reg_shift_reg(int reg, int reg2, int size);
 InstructionParam param_imm(long long value, int size);
 InstructionParam param_deref_imm(long long value, int size);
+InstructionParam param_label(long long value, int size);
 
 struct InstructionWithParamsList : public Array<InstructionWithParams>
 {
 	InstructionWithParamsList(int line_offset);
 	~InstructionWithParamsList();
 
-	void add_easy(int inst, int param1_type = PK_NONE, int param1_size = -1, void *param1 = NULL, int param2_type = PK_NONE, int param2_size = -1, void *param2 = NULL);
+//	void add_easy(int inst, int param1_type = PK_NONE, int param1_size = -1, void *param1 = NULL, int param2_type = PK_NONE, int param2_size = -1, void *param2 = NULL);
 	void add2(int inst, const InstructionParam &p1 = param_none, const InstructionParam &p2 = param_none);
 	void add_arm(int cond, int inst, const InstructionParam &p1, const InstructionParam &p2 = param_none, const InstructionParam &p3 = param_none);
 	int add_label(const string &name, bool declaring);
@@ -398,6 +383,8 @@ struct InstructionWithParamsList : public Array<InstructionWithParams>
 	void LinkWantedLabels(void *oc);
 	void AddInstruction(char *oc, int &ocs, int n);
 	void AddInstructionARM(char *oc, int &ocs, int n);
+
+	void show();
 
 	Array<Label> label;
 	Array<WantedLabel> wanted_label;
@@ -420,7 +407,7 @@ public:
 	int line, column;
 };
 
-void AddInstruction(char *oc, int &ocs, int inst, int param1_type = PK_NONE, int param1_size = -1, void *param1 = NULL, int param2_type = PK_NONE, int param2_size = -1, void *param2 = NULL);
+void AddInstruction(char *oc, int &ocs, int inst, const InstructionParam &p1, const InstructionParam &p2 = param_none, const InstructionParam &p3 = param_none);
 void SetInstructionSet(int set);
 bool ImmediateAllowed(int inst);
 extern int OCParam;

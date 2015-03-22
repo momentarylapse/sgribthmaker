@@ -402,8 +402,6 @@ enum
 };
 
 
-InstructionParam _make_param_(int type, int size, long long param);
-
 InstructionWithParamsList::InstructionWithParamsList(int line_no)
 {
 	current_inst = 0;
@@ -413,17 +411,6 @@ InstructionWithParamsList::InstructionWithParamsList(int line_no)
 
 InstructionWithParamsList::~InstructionWithParamsList()
 {}
-
-void InstructionWithParamsList::add_easy(int inst, int param1_type, int param1_size, void *param1, int param2_type, int param2_size, void *param2)
-{
-	InstructionWithParams i;
-	i.inst = inst;
-	i.p1 = _make_param_(param1_type, param1_size, (long)param1);
-	i.p2 = _make_param_(param2_type, param2_size, (long)param2);
-	i.line = current_line;
-	i.col = current_col;
-	add(i);
-};
 
 InstructionParam param_reg(int reg)
 {
@@ -435,6 +422,7 @@ InstructionParam param_reg(int reg)
 	p.deref = false;
 	p.value = 0;
 	p.disp = DISP_MODE_NONE;
+	p.is_label = false;
 	return p;
 }
 
@@ -448,6 +436,7 @@ InstructionParam param_deref_reg(int reg, int size)
 	p.deref = true;
 	p.value = 0;
 	p.disp = DISP_MODE_NONE;
+	p.is_label = false;
 	return p;
 }
 
@@ -461,6 +450,7 @@ InstructionParam param_deref_reg_shift(int reg, int shift, int size)
 	p.deref = true;
 	p.value = shift;
 	p.disp = ((shift < 120) && (shift > -120)) ? DISP_MODE_8 : DISP_MODE_32;
+	p.is_label = false;
 	return p;
 }
 
@@ -474,6 +464,7 @@ InstructionParam param_deref_reg_shift_reg(int reg, int reg2, int size)
 	p.deref = true;
 	p.value = 1;
 	p.disp = DISP_MODE_REG2;
+	p.is_label = false;
 	return p;
 }
 
@@ -487,6 +478,7 @@ InstructionParam param_imm(long long value, int size)
 	p.value = value;
 	p.deref = false;
 	p.disp = DISP_MODE_NONE;
+	p.is_label = false;
 	return p;
 }
 
@@ -500,10 +492,25 @@ InstructionParam param_deref_imm(long long value, int size)
 	p.value = value;
 	p.deref = true;
 	p.disp = DISP_MODE_NONE;
+	p.is_label = false;
 	return p;
 }
 
-void InstructionWithParamsList::add_arm(int cond, int inst, const InstructionParam &p1, const InstructionParam &p2, const InstructionParam &p3)
+InstructionParam param_label(long long value, int size)
+{
+	InstructionParam p;
+	p.type = PARAMT_IMMEDIATE;
+	p.reg = NULL;
+	p.reg2 = NULL;
+	p.size = size;
+	p.value = value;
+	p.deref = false;
+	p.disp = DISP_MODE_NONE;
+	p.is_label = true;
+	return p;
+}
+
+void InstructionWithParamsList::add_arm(int cond, int inst, const InstructionParam &p1 = param_none, const InstructionParam &p2, const InstructionParam &p3)
 {
 	InstructionWithParams i;
 	i.inst = inst;
@@ -511,45 +518,29 @@ void InstructionWithParamsList::add_arm(int cond, int inst, const InstructionPar
 	i.p1 = p1;
 	i.p2 = p2;
 	i.p3 = p3;
-	/*
-	i.p1.reg = RegisterByID[reg1];
-	i.p1.reg2 = NULL;
-	if (reg2 >= REG_R0)
-		i.p1.reg2 = RegisterByID[reg2];
-	i.p2.type = PARAMT_NONE;
-	i.p2.value = 0;
-	if (param3_type == PK_REGISTER){
-		i.p2.type = PARAMT_REGISTER;
-		i.p2.reg = RegisterByID[reg3];
-	}else if (param3_type == PK_CONSTANT){
-		i.p2.type = PARAMT_IMMEDIATE;
-		i.p2.value = immediate3;
-	}else if (param3_type == PK_REGISTER_SHIFT){
-		i.p2.type = PARAMT_REGISTER_SHIFT;
-		i.p2.reg = RegisterByID[reg3];
-		i.p2.value = immediate3;
-	}else if (param3_type == PK_DEREF_REGISTER_SHIFT){
-		i.p2.type = PARAMT_IMMEDIATE;
-		i.p2.value = immediate3;
-	}else if (param3_type == PK_DEREF_REGISTER){
-		i.p2.type = PARAMT_IMMEDIATE;
-		i.p2.value = 0;
-	}else if (param3_type == PK_DEREF_REGISTER2_UP){
-		i.p2.type = PARAMT_REGISTER;
-		i.p2.reg = RegisterByID[reg3];
-		i.p2.value = 1;
-	}else if (param3_type == PK_DEREF_REGISTER2_DOWN){
-		i.p2.type = PARAMT_REGISTER;
-		i.p2.reg = RegisterByID[reg3];
-		i.p2.value = -1;
-	}else if (param3_type == PK_LOCAL){
-		i.p1.reg2 = RegisterByID[REG_R13];
-		i.p2.type = PARAMT_IMMEDIATE;
-		i.p2.value = immediate3;
-	}*/
 	i.line = current_line;
 	i.col = current_col;
 	add(i);
+}
+
+void InstructionWithParamsList::add2(int inst, const InstructionParam &p1, const InstructionParam &p2)
+{
+	InstructionWithParams i;
+	i.inst = inst;
+	i.condition = ARM_COND_ALWAYS;
+	i.p1 = p1;
+	i.p2 = p2;
+	i.p3 = param_none;
+	i.line = current_line;
+	i.col = current_col;
+	add(i);
+}
+
+void InstructionWithParamsList::show()
+{
+	msg_write("--------------");
+	foreach(Asm::InstructionWithParams &i, *this)
+		msg_write(i.str());
 }
 
 int InstructionWithParamsList::add_label(const string &name, bool declaring)
@@ -586,22 +577,22 @@ void InstructionWithParamsList::add_func_intro(int stack_alloc_size)
 	long reg_bp = (InstructionSet.set == INSTRUCTION_SET_AMD64) ? REG_RBP : REG_EBP;
 	long reg_sp = (InstructionSet.set == INSTRUCTION_SET_AMD64) ? REG_RSP : REG_ESP;
 	int s = InstructionSet.pointer_size;
-	add_easy(inst_push, PK_REGISTER, s, (void*)reg_bp);
-	add_easy(inst_mov, PK_REGISTER, s, (void*)reg_bp, PK_REGISTER, s, (void*)reg_sp);
+	add2(inst_push, param_reg(reg_bp));
+	add2(inst_mov, param_reg(reg_bp), param_reg(reg_sp));
 	if (stack_alloc_size > 127){
-		add_easy(inst_sub, PK_REGISTER, s, (void*)reg_sp, PK_CONSTANT, SIZE_32, (void*)(long)stack_alloc_size);
+		add2(inst_sub, param_reg(reg_sp), param_imm(stack_alloc_size, SIZE_32));
 	}else if (stack_alloc_size > 0){
-		add_easy(inst_sub, PK_REGISTER, s, (void*)reg_sp, PK_CONSTANT, SIZE_8, (void*)(long)stack_alloc_size);
+		add2(inst_sub, param_reg(reg_sp), param_imm(stack_alloc_size, SIZE_8));
 	}
 }
 
 void InstructionWithParamsList::add_func_return(int return_size)
 {
-	add_easy(inst_leave);
+	add2(inst_leave);
 	if (return_size > 4)
-		add_easy(inst_ret, PK_CONSTANT, SIZE_16, (void*)4);
+		add2(inst_ret, param_imm(4, SIZE_16));
 	else
-		add_easy(inst_ret);
+		add2(inst_ret);
 }
 
 // which part of the modr/m byte is used
@@ -1736,7 +1727,6 @@ void Init(int set)
 // convert an asm parameter into a human readable expression
 string InstructionParam::str(bool hide_size)
 {
-	msg_db_f("AddParam", 1+ASM_DB_LEVEL);
 	//msg_write("----");
 	//msg_write(p.type);
 	if (type == PARAMT_INVALID){
@@ -1754,19 +1744,19 @@ string InstructionParam::str(bool hide_size)
 			if (disp == DISP_MODE_NONE)
 				return ss + "[" + reg->name + "]";
 			else if (disp == DISP_MODE_8)
-				return ss + format("[%s + 0x%02x]", reg->name.c_str(), value);
+				return ss + format("[%s+0x%02x]", reg->name.c_str(), (value & 0xff));
 			else if (disp == DISP_MODE_16)
-				return ss + format("[%s + 0x%04x]", reg->name.c_str(), value);
+				return ss + format("[%s+0x%04x]", reg->name.c_str(), (value & 0xffff));
 			else if (disp == DISP_MODE_32)
-				return ss + format("[%s + 0x%08x]", reg->name.c_str(), value);
+				return ss + format("[%s+0x%08x]", reg->name.c_str(), value);
 			else if (disp == DISP_MODE_SIB)
 				return "SIB[...][...]";
 			else if (disp == DISP_MODE_8_SIB)
-				return ss + format("[SIB... + 0x%02x]", value);
+				return ss + format("[SIB...+0x%02x]", value);
 			else if (disp == DISP_MODE_8_REG2)
-				return ss + format("[%s + %s + 0x%02x]", reg->name.c_str(), reg2->name.c_str(), value);
+				return ss + format("[%s+%s+0x%02x]", reg->name.c_str(), reg2->name.c_str(), value);
 			else if (disp == DISP_MODE_REG2)
-				return ss + "[" + reg->name + " + " + reg2->name + "]";
+				return ss + "[" + reg->name + "+" + reg2->name + "]";
 		}else
 			return reg->name;
 	}else if (type == PARAMT_IMMEDIATE){
@@ -1778,79 +1768,19 @@ string InstructionParam::str(bool hide_size)
 		//msg_write("im");
 		return format("%s:%s", d2h(&((char*)&value)[4], 2).c_str(), d2h(&value, state.ParamSize).c_str());*/
 	}
-#if 0
-	for (int i=0;i<Registers.num;i++)
-		if (param==Registers[i].reg){
-			strcat(str,Registers[i].name);
-			return;
-		}
-	switch(param){
-		case peAX:	strcat(str,"[eax]");	break;
-		case peCX:	strcat(str,"[ecx]");	break;
-		case peDX:	strcat(str,"[edx]");	break;
-		case peBX:	strcat(str,"[ebx]");	break;
-		case pp:	strcat(str,"[--][--]");	break;
-		case disp8:	strcat(str,string("[",d2h((char*)&disp,1),"]"));	break;
-		case disp16:	strcat(str,string("[",d2h((char*)&disp,2),"]"));	break;
-		case disp32:	strcat(str,string("[",d2h((char*)&disp,4),"]"));	break;
-		case peSI:	strcat(str,"[esi]");	break;
-		case peDI:	strcat(str,"[edi]");	break;
-		case pBX_pSI:	strcat(str,"[bx + si]");		break;
-		case pBX_pDI:	strcat(str,"[bx + di]");		break;
-		case pBP_pSI:	strcat(str,"[bp + si]");		break;
-		case pBP_pDI:	strcat(str,"[bp + di]");		break;
-		case pBX:	strcat(str,"[bx]");		break;
-		case pSI:	strcat(str,"[si]");		break;
-		case pDI:	strcat(str,"[di]");		break;
-
-		case d8_peAX:	strcat(str,string("[eax + ",d2h((char*)&disp,1),"]"));	break;
-		case d8_peCX:	strcat(str,string("[ecx + ",d2h((char*)&disp,1),"]"));	break;
-		case d8_peDX:	strcat(str,string("[edx + ",d2h((char*)&disp,1),"]"));	break;
-		case d8_peBX:	strcat(str,string("[ebx + ",d2h((char*)&disp,1),"]"));	break;
-		case d8_pp:	strcat(str,string("[--][-- + ",d2h((char*)&disp,1),"]"));	break;
-		case d8_peBP:	strcat(str,string("[ebp + ",d2h((char*)&disp,1),"]"));	break;
-		case d8_peSI:	strcat(str,string("[esi + ",d2h((char*)&disp,1),"]"));	break;
-		case d8_peDI:	strcat(str,string("[edi + ",d2h((char*)&disp,1),"]"));	break;
-
-		case d8_pBX:	strcat(str,string("[bx + ",d2h((char*)&disp,1),"]"));	break;
-		case d8_pBP:	strcat(str,string("[bp + ",d2h((char*)&disp,1),"]"));	break;
-		case d8_pSI:	strcat(str,string("[si + ",d2h((char*)&disp,1),"]"));	break;
-		case d8_pDI:	strcat(str,string("[di + ",d2h((char*)&disp,1),"]"));	break;
-	
-		case d16_pBX_pSI:	strcat(str,string("[bx + si + ",d2h((char*)&disp,2),"]"));	break;
-		case d16_pBX_pDI:	strcat(str,string("[bx + di + ",d2h((char*)&disp,2),"]"));	break;
-		case d16_pBP_pSI:	strcat(str,string("[bp + si + ",d2h((char*)&disp,2),"]"));	break;
-		case d16_pBP_pDI:	strcat(str,string("[bp + di + ",d2h((char*)&disp,2),"]"));	break;
-		case d16_pBX:	strcat(str,string("[bx + ",d2h((char*)&disp,2),"]"));	break;
-		case d16_pBP:	strcat(str,string("[bp + ",d2h((char*)&disp,2),"]"));	break;
-		case d16_pSI:	strcat(str,string("[si + ",d2h((char*)&disp,2),"]"));	break;
-		case d16_pDI:	strcat(str,string("[di + ",d2h((char*)&disp,2),"]"));	break;
-
-		case d32_peAX:	strcat(str,string("[eax + ",d2h((char*)&disp,4),"]"));	break;
-		case d32_peCX:	strcat(str,string("[ecx + ",d2h((char*)&disp,4),"]"));	break;
-		case d32_peDX:	strcat(str,string("[edx + ",d2h((char*)&disp,4),"]"));	break;
-		case d32_peBX:	strcat(str,string("[ebx + ",d2h((char*)&disp,4),"]"));	break;
-		case d32_pp:	strcat(str,string("[--][-- + ",d2h((char*)&disp,4),"]"));	break;
-		case d32_peBP:	strcat(str,string("[ebp + ",d2h((char*)&disp,4),"]"));	break;
-		case d32_peSI:	strcat(str,string("[esi + ",d2h((char*)&disp,4),"]"));	break;
-		case d32_peDI:	strcat(str,string("[edi + ",d2h((char*)&disp,4),"]"));	break;
-
-		case Ib:	strcat(str,d2h((char*)&disp,1));	break;
-		case Iw:	strcat(str,d2h((char*)&disp,2));	break;
-		case Id:	strcat(str,d2h((char*)&disp,4));	break;
-		case Ip:
-			if ((small_param)&&(!mode16))	strcat(str,"word ");
-			if ((!small_param)&&(mode16))	strcat(str,"dword ");
-			strcat(str,d2h((char*)&ParamConstantDouble,2));
-			strcat(str,":");
-			if (small_param)	strcat(str,d2h((char*)&disp,2));
-			else				strcat(str,d2h((char*)&disp,4));
-			break;
-
-		default:	strcat(str,string(i2s(param),": -\?\?- "));	break;
-	};
-#endif
 	return "\?\?\?";
+}
+
+string InstructionWithParams::str(bool hide_size)
+{
+	string s;
+	s += GetInstructionName(inst);
+	s += "  " + p1.str(hide_size);
+	if (p2.type != PARAMT_NONE)
+		s += ",  " + p2.str(hide_size);
+	if (p3.type != PARAMT_NONE)
+		s += ",  " + p3.str(hide_size);
+	return s;
 }
 
 inline void UnfuzzyParam(InstructionParam &p, InstructionParamFuzzy &pf)
@@ -3171,57 +3101,6 @@ bool InstructionParamFuzzy::match(InstructionParam &wanted_p)
 	return false;
 }
 
-// translate from easy parameters to assembler usable parameters
-InstructionParam _make_param_(int type, int size, long long param)
-{
-	InstructionParam i;
-	i.reg = NULL;
-	i.size = SIZE_UNKNOWN;
-	i.deref = false;
-	i.value = 0;
-	i.disp = DISP_MODE_NONE;
-	i.is_label = false;
-	if (type == PK_NONE){
-		i.type = PARAMT_NONE;
-	}else if (type == PK_CONSTANT){
-		i.type = PARAMT_IMMEDIATE;
-		i.size = size;
-		i.value = param;
-	}else if (type == PK_LABEL){
-		i.type = PARAMT_IMMEDIATE;
-		i.size = SIZE_32;
-		i.value = param;
-		i.is_label = true;
-	}else if (type == PK_DEREF_CONSTANT){
-		i.type = PARAMT_IMMEDIATE;
-		i.deref = true;
-		i.size = size;
-		i.value = param;
-	}else if (type == PK_EDX_REL){
-		i.type = PARAMT_REGISTER;
-		i.reg = RegisterByID[REG_EDX];
-		i.deref = true;
-		i.disp = ((param < 120) && (param > -120)) ? DISP_MODE_8 : DISP_MODE_32;
-		i.value = param;
-	}else if (type == PK_LOCAL){
-		i.type = PARAMT_REGISTER;
-		i.reg = RegisterByID[REG_EBP];
-		i.deref = true;
-		i.size = size;
-		i.disp = ((param < 120) && (param > -120)) ? DISP_MODE_8 : DISP_MODE_32;
-		i.value = param;
-	}else if (type == PK_REGISTER){
-		i.type = PARAMT_REGISTER;
-		i.reg = RegisterByID[(long)param];
-		i.size = i.reg->size;
-	}else if (type == PK_DEREF_REGISTER){
-		i.type = PARAMT_REGISTER;
-		i.reg = RegisterByID[(long)param];
-		i.size = size;
-		i.deref = true;
-	}
-	return i;
-}
 
 int GetModRMReg(Register *r)
 {
@@ -3428,8 +3307,6 @@ void InstructionWithParamsList::AddInstructionARM(char *oc, int &ocs, int n)
 
 	int code = 0;
 
-	msg_write(GetInstructionName(iwp.inst));
-
 	code = iwp.condition << 28;
 	int nn = -1;
 	for (int i=0; i<16; i++)
@@ -3571,55 +3448,7 @@ void InstructionWithParamsList::Compile(void *oc, int &ocs)
 	}
 }
 
-// only used for error messages
-void param2str(string &str, int type, int size, void *param)
-{
-	switch(type){
-		case PK_NONE:
-			str = "---";
-			break;
-		case PK_REGISTER:
-			str = "reg ";
-			if (((long)param >= 0) && ((long)param < RegisterByID.num)){
-				if (RegisterByID[(long)param])
-					str += RegisterByID[(long)param]->name;
-				else
-					str += "-----evil----";
-			}else
-				str += "-----evil----";
-			break;
-		case PK_DEREF_REGISTER:
-			str = get_size_name(size) + " deref reg ";
-			if (((long)param >= 0) && ((long)param < RegisterByID.num)){
-				if (RegisterByID[(long)param])
-					str += RegisterByID[(long)param]->name;
-				else
-					str += "-----evil----";
-			}else
-				str += "-----evil----";
-			break;
-		case PK_LOCAL:
-			str = get_size_name(size) + " local " + d2h(&param, 4);
-			break;
-		case PK_EDX_REL:
-			str = "edx rel " + d2h(&param, 4);
-			break;
-		case PK_CONSTANT:
-			str = "const " + d2h(&param, size);
-			break;
-		/*case PKConstantDouble:
-			str = "const 2x " + d2h(&param, 6);
-			break;*/
-		case PK_DEREF_CONSTANT:
-			str = get_size_name(size) + "deref const [" + d2h(&param, 4) + "]";
-			break;
-		default:
-			str = format("??? (%d)", type);
-			break;
-	}
-}
-
-void AddInstruction(char *oc, int &ocs, int inst, int param1_type, int param1_size, void *param1, int param2_type, int param2_size, void *param2)
+void AddInstruction(char *oc, int &ocs, int inst, const InstructionParam &p1, const InstructionParam &p2, const InstructionParam &p3)
 {
 	msg_db_f("AsmAddInstruction", 1+ASM_DB_LEVEL);
 	/*if (!CPUInstructions)
@@ -3631,15 +3460,13 @@ void AddInstruction(char *oc, int &ocs, int inst, int param1_type, int param1_si
 		if (InstructionName[i].inst == inst)
 			printf("%s\n", InstructionName[i].name);*/
 
-	InstructionParam wp1 = _make_param_(param1_type, param1_size, (long)param1);
-	InstructionParam wp2 = _make_param_(param2_type, param2_size, (long)param2);
-
 	OCParam = ocs;
 	InstructionWithParamsList list = InstructionWithParamsList(0);
 	InstructionWithParams iwp;
 	iwp.inst = inst;
-	iwp.p1 = wp1;
-	iwp.p2 = wp2;
+	iwp.p1 = p1;
+	iwp.p2 = p2;
+	iwp.p3 = p3;
 	iwp.line = -1;
 	list.add(iwp);
 	list.AddInstruction(oc, ocs, 0);
