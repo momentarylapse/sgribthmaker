@@ -487,6 +487,42 @@ void OnPreviousDocument()
 		}
 }
 
+void Test1(int a)
+{
+	msg_write("out: " + i2s(a));
+}
+
+int Test2()
+{
+	return 2001;
+}
+
+void TestARM(const string &filename)
+{
+	Script::LinkExternal("Test1", (void*)&Test1);
+	Script::LinkExternal("Test2", (void*)&Test2);
+
+	typedef int ifii(int, int);
+	ifii *fp = NULL;
+
+	try{
+		Script::Script *s = Script::Load(filename);
+		msg_write(Asm::Disassemble(s->Opcode, s->OpcodeSize, true));
+		fp = (ifii*)s->func.back();
+	}catch(Script::Exception &e){
+		e.print();
+	}
+
+
+#ifdef CPU_ARM
+	printf("run...\n");
+	int r = (*fp)(1, 2);
+	printf("return:  %d\n", r);
+#endif
+
+	exit(0);
+}
+
 class SgribthMaker : public HuiApplication
 {
 public:
@@ -510,6 +546,11 @@ public:
 		int *fff = (int*)mmap(0, 100, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS | MAP_EXECUTABLE, -1, 0);
 		typedef int ifii(int, int);
 		ifii *fp = (ifii*)fff;
+
+		msg_set_verbose(true);
+
+		if (arg.num > 1)
+			TestARM(arg[1]);
 
 
 
@@ -599,9 +640,7 @@ public:
 		MainWin->eventSX("file_list", "hui:select", &OnFileList);
 		MainWin->eventSX("function_list", "hui:select", &OnFunctionList);
 
-		//msg_write(Asm::Disassemble((void*)&TestTest));
-
-		msg_set_verbose(true);
+		/*msg_set_verbose(true);
 
 		if (Script::config.instruction_set == Asm::INSTRUCTION_SET_ARM){
 			CFile *f = FileOpen("arm/arm-test");
@@ -625,26 +664,9 @@ public:
 			}catch(Asm::Exception &e){
 				e.print();
 			}
-		}
+		}*/
 
 
-		msg_write("kaba");
-		try{
-			Script::Script *s = Script::CreateForSource("#show\nint f(int a, int b)\n\tint c = a + b\n\treturn c");
-			msg_write(Asm::Disassemble(s->Opcode, s->OpcodeSize, true));
-			fp = (ifii*)s->func[0];
-		}catch(Script::Exception &e){
-			e.print();
-		}
-
-
-#ifdef CPU_ARM
-		printf("run...\n");
-		int r = (*fp)(1,2);
-		printf("%d\n", r);
-#endif
-
-		exit(0);
 
 		if (arg.num > 1){
 			for (int i=1; i<arg.num; i++)
