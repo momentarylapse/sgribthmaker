@@ -3394,6 +3394,11 @@ void InstructionWithParamsList::AddInstructionARM(char *oc, int &ocs, int n)
 		code |= arm_reg_no(iwp.p1.reg) << 16;
 		code |= arm_reg_no(iwp.p2.reg);
 		code |= arm_reg_no(iwp.p3.reg) << 8;
+	}else if (iwp.inst == inst_call){
+		// bl
+		code |= 0x0b000000;
+		int value = (iwp.p1.value - (long)&oc[ocs] - 8) >> 2;
+		code |= (value & 0x00ffffff);
 	}
 
 	*(int*)&oc[ocs] = code;

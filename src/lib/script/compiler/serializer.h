@@ -79,24 +79,27 @@ public:
 	virtual ~Serializer();
 
 	Array<SerialCommand> cmd;
-	int NumMarkers;
+	int num_markers;
 	Script *script;
 	SyntaxTree *syntax_tree;
 	Function *cur_func;
 	bool call_used;
-	Command *NextCommand;
-	bool TempVarRangesDefined;
+	Command *next_command;
+	bool temp_var_ranges_defined;
 
-	Array<int> MapRegRoot;
+	Array<int> map_reg_root;
 	Array<RegChannel> reg_channel;
 
-	bool RegRootUsed[max_reg];
+	bool reg_root_used[max_reg];
 	Array<LoopData> loop;
 
-	int StackOffset, StackMaxSize, MaxPushSize;
+	int stack_offset, stack_max_size, max_push_size;
 	Array<TempVar> temp_var;
 
 	Array<AddLaterData> add_later;
+
+	Array<void*> global_refs;
+	int add_global_ref(void *p);
 
 	Asm::InstructionWithParamsList *list;
 
@@ -136,8 +139,8 @@ public:
 	void add_jump_after_command(int level, int index, int marker);
 
 
-	Array<SerialCommandParam> InsertedConstructorFunc;
-	Array<SerialCommandParam> InsertedConstructorTemp;
+	Array<SerialCommandParam> inserted_constructor_func;
+	Array<SerialCommandParam> inserted_constructor_temp;
 	void add_cmd_constructor(SerialCommandParam &param, int modus);
 	void add_cmd_destructor(SerialCommandParam &param, bool ref = true);
 
@@ -232,6 +235,7 @@ public:
 	virtual void SerializeOperator(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret);
 
 	virtual void DoMapping();
+	void ConvertGlobalLookups();
 	virtual void CorrectUnallowedParamCombis();
 	virtual void CorrectUnallowedParamCombis2(SerialCommand &c);
 };
