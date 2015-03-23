@@ -515,9 +515,11 @@ void TestARM(const string &filename)
 
 
 #ifdef CPU_ARM
-	printf("run...\n");
-	int r = (*fp)(1, 2);
-	printf("return:  %d\n", r);
+	if (fp){
+		printf("run...\n");
+		int r = (*fp)(1, 2);
+		printf("return:  %d\n", r);
+	}
 #endif
 
 	exit(0);
