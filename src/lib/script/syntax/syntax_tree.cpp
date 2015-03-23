@@ -1106,7 +1106,7 @@ void SyntaxTree::MapLocalVariablesToStack()
 
 			foreachi(Variable &v, f->var, i){
 				int s = mem_align(v.type->size, 4);
-				v._offset = - f->_var_size - s;
+				v._offset = f->_var_size + s;
 				f->_var_size += s;
 			}
 		}

@@ -2656,6 +2656,8 @@ void Serializer::add_stack_var(Type *type, int first, int last, SerialCommandPar
 	int s = mem_align(type->size, 4);
 	stack_offset += s;
 	int offset = - stack_offset;
+	if (config.instruction_set == Asm::INSTRUCTION_SET_ARM)
+		offset = stack_offset;
 	if (stack_offset > stack_max_size)
 		stack_max_size = stack_offset;
 
@@ -3037,8 +3039,6 @@ void SerializerAMD64::AddFunctionOutro(Function *f)
 
 void SerializerARM::AddFunctionIntro(Function *f)
 {
-	if (!syntax_tree->FlagNoFunctionFrame)
-		add_cmd(Asm::inst_stmdb, param_reg(TypePointer, Asm::REG_R13), param_const(TypeInt, (void*)0x4ff0));
 
 	// return, instance, params
 	Array<Variable> param;
@@ -3578,11 +3578,18 @@ void Serializer::Assemble(char *Opcode, int &OpcodeSize)
 	msg_db_f("Serializer.Assemble", 2);
 
 	// intro + allocate stack memory
-	stack_max_size += max_push_size;
+	if (config.instruction_set != Asm::INSTRUCTION_SET_ARM)
+		stack_max_size += max_push_size;
 	stack_max_size = mem_align(stack_max_size, config.stack_frame_align);
 
-	if (!syntax_tree->FlagNoFunctionFrame)
-		list->add_func_intro(stack_max_size);
+	if (!syntax_tree->FlagNoFunctionFrame){
+		if (config.instruction_set == Asm::INSTRUCTION_SET_ARM){
+			add_cmd(Asm::inst_stmdb, param_reg(TypePointer, Asm::REG_R13), param_const(TypeInt, (void*)0x4ff0));
+			add_cmd(Asm::inst_add, param_reg(TypePointer, Asm::REG_R13), param_reg(TypePointer, Asm::REG_R13), param_const(TypeInt, (void*)stack_max_size));
+		}else{
+			list->add_func_intro(stack_max_size);
+		}
+	}
 
 	for (int i=0;i<cmd.num;i++){
 
