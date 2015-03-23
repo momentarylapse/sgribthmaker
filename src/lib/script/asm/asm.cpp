@@ -500,9 +500,9 @@ void InstructionWithParamsList::add_arm(int cond, int inst, const InstructionPar
 	InstructionWithParams i;
 	i.inst = inst;
 	i.condition = cond;
-	i.p1 = p1;
-	i.p2 = p2;
-	i.p3 = p3;
+	i.p[0] = p1;
+	i.p[1] = p2;
+	i.p[2] = p3;
 	i.line = current_line;
 	i.col = current_col;
 	add(i);
@@ -513,9 +513,9 @@ void InstructionWithParamsList::add2(int inst, const InstructionParam &p1, const
 	InstructionWithParams i;
 	i.inst = inst;
 	i.condition = ARM_COND_ALWAYS;
-	i.p1 = p1;
-	i.p2 = p2;
-	i.p3 = param_none;
+	i.p[0] = p1;
+	i.p[1] = p2;
+	i.p[2] = param_none;
 	i.line = current_line;
 	i.col = current_col;
 	add(i);
@@ -689,10 +689,10 @@ bool CPUInstruction::match(InstructionWithParams &iwp)
 	if (inst != iwp.inst)
 		return false;
 
-	//return (param1.match(iwp.p1)) && (param2.match(iwp.p2));
-	bool b = (param1.match(iwp.p1)) && (param2.match(iwp.p2));
+	//return (param1.match(iwp.p[0])) && (param2.match(iwp.p[1]));
+	bool b = (param1.match(iwp.p[0])) && (param2.match(iwp.p[1]));
 	/*if (b){
-		msg_write("source: " + iwp.p1.str() + " " + iwp.p2.str());
+		msg_write("source: " + iwp.p[0].str() + " " + iwp.p[1].str());
 		print();
 	}*/
 	return b;
@@ -1785,11 +1785,11 @@ string InstructionWithParams::str(bool hide_size)
 {
 	string s;
 	s += GetInstructionName(inst);
-	s += "  " + p1.str(hide_size);
-	if (p2.type != PARAMT_NONE)
-		s += ",  " + p2.str(hide_size);
-	if (p3.type != PARAMT_NONE)
-		s += ",  " + p3.str(hide_size);
+	s += "  " + p[0].str(hide_size);
+	if (p[1].type != PARAMT_NONE)
+		s += ",  " + p[1].str(hide_size);
+	if (p[2].type != PARAMT_NONE)
+		s += ",  " + p[2].str(hide_size);
 	return s;
 }
 
@@ -2115,12 +2115,12 @@ InstructionWithParams disarm_data_opcode(int code)
 	i.inst = ARMDataInstructions[(code >> 21) & 15];
 	if ((code >> 20) & 1)
 		msg_write(" [S]");
-	i.p1 = param_reg(REG_R0 + ((code >> 12) & 15));
-	i.p2 = param_reg(REG_R0 + ((code >> 16) & 15));
+	i.p[0] = param_reg(REG_R0 + ((code >> 12) & 15));
+	i.p[1] = param_reg(REG_R0 + ((code >> 16) & 15));
 	if ((code >> 25) & 1)
-		i.p3 = param_imm(arm_decode_imm(code & 0xfff), SIZE_32);
+		i.p[2] = param_imm(arm_decode_imm(code & 0xfff), SIZE_32);
 	else
-		i.p3 = disarm_shift_reg(code & 0xfff);
+		i.p[2] = disarm_shift_reg(code & 0xfff);
 	return i;
 }
 
@@ -2130,9 +2130,9 @@ InstructionWithParams disarm_data_opcode_mul(int code)
 	i.inst = inst_mul;
 	if ((code >> 20) & 1)
 		msg_write(" [S]");
-	i.p1 = param_reg(REG_R0 + ((code >> 16) & 15));
-	i.p2 = param_reg(REG_R0 + ((code >> 0) & 15));
-	i.p3 = param_reg(REG_R0 + ((code >> 8) & 15));
+	i.p[0] = param_reg(REG_R0 + ((code >> 16) & 15));
+	i.p[1] = param_reg(REG_R0 + ((code >> 0) & 15));
+	i.p[2] = param_reg(REG_R0 + ((code >> 8) & 15));
 	return i;
 }
 
@@ -2143,9 +2143,9 @@ InstructionWithParams disarm_branch(int code)
 		i.inst = inst_bl;
 	else
 		i.inst = inst_b;
-	i.p1 = param_imm(code & 0x00ffffff, SIZE_32);
-	i.p2 = param_none;
-	i.p3 = param_none;
+	i.p[0] = param_imm(code & 0x00ffffff, SIZE_32);
+	i.p[1] = param_none;
+	i.p[2] = param_none;
 	return i;
 }
 
@@ -2160,7 +2160,7 @@ InstructionWithParams disarm_data_transfer(int code)
 		i.inst = bb ? inst_strb : inst_str;
 	int Rn = (code >> 16) & 0xf;
 	int Rd = (code >> 12) & 0xf;
-	i.p1 = param_reg(REG_R0 + Rd);
+	i.p[0] = param_reg(REG_R0 + Rd);
 	bool imm = ((code >> 25) & 1);
 	bool pre = ((code >> 24) & 1);
 	bool up = ((code >> 23) & 1);
@@ -2169,12 +2169,12 @@ InstructionWithParams disarm_data_transfer(int code)
 		msg_write( " --shifted reg--");
 	}else{
 		if (code & 0xfff)
-			i.p2 = param_deref_reg_shift(REG_R0 + Rn, up ? (code & 0xfff) : (-(code & 0xfff)), SIZE_32);
+			i.p[1] = param_deref_reg_shift(REG_R0 + Rn, up ? (code & 0xfff) : (-(code & 0xfff)), SIZE_32);
 		else
-			i.p2 = param_deref_reg(REG_R0 + Rn, SIZE_32);
+			i.p[1] = param_deref_reg(REG_R0 + Rn, SIZE_32);
 	}
-	i.p2.write_back = ww;
-	i.p3 = param_none;
+	i.p[1].write_back = ww;
+	i.p[2] = param_none;
 	return i;
 }
 
@@ -2194,10 +2194,10 @@ InstructionWithParams disarm_data_block_transfer(int code)
 	else if (pp and !uu)
 		i.inst = ll ? inst_ldmdb : inst_stmdb;
 	int Rn = (code >> 16) & 0xf;
-	i.p1 = param_reg(REG_R0 + Rn);
-	i.p2 = param_reg_set(code & 0xffff);
-	i.p1.write_back = ww;
-	i.p3 = param_none;
+	i.p[0] = param_reg(REG_R0 + Rn);
+	i.p[1] = param_reg_set(code & 0xffff);
+	i.p[0].write_back = ww;
+	i.p[2] = param_none;
 	return i;
 }
 
@@ -2215,9 +2215,9 @@ string DisassembleARM(void *_code_,int length,bool allow_comments)
 
 		InstructionWithParams iwp;
 		iwp.inst = inst_nop;
-		iwp.p1 = param_none;
-		iwp.p2 = param_none;
-		iwp.p3 = param_none;
+		iwp.p[0] = param_none;
+		iwp.p[1] = param_none;
+		iwp.p[2] = param_none;
 		if (((cur >> 26) & 3) == 0){
 			if ((cur & 0x0fe000f0) == 0x00000090)
 				iwp = disarm_data_opcode_mul(cur);
@@ -3002,8 +3002,8 @@ void InstructionWithParamsList::AppendFromSource(const string &_code)
 		}
 		InstructionWithParams iwp;
 		iwp.inst = inst;
-		iwp.p1 = p1;
-		iwp.p2 = p2;
+		iwp.p[0] = p1;
+		iwp.p[1] = p2;
 		iwp.line = current_line;
 		iwp.col = current_col;
 		add(iwp);
@@ -3264,7 +3264,7 @@ void InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)
 		state.LineNo = iwp.line;
 		for (int i=0;i<NUM_INSTRUCTION_NAMES;i++)
 			if (InstructionNames[i].inst == iwp.inst)
-				SetError("command not compatible with its parameters\n" + InstructionNames[i].name + " " + iwp.p1.str() + ", " + iwp.p2.str());
+				SetError("command not compatible with its parameters\n" + iwp.str());
 		SetError(format("instruction unknown: %d", iwp.inst));
 	}
 
@@ -3273,7 +3273,7 @@ void InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)
 		CPUInstructions[ninst].print();
 
 	// compile
-	OpcodeAddInstruction(oc, ocs, CPUInstructions[ninst], iwp.p1, iwp.p2, *this);
+	OpcodeAddInstruction(oc, ocs, CPUInstructions[ninst], iwp.p[0], iwp.p[1], *this);
 	iwp.size = ocs - ocs0;
 
 	//msg_write(d2h(&oc[ocs0], ocs - ocs0, false));
@@ -3315,6 +3315,14 @@ bool inline arm_is_load_store_multi(int inst)
 	return false;
 }
 
+void arm_expect(InstructionWithParams &c, int type0 = PARAMT_NONE, int type1 = PARAMT_NONE, int type2 = PARAMT_NONE)
+{
+	int t[3] = {type0, type1, type2};
+	for (int i=0; i<3; i++)
+		if (c.p[i].type != t[i])
+			SetError(format("param #%d expected to be %s: ", i+1, "???") + c.str());
+}
+
 void InstructionWithParamsList::AddInstructionARM(char *oc, int &ocs, int n)
 {
 	msg_db_f("AsmAddInstructionLowARM", 1+ASM_DB_LEVEL);
@@ -3333,20 +3341,24 @@ void InstructionWithParamsList::AddInstructionARM(char *oc, int &ocs, int n)
 	if (nn >= 0){
 		code |= 0x0 << 26;
 		code |= (nn << 21);
-		code |= arm_reg_no(iwp.p1.reg) << 12;
-		code |= arm_reg_no(iwp.p2.reg) << 16;
-		if (iwp.p3.type == PARAMT_REGISTER){
-			code |= arm_reg_no(iwp.p3.reg) << 0;
-			if (iwp.p3.disp != DISP_MODE_NONE)
+		if (iwp.p[2].type == PARAMT_REGISTER){
+			arm_expect(iwp, PARAMT_REGISTER, PARAMT_REGISTER, PARAMT_REGISTER);
+			code |= arm_reg_no(iwp.p[2].reg) << 0;
+			if (iwp.p[2].disp != DISP_MODE_NONE)
 				SetError("p3.disp != DISP_MODE_NONE");
-		}else if (iwp.p3.type == PARAMT_IMMEDIATE){
-			code |= arm_encode_imm(iwp.p3.value) << 0;
+		}else if (iwp.p[2].type == PARAMT_IMMEDIATE){
+			arm_expect(iwp, PARAMT_REGISTER, PARAMT_REGISTER, PARAMT_IMMEDIATE);
+			code |= arm_encode_imm(iwp.p[2].value) << 0;
 			code |= 1 << 25;
-		}/*else if (iwp.p3.type == PARAMT_REGISTER_SHIFT){
+		}/*else if (iwp.p[2].type == PARAMT_REGISTER_SHIFT){
 			msg_write("TODO reg shift");
-			code |= arm_reg_no(iwp.p3.reg) << 0;
-			code |= (iwp.p3.value & 0xff) << 4;
-		}*/
+			code |= arm_reg_no(iwp.p[2].reg) << 0;
+			code |= (iwp.p[2].value & 0xff) << 4;
+		}*/ else{
+			SetError("unhandled param #3 in " + iwp.str());
+		}
+		code |= arm_reg_no(iwp.p[0].reg) << 12;
+		code |= arm_reg_no(iwp.p[1].reg) << 16;
 	}else if (arm_is_load_store_reg(iwp.inst)){
 		if (iwp.inst == inst_ldr)
 			code |= 0x04100000;
@@ -3357,22 +3369,23 @@ void InstructionWithParamsList::AddInstructionARM(char *oc, int &ocs, int n)
 		else if (iwp.inst == inst_strb)
 			code |= 0x04400000;
 
-		code |= arm_reg_no(iwp.p1.reg) << 12;
-		code |= arm_reg_no(iwp.p2.reg) << 16;
+		code |= arm_reg_no(iwp.p[0].reg) << 12;
+		code |= arm_reg_no(iwp.p[1].reg) << 16;
 
-		if ((iwp.p2.disp == DISP_MODE_8) or (iwp.p2.disp == DISP_MODE_32)){
-			if (iwp.p2.value >= 0)
-				code |= 0x01800000 | iwp.p2.value;
+		if ((iwp.p[1].disp == DISP_MODE_8) or (iwp.p[1].disp == DISP_MODE_32)){
+			if (iwp.p[1].value >= 0)
+				code |= 0x01800000 | iwp.p[1].value;
 			else
-				code |= 0x01000000 | (-iwp.p2.value);
-		}else if (iwp.p2.disp == DISP_MODE_REG2){
-			if (iwp.p2.value >= 0)
+				code |= 0x01000000 | (-iwp.p[1].value);
+		}else if (iwp.p[1].disp == DISP_MODE_REG2){
+			if (iwp.p[1].value >= 0)
 				code |= 0x03800000;
 			else
 				code |= 0x03000000;
-			code |= arm_reg_no(iwp.p2.reg2);
+			code |= arm_reg_no(iwp.p[1].reg2);
 		}
 	}else if (arm_is_load_store_multi(iwp.inst)){
+		arm_expect(iwp, PARAMT_REGISTER, PARAMT_IMMEDIATE);
 		bool ll = ((iwp.inst == inst_ldmia) or (iwp.inst == inst_ldmib) or (iwp.inst == inst_ldmda) or (iwp.inst == inst_ldmdb));
 		bool uu = ((iwp.inst == inst_ldmia) or (iwp.inst == inst_ldmib) or (iwp.inst == inst_stmia) or (iwp.inst == inst_stmib));
 		bool pp = ((iwp.inst == inst_ldmib) or (iwp.inst == inst_ldmdb) or (iwp.inst == inst_stmib) or (iwp.inst == inst_stmdb));
@@ -3387,18 +3400,22 @@ void InstructionWithParamsList::AddInstructionARM(char *oc, int &ocs, int n)
 			code |= 0x01000000;
 		if (ww)
 			code |= 0x00200000;
-		code |= arm_reg_no(iwp.p1.reg) << 16;
-		code |= iwp.p2.value & 0xffff;
+		code |= arm_reg_no(iwp.p[0].reg) << 16;
+		code |= iwp.p[1].value & 0xffff;
 	}else if (iwp.inst == inst_mul){
 		code |= 0x00000090;
-		code |= arm_reg_no(iwp.p1.reg) << 16;
-		code |= arm_reg_no(iwp.p2.reg);
-		code |= arm_reg_no(iwp.p3.reg) << 8;
+		arm_expect(iwp, PARAMT_REGISTER, PARAMT_REGISTER, PARAMT_REGISTER);
+		code |= arm_reg_no(iwp.p[0].reg) << 16;
+		code |= arm_reg_no(iwp.p[1].reg);
+		code |= arm_reg_no(iwp.p[2].reg) << 8;
 	}else if (iwp.inst == inst_call){
+		arm_expect(iwp, PARAMT_IMMEDIATE);
 		// bl
 		code |= 0x0b000000;
-		int value = (iwp.p1.value - (long)&oc[ocs] - 8) >> 2;
+		int value = (iwp.p[0].value - (long)&oc[ocs] - 8) >> 2;
 		code |= (value & 0x00ffffff);
+	}else{
+		SetError("cannot assemble instruction: " + iwp.str());
 	}
 
 	*(int*)&oc[ocs] = code;
@@ -3415,8 +3432,8 @@ void InstructionWithParamsList::ShrinkJumps(void *oc, int ocs)
 	// try shrinking
 	foreachi(InstructionWithParams &iwp, *this, i){
 		if ((iwp.inst == inst_jmp) || (iwp.inst == inst_jz) || (iwp.inst == inst_jnz) || (iwp.inst == inst_jl) || (iwp.inst == inst_jnl) || (iwp.inst == inst_jle) || (iwp.inst == inst_jnle)){
-			if (iwp.p1.is_label){
-				int target = label[(int)iwp.p1.value].inst_no;
+			if (iwp.p[0].is_label){
+				int target = label[(int)iwp.p[0].value].inst_no;
 
 				// jump distance
 				int dist = 0;
@@ -3428,7 +3445,7 @@ void InstructionWithParamsList::ShrinkJumps(void *oc, int ocs)
 
 				if (dist < 127){
 					so("really shrink");
-					iwp.p1.size = SIZE_8;
+					iwp.p[0].size = SIZE_8;
 				}
 			}
 		}
@@ -3509,9 +3526,9 @@ void AddInstruction(char *oc, int &ocs, int inst, const InstructionParam &p1, co
 	InstructionWithParamsList list = InstructionWithParamsList(0);
 	InstructionWithParams iwp;
 	iwp.inst = inst;
-	iwp.p1 = p1;
-	iwp.p2 = p2;
-	iwp.p3 = p3;
+	iwp.p[0] = p1;
+	iwp.p[1] = p2;
+	iwp.p[2] = p3;
 	iwp.line = -1;
 	list.add(iwp);
 	list.AddInstruction(oc, ocs, 0);

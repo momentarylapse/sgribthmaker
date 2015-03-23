@@ -3108,8 +3108,8 @@ void SerializerARM::AddFunctionIntro(Function *f)
 
 void SerializerARM::AddFunctionOutro(Function *f)
 {
-	//add_cmd(Asm::inst_ret);
-	add_cmd(Asm::inst_ldmia, param_reg(TypePointer, Asm::REG_R13), param_const(TypeInt, (void*)0x8ff0));
+	// will be translated into a "real" outro later...
+	add_cmd(Asm::inst_ret);
 }
 
 void init_serializing()
@@ -3573,6 +3573,20 @@ void SerializerARM::CorrectUnallowedParamCombis2(SerialCommand &c)
 	}
 }
 
+void SerializerARM::CorrectReturn()
+{
+	for (int i=0;i<cmd.num;i++)
+		if (cmd[i].inst == Asm::inst_ret){
+			remove_cmd(i);
+			if (stack_max_size > 0){
+				add_cmd(Asm::inst_add, param_reg(TypePointer, Asm::REG_R13), param_reg(TypePointer, Asm::REG_R13), param_const(TypeInt, (void*)(long)stack_max_size));
+				move_last_cmd(i ++);
+			}
+			add_cmd(Asm::inst_ldmia, param_reg(TypePointer, Asm::REG_R13), param_const(TypeInt, (void*)0x8ff0));
+			move_last_cmd(i);
+		}
+}
+
 void Serializer::Assemble(char *Opcode, int &OpcodeSize)
 {
 	msg_db_f("Serializer.Assemble", 2);
@@ -3585,11 +3599,16 @@ void Serializer::Assemble(char *Opcode, int &OpcodeSize)
 	if (!syntax_tree->FlagNoFunctionFrame){
 		if (config.instruction_set == Asm::INSTRUCTION_SET_ARM){
 			add_cmd(Asm::inst_stmdb, param_reg(TypePointer, Asm::REG_R13), param_const(TypeInt, (void*)0x4ff0));
-			add_cmd(Asm::inst_add, param_reg(TypePointer, Asm::REG_R13), param_reg(TypePointer, Asm::REG_R13), param_const(TypeInt, (void*)stack_max_size));
+			move_last_cmd(0);
+			if (stack_max_size > 0){
+				add_cmd(Asm::inst_sub, param_reg(TypePointer, Asm::REG_R13), param_reg(TypePointer, Asm::REG_R13), param_const(TypeInt, (void*)(long)stack_max_size));
+				move_last_cmd(1);
+			}
 		}else{
 			list->add_func_intro(stack_max_size);
 		}
 	}
+	CorrectReturn();
 
 	for (int i=0;i<cmd.num;i++){
 

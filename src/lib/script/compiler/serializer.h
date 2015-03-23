@@ -116,6 +116,7 @@ public:
 	virtual void SerializeOperator(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret) = 0;
 	virtual void AddFunctionIntro(Function *f) = 0;
 	virtual void AddFunctionOutro(Function *f) = 0;
+	virtual void CorrectReturn(){};
 
 	void SimplifyIfStatements();
 	void SimplifyFloatStore();
@@ -238,6 +239,7 @@ public:
 	void ConvertGlobalLookups();
 	virtual void CorrectUnallowedParamCombis();
 	virtual void CorrectUnallowedParamCombis2(SerialCommand &c);
+	virtual void CorrectReturn();
 };
 
 };

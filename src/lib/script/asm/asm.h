@@ -334,7 +334,7 @@ struct InstructionWithParams
 {
 	int inst;
 	int condition; // ARM
-	InstructionParam p1, p2, p3;
+	InstructionParam p[3];
 	int line, col;
 	int size;
 	int addr_size;
