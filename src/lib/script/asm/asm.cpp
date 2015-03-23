@@ -2874,7 +2874,7 @@ void InstructionWithParamsList::AppendFromSource(const string &_code)
 	code_buffer = code; // Asm-Source-Puffer
 
 	int pos = 0;
-	InstructionParam p1, p2;
+	InstructionParam p1, p2, p3;
 	state.DefaultSize = SIZE_32;
 	if (CurrentMetaInfo)
 		if (CurrentMetaInfo->mode16)
@@ -2882,7 +2882,7 @@ void InstructionWithParamsList::AppendFromSource(const string &_code)
 	state.EndOfCode = false;
 	while(pos < _code.num - 2){
 
-		string cmd, param1, param2;
+		string cmd, param1, param2, param3;
 
 		//msg_write("..");
 		state.reset();
@@ -2912,6 +2912,8 @@ void InstructionWithParamsList::AppendFromSource(const string &_code)
 		}
 		if (!state.EndOfLine)
 			param2 = FindMnemonic(pos);
+		if (!state.EndOfLine)
+			param3 = FindMnemonic(pos);
 		//msg_write(string2("----: %s %s%s %s", cmd, param1, (strlen(param2)>0)?",":"", param2));
 		if (state.EndOfCode)
 			break;
@@ -2919,12 +2921,14 @@ void InstructionWithParamsList::AppendFromSource(const string &_code)
 		so(cmd);
 		so(param1);
 		so(param2);
+		so(param3);
 		so("------");
 
 		// parameters
 		GetParam(p1, param1, *this, 0);
 		GetParam(p2, param2, *this, 1);
-		if ((p1.type == PARAMT_INVALID) || (p2.type == PARAMT_INVALID))
+		GetParam(p3, param3, *this, 1);
+		if ((p1.type == PARAMT_INVALID) || (p2.type == PARAMT_INVALID) || (p3.type == PARAMT_INVALID))
 			return;
 
 	// special stuff
@@ -3001,9 +3005,11 @@ void InstructionWithParamsList::AppendFromSource(const string &_code)
 			SetError("prefix unhandled:  " + cmd);
 		}
 		InstructionWithParams iwp;
+		iwp.condition = ARM_COND_ALWAYS;
 		iwp.inst = inst;
 		iwp.p[0] = p1;
 		iwp.p[1] = p2;
+		iwp.p[2] = p3;
 		iwp.line = current_line;
 		iwp.col = current_col;
 		add(iwp);
@@ -3414,6 +3420,16 @@ void InstructionWithParamsList::AddInstructionARM(char *oc, int &ocs, int n)
 		code |= 0x0b000000;
 		int value = (iwp.p[0].value - (long)&oc[ocs] - 8) >> 2;
 		code |= (value & 0x00ffffff);
+	}else if ((iwp.inst == inst_bl) or (iwp.inst == inst_b)){
+		arm_expect(iwp, PARAMT_IMMEDIATE);
+		if (iwp.inst == inst_bl)
+			code |= 0x0b000000;
+		else
+			code |= 0x0a000000;
+		code |= (iwp.p[0].value & 0x00ffffff);
+	}else if (iwp.inst == inst_dd){
+		arm_expect(iwp, PARAMT_IMMEDIATE);
+		code = iwp.p[0].value;
 	}else{
 		SetError("cannot assemble instruction: " + iwp.str());
 	}
