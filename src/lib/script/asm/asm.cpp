@@ -1781,9 +1781,30 @@ string InstructionParam::str(bool hide_size)
 	return "\?\?\?";
 }
 
+string ARMConditions[16] = {
+	"eq",
+	"ne",
+	"cs",
+	"cc",
+	"mi",
+	"pl",
+	"vs",
+	"vc",
+	"hi",
+	"ls",
+	"ge",
+	"lt",
+	"gt",
+	"le",
+	"al",
+	"???",
+};
+
 string InstructionWithParams::str(bool hide_size)
 {
 	string s;
+	if (condition != ARM_COND_ALWAYS)
+		s += ARMConditions[condition & 0xf] + ":";
 	s += GetInstructionName(inst);
 	s += "  " + p[0].str(hide_size);
 	if (p[1].type != PARAMT_NONE)
@@ -2021,41 +2042,6 @@ inline void ReadParamData(char *&cur, InstructionParam &p, bool has_modrm)
 		}
 	}
 	//msg_write((long)cur - (long)o);
-}
-
-string arm_cond_to_str(int cond)
-{
-	if (cond == 0)
-		return "[=] ";
-	if (cond == 1)
-		return "[!=] ";
-	if (cond == 2)
-		return "[CS] ";
-	if (cond == 3)
-		return "[CC] ";
-	if (cond == 4)
-		return "[-] ";
-	if (cond == 5)
-		return "[+] ";
-	if (cond == 6)
-		return "[OF] ";
-	if (cond == 7)
-		return "[!OF] ";
-	if (cond == 8)
-		return "[HI] ";
-	if (cond == 9)
-		return "[LS] ";
-	if (cond == 10)
-		return "[>=] ";
-	if (cond == 11)
-		return "[<] ";
-	if (cond == 12)
-		return "[>] ";
-	if (cond == 13)
-		return "[<=] ";
-	if (cond == 14)
-		return "";
-	return "???";
 }
 
 string show_reg(int r)
@@ -2996,6 +2982,21 @@ void InstructionWithParamsList::AppendFromSource(const string &_code)
 			continue;
 		}
 
+
+		InstructionWithParams iwp;
+		iwp.condition = ARM_COND_ALWAYS;
+
+		if (cmd.find(":") >= 0){
+			iwp.condition = -1;
+			Array<string> l = cmd.explode(":");
+			for (int i=0; i<16; i++)
+				if (l[0] == ARMConditions[i])
+					iwp.condition = i;
+			if (iwp.condition < 0)
+				SetError("unknown condition: " + l[0]);
+			cmd = l[1];
+		}
+
 		// command
 		int inst = -1;
 		for (int i=0;i<NUM_INSTRUCTION_NAMES;i++)
@@ -3008,8 +3009,6 @@ void InstructionWithParamsList::AppendFromSource(const string &_code)
 			//buffer[CodeLength ++] = 0x66;
 			SetError("prefix unhandled:  " + cmd);
 		}
-		InstructionWithParams iwp;
-		iwp.condition = ARM_COND_ALWAYS;
 		iwp.inst = inst;
 		iwp.p[0] = p1;
 		iwp.p[1] = p2;
