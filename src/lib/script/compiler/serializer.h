@@ -33,7 +33,7 @@ struct LoopData
 struct SerialCommandParam
 {
 	int kind;
-	char *p;
+	long long p;
 	Type *type;
 	int shift;
 	//int c_id, v_id;
