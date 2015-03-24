@@ -2099,7 +2099,7 @@ InstructionWithParams disarm_data_opcode(int code)
 {
 	InstructionWithParams i;
 	i.inst = ARMDataInstructions[(code >> 21) & 15];
-	if (((code >> 20) & 1) and (i.inst == inst_cmp))
+	if (((code >> 20) & 1) and (i.inst != inst_cmp) and (i.inst != inst_cmn) and (i.inst != inst_teq) and (i.inst != inst_tst))
 		msg_write(GetInstructionName(i.inst) + "[S]");
 	i.p[0] = param_reg(REG_R0 + ((code >> 12) & 15));
 	i.p[1] = param_reg(REG_R0 + ((code >> 16) & 15));
@@ -2107,7 +2107,9 @@ InstructionWithParams disarm_data_opcode(int code)
 		i.p[2] = param_imm(arm_decode_imm(code & 0xfff), SIZE_32);
 	else
 		i.p[2] = disarm_shift_reg(code & 0xfff);
-	if ((i.inst == inst_cmp) or (i.inst == inst_mov)){
+	if ((i.inst == inst_cmp) or (i.inst == inst_cmn) or (i.inst == inst_tst) or (i.inst == inst_teq) or (i.inst == inst_mov)){
+		if ((i.inst == inst_cmp) or (i.inst == inst_cmn))
+			i.p[0] = i.p[1];
 		i.p[1] = i.p[2];
 		i.p[2] = param_none;
 	}
@@ -3348,11 +3350,16 @@ void InstructionWithParamsList::AddInstructionARM(char *oc, int &ocs, int n)
 		if (iwp.inst == ARMDataInstructions[i])
 			nn = i;
 	if (nn >= 0){
-		if ((iwp.inst == inst_cmp) or (iwp.inst == inst_mov)){
+		if ((iwp.inst == inst_cmp) or (iwp.inst == inst_cmn) or (iwp.inst == inst_tst) or (iwp.inst == inst_teq) or (iwp.inst == inst_mov)){
 			iwp.p[2] = iwp.p[1];
-			iwp.p[1] = param_reg(REG_R0);
+			if ((iwp.inst == inst_cmp) or (iwp.inst == inst_cmn)){
+				iwp.p[1] = iwp.p[0];
+				iwp.p[0] = param_reg(REG_R0);
+			}else{
+				iwp.p[1] = param_reg(REG_R0);
+			}
 		}
-		bool ss = (iwp.inst == inst_cmp);
+		bool ss = (iwp.inst == inst_cmp) or (iwp.inst == inst_cmn) or (iwp.inst == inst_tst) or (iwp.inst == inst_teq);
 		code |= 0x0 << 26;
 		code |= (nn << 21);
 		if (ss)
