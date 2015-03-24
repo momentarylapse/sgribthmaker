@@ -766,6 +766,45 @@ void SerializerARM::SerializeCompilerFunction(Command *com, Array<SerialCommandP
 {
 
 	switch(com->link_no){
+		case CommandIf:{
+			// cmp;  jz m;  -block-  m;
+			add_cmd(Asm::inst_cmp, param[0], param_const(TypeBool, 0x0));
+			int m_after_true = add_marker_after_command(level, index + 1);
+			add_cmd(Asm::ARM_COND_EQUAL, Asm::inst_b, param_marker(m_after_true), p_none, p_none);
+			}break;
+		case CommandIfElse:{
+			// cmp;  jz m1;  -block-  jmp m2;  m1;  -block-  m2;
+			add_cmd(Asm::inst_cmp, param[0], param_const(TypeBool, 0x0));
+			int m_after_true = add_marker_after_command(level, index + 1);
+			int m_after_false = add_marker_after_command(level, index + 2);
+			add_cmd(Asm::ARM_COND_EQUAL, Asm::inst_b, param_marker(m_after_true), p_none, p_none); // jz ...
+			add_jump_after_command(level, index + 1, m_after_false); // insert before <m_after_true> is inserted!
+			}break;
+		case CommandWhile:
+		case CommandFor:{
+			// m1;  cmp;  jz m2;  -block-             jmp m1;  m2;     (while)
+			// m1;  cmp;  jz m2;  -block-  m3;  i++;  jmp m1;  m2;     (for)
+			add_cmd(Asm::inst_cmp, param[0], param_const(TypeBool, 0x0));
+			int marker_after_while = add_marker_after_command(level, index + 1);
+			add_cmd(Asm::ARM_COND_EQUAL, Asm::inst_b, param_marker(marker_after_while), p_none, p_none);
+			add_jump_after_command(level, index + 1, marker_before_params); // insert before <marker_after_while> is inserted!
+
+			int marker_continue = marker_before_params;
+			if (com->link_no == CommandFor){
+				// NextCommand is a block!
+				if (next_command->kind != KindBlock)
+					DoError("command block in \"for\" loop missing");
+				marker_continue = add_marker_after_command(level + 1, next_command->block()->command.num - 2);
+			}
+			LoopData l = {marker_continue, marker_after_while, level, index};
+			loop.add(l);
+			}break;
+		case CommandBreak:
+			add_cmd(Asm::inst_b, param_marker(loop.back().marker_break));
+			break;
+		case CommandContinue:
+			add_cmd(Asm::inst_b, param_marker(loop.back().marker_continue));
+			break;
 		case CommandReturn:
 			if (com->num_params > 0){
 				if (cur_func->return_type->UsesReturnByMemory()){ // we already got a return address in [ebp+0x08] (> 4 byte)
