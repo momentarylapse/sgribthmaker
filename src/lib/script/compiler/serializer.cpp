@@ -816,7 +816,7 @@ void SerializerARM::SerializeCompilerFunction(Command *com, Array<SerialCommandP
 					SerialCommandParam t;
 					add_temp(cur_func->return_type, t);
 					FillInDestructors(false);
-					if (cur_func->return_type == TypeInt){
+					if ((cur_func->return_type == TypeInt) or (cur_func->return_type->size == 1)){
 						add_cmd(Asm::inst_mov, param_reg(cur_func->return_type, Asm::REG_R0), param[0]);
 					}else{
 						DoError("return != int");

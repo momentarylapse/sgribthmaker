@@ -2161,9 +2161,9 @@ InstructionWithParams disarm_data_transfer(int code)
 		msg_write( " --shifted reg--");
 	}else{
 		if (code & 0xfff)
-			i.p[1] = param_deref_reg_shift(REG_R0 + Rn, up ? (code & 0xfff) : (-(code & 0xfff)), SIZE_32);
+			i.p[1] = param_deref_reg_shift(REG_R0 + Rn, up ? (code & 0xfff) : (-(code & 0xfff)), bb ? SIZE_8 : SIZE_32);
 		else
-			i.p[1] = param_deref_reg(REG_R0 + Rn, SIZE_32);
+			i.p[1] = param_deref_reg(REG_R0 + Rn, bb ? SIZE_8 : SIZE_32);
 	}
 	i.p[1].write_back = ww;
 	i.p[2] = param_none;
@@ -3437,7 +3437,7 @@ void InstructionWithParamsList::AddInstructionARM(char *oc, int &ocs, int n)
 		code |= 0x0b000000;
 		int value = (iwp.p[0].value - (long)&oc[ocs] - 8) >> 2;
 		code |= (value & 0x00ffffff);
-	}else if ((iwp.inst == inst_bl) or (iwp.inst == inst_b)){
+	}else if ((iwp.inst == inst_bl) or (iwp.inst == inst_b) or (iwp.inst == inst_jmp)){
 		arm_expect(iwp, PARAMT_IMMEDIATE);
 		if (iwp.inst == inst_bl)
 			code |= 0x0b000000;
