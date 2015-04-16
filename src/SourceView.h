@@ -63,7 +63,7 @@ public:
 	GtkTextBuffer *tb;
 	GtkWidget *tv;
 
-	GtkTextTag *tag[NumTagTypes];
+	GtkTextTag *tag[NUM_TAG_TYPES];
 
 	//void SwitchToDocument(Document *d);
 	Document *doc;

@@ -18,7 +18,7 @@
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.3.2";
+string AppVersion = "0.4.3.3";
 
 #define ALLOW_LOGGING			true
 //#define ALLOW_LOGGING			false
@@ -356,23 +356,21 @@ void CompileAndRun(bool verbose)
 
 
 		float dt_execute = 0;
-		if (compile_script->syntax->FlagCompileOS)
+		if (compile_script->syntax->flag_compile_os)
 			HuiErrorBox(MainWin, _("Fehler"), _("Script nicht ausf&uhrbar. (#os)"));
 		else{
 			HuiPushMainLevel();
 			CompileTimer.reset();
-			if (!compile_script->syntax->FlagNoExecution){
-				typedef void void_func();
-				void_func *f = (void_func*)compile_script->MatchFunction("main", "void", 0);
-				if (f)
-					f();
-				//compile_script->ShowVars(false);
-			}
+			typedef void void_func();
+			void_func *f = (void_func*)compile_script->MatchFunction("main", "void", 0);
+			if (f)
+				f();
+			//compile_script->ShowVars(false);
 			dt_execute = CompileTimer.get();
 			HuiPopMainLevel();
 		}
 		
-		SetMessage(format(_("Compilieren: %s         Opcode: %db         Ausf&uhren: %s"), get_time_str(dt_compile).c_str(), compile_script->OpcodeSize, get_time_str(dt_execute).c_str()));
+		SetMessage(format(_("Compilieren: %s         Opcode: %db         Ausf&uhren: %s"), get_time_str(dt_compile).c_str(), compile_script->opcode_size, get_time_str(dt_execute).c_str()));
 		//if (verbose)
 		//	HuiInfoBox(MainWin,"Speicher",string("nicht freigegebener Speicher des Scriptes: ",i2s(script->MemoryUsed),"b"));}
 
@@ -487,44 +485,6 @@ void OnPreviousDocument()
 		}
 }
 
-void Test1(int a)
-{
-	msg_write("out: " + i2s(a));
-}
-
-int Test2()
-{
-	return 2001;
-}
-
-void TestARM(const string &filename)
-{
-	Script::LinkExternal("Test1", (void*)&Test1);
-	Script::LinkExternal("Test2", (void*)&Test2);
-
-	typedef int ifii(int, int);
-	ifii *fp = NULL;
-
-	try{
-		Script::Script *s = Script::Load(filename);
-		msg_write(Asm::Disassemble(s->Opcode, s->OpcodeSize, true));
-		fp = (ifii*)s->func.back();
-	}catch(Script::Exception &e){
-		e.print();
-	}
-
-
-#ifdef CPU_ARM
-	if (fp){
-		printf("run...\n");
-		int r = (*fp)(1, 2);
-		printf("return:  %d\n", r);
-	}
-#endif
-
-	exit(0);
-}
-
 class SgribthMaker : public HuiApplication
 {
 public:
@@ -540,22 +500,11 @@ public:
 
 		HuiRegisterFileType("kaba","MichiSoft Script Datei",HuiAppDirectory + "Data/kaba.ico",HuiAppFilename,"open",true);
 
-		Script::Init(Asm::INSTRUCTION_SET_ARM);
+		Script::Init();
 	}
 
 	virtual bool onStartup(const Array<string> &arg)
 	{
-		int *fff = (int*)mmap(0, 100, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS | MAP_EXECUTABLE, -1, 0);
-		typedef int ifii(int, int);
-		ifii *fp = (ifii*)fff;
-
-		msg_set_verbose(true);
-
-		if (arg.num > 1)
-			TestARM(arg[1]);
-
-
-
 		HuiAddCommand("new", "hui:new", KEY_N + KEY_CONTROL, &New);
 		//HuiAddKeyCode(HMM_NEW_HEX, KEY_F1 + 256);
 		HuiAddCommand("open", "hui:open", KEY_O + KEY_CONTROL, &OnOpen);
@@ -641,32 +590,6 @@ public:
 
 		MainWin->eventSX("file_list", "hui:select", &OnFileList);
 		MainWin->eventSX("function_list", "hui:select", &OnFunctionList);
-
-		/*msg_set_verbose(true);
-
-		if (Script::config.instruction_set == Asm::INSTRUCTION_SET_ARM){
-			CFile *f = FileOpen("arm/arm-test");
-			f->SetBinaryMode(true);
-			string code = f->ReadComplete();
-			delete(f);
-			//msg_write(code.hex());
-			msg_write(Asm::Disassemble(&code[1024-12], 64, true));
-
-			try{
-				Asm::InstructionWithParamsList *l = new Asm::InstructionWithParamsList(0);
-				l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::param_reg(Asm::REG_R0), Asm::param_reg(Asm::REG_R0), Asm::param_reg(Asm::REG_R1));
-				l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_add, Asm::param_reg(Asm::REG_R0), Asm::param_reg(Asm::REG_R1), Asm::param_imm(512, 4));//2040));
-//				l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_ldr, Asm::param_reg(Asm::REG_R0), Asm::param_deref_reg_shift(Asm::REG_R13, 512, 4));//2040));
-//				l->add_arm(Asm::ARM_COND_ALWAYS, Asm::inst_ldr, Asm::param_reg(Asm::REG_R0), Asm::param_deref_reg(Asm::REG_R2, 4));
-				int ocs = 0;
-				l->Compile(fff, ocs);
-				fff[ocs / 4] = 0xe12fff1e;
-				ocs += 4;
-				msg_write(Asm::Disassemble(fff, ocs, true));
-			}catch(Asm::Exception &e){
-				e.print();
-			}
-		}*/
 
 
 

@@ -25,6 +25,7 @@ struct ParserState
 	bool ExtendModRMReg;
 	bool ExtendModRMIndex;
 	int FullRegisterSize;
+	InstructionWithParamsList *list;
 	void init()
 	{
 		DefaultSize = SIZE_32;
@@ -33,14 +34,24 @@ struct ParserState
 		if (CurrentMetaInfo)
 			if (CurrentMetaInfo->mode16)
 				DefaultSize = SIZE_16;
+
+		list = NULL;
 	}
-	void reset()
+	void reset(InstructionWithParamsList *_list)
 	{
 		ParamSize = DefaultSize;
 		AddrSize = DefaultSize;
 		ExtendModRMBase = false;
 		ExtendModRMReg = false;
 		ExtendModRMIndex = false;
+		list = _list;
+	}
+	string get_label(int i)
+	{
+		if (list)
+			if ((i >= 0) and (i < list->label.num))
+				return list->label[i].name;
+		return "_label_" + i2s(i);
 	}
 };
 static ParserState state;
@@ -48,6 +59,8 @@ static ParserState state;
 const char *code_buffer;
 MetaInfo *CurrentMetaInfo = NULL;
 MetaInfo DummyMetaInfo;
+
+int arm_encode_8l4(unsigned int value);
 
 Exception::Exception(const string &_message, const string &_expression, int _line, int _column)
 {
@@ -326,6 +339,7 @@ InstructionName InstructionNames[NUM_INSTRUCTION_NAMES + 1] = {
 
 	{inst_b,		"b"},
 	{inst_bl,		"bl"},
+	{inst_blx,		"blx"},
 
 	{inst_ldr,		"ldr"},
 	{inst_ldrb,		"ldrb"},
@@ -341,14 +355,12 @@ InstructionName InstructionNames[NUM_INSTRUCTION_NAMES + 1] = {
 	{inst_stmda,		"stmda"},
 	{inst_stmdb,		"stmdb"},
 
-	{inst_eor,	"eor"},
 	{inst_rsb,	"rsb"},
 	{inst_sbc,	"sbc"},
 	{inst_rsc,	"rsc"},
 	{inst_tst,	"tst"},
 	{inst_teq,	"teq"},
 	{inst_cmn,	"cmn"},
-	{inst_orr,	"orr"},
 	{inst_bic,	"bic"},
 	{inst_mvn,	"mvn"},
 	
@@ -413,11 +425,18 @@ InstructionWithParamsList::InstructionWithParamsList(int line_no)
 InstructionWithParamsList::~InstructionWithParamsList()
 {}
 
+Register *get_reg(int reg)
+{
+	if ((reg < 0) or (reg >= RegisterByID.num))
+		SetError("invalid register index: " + i2s(reg));
+	return RegisterByID[reg];
+}
+
 InstructionParam param_reg(int reg)
 {
 	InstructionParam p;
 	p.type = PARAMT_REGISTER;
-	p.reg = RegisterByID[reg];
+	p.reg = get_reg(reg);
 	p.size = p.reg->size;
 	return p;
 }
@@ -426,7 +445,7 @@ InstructionParam param_deref_reg(int reg, int size)
 {
 	InstructionParam p;
 	p.type = PARAMT_REGISTER;
-	p.reg = RegisterByID[reg];
+	p.reg = get_reg(reg);
 	p.size = size;
 	p.deref = true;
 	return p;
@@ -445,7 +464,7 @@ InstructionParam param_deref_reg_shift(int reg, int shift, int size)
 {
 	InstructionParam p;
 	p.type = PARAMT_REGISTER;
-	p.reg = RegisterByID[reg];
+	p.reg = get_reg(reg);
 	p.size = size;
 	p.deref = true;
 	p.value = shift;
@@ -457,9 +476,9 @@ InstructionParam param_deref_reg_shift_reg(int reg, int reg2, int size)
 {
 	InstructionParam p;
 	p.type = PARAMT_REGISTER;
-	p.reg = RegisterByID[reg];
+	p.reg = get_reg(reg);
 	p.size = size;
-	p.reg2 = RegisterByID[reg2];
+	p.reg2 = get_reg(reg2);
 	p.deref = true;
 	p.value = 1;
 	p.disp = DISP_MODE_REG2;
@@ -495,6 +514,17 @@ InstructionParam param_label(long long value, int size)
 	return p;
 }
 
+InstructionParam param_deref_label(long long value, int size)
+{
+	InstructionParam p;
+	p.type = PARAMT_IMMEDIATE;
+	p.size = size;
+	p.value = value;
+	p.is_label = true;
+	p.deref = true;
+	return p;
+}
+
 void InstructionWithParamsList::add_arm(int cond, int inst, const InstructionParam &p1 = param_none, const InstructionParam &p2, const InstructionParam &p3)
 {
 	InstructionWithParams i;
@@ -524,35 +554,75 @@ void InstructionWithParamsList::add2(int inst, const InstructionParam &p1, const
 void InstructionWithParamsList::show()
 {
 	msg_write("--------------");
-	foreach(Asm::InstructionWithParams &i, *this)
+	state.reset(this);
+	foreachi(Asm::InstructionWithParams &i, *this, n){
+		foreach(Label &l, label)
+			if (l.inst_no == n)
+				msg_write("    " + l.name + ":");
 		msg_write(i.str());
+	}
 }
 
-int InstructionWithParamsList::add_label(const string &name, bool declaring)
+int InstructionWithParamsList::add_label(const string &name)
 {
 	so("add_label: " + name);
 	// label already in use? (used before declared)
-	if (declaring){
-		foreachi(Label &l, label, i)
-			if (l.inst_no < 0)
-				if (l.name == name){
-					l.inst_no = num;
-					so("----redecl");
-					return i;
-				}
-	}else{
-		foreachi(Label &l, label, i)
+	foreachi(Label &l, label, i)
+		if (l.inst_no < 0)
 			if (l.name == name){
-				so("----reuse");
+				if ((l.inst_no >= 0) and (name != "$"))
+					SetError("label already declared: " + name);
+				l.inst_no = num;
+				so("----redecl");
 				return i;
 			}
-	}
 	Label l;
 	l.name = name;
-	l.inst_no = declaring ? num : -1;
+	l.inst_no = num;
 	l.value = -1;
 	label.add(l);
 	return label.num - 1;
+}
+
+int InstructionWithParamsList::get_label(const string &name)
+{
+	so("add_label: " + name);
+	foreachi(Label &l, label, i)
+		if (l.name == name){
+			so("----reuse");
+			return i;
+		}
+	Label l;
+	l.name = name;
+	l.inst_no = -1;
+	l.value = -1;
+	label.add(l);
+	return label.num - 1;
+}
+
+void *InstructionWithParamsList::get_label_value(const string &name)
+{
+	foreach(Label &l, label)
+		if (l.name == name)
+			return (void*)l.value;
+	return NULL;
+}
+
+
+void InstructionWithParamsList::add_wanted_label(int pos, int label_no, int inst_no, bool rel, bool abs, int size)
+{
+	if ((label_no < 0) or (label_no >= label.num))
+		SetError("illegal wanted label request");
+	WantedLabel w;
+	w.pos = pos;
+	w.size = size;
+	w.label_no = label_no;
+	w.name = label[label_no].name;
+	w.relative = rel;
+	w.abs = abs;
+	w.inst_no = inst_no;
+	wanted_label.add(w);
+	so("add wanted label");
 }
 
 void InstructionWithParamsList::add_func_intro(int stack_alloc_size)
@@ -951,7 +1021,7 @@ bool GetInstructionAllowGenReg(int inst)
 
 
 
-int QueryInstructionSet()
+int QueryLocalInstructionSet()
 {
 #ifdef CPU_AMD64
 	return INSTRUCTION_SET_AMD64;
@@ -1692,7 +1762,7 @@ void InitX86()
 void Init(int set)
 {
 	if (set < 0)
-		set = QueryInstructionSet();
+		set = QueryLocalInstructionSet();
 
 	InstructionSet.set = set;
 	InstructionSet.pointer_size = 4;
@@ -1770,10 +1840,12 @@ string InstructionParam::str(bool hide_size)
 				s.add(RegisterByID[REG_R0 + i]->name);
 		return "{" + implode(s, ",") + "}";
 	}else if (type == PARAMT_IMMEDIATE){
-		//msg_write("im");
+		string s = d2h(&value, deref ? state.AddrSize : size);
+		if (is_label)
+			s = state.get_label(value);
 		if (deref)
-			return get_size_name(size) + " " + format("[%s]", d2h(&value, state.AddrSize).c_str());
-		return d2h(&value, size);
+			return get_size_name(size) + " [" + s + "]";
+		return s;
 	/*}else if (type == ParamTImmediateExt){
 		//msg_write("im");
 		return format("%s:%s", d2h(&((char*)&value)[4], 2).c_str(), d2h(&value, state.ParamSize).c_str());*/
@@ -2049,10 +2121,10 @@ string show_reg(int r)
 	return format("r%d", r);
 }
 
-int ARMDataInstructions[16] =
+int ARM_DATA_INSTRUCTIONS[16] =
 {
 	inst_and,
-	inst_eor,
+	inst_xor,
 	inst_sub,
 	inst_rsb,
 	inst_add,
@@ -2063,7 +2135,7 @@ int ARMDataInstructions[16] =
 	inst_teq,
 	inst_cmp,
 	inst_cmn,
-	inst_orr,
+	inst_or,
 	inst_mov,
 	inst_bic,
 	inst_mvn
@@ -2098,7 +2170,7 @@ InstructionParam disarm_shift_reg(int code)
 InstructionWithParams disarm_data_opcode(int code)
 {
 	InstructionWithParams i;
-	i.inst = ARMDataInstructions[(code >> 21) & 15];
+	i.inst = ARM_DATA_INSTRUCTIONS[(code >> 21) & 15];
 	if (((code >> 20) & 1) and (i.inst != inst_cmp) and (i.inst != inst_cmn) and (i.inst != inst_teq) and (i.inst != inst_tst))
 		msg_write(GetInstructionName(i.inst) + "[S]");
 	i.p[0] = param_reg(REG_R0 + ((code >> 12) & 15));
@@ -2136,6 +2208,16 @@ InstructionWithParams disarm_branch(int code)
 	else
 		i.inst = inst_b;
 	i.p[0] = param_imm(code & 0x00ffffff, SIZE_32);
+	i.p[1] = param_none;
+	i.p[2] = param_none;
+	return i;
+}
+
+InstructionWithParams disarm_blx(int code)
+{
+	InstructionWithParams i;
+	i.inst = inst_blx;
+	i.p[0] = param_reg(REG_R0 + ((code >> 0) & 15));
 	i.p[1] = param_none;
 	i.p[2] = param_none;
 	return i;
@@ -2210,7 +2292,9 @@ string DisassembleARM(void *_code_,int length,bool allow_comments)
 		iwp.p[0] = param_none;
 		iwp.p[1] = param_none;
 		iwp.p[2] = param_none;
-		if (((cur >> 26) & 3) == 0){
+		if ((cur & 0x0ff000f0) == 0x01200030){
+			iwp = disarm_blx(cur);
+		}else if (((cur >> 26) & 3) == 0){
 			if ((cur & 0x0fe000f0) == 0x00000090)
 				iwp = disarm_data_opcode_mul(cur);
 			else
@@ -2249,7 +2333,7 @@ string DisassembleX86(void *_code_,int length,bool allow_comments)
 
 
 	while(code < end){
-		state.reset();
+		state.reset(NULL);
 		opcode = cur;
 		code = cur;
 
@@ -2298,7 +2382,7 @@ string DisassembleX86(void *_code_,int length,bool allow_comments)
 			for (int i=0;i<CurrentMetaInfo->bit_change.num;i++)
 				if ((long)code-(long)orig == CurrentMetaInfo->bit_change[i].offset){
 					state.DefaultSize = (CurrentMetaInfo->bit_change[i].bits == 16) ? SIZE_16 : SIZE_32;
-					state.reset();
+					state.reset(NULL);
 					if (state.DefaultSize == SIZE_16)
 						bufstr += "   bits_16\n";
 					else
@@ -2697,58 +2781,38 @@ void GetParam(InstructionParam &p, const string &param, InstructionWithParamsLis
 
 	// char const
 	}else if ((param[0] == '\'') && (param[param.num - 1] == '\'')){
-		p.value = (long)param[1];
-		p.type = PARAMT_IMMEDIATE;
-		p.size = SIZE_8;
+		p = param_imm((long)param[1], SIZE_8);
 		if (DebugAsm)
 			printf("hex const:  %s\n",d2h((char*)&p.value,1).c_str());
 
 	// label substitude
 	}else if (param == "$"){
-		p.value = list.add_label(param, true);
-		p.type = PARAMT_IMMEDIATE;
-		p.size = SIZE_32;
-		p.is_label = true;
-		so("label:  " + param + "\n");
+		p = param_label(list.add_label(param), SIZE_32);
 		
 	}else{
 		// register
 		for (int i=0;i<Registers.num;i++)
 			if (Registers[i].name == param){
-				p.type = PARAMT_REGISTER;
-				p.reg = &Registers[i];
-				p.size = Registers[i].size;
-				so("Register:  " + Registers[i].name + "\n");
+				p = param_reg(Registers[i].id);
 				return;
 			}
 		// existing label
 		for (int i=0;i<list.label.num;i++)
 			if (list.label[i].name == param){
-				p.value = i;
-				p.type = PARAMT_IMMEDIATE;
-				p.size = SIZE_32;
-				p.is_label = true;
-				so("label:  " + param + "\n");
+				p = param_label(i, SIZE_32);
 				return;
 			}
 		// script variable (global)
 		for (int i=0;i<CurrentMetaInfo->global_var.num;i++){
 			if (CurrentMetaInfo->global_var[i].name == param){
-				p.value = (long)CurrentMetaInfo->global_var[i].pos;
-				p.type = PARAMT_IMMEDIATE;
-				p.size = CurrentMetaInfo->global_var[i].size;
-				p.deref = true;
-				so("global variable:  \"" + param + "\"\n");
+				p = param_deref_imm((long)CurrentMetaInfo->global_var[i].pos, CurrentMetaInfo->global_var[i].size);
 				return;
 			}
 		}
 		// not yet existing label...
 		if (param[0]=='_'){
 			so("label as param:  \"" + param + "\"\n");
-			p.value = list.add_label(param, false);
-			p.type = PARAMT_IMMEDIATE;
-			p.is_label = true;
-			p.size = SIZE_32;
+			p = param_label(list.get_label(param), SIZE_32);
 			return;
 		}
 	}
@@ -2758,15 +2822,20 @@ void GetParam(InstructionParam &p, const string &param, InstructionWithParamsLis
 
 inline void insert_val(char *oc, int &ocs, long long val, int size)
 {
-	if (size == 1)
+	if (size == SIZE_8)
 		oc[ocs] = (char)val;
-	else if (size == 2)
+	else if (size == SIZE_16)
 		*(short*)&oc[ocs] = (short)val;
-	else if (size == 4)
+	else if (size == SIZE_24)
+		*(int*)&oc[ocs - 1] = (*(int*)&oc[ocs - 1] & 0xff000000) | ((int)val & 0x00ffffff);
+	else if (size == SIZE_32)
 		*(int*)&oc[ocs] = (int)val;
-	else if (size == 8)
+	else if (size == SIZE_64)
 		*(long long int*)&oc[ocs] = val;
-	else
+	else if (size == SIZE_8L4){
+		val = arm_encode_8l4(val);
+		*(int*)&oc[ocs - 2] = (*(int*)&oc[ocs - 2] & 0xfffff000) | ((int)val & 0x00000fff);
+	}else if (size > 0)
 		memcpy(&oc[ocs], &val, size);
 }
 
@@ -2805,15 +2874,9 @@ void OpcodeAddImmideate(char *oc, int &ocs, InstructionParam &p, CPUInstruction 
 	if (inst.inst == inst_jmp_far)
 		rel = false;
 	if (p.is_label){
-		WantedLabel w;
-		w.pos = ocs;
-		w.size = size;
-		w.label_no = (int)value;
-		w.name = list.label[p.value].name;
-		w.relative = rel;
-		w.inst_no = list.current_inst;
-		list.wanted_label.add(w);
-		so("add wanted label");
+		if ((InstructionSet.set == INSTRUCTION_SET_AMD64) and (p.deref))
+			rel = true;
+		list.add_wanted_label(ocs, p.value, list.current_inst, rel, false, size);
 	}else if (rel){
 		value -= CurrentMetaInfo->code_origin + ocs + size + next_param_size; // TODO ...first byte of next opcode
 	}
@@ -2830,9 +2893,25 @@ void InstructionWithParamsList::LinkWantedLabels(void *oc)
 			continue;
 		so("linking label");
 
-		int value = l.value;
-		if (w.relative)
-			value -= CurrentMetaInfo->code_origin + w.pos + w.size; // TODO first byte after command
+		long long value = l.value;
+		if (w.relative){
+			int size = w.size;
+			if (size == SIZE_8L4)
+				size = 2;
+
+			// TODO first byte after command
+			if (InstructionSet.set == INSTRUCTION_SET_ARM){
+				value -= CurrentMetaInfo->code_origin + w.pos + size + 4;
+				int inst = (*this)[w.inst_no].inst;
+				if ((inst == inst_bl) or (inst == inst_b) or (inst == inst_call) or (inst == inst_jmp)){
+					value = value >> 2;
+				}
+			}else{
+				value -= CurrentMetaInfo->code_origin + w.pos + size;
+			}
+		}
+		if ((w.abs) and (value < 0))
+			value = - value;
 
 		insert_val((char*)oc, w.pos, value, w.size);
 
@@ -2877,7 +2956,7 @@ void InstructionWithParamsList::AppendFromSource(const string &_code)
 		string cmd, param1, param2, param3;
 
 		//msg_write("..");
-		state.reset();
+		state.reset(this);
 
 
 	// interpret asm code (1 line)
@@ -2927,7 +3006,7 @@ void InstructionWithParamsList::AppendFromSource(const string &_code)
 		if (cmd == "bits_16"){
 			so("16 bit Modus!");
 			state.DefaultSize = SIZE_16;
-			state.reset();
+			state.reset(this);
 			if (CurrentMetaInfo){
 				CurrentMetaInfo->mode16 = true;
 				BitChange b;
@@ -2939,7 +3018,7 @@ void InstructionWithParamsList::AppendFromSource(const string &_code)
 		}else if (cmd == "bits_32"){
 			so("32 bit Modus!");
 			state.DefaultSize = SIZE_32;
-			state.reset();
+			state.reset(this);
 			if (CurrentMetaInfo){
 				CurrentMetaInfo->mode16 = false;
 				BitChange b;
@@ -2979,7 +3058,7 @@ void InstructionWithParamsList::AppendFromSource(const string &_code)
 			so("Label");
 			cmd.resize(cmd.num - 1);
 			so(cmd);
-			add_label(cmd, true);
+			add_label(cmd);
 
 			continue;
 		}
@@ -3242,7 +3321,7 @@ void InstructionWithParamsList::AddInstruction(char *oc, int &ocs, int n)
 	int ocs0 = ocs;
 	InstructionWithParams &iwp = (*this)[n];
 	current_inst = n;
-	state.reset();
+	state.reset(this);
 
 	// test if any instruction matches our wishes
 	int ninst = -1;
@@ -3299,7 +3378,7 @@ int arm_reg_no(Register *r)
 	return -1;
 }
 
-int arm_encode_imm(unsigned int value)
+int arm_encode_8l4(unsigned int value)
 {
 	for (int ex=0; ex<=30; ex+=2){
 		unsigned int mask = (0xffffff00 >> ex) | (0xffffff00 << (32-ex));
@@ -3334,20 +3413,27 @@ void arm_expect(InstructionWithParams &c, int type0 = PARAMT_NONE, int type1 = P
 			SetError(format("param #%d expected to be %s: ", i+1, "???") + c.str());
 }
 
+inline bool label_after_now(InstructionWithParamsList *list, int label_no, int now)
+{
+	if (list->label[label_no].inst_no < 0)
+		return true;
+	return list->label[label_no].inst_no > now;
+}
+
 void InstructionWithParamsList::AddInstructionARM(char *oc, int &ocs, int n)
 {
 	msg_db_f("AsmAddInstructionLowARM", 1+ASM_DB_LEVEL);
 
 	InstructionWithParams &iwp = (*this)[n];
 	current_inst = n;
-	state.reset();
+	state.reset(this);
 
 	int code = 0;
 
 	code = iwp.condition << 28;
 	int nn = -1;
 	for (int i=0; i<16; i++)
-		if (iwp.inst == ARMDataInstructions[i])
+		if (iwp.inst == ARM_DATA_INSTRUCTIONS[i])
 			nn = i;
 	if (nn >= 0){
 		if ((iwp.inst == inst_cmp) or (iwp.inst == inst_cmn) or (iwp.inst == inst_tst) or (iwp.inst == inst_teq) or (iwp.inst == inst_mov)){
@@ -3371,8 +3457,12 @@ void InstructionWithParamsList::AddInstructionARM(char *oc, int &ocs, int n)
 				SetError("p3.disp != DISP_MODE_NONE");
 		}else if (iwp.p[2].type == PARAMT_IMMEDIATE){
 			arm_expect(iwp, PARAMT_REGISTER, PARAMT_REGISTER, PARAMT_IMMEDIATE);
-			code |= arm_encode_imm(iwp.p[2].value) << 0;
-			code |= 1 << 25;
+			if (iwp.p[2].is_label){
+				add_wanted_label(ocs + 2, iwp.p[2].value, n, false, false, SIZE_8L4);
+			}else{
+				code |= arm_encode_8l4(iwp.p[2].value) << 0;
+				code |= 1 << 25;
+			}
 		}/*else if (iwp.p[2].type == PARAMT_REGISTER_SHIFT){
 			msg_write("TODO reg shift");
 			code |= arm_reg_no(iwp.p[2].reg) << 0;
@@ -3392,14 +3482,24 @@ void InstructionWithParamsList::AddInstructionARM(char *oc, int &ocs, int n)
 		else if (iwp.inst == inst_strb)
 			code |= 0x04400000;
 
+		if ((iwp.p[1].type == PARAMT_IMMEDIATE) and (iwp.p[1].deref) and (iwp.p[1].is_label)){
+			add_wanted_label(ocs + 2, iwp.p[1].value, n, true, true, SIZE_8L4);
+			iwp.p[1] = param_deref_reg_shift(REG_R15, label_after_now(this, iwp.p[1].value, n) ? 1 : -1, SIZE_32);
+		}
+
+		if (iwp.p[0].reg == iwp.p[1].reg)
+			SetError("not allowed to use the same register for destination and addressing: " + iwp.str());
+
 		code |= arm_reg_no(iwp.p[0].reg) << 12;
 		code |= arm_reg_no(iwp.p[1].reg) << 16;
 
 		if ((iwp.p[1].disp == DISP_MODE_8) or (iwp.p[1].disp == DISP_MODE_32)){
+			if ((iwp.p[1].value > 0x0fff) or (iwp.p[1].value < - 0x0fff))
+				SetError("offset larger than 12 bit: " + iwp.str());
 			if (iwp.p[1].value >= 0)
-				code |= 0x01800000 | iwp.p[1].value;
+				code |= 0x01800000 | (iwp.p[1].value & 0x0fff);
 			else
-				code |= 0x01000000 | (-iwp.p[1].value);
+				code |= 0x01000000 | ((-iwp.p[1].value) & 0x0fff);
 		}else if (iwp.p[1].disp == DISP_MODE_REG2){
 			if (iwp.p[1].value >= 0)
 				code |= 0x03800000;
@@ -3431,19 +3531,22 @@ void InstructionWithParamsList::AddInstructionARM(char *oc, int &ocs, int n)
 		code |= arm_reg_no(iwp.p[0].reg) << 16;
 		code |= arm_reg_no(iwp.p[1].reg);
 		code |= arm_reg_no(iwp.p[2].reg) << 8;
-	}else if (iwp.inst == inst_call){
+	}else if ((iwp.inst == inst_blx) or ((iwp.inst == inst_call) and (iwp.p[0].type == PARAMT_REGISTER))){
+		arm_expect(iwp, PARAMT_REGISTER);
+		code |= 0x012fff30;
+		code |= arm_reg_no(iwp.p[0].reg);
+	}else if ((iwp.inst == inst_bl) or (iwp.inst == inst_b) or (iwp.inst == inst_jmp) or (iwp.inst == inst_call)){
 		arm_expect(iwp, PARAMT_IMMEDIATE);
-		// bl
-		code |= 0x0b000000;
-		int value = (iwp.p[0].value - (long)&oc[ocs] - 8) >> 2;
-		code |= (value & 0x00ffffff);
-	}else if ((iwp.inst == inst_bl) or (iwp.inst == inst_b) or (iwp.inst == inst_jmp)){
-		arm_expect(iwp, PARAMT_IMMEDIATE);
-		if (iwp.inst == inst_bl)
+		if ((iwp.inst == inst_bl) or (iwp.inst == inst_call))
 			code |= 0x0b000000;
 		else
 			code |= 0x0a000000;
-		code |= (iwp.p[0].value & 0x00ffffff);
+		int value = iwp.p[0].value;
+		if (iwp.p[0].is_label){
+			add_wanted_label(ocs + 1, value, n, true, false, SIZE_24);
+		}else if (iwp.inst == inst_call)
+			value = (iwp.p[0].value - (long)&oc[ocs] - 8) >> 2;
+		code |= (value & 0x00ffffff);
 	}else if (iwp.inst == inst_dd){
 		arm_expect(iwp, PARAMT_IMMEDIATE);
 		code = iwp.p[0].value;
@@ -3494,7 +3597,7 @@ void InstructionWithParamsList::Optimize(void *oc, int ocs)
 void InstructionWithParamsList::Compile(void *oc, int &ocs)
 {
 	state.DefaultSize = SIZE_32;
-	state.reset();
+	state.reset(this);
 	if (!CurrentMetaInfo){
 		DummyMetaInfo.code_origin = (long)oc;
 		CurrentMetaInfo = &DummyMetaInfo;
@@ -3507,7 +3610,7 @@ void InstructionWithParamsList::Compile(void *oc, int &ocs)
 				state.DefaultSize = SIZE_32;
 				if (b.bits == 16)
 					state.DefaultSize = SIZE_16;
-				state.reset();
+				state.reset(this);
 				b.offset = ocs;
 			}
 
@@ -3535,8 +3638,6 @@ void InstructionWithParamsList::Compile(void *oc, int &ocs)
 	LinkWantedLabels(oc);
 
 	foreach(WantedLabel &l, wanted_label){
-		if (l.name.head(10) == "kaba-func:")
-			continue;
 		state.LineNo = (*this)[l.inst_no].line;
 		state.ColumnNo = (*this)[l.inst_no].col;
 		SetError("undeclared label used: " + l.name);
@@ -3549,7 +3650,7 @@ void AddInstruction(char *oc, int &ocs, int inst, const InstructionParam &p1, co
 	/*if (!CPUInstructions)
 		SetInstructionSet(InstructionSetDefault);*/
 	state.DefaultSize = SIZE_32;
-	state.reset();
+	state.reset(NULL);
 	/*msg_write("--------");
 	for (int i=0;i<NUM_INSTRUCTION_NAMES;i++)
 		if (InstructionName[i].inst == inst)

@@ -17,7 +17,6 @@ public:
 	virtual ~ParserPython();
 	virtual string GetName(){	return "Python";	}
 
-	virtual int WordType(const string &name);
 	virtual void CreateTextColors(SourceView *sv, int first_line = -1, int last_line = -1);
 };
 

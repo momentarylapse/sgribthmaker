@@ -205,6 +205,7 @@ enum{
 	// ARM
 	inst_b,
 	inst_bl,
+	inst_blx,
 
 	inst_ldr,
 	inst_ldrb,
@@ -220,14 +221,12 @@ enum{
 	inst_stmda,
 	inst_stmdb,
 
-	inst_eor,
 	inst_rsb,
 	inst_sbc,
 	inst_rsc,
 	inst_tst,
 	inst_teq,
 	inst_cmn,
-	inst_orr,
 	inst_bic,
 	inst_mvn,
 
@@ -267,7 +266,7 @@ struct Label
 {
 	string name;
 	int inst_no;
-	int value;
+	long long value;
 };
 
 struct WantedLabel
@@ -279,6 +278,7 @@ struct WantedLabel
 	int label_no;
 	int inst_no;
 	bool relative;
+	bool abs;
 };
 
 struct AsmData
@@ -298,7 +298,7 @@ struct BitChange
 
 struct MetaInfo
 {
-	long code_origin; // how to interpret opcode buffer[0]
+	long long code_origin; // how to interpret opcode buffer[0]
 	bool mode16;
 	int line_offset; // number of script lines preceding asm block (to give correct error messages)
 
@@ -347,10 +347,12 @@ enum
 {
 	SIZE_8 = 1,
 	SIZE_16 = 2,
+	SIZE_24 = 3,
 	SIZE_32 = 4,
 	SIZE_48 = 6,
 	SIZE_64 = 8,
 	SIZE_128 = 16,
+	SIZE_8L4 = -13,
 	/*SIZE_VARIABLE = -5,
 	SIZE_32OR48 = -6,*/
 	SIZE_UNKNOWN = -7,
@@ -365,6 +367,7 @@ InstructionParam param_deref_reg_shift_reg(int reg, int reg2, int size);
 InstructionParam param_imm(long long value, int size);
 InstructionParam param_deref_imm(long long value, int size);
 InstructionParam param_label(long long value, int size);
+InstructionParam param_deref_label(long long value, int size);
 
 struct InstructionWithParamsList : public Array<InstructionWithParams>
 {
@@ -374,7 +377,12 @@ struct InstructionWithParamsList : public Array<InstructionWithParams>
 //	void add_easy(int inst, int param1_type = PK_NONE, int param1_size = -1, void *param1 = NULL, int param2_type = PK_NONE, int param2_size = -1, void *param2 = NULL);
 	void add2(int inst, const InstructionParam &p1 = param_none, const InstructionParam &p2 = param_none);
 	void add_arm(int cond, int inst, const InstructionParam &p1, const InstructionParam &p2 = param_none, const InstructionParam &p3 = param_none);
-	int add_label(const string &name, bool declaring);
+
+	int add_label(const string &name);
+	int get_label(const string &name);
+	void *get_label_value(const string &name);
+
+	void add_wanted_label(int pos, int label_no, int inst_no, bool rel, bool abs, int size);
 
 	void add_func_intro(int stack_alloc_size);
 	void add_func_return(int return_size);
@@ -397,6 +405,7 @@ struct InstructionWithParamsList : public Array<InstructionWithParams>
 };
 
 void Init(int instruction_set = -1);
+int QueryLocalInstructionSet();
 bool Assemble(const char *code, char *oc, int &ocs);
 string Disassemble(void *code, int length = -1, bool allow_comments = true);
 

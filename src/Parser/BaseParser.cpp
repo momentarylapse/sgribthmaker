@@ -40,6 +40,8 @@ Parser::Label::Label(const string &_name, int _line, int _level)
 
 Parser::Parser()
 {
+	macro_begin = "-none-";
+	line_comment_begin = "-none-";
 }
 
 Parser::~Parser()
@@ -55,7 +57,21 @@ Array<Parser::Label> Parser::FindLabels(SourceView *sv)
 
 int Parser::WordType(const string &name)
 {
-	return InWord;
+	if (name.head(macro_begin.num) == macro_begin)
+		return IN_MACRO;
+	foreach(string &n, special_words)
+		if (name == n)
+			return IN_WORD_SPECIAL;
+	foreach(string &n, types)
+		if (name == n)
+			return IN_WORD_TYPE;
+	foreach(string &n, compiler_functions)
+		if (name == n)
+			return IN_WORD_COMPILER_FUNCTION;
+	foreach(string &n, globals)
+		if (name == n)
+			return IN_WORD_GLOBAL_VARIABLE;
+	return IN_WORD;
 }
 
 void Parser::CreateTextColors(SourceView *sv, int first_line, int last_line)
@@ -87,10 +103,10 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 
 		char *p = (char*)&s[0];
 		char *p0 = p;
-		int last_type = CharSpace;
-		int in_type = (comment_level > 1) ? InCommentLevel2 : ((comment_level > 0) ? InCommentLevel1 : InSpace);
+		int last_type = CHAR_SPACE;
+		int in_type = (comment_level > 1) ? IN_COMMENT_LEVEL_2 : ((comment_level > 0) ? IN_COMMENT_LEVEL_1 : IN_SPACE);
 		if (in_ml_string)
-			in_type = InString;
+			in_type = IN_STRING;
 		int pos0 = 0;
 		int pos = 0;
 		int num_uchars = g_utf8_strlen(p, s.num);
@@ -98,16 +114,16 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 		while(pos < num_uchars){
 			int type = char_type(*p);
 			// still in a string?
-			if (in_type == InString){
+			if (in_type == IN_STRING){
 				if (prev_was_escape){
 					prev_was_escape = false;
 				}else if (*p == '\\'){
 					prev_was_escape = true;
 				}else if (*p == '\"'){
-					in_type = InOperator;
+					in_type = IN_OPERATOR;
 					in_ml_string = false;
 					next_char();
-					sv->MarkWord(l, pos0, pos, InString, p0, p);
+					sv->MarkWord(l, pos0, pos, IN_STRING, p0, p);
 					set_mark();
 					continue;
 				}
@@ -117,7 +133,7 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 					sv->MarkWord(l, pos0, pos, in_type, p0, p);
 					set_mark();
 					next_char();
-					in_type = InCommentLevel2;
+					in_type = IN_COMMENT_LEVEL_2;
 					comment_level ++;
 				}else if ((*p == '*') && (p[1] == '/')){
 					next_char();
@@ -125,7 +141,7 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 					sv->MarkWord(l, pos0, pos, in_type, p0, p);
 					set_mark();
 					comment_level --;
-					in_type = (comment_level > 0) ? InCommentLevel1 : InOperator;
+					in_type = (comment_level > 0) ? IN_COMMENT_LEVEL_1 : IN_OPERATOR;
 					last_type = type;
 					continue;
 				}
@@ -135,43 +151,49 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 					sv->MarkWord(l, pos0, pos, in_type, p0, p);
 					set_mark();
 					in_ml_string = true;
-					in_type = InString;
+					in_type = IN_STRING;
 				}else if (last_type != type){
-					if ((in_type == InNumber) && ((*p == '.') || (*p == 'x') || ((*p >= 'a') && (*p <= 'f')))){
+					if ((in_type == IN_NUMBER) && ((*p == '.') || (*p == 'x') || ((*p >= 'a') && (*p <= 'f')))){
 						next_char();
 						continue;
 					}
-					if ((in_type == InWord) && (type == CharNumber)){
+					if ((in_type == IN_WORD) && (type == CHAR_NUMBER)){
 						next_char();
 						continue;
 					}
 					sv->MarkWord(l, pos0, pos, in_type, p0, p);
 					set_mark();
-					if (type == CharSpace)
-						in_type = InSpace;
-					else if (type == CharLetter)
-						in_type = InWord;
-					else if (type == CharNumber)
-						in_type = InNumber;
-					else if (type == CharSign)
-						in_type = InOperator;
+					if (type == CHAR_SPACE)
+						in_type = IN_SPACE;
+					else if (type == CHAR_LETTER)
+						in_type = IN_WORD;
+					else if (type == CHAR_NUMBER)
+						in_type = IN_NUMBER;
+					else if (type == CHAR_SIGN)
+						in_type = IN_OPERATOR;
 					// # -> macro...
 					if (*p == '#'){
-						in_type = InWord;
-						type = CharLetter;
+						in_type = IN_WORD;
+						type = CHAR_LETTER;
 					}
 				}
 				// line comment starting?
-				if ((*p == '/') && (p[1] == '/')){
+				bool line_comment = true;
+				for (int j=0; j<line_comment_begin.num; j++)
+					if (p[j] != line_comment_begin[j]){
+						line_comment = false;
+						break;
+					}
+				if (line_comment){
 					sv->MarkWord(l, pos0, pos, in_type, p0, p);
 					set_mark();
-					in_type = InLineComment;
+					in_type = IN_LINE_COMMENT;
 					break;
 				// multi-comment starting?
 				}else if ((*p == '/') && (p[1] == '*')){
 					sv->MarkWord(l, pos0, pos, in_type, p0, p);
 					set_mark();
-					in_type = InCommentLevel1;
+					in_type = IN_COMMENT_LEVEL_1;
 					comment_level ++;
 					next_char();
 				}

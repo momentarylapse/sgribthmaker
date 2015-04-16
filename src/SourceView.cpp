@@ -157,7 +157,7 @@ SourceView::SourceView(HuiWindow *win, const string &_id, Document *d)
 	tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tv));
 
 
-	for (int i=0; i<NumTagTypes; i++)
+	for (int i=0; i<NUM_TAG_TYPES; i++)
 		tag[i] = gtk_text_buffer_create_tag(tb, NULL, NULL);
 
 	NeedsUpdateStart = 0;
@@ -347,7 +347,7 @@ void SourceView::MarkWord(int line, int start, int end, int type, char *p0, char
 	if (start == end)
 		return;
 	msg_db_f("MarkWord", 1);
-	if (type == InWord)
+	if (type == IN_WORD)
 		if ((start == 0) || (p0[-1] != '.'))
 		if ((long)p - (long)p0 < 64){
 			string temp = string(p0, (long)p - (long)p0);
@@ -517,7 +517,7 @@ void color2gdkrgba(const color &c, GdkRGBA &g)
 
 void SourceView::ApplyScheme(HighlightScheme *s)
 {
-	for (int i=0; i<NumTagTypes; i++){
+	for (int i=0; i<NUM_TAG_TYPES; i++){
 		if (s->context[i].set_bg)
 			SetTag(i, color_to_hex(s->context[i].fg).c_str(), color_to_hex(s->context[i].bg).c_str(), s->context[i].bold, s->context[i].italic);
 		else
@@ -526,7 +526,7 @@ void SourceView::ApplyScheme(HighlightScheme *s)
 	GdkRGBA _color;
 	color2gdkrgba(s->bg, _color);
 	gtk_widget_override_background_color(tv, GTK_STATE_FLAG_NORMAL, &_color);
-	color2gdkrgba(s->context[InWord].fg, _color);
+	color2gdkrgba(s->context[IN_WORD].fg, _color);
 	gtk_widget_override_background_color(tv, GTK_STATE_FLAG_SELECTED, &_color);
 	color2gdkrgba(s->bg, _color);
 	gtk_widget_override_color(tv, GTK_STATE_FLAG_SELECTED, &_color);

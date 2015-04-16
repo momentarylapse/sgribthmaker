@@ -10,46 +10,52 @@
 
 ParserC::ParserC()
 {
+	macro_begin = "#";
+	line_comment_begin = "//";
+	special_words.add("enum");
+	special_words.add("class");
+	special_words.add("if");
+	special_words.add("else");
+	special_words.add("while");
+	special_words.add("for");
+	special_words.add("return");
+	special_words.add("break");
+	special_words.add("continue");
+	special_words.add("and");
+	special_words.add("or");
+	special_words.add("new");
+	special_words.add("delete");
+	special_words.add("extern");
+	special_words.add("virtual");
+	special_words.add("static");
+	special_words.add("public");
+	special_words.add("private");
+	special_words.add("protected");
+	special_words.add("const");
+	special_words.add("this");
+	special_words.add("namespace");
+	special_words.add("struct");
+	special_words.add("template");
+	types.add("int");
+	types.add("void");
+	types.add("float");
+	types.add("double");
+	types.add("long");
+	types.add("char");
+	types.add("bool");
+	types.add("signed");
+	types.add("unsigned");
+	types.add("short");
+	compiler_functions.add("printf");
+	compiler_functions.add("sin");
+	compiler_functions.add("cos");
+	globals.add("null");
+	globals.add("true");
+	globals.add("false");
 }
 
 ParserC::~ParserC()
 {
-}
-
-int ParserC::WordType(const string &name)
-{
-	if (name[0] == '#')
-		return InMacro;
-	if ((name == "enum") ||
-	    (name == "class") ||
-		(name == "if") ||
-		(name == "else") ||
-		(name == "while") ||
-		(name == "for") ||
-		(name == "return") ||
-		(name == "break") ||
-		(name == "continue") ||
-		(name == "and") ||
-		(name == "or") ||
-		(name == "new") ||
-		(name == "delete") ||
-		(name == "extern") ||
-		(name == "virtual") ||
-		(name == "const") ||
-		(name == "this"))
-		return InWordSpecial;
-	if ((name == "void") ||
-	    (name == "int") ||
-		(name == "float") ||
-		(name == "char") ||
-		(name == "unsigned") ||
-		(name == "signed") ||
-		(name == "short"))
-		return InWordType;
-	if ((name == "printf") ||
-	    (name == "sin"))
-		return InWordCompilerFunction;
-	return -1;
 }
 
 void ParserC::CreateTextColors(SourceView *sv, int first_line, int last_line)

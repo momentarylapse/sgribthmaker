@@ -18,9 +18,6 @@ struct RegChannel
 enum{
 	inst_marker = 10000,
 	inst_asm,
-	inst_func_intro,
-	inst_func_outro,
-	inst_call_label,
 };
 
 struct LoopData
@@ -63,19 +60,19 @@ struct TempVar
 
 struct AddLaterData
 {
-	int kind, marker, level, index;
+	int kind, label, level, index;
 };
 
 enum{
-	StuffKindMarker,
-	StuffKindJump,
+	STUFF_KIND_MARKER,
+	STUFF_KIND_JUMP,
 };
 
 
 class Serializer
 {
 public:
-	Serializer(Script *script);
+	Serializer(Script *script, Asm::InstructionWithParamsList *list);
 	virtual ~Serializer();
 
 	Array<SerialCommand> cmd;
@@ -83,6 +80,7 @@ public:
 	Script *script;
 	SyntaxTree *syntax_tree;
 	Function *cur_func;
+	int cur_func_index;
 	bool call_used;
 	Command *next_command;
 	bool temp_var_ranges_defined;
@@ -98,7 +96,12 @@ public:
 
 	Array<AddLaterData> add_later;
 
-	Array<void*> global_refs;
+	struct GlobalRef
+	{
+		int label;
+		void *p;
+	};
+	Array<GlobalRef> global_refs;
 	int add_global_ref(void *p);
 
 	Asm::InstructionWithParamsList *list;
@@ -106,11 +109,14 @@ public:
 	void DoError(const string &msg);
 	void DoErrorLink(const string &msg);
 
-	void Assemble(char *Opcode, int &OpcodeSize);
+	void Assemble();
+	void assemble_cmd(SerialCommand &c);
+	void assemble_cmd_arm(SerialCommand &c);
+	Asm::InstructionParam get_param(int inst, SerialCommandParam &p);
 
 	void SerializeFunction(Function *f);
 	void SerializeBlock(Block *block, int level);
-	void SerializeParameter(Command *link, int level, int index, SerialCommandParam &param);
+	virtual SerialCommandParam SerializeParameter(Command *link, int level, int index) = 0;
 	SerialCommandParam SerializeCommand(Command *com, int level, int index);
 	virtual void SerializeCompilerFunction(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret, int level, int index, int marker_before_params) = 0;
 	virtual void SerializeOperator(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret) = 0;
@@ -162,7 +168,7 @@ public:
 	virtual void CorrectUnallowedParamCombis() = 0;
 	virtual void CorrectUnallowedParamCombis2(SerialCommand &c) = 0;
 
-	int find_unused_reg(int first, int last, int size, bool allow_eax);
+	int find_unused_reg(int first, int last, int size, int exclude = -1);
 	void solve_deref_temp_local(int c, int np, bool is_local);
 	void ResolveDerefTempAndLocal();
 	bool ParamUntouchedInInterval(SerialCommandParam &p, int first, int last);
@@ -176,8 +182,8 @@ public:
 	virtual void add_virtual_function_call(int virtual_index) = 0;
 	virtual int fc_begin() = 0;
 	virtual void fc_end(int push_size) = 0;
-	void AddReference(SerialCommandParam &param, Type *type, SerialCommandParam &ret);
-	void AddDereference(SerialCommandParam &param, SerialCommandParam &ret, Type *force_type = NULL);
+	SerialCommandParam AddReference(SerialCommandParam &param, Type *type);
+	SerialCommandParam AddDereference(SerialCommandParam &param, Type *force_type = NULL);
 
 	void MapTempVarToReg(int vi, int reg);
 	void add_stack_var(Type *type, int first, int last, SerialCommandParam &p);
@@ -186,61 +192,41 @@ public:
 
 	void FillInDestructors(bool from_temp);
 	void FillInConstructorsFunc();
+
+
+
+	Array<SerialCommandParam> CompilerFunctionParam;
+	SerialCommandParam CompilerFunctionReturn;
+	SerialCommandParam CompilerFunctionInstance;
+
+	SerialCommandParam p_eax, p_eax_int, p_deref_eax;
+	SerialCommandParam p_rax;
+	SerialCommandParam p_ax, p_al, p_ah, p_al_bool, p_al_char;
+	SerialCommandParam p_st0, p_st1;
+	const SerialCommandParam p_none;
+
+	void AddFuncParam(const SerialCommandParam &p);
+	void AddFuncReturn(const SerialCommandParam &r);
+	void AddFuncInstance(const SerialCommandParam &inst);
+
+
+	static SerialCommandParam param_shift(const SerialCommandParam &param, int shift, Type *t);
+	static SerialCommandParam param_global(Type *type, void *v);
+	static SerialCommandParam param_local(Type *type, int offset);
+	static SerialCommandParam param_const(Type *type, long c);
+	static SerialCommandParam param_marker(int m);
+	static SerialCommandParam param_deref_marker(Type *type, int m);
+	static SerialCommandParam param_reg(Type *type, int reg);
+	static SerialCommandParam param_deref_reg(Type *type, int reg);
+	static SerialCommandParam param_lookup(Type *type, int ref);
+	static SerialCommandParam param_deref_lookup(Type *type, int ref);
+
+	static int reg_resize(int reg, int size);
+	void _resolve_deref_reg_shift_(SerialCommandParam &p, int i);
+
+	static int get_reg(int root, int size);
 };
 
-class SerializerX86 : public Serializer
-{
-public:
-	SerializerX86(Script *script) : Serializer(script){};
-	virtual ~SerializerX86(){}
-	virtual void add_function_call(Script *script, int func_no);
-	virtual void add_virtual_function_call(int virtual_index);
-	virtual int fc_begin();
-	virtual void fc_end(int push_size);
-	virtual void AddFunctionIntro(Function *f);
-	virtual void AddFunctionOutro(Function *f);
-	virtual void SerializeCompilerFunction(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret, int level, int index, int marker_before_params);
-	virtual void SerializeOperator(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret);
-
-	virtual void DoMapping();
-	virtual void CorrectUnallowedParamCombis();
-	virtual void CorrectUnallowedParamCombis2(SerialCommand &c);
-};
-
-class SerializerAMD64 : public SerializerX86
-{
-public:
-	SerializerAMD64(Script *script) : SerializerX86(script){};
-	virtual ~SerializerAMD64(){}
-	virtual void add_function_call(Script *script, int func_no);
-	virtual void add_virtual_function_call(int virtual_index);
-	virtual int fc_begin();
-	virtual void fc_end(int push_size);
-	virtual void AddFunctionIntro(Function *f);
-	virtual void AddFunctionOutro(Function *f);
-	virtual void CorrectUnallowedParamCombis2(SerialCommand &c);
-};
-
-class SerializerARM : public Serializer
-{
-public:
-	SerializerARM(Script *script) : Serializer(script){};
-	virtual ~SerializerARM(){}
-	virtual void add_function_call(Script *script, int func_no);
-	virtual void add_virtual_function_call(int virtual_index);
-	virtual int fc_begin();
-	virtual void fc_end(int push_size);
-	virtual void AddFunctionIntro(Function *f);
-	virtual void AddFunctionOutro(Function *f);
-	virtual void SerializeCompilerFunction(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret, int level, int index, int marker_before_params);
-	virtual void SerializeOperator(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret);
-
-	virtual void DoMapping();
-	void ConvertGlobalLookups();
-	virtual void CorrectUnallowedParamCombis();
-	virtual void CorrectUnallowedParamCombis2(SerialCommand &c);
-	virtual void CorrectReturn();
-};
 
 };
 

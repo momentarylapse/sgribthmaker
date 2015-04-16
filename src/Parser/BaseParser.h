@@ -19,6 +19,13 @@ public:
 	virtual ~Parser();
 	virtual string GetName() = 0;
 
+	string macro_begin;
+	string line_comment_begin;
+	Array<string> special_words;
+	Array<string> types;
+	Array<string> compiler_functions;
+	Array<string> globals;
+
 
 	struct Label
 	{
@@ -42,21 +49,21 @@ Parser *GetParser(const string &filename);
 
 
 enum{
-	CharSpace,
-	CharLetter,
-	CharNumber,
-	CharSign
+	CHAR_SPACE,
+	CHAR_LETTER,
+	CHAR_NUMBER,
+	CHAR_SIGN
 };
 
 inline int char_type(char c)
 {
 	if ((c >= '0') && (c <= '9'))
-		return CharNumber;
+		return CHAR_NUMBER;
 	if ((c == ' ') || (c == '\n') || (c == '\t'))
-		return CharSpace;
+		return CHAR_SPACE;
 	if (((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')) || (c == '_'))
-		return CharLetter;
-	return CharSign;
+		return CHAR_LETTER;
+	return CHAR_SIGN;
 }
 
 

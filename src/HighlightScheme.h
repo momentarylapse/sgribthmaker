@@ -13,20 +13,20 @@
 class SourceView;
 
 enum{
-	InWord,
-	InWordSpecial,
-	InWordCompilerFunction,
-	InWordGameVariable,
-	InWordType,
-	InLineComment,
-	InCommentLevel1,
-	InCommentLevel2,
-	InMacro,
-	InSpace,
-	InString,
-	InOperator,
-	InNumber,
-	NumTagTypes
+	IN_WORD,
+	IN_WORD_SPECIAL,
+	IN_WORD_COMPILER_FUNCTION,
+	IN_WORD_GLOBAL_VARIABLE,
+	IN_WORD_TYPE,
+	IN_LINE_COMMENT,
+	IN_COMMENT_LEVEL_1,
+	IN_COMMENT_LEVEL_2,
+	IN_MACRO,
+	IN_SPACE,
+	IN_STRING,
+	IN_OPERATOR,
+	IN_NUMBER,
+	NUM_TAG_TYPES
 };
 
 struct HighlightContext
@@ -43,7 +43,7 @@ class HighlightScheme
 public:
 	string name;
 	color bg;
-	HighlightContext context[NumTagTypes];
+	HighlightContext context[NUM_TAG_TYPES];
 	bool is_default, changed;
 	HighlightScheme();
 	HighlightScheme *copy(const string &name);

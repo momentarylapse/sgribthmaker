@@ -13,6 +13,45 @@
 
 ParserKaba::ParserKaba()
 {
+	macro_begin = "#";
+	line_comment_begin = "//";
+	special_words.add("enum");
+	special_words.add("class");
+	special_words.add("use");
+	special_words.add("import");
+	special_words.add("if");
+	special_words.add("else");
+	special_words.add("while");
+	special_words.add("for");
+	special_words.add("in");
+	special_words.add("return");
+	special_words.add("break");
+	special_words.add("continue");
+	special_words.add("and");
+	special_words.add("or");
+	special_words.add("new");
+	special_words.add("delete");
+	special_words.add("extern");
+	special_words.add("virtual");
+	special_words.add("overwrite");
+	special_words.add("static");
+	special_words.add("const");
+	special_words.add("self");
+	special_words.add("super");
+	special_words.add("namespace");
+	special_words.add("asm");
+	foreach(Script::Package &p, Script::Packages){
+		for (int i=0;i<p.script->syntax->types.num;i++)
+			types.add(p.script->syntax->types[i]->name);
+		for (int i=0;i<p.script->syntax->root_of_all_evil.var.num;i++)
+			globals.add(p.script->syntax->root_of_all_evil.var[i].name);
+		for (int i=0;i<p.script->syntax->constants.num;i++)
+			globals.add(p.script->syntax->constants[i].name);
+		for (int i=0;i<p.script->syntax->functions.num;i++)
+			compiler_functions.add(p.script->syntax->functions[i]->name);
+	}
+	for (int i=0;i<Script::PreCommands.num;i++)
+		compiler_functions.add(Script::PreCommands[i].name);
 }
 
 ParserKaba::~ParserKaba()
@@ -29,7 +68,7 @@ Array<Parser::Label> ParserKaba::FindLabels(SourceView *sv)
 		string s = sv->GetLine(l);
 		if (s.num < 4)
 			continue;
-		if (char_type(s[0]) == CharLetter){
+		if (char_type(s[0]) == CHAR_LETTER){
 			if (s.find("class ") >= 0){
 				last_class = s.replace("\t", " ").replace(":", " ").explode(" ")[1];
 				s = "class " + last_class;
@@ -40,7 +79,7 @@ Array<Parser::Label> ParserKaba::FindLabels(SourceView *sv)
 			if (s.find("extern") >= 0)
 				continue;
 			labels.add(Label(s, l, 0));
-		}else if ((last_class.num > 0) && (s[0] == '\t') && (char_type(s[1]) == CharLetter)){
+		}else if ((last_class.num > 0) && (s[0] == '\t') && (char_type(s[1]) == CHAR_LETTER)){
 			if (s.find("(") < 0)
 				continue;
 			s = s.replace("virtual ", "").replace("overwrite ", "").trim();
@@ -48,57 +87,6 @@ Array<Parser::Label> ParserKaba::FindLabels(SourceView *sv)
 		}
 	}
 	return labels;
-}
-
-
-
-int ParserKaba::WordType(const string &name)
-{
-	if (name[0] == '#')
-		return InMacro;
-	if ((name == "enum") ||
-	    (name == "class") ||
-		(name == "use") ||
-		(name == "import") ||
-		(name == "if") ||
-		(name == "else") ||
-		(name == "while") ||
-		(name == "for") ||
-		(name == "in") ||
-		(name == "return") ||
-		(name == "break") ||
-		(name == "continue") ||
-		(name == "and") ||
-		(name == "or") ||
-		(name == "extern") ||
-		(name == "virtual") ||
-		(name == "overwrite") ||
-		(name == "const") ||
-		(name == "this") ||
-		(name == "self") ||
-		(name == "super") ||
-		(name == "new") ||
-		(name == "delete") ||
-		(name == "asm"))
-		return InWordSpecial;
-	foreach(Script::Package &p, Script::Packages){
-		for (int i=0;i<p.script->syntax->Types.num;i++)
-			if (name == p.script->syntax->Types[i]->name)
-				return InWordType;
-		for (int i=0;i<p.script->syntax->RootOfAllEvil.var.num;i++)
-			if (name == p.script->syntax->RootOfAllEvil.var[i].name)
-				return InWordGameVariable;
-		for (int i=0;i<p.script->syntax->Constants.num;i++)
-			if (name == p.script->syntax->Constants[i].name)
-				return InWordGameVariable;
-		for (int i=0;i<p.script->syntax->Functions.num;i++)
-			if (name == p.script->syntax->Functions[i]->name)
-				return InWordCompilerFunction;
-	}
-	for (int i=0;i<Script::PreCommands.num;i++)
-		if (name == Script::PreCommands[i].name)
-			return InWordCompilerFunction;
-	return -1;
 }
 
 

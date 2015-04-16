@@ -10,86 +10,76 @@
 
 ParserShader::ParserShader()
 {
+	macro_begin = "#";
+	line_comment_begin = "//";
+	special_words.add("varying");
+	special_words.add("uniform");
+	special_words.add("invariant");
+	special_words.add("if");
+	special_words.add("else");
+	special_words.add("while");
+	special_words.add("for");
+	special_words.add("return");
+	special_words.add("break");
+	special_words.add("continue");
+	special_words.add("const");
+	special_words.add("<VertexShader>");
+	special_words.add("</VertexShader>");
+	special_words.add("<FragmentShader>");
+	special_words.add("</FragmentShader>");
+	types.add("void");
+	types.add("int");
+	types.add("float");
+	types.add("vec2");
+	types.add("vec3");
+	types.add("vec4");
+	types.add("bool");
+	types.add("mat2");
+	types.add("mat3");
+	types.add("mat4");
+	types.add("mat2x2");
+	types.add("mat2x3");
+	types.add("mat2x4");
+	types.add("mat3x2");
+	types.add("mat3x3");
+	types.add("mat4x2");
+	types.add("mat4x3");
+	types.add("mat4x4");
+	types.add("sampler2D");
+	types.add("samplerCube");
+	compiler_functions.add("max");
+	compiler_functions.add("dot");
+	compiler_functions.add("pow");
+	compiler_functions.add("texture2D");
+	compiler_functions.add("textureCube");
+	compiler_functions.add("reflect");
+	compiler_functions.add("refract");
+	compiler_functions.add("normalize");
+	globals.add("gl_Position");
+	globals.add("gl_TexCoord");
+	globals.add("gl_Vertex");
+	globals.add("gl_MultiTexCoord0");
+	globals.add("gl_MultiTexCoord1");
+	globals.add("gl_MultiTexCoord2");
+	globals.add("gl_MultiTexCoord3");
+	globals.add("gl_Normal");
+	globals.add("gl_NormalMatrix");
+	globals.add("gl_ModelViewMatrix");
+	globals.add("gl_ModelViewProjectionMatrix");
+	globals.add("gl_ModelViewMatrixInverse");
+	globals.add("gl_LightSource");
+	globals.add("gl_ModelViewProjectionMatrix");
+	globals.add("gl_FrontMaterial");
+	globals.add("gl_FrontColor");
+	globals.add("gl_Fog");
+	globals.add("gl_FogFragCoord");
+	globals.add("gl_FragCoord");
+	globals.add("gl_Color");
+	globals.add("gl_FragColor");
 }
 
 ParserShader::~ParserShader()
 {
-}
-
-int ParserShader::WordType(const string &name)
-{
-	if (name[0] == '#')
-		return InMacro;
-	if ((name == "varying") ||
-		(name == "uniform") ||
-		(name == "invariant") ||
-		(name == "if") ||
-		(name == "else") ||
-		(name == "while") ||
-		(name == "for") ||
-		(name == "return") ||
-		(name == "break") ||
-		(name == "continue") ||
-		(name == "const") ||
-		(name == "<VertexShader>") ||
-		(name == "</VertexShader>") ||
-		(name == "<FragmentShader>") ||
-		(name == "</FragmentShader>"))
-		return InWordSpecial;
-	if ((name == "void") ||
-	    (name == "int") ||
-		(name == "float") ||
-		(name == "vec2") ||
-		(name == "vec3") ||
-		(name == "vec4") ||
-		(name == "bool") ||
-		(name == "mat2") ||
-		(name == "mat3") ||
-		(name == "mat4") ||
-		(name == "mat2x2") ||
-		(name == "mat2x3") ||
-		(name == "mat2x4") ||
-		(name == "mat3x2") ||
-		(name == "mat3x3") ||
-		(name == "mat3x4") ||
-		(name == "mat4x2") ||
-		(name == "mat4x3") ||
-		(name == "mat4x4") ||
-		(name == "sampler2D") ||
-		(name == "samplerCube"))
-		return InWordType;
-	if ((name == "max") ||
-		(name == "dot") ||
-		(name == "pow") ||
-		(name == "texture2D") ||
-		(name == "textureCube") ||
-		(name == "reflect") ||
-		(name == "refract") ||
-		(name == "normalize"))
-		return InWordCompilerFunction;
-	if ((name == "gl_Position") ||
-		(name == "gl_TexCoord") ||
-		(name == "gl_Vertex") ||
-		(name == "gl_MultiTexCoord0") ||
-		(name == "gl_MultiTexCoord1") ||
-		(name == "gl_MultiTexCoord2") ||
-		(name == "gl_MultiTexCoord3") ||
-		(name == "gl_Normal") ||
-		(name == "gl_NormalMatrix") ||
-		(name == "gl_ModelViewMatrix") ||
-		(name == "gl_ModelViewProjectionMatrix") ||
-		(name == "gl_ModelViewMatrixInverse") ||
-		(name == "gl_LightSource") ||
-		(name == "gl_ModelViewProjectionMatrix") ||
-		(name == "gl_FrontMaterial") ||
-		(name == "gl_FrontColor") ||
-		(name == "gl_Fog") ||
-		(name == "gl_FogFragCoord") ||
-		(name == "gl_FragCoord") ||
-		(name == "gl_Color") ||
-		(name == "gl_FragColor"))
-		return InWordGameVariable;
-	return -1;
 }
 
 void ParserShader::CreateTextColors(SourceView *sv, int first_line, int last_line)

@@ -18,7 +18,6 @@ public:
 	virtual string GetName(){	return "Shader";	}
 
 	//virtual Array<Label> FindLabels(SourceView *sv);
-	virtual int WordType(const string &name);
 	virtual void CreateTextColors(SourceView *sv, int first_line = -1, int last_line = -1);
 };
 
