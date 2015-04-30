@@ -356,19 +356,15 @@ void CompileAndRun(bool verbose)
 
 
 		float dt_execute = 0;
-		if (compile_script->syntax->flag_compile_os)
-			HuiErrorBox(MainWin, _("Fehler"), _("Script nicht ausf&uhrbar. (#os)"));
-		else{
-			HuiPushMainLevel();
-			CompileTimer.reset();
-			typedef void void_func();
-			void_func *f = (void_func*)compile_script->MatchFunction("main", "void", 0);
-			if (f)
-				f();
-			//compile_script->ShowVars(false);
-			dt_execute = CompileTimer.get();
-			HuiPopMainLevel();
-		}
+		HuiPushMainLevel();
+		CompileTimer.reset();
+		typedef void void_func();
+		void_func *f = (void_func*)compile_script->MatchFunction("main", "void", 0);
+		if (f)
+			f();
+		//compile_script->ShowVars(false);
+		dt_execute = CompileTimer.get();
+		HuiPopMainLevel();
 		
 		SetMessage(format(_("Compilieren: %s         Opcode: %db         Ausf&uhren: %s"), get_time_str(dt_compile).c_str(), compile_script->opcode_size, get_time_str(dt_execute).c_str()));
 		//if (verbose)
