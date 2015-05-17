@@ -9,12 +9,12 @@
 
 Console::Console()
 {
-	addControlTable("", 0, 0, 1, 2, "table_console");
+	addGrid("", 0, 0, 1, 2, "table_console");
 	//SetBorderWidth(5);
 	setTarget("table_console", 0);
 	addMultilineEdit("", 0, 0, 0, 0, "log");
 	enable("log", false);
-	addControlTable("!noexpandy", 0, 1, 3, 1, "table_command");
+	addGrid("!noexpandy", 0, 1, 3, 1, "table_command");
 	setTarget("table_command", 0);
 	addEdit("!expandx", 0, 0, 0, 0, "console");
 	addButton("OK", 1, 0, 0, 0, "console_ok");

@@ -542,12 +542,12 @@ public:
 
 		MainWin->setBorderWidth(0);
 		MainWin->setIndent(0);
-		MainWin->addControlTable("", 0, 0, 1, 2, "table_main");
+		MainWin->addGrid("", 0, 0, 1, 2, "table_main");
 		MainWin->setTarget("table_main", 0);
-		MainWin->addControlTable("", 0, 0, 2, 1, "table_doc");
+		MainWin->addGrid("", 0, 0, 2, 1, "table_doc");
 		MainWin->setTarget("table_doc", 0);
 		MainWin->addTabControl("!nobar", 0, 0, 0, 0, "tab");
-		MainWin->addControlTable("!noexpandx,width=180", 1, 0, 1, 2, "table_side");
+		MainWin->addGrid("!noexpandx,width=180", 1, 0, 1, 2, "table_side");
 		MainWin->setTarget("table_side", 0);
 		MainWin->addGroup("Dokumente", 0, 0, 0, 0, "group_files");
 		MainWin->addExpander("Funktionen", 0, 1, 0, 0, "function_expander");
