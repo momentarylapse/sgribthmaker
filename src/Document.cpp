@@ -43,7 +43,7 @@ string Document::name(bool long_name) const
 bool Document::load(const string &_filename)
 {
 	msg_db_f("LoadFromFile", 1);
-	CFile *f = FileOpen(_filename);
+	File *f = FileOpen(_filename);
 	if (!f){
 		SetMessage(_("Datei l&asst sich nicht &offnen"));
 		return false;
@@ -66,7 +66,7 @@ bool Document::load(const string &_filename)
 bool Document::save(const string &_filename)
 {
 	msg_db_f("Document.save", 1);
-	CFile *f = FileCreate(_filename);
+	File *f = FileCreate(_filename);
 	string temp = source_view->GetAll();
 	f->WriteBuffer(temp.data, temp.num);
 	FileClose(f);
