@@ -24,7 +24,7 @@ Document::Document()
 
 Document::~Document()
 {
-	delete(history);
+	//delete(history);
 }
 
 string Document::name(bool long_name) const

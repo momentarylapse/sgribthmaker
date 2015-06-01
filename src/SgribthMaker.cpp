@@ -13,12 +13,9 @@
 #include "Document.h"
 
 
-	#include <sys/mman.h>
-
-
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.3.3";
+string AppVersion = "0.4.4.0";
 
 #define ALLOW_LOGGING			true
 //#define ALLOW_LOGGING			false
@@ -33,6 +30,8 @@ extern string NixShaderError;
 
 Array<Document*> documents;
 Document *cur_doc = NULL;
+
+void OnExit();
 
 //------------------------------------------------------------------------------
 // Highlighting
@@ -107,7 +106,7 @@ void SetActiveDocument(Document *d)
 	foreachi(Document *dd, documents, i)
 		if (dd == d){
 			MainWin->setInt("tab", i);
-			MainWin->activate("edit" + i2s(i));
+			MainWin->activate(dd->source_view->id);
 			break;
 		}
 	cur_doc = d;
@@ -132,6 +131,20 @@ bool AllowTermination()
 	return true;
 }
 
+bool AllowDocTermination(Document *d)
+{
+	if (d->history->changed){
+		SetActiveDocument(d);
+		string answer = HuiQuestionBox(MainWin, _("dem&utige aber h&ofliche Frage"), _("Sie haben die Entropie erh&oht. Wollen Sie Ihr Werk speichern?"), true);
+		if (answer == "hui:cancel")
+			return false;
+		if (answer == "hui:yes")
+			return Save(d);
+		return true;
+	}
+	return true;
+}
+
 void New()
 {
 	msg_db_f("New", 1);
@@ -139,7 +152,7 @@ void New()
 	if (documents.num > 0)
 		MainWin->hideControl("table_side", false);
 
-	string id = "edit" + i2s(documents.num);
+	string id = format("edit-%06d", randi(1000000));
 
 	MainWin->setBorderWidth(0);
 	if (documents.num > 0)
@@ -152,6 +165,29 @@ void New()
 
 	sv->ApplyScheme(HighlightScheme::default_scheme);
 	source_view.add(sv);
+
+	SetActiveDocument(documents.back());
+	UpdateMenu();
+}
+
+void OnCloseDocument()
+{
+	msg_db_f("CloseDoc", 1);
+
+	if (!AllowDocTermination(cur_doc))
+		return;
+
+	if (documents.num <= 1){
+		OnExit();
+		return;
+	}
+
+	int n = MainWin->getInt("tab");
+	MainWin->removeString("tab", n);
+	delete(documents[n]);
+	documents.erase(n);
+	delete(source_view[n]);
+	source_view.erase(n);
 
 	SetActiveDocument(documents.back());
 	UpdateMenu();
@@ -507,6 +543,7 @@ public:
 		//HuiAddKeyCode(HMM_OPEN_HEX, KEY_F9 + 256);
 		HuiAddCommand("save", "hui:save", KEY_S + KEY_CONTROL, &OnSave);
 		HuiAddCommand("save_as", "hui:save_as", KEY_S + KEY_SHIFT + KEY_CONTROL, &OnSaveAs);
+		HuiAddCommand("close", "hui:close", KEY_W + KEY_CONTROL, &OnCloseDocument);
 		HuiAddCommand("exit", "hui:quit", KEY_Q + KEY_CONTROL, &OnExit);
 		//HuiAddCommand("show_data", "", KEY_D + KEY_CONTROL, &ShowData);
 		HuiAddCommand("execute_command", "", KEY_E + KEY_CONTROL, &ExecuteCommandDialog);
