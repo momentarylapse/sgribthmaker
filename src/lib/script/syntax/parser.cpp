@@ -351,32 +351,32 @@ Command *SyntaxTree::GetSpecialFunctionCall(const string &f_name, Command *Opera
 
 
 // cmd needs to have Param[]'s existing with correct Type!
-void SyntaxTree::FindFunctionSingleParameter(int p, Type **WantedType, Function *f, Command *cmd)
+void SyntaxTree::FindFunctionSingleParameter(int p, Array<Type*> &wanted_type, Function *f, Command *cmd)
 {
 	msg_db_f("FindFuncSingleParam", 4);
 	Command *param = GetCommand(f);
 
-	WantedType[p] = TypeUnknown;
+	wanted_type[p] = TypeUnknown;
 	if (cmd->kind == KIND_FUNCTION){
 		Function *ff = cmd->script->syntax->functions[cmd->link_no];
 		if (p < ff->num_params)
-			WantedType[p] = ff->literal_param_type[p];
+			wanted_type[p] = ff->literal_param_type[p];
 	}else if (cmd->kind == KIND_VIRTUAL_FUNCTION){
 		ClassFunction *cf = cmd->instance->type->parent->GetVirtualFunction(cmd->link_no);
 		if (!cf)
 			DoError("FindFunctionSingleParameter: can't find virtual function...?!?");
 		if (p < cf->param_type.num)
-			WantedType[p] = cf->param_type[p];
+			wanted_type[p] = cf->param_type[p];
 	}else if (cmd->kind == KIND_COMPILER_FUNCTION){
 		if (p < PreCommands[cmd->link_no].param.num)
-			WantedType[p] = PreCommands[cmd->link_no].param[p].type;
+			wanted_type[p] = PreCommands[cmd->link_no].param[p].type;
 	}else
 		DoError("evil function...");
 	// link parameters
 	cmd->set_param(p, param);
 }
 
-void SyntaxTree::FindFunctionParameters(int &np, Type **WantedType, Function *f, Command *cmd)
+void SyntaxTree::FindFunctionParameters(Array<Type*> &wanted_type, Function *f, Command *cmd)
 {
 	if (Exp.cur != "(")
 		DoError("\"(\" expected in front of function parameter list");
@@ -384,14 +384,13 @@ void SyntaxTree::FindFunctionParameters(int &np, Type **WantedType, Function *f,
 	Exp.next();
 
 	// list of parameters
-	np = 0;
-	for (int p=0;p<SCRIPT_MAX_PARAMS;p++){
+	for (int p=0;;p++){
 		if (Exp.cur == ")")
 			break;
-		np ++;
+		wanted_type.add(TypeUnknown);
 		// find parameter
 
-		FindFunctionSingleParameter(p, WantedType, f, cmd);
+		FindFunctionSingleParameter(p, wanted_type, f, cmd);
 
 		if (Exp.cur != ","){
 			if (Exp.cur == ")")
@@ -476,25 +475,24 @@ Command *SyntaxTree::GetFunctionCall(const string &f_name, Command *Operand, Fun
 
 
 	// find (and provisional link) the parameters in the source
-	int np;
-	Type *WantedType[SCRIPT_MAX_PARAMS];
+	Array<Type*> wanted_type;
 
-	bool needs_brackets = ((Operand->type != TypeVoid) || (Operand->num_params != 1));
+	bool needs_brackets = ((Operand->type != TypeVoid) or (Operand->param.num != 1));
 	if (needs_brackets){
-		FindFunctionParameters(np, WantedType, f, Operand);
+		FindFunctionParameters(wanted_type, f, Operand);
 
 	}else{
-		np = 1;
-		FindFunctionSingleParameter(0, WantedType, f, Operand);
+		wanted_type.add(TypeUnknown);
+		FindFunctionSingleParameter(0, wanted_type, f, Operand);
 	}
 
 	// test compatibility
-	if (np != Operand->num_params){
+	if (wanted_type.num != Operand->param.num){
 		Exp.rewind();
-		DoError(format("function \"%s\" expects %d parameters, %d were found",f_name.c_str(), Operand->num_params, np));
+		DoError(format("function \"%s\" expects %d parameters, %d were found",f_name.c_str(), Operand->param.num, wanted_type.num));
 	}
-	for (int p=0;p<np;p++){
-		Operand->set_param(p, CheckParamLink(Operand->param[p], WantedType[p], f_name, p));
+	for (int p=0;p<wanted_type.num;p++){
+		Operand->set_param(p, CheckParamLink(Operand->param[p], wanted_type[p], f_name, p));
 	}
 	return Operand;
 }
@@ -503,8 +501,8 @@ Command *build_list(SyntaxTree *ps, Array<Command*> &el)
 {
 	if (el.num == 0)
 		ps->DoError("empty arrays not supported yet");
-	if (el.num > SCRIPT_MAX_PARAMS)
-		ps->DoError(format("only %d elements in auto arrays supported yet", SCRIPT_MAX_PARAMS));
+//	if (el.num > SCRIPT_MAX_PARAMS)
+//		ps->DoError(format("only %d elements in auto arrays supported yet", SCRIPT_MAX_PARAMS));
 	Type *t = ps->CreateArrayType(el[0]->type, -1);
 	Command *c = ps->AddCommand(KIND_ARRAY_BUILDER, 0, t);
 	c->set_num_params(el.num);
@@ -1677,6 +1675,7 @@ bool SyntaxTree::ParseFunctionCommand(Function *f, ExpressionBuffer::Line *this_
 void Function::Update(Type *class_type)
 {
 	// save "original" param types (Var[].Type gets altered for call by reference)
+	literal_param_type.resize(num_params);
 	for (int i=0;i<num_params;i++)
 		literal_param_type[i] = var[i].type;
 
@@ -1775,7 +1774,7 @@ Function *SyntaxTree::ParseFunctionHeader(Type *class_type, bool as_extern)
 // parameter list
 
 	if (Exp.cur != ")")
-		for (int k=0;k<SCRIPT_MAX_PARAMS;k++){
+		for (int k=0;;k++){
 			// like variable definitions
 
 			// type of parameter variable
