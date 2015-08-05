@@ -125,6 +125,8 @@ Command *SyntaxTree::add_command_operator(Command *p1, Command *p2, int op)
 
 Command *SyntaxTree::add_command_local_var(int no, Type *type)
 {
+	if (no < 0)
+		script->DoErrorInternal("negative local variable index");
 	return AddCommand(KIND_VAR_LOCAL, no, type);
 }
 

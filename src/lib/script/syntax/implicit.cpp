@@ -446,9 +446,10 @@ void SyntaxTree::AutoImplementArrayAdd(Function *f, Type *t)
 {
 	if (!f)
 		return;
-	Command *item = add_command_local_var(f->__get_var("x"), t->parent);
+	Block *b = f->block;
+	Command *item = add_command_local_var(b->get_var("x"), t->parent);
 
-	Command *self = add_command_local_var(f->__get_var("self"), t->GetPointer());
+	Command *self = add_command_local_var(b->get_var("self"), t->GetPointer());
 
 	Command *self_num = shift_command(cp_command(self), true, config.pointer_size, TypeInt);
 
@@ -460,7 +461,7 @@ void SyntaxTree::AutoImplementArrayAdd(Function *f, Type *t)
 	Command *cmd_add = add_command_operator(self_num, cmd_1, OperatorIntAdd);
 	Command *cmd_resize = add_command_classfunc(t->GetFunc("resize", TypeVoid, 1), self);
 	cmd_resize->set_param(0, cmd_add);
-	f->block->commands.add(cmd_resize);
+	b->commands.add(cmd_resize);
 
 
 
@@ -473,7 +474,7 @@ void SyntaxTree::AutoImplementArrayAdd(Function *f, Type *t)
 	Command *cmd_assign = LinkOperator(OPERATOR_ASSIGN, cmd_el, item);
 	if (!cmd_assign)
 		DoError(format("%s.add(): no %s.__assign__ for elements", t->name.c_str(), t->parent->name.c_str()));
-	f->block->commands.add(cmd_assign);
+	b->commands.add(cmd_assign);
 }
 
 void add_func_header(SyntaxTree *s, Type *t, const string &name, Type *return_type, Type *param_type, const string &param_name)
@@ -481,10 +482,7 @@ void add_func_header(SyntaxTree *s, Type *t, const string &name, Type *return_ty
 	Function *f = s->AddFunction(name, return_type);
 	f->auto_implement = true;
 	if (param_type != TypeVoid){
-		Variable v;
-		v.name = param_name;
-		v.type = param_type;
-		f->var.add(v);
+		f->block->add_var(param_name, param_type);
 		f->num_params ++;
 	}
 	f->Update(t);
