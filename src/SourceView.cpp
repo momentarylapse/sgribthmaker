@@ -530,8 +530,9 @@ void SourceView::ApplyScheme(HighlightScheme *s)
 	gtk_widget_override_background_color(tv, GTK_STATE_FLAG_SELECTED, &_color);
 	color2gdkrgba(s->bg, _color);
 	gtk_widget_override_color(tv, GTK_STATE_FLAG_SELECTED, &_color);
-	color2gdkrgba(Black, _color);
+	color2gdkrgba(s->context[IN_WORD].fg, _color);
 	gtk_widget_override_color(tv, GTK_STATE_FLAG_NORMAL, &_color);
+	gtk_widget_override_cursor(tv, &_color, &_color);
 	scheme = s;
 	HuiConfig.setStr("HighlightScheme", s->name);
 }
@@ -553,7 +554,8 @@ void SourceView::UpdateFont()
 	PangoFontDescription *font_desc = pango_font_description_from_string(font_name.c_str());
 	gtk_widget_override_font(tv, font_desc);
 	pango_font_description_free(font_desc);
-	UpdateTabSize();
+
+	HuiRunLaterM(0.010f, this, &SourceView::UpdateTabSize);
 }
 
 
