@@ -11,7 +11,7 @@
 extern Array<SourceView*> source_view;
 
 SettingsDialog::SettingsDialog(HuiWindow *parent) :
-	HuiWindow("settings_dialog", parent, false)
+	HuiWindow("settings_dialog", parent)
 {
 	setInt("tab_width", HuiConfig.getInt("TabWidth", 8));
 	setString("font", HuiConfig.getStr("Font", "Monospace 10"));

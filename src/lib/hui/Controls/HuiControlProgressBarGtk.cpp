@@ -13,7 +13,7 @@
 HuiControlProgressBar::HuiControlProgressBar(const string &title, const string &id) :
 	HuiControl(HUI_KIND_PROGRESSBAR, id)
 {
-	GetPartStrings(id, title);
+	GetPartStrings(title);
 	widget = gtk_progress_bar_new();
 	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(widget), sys_str(PartString[0]));
 	//g_signal_connect(G_OBJECT(widget), "clicked", G_CALLBACK(&OnGtkButtonPress), this);
@@ -27,7 +27,7 @@ string HuiControlProgressBar::getString()
 
 void HuiControlProgressBar::__setString(const string &str)
 {
-#if GTK_MAJOR_VERSION >= 3
+#if GTK_CHECK_VERSION(3,0,0)
 	gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(widget), true);
 #endif
 	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(widget), sys_str(str));

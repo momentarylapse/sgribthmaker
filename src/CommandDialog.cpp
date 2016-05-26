@@ -11,7 +11,7 @@ extern string LastCommand;
 void ExecuteCommand(const string&);
 
 CommandDialog::CommandDialog(HuiWindow *parent) :
-	HuiWindow("command_dialog", parent, false)
+	HuiWindow("command_dialog", parent)
 {
 	setString("command", LastCommand);
 	event("ok", this, &CommandDialog::onOk);

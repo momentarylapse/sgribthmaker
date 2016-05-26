@@ -18,7 +18,7 @@ class HuiPanel;
 extern int allow_signal_level; // -> hui_window_control.cpp
 
 
-void GetPartStrings(const string &id, const string &title);
+void GetPartStrings(const string &title);
 //string ScanOptions(int id, const string &title);
 extern Array<string> PartString;
 extern string OptionString, HuiFormatString;
@@ -100,9 +100,6 @@ public:
 	void setOptions(const string &options);
 	virtual void __setOption(const string &op, const string &value){}
 	void getSize(int &w, int &h);
-
-	virtual void setFont(const string &font_name);
-	virtual void setTabSize(int tab_size){}
 
 	void notify(const string &message = "", bool is_default = true);
 };

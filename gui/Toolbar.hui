@@ -1,0 +1,11 @@
+Toolbar toolbar ""
+	Item /new "Neu" image=hui:new tooltip="neue Datei"
+	Item /open "Öffnen..." image=hui:open tooltip="eine Datei öffnen"
+	Item /save "Speichern" image=hui:save tooltip="Datei speichern"
+	Separator
+	Item /undo "Rückgängig" image=hui:undo
+	Item /redo "Wiederherstellen" image=hui:redo
+	Separator
+	Item /compile "Übersetzen" image=hui:media-record
+	Item /compile_and_run "Ausführen (schnell)" image=hui:media-play
+

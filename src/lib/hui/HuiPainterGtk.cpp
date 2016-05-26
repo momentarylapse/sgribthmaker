@@ -7,16 +7,49 @@
 
 #include "hui.h"
 #include "HuiPainter.h"
+#include "Controls/HuiControl.h"
+#include "Controls/HuiControlDrawingArea.h"
 #include "../math/math.h"
 
 #ifdef HUI_API_GTK
 
-void HuiPainter::end()
+HuiPainter::HuiPainter()
+{
+	win = NULL;
+	cr = NULL;
+	width = 0;
+	height = 0;
+	mode_fill = true;
+}
+
+HuiPainter::HuiPainter(HuiPanel *panel, const string &_id)
+{
+	win = panel->win;
+	id = _id;
+	cr = NULL;
+	width = 0;
+	height = 0;
+	mode_fill = true;
+	HuiControl *c = panel->_get_control_(id);
+	if (c){
+		cr = (cairo_t*)((HuiControlDrawingArea*)c)->cur_cairo;
+//		cr = gdk_cairo_create(gtk_widget_get_window(c->widget));
+
+		//gdk_drawable_get_size(gtk_widget_get_window(c->widget), &hui_drawing_context.width, &hui_drawing_context.height);
+		width = gdk_window_get_width(gtk_widget_get_window(c->widget));
+		height = gdk_window_get_height(gtk_widget_get_window(c->widget));
+		//hui_drawing_context.setFontSize(16);
+		setFont("Sans", 16, false, false);
+	}
+}
+
+HuiPainter::~HuiPainter()
 {
 	if (!cr)
 		return;
 
-	cairo_destroy(cr);
+//	cairo_destroy(cr);
+	cr = NULL;
 }
 
 void HuiPainter::setColor(const color &c)
@@ -33,13 +66,13 @@ void HuiPainter::setLineWidth(float w)
 	cairo_set_line_width(cr, w);
 }
 
-void HuiPainter::setLineDash(Array<float> &dash, float offset)
+void HuiPainter::setLineDash(const Array<float> &dash, float offset)
 {
 	if (!cr)
 		return;
 	Array<double> d;
-	foreach(float f, dash)
-		d.add(f);
+	for (int i=0; i<dash.num; i++)
+		d.add(dash[i]);
 	cairo_set_dash(cr, (double*)d.data, d.num, offset);
 }
 
@@ -87,7 +120,7 @@ void HuiPainter::drawLine(float x1, float y1, float x2, float y2)
 	cairo_stroke(cr);
 }
 
-void HuiPainter::drawLines(Array<complex> &p)
+void HuiPainter::drawLines(const Array<complex> &p)
 {
 	if (!cr)
 		return;
@@ -101,7 +134,7 @@ void HuiPainter::drawLines(Array<complex> &p)
 	cairo_stroke(cr);
 }
 
-void HuiPainter::drawPolygon(Array<complex> &p)
+void HuiPainter::drawPolygon(const Array<complex> &p)
 {
 	if (!cr)
 		return;
@@ -111,7 +144,11 @@ void HuiPainter::drawPolygon(Array<complex> &p)
 	for (int i=1; i<p.num; i++)
 		cairo_line_to(cr, p[i].x, p[i].y);
 	cairo_close_path(cr);
-	cairo_fill(cr);
+
+	if (mode_fill)
+		cairo_fill(cr);
+	else
+		cairo_stroke(cr);
 }
 
 void HuiPainter::drawStr(float x, float y, const string &str)
@@ -133,7 +170,12 @@ void HuiPainter::drawStr(float x, float y, const string &str)
 	//pango_font_description_set_size(desc, 10);//cur_font_size);
 	pango_layout_set_font_description(layout, desc);
 	pango_font_description_free(desc);
-	pango_cairo_show_layout(cr, layout);
+	if (mode_fill){
+		pango_cairo_show_layout(cr, layout);
+	}else{
+		pango_cairo_layout_path(cr, layout);
+		cairo_stroke(cr);
+	}
 	g_object_unref(layout);
 
 	//cairo_show_text(cr, str);
@@ -169,7 +211,11 @@ void HuiPainter::drawRect(float x, float y, float w, float h)
 	if (!cr)
 		return;
 	cairo_rectangle(cr, x, y, w, h);
-	cairo_fill(cr);
+
+	if (mode_fill)
+		cairo_fill(cr);
+	else
+		cairo_stroke(cr);
 }
 
 void HuiPainter::drawRect(const rect &r)
@@ -177,7 +223,11 @@ void HuiPainter::drawRect(const rect &r)
 	if (!cr)
 		return;
 	cairo_rectangle(cr, r.x1, r.y1, r.width(), r.height());
-	cairo_fill(cr);
+
+	if (mode_fill)
+		cairo_fill(cr);
+	else
+		cairo_stroke(cr);
 }
 
 void HuiPainter::drawCircle(float x, float y, float radius)
@@ -185,7 +235,11 @@ void HuiPainter::drawCircle(float x, float y, float radius)
 	if (!cr)
 		return;
 	cairo_arc(cr, x, y, radius, 0, 2 * pi);
-	cairo_fill(cr);
+
+	if (mode_fill)
+		cairo_fill(cr);
+	else
+		cairo_stroke(cr);
 }
 
 void HuiPainter::drawImage(float x, float y, const Image &image)
@@ -202,11 +256,27 @@ void HuiPainter::drawImage(float x, float y, const Image &image)
                                                          image.height,
 	    image.width * 4);
 
-	cairo_set_source_surface (cr, img, x, y);
+	cairo_set_source_surface(cr, img, x, y);
 	cairo_paint(cr);
 	cairo_surface_destroy(img);
 	cairo_set_source(cr, p);
 	cairo_pattern_destroy(p);
+#endif
+}
+
+void HuiPainter::drawMaskImage(float x, float y, const Image &image)
+{
+#ifdef _X_USE_IMAGE_
+	if (!cr)
+		return;
+	image.setMode(Image::ModeBGRA);
+	cairo_surface_t *img = cairo_image_surface_create_for_data((unsigned char*)image.data.data,
+                                                         CAIRO_FORMAT_ARGB32,
+                                                         image.width,
+                                                         image.height,
+	    image.width * 4);
+
+	cairo_mask_surface(cr, img, x, y);
 #endif
 }
 
@@ -240,6 +310,11 @@ void HuiPainter::setAntialiasing(bool enabled)
 		cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
 	else
 		cairo_set_antialias(cr, CAIRO_ANTIALIAS_NONE);
+}
+
+void HuiPainter::setFill(bool fill)
+{
+	mode_fill = fill;
 }
 
 #endif

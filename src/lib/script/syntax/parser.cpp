@@ -18,14 +18,9 @@ extern bool next_const;
 
 const int TYPE_CAST_OWN_STRING = 4096;
 
-#define is_variable(kind)	(((kind) == KindVarLocal) or ((kind) == KindVarGlobal))
-
 inline bool type_match(Type *type, bool is_class, Type *wanted);
-inline bool direct_type_match(Type *a, Type *b)
-{
-	return ( (a==b) or ( (a->is_pointer) and (b->is_pointer) ) or (a->IsDerivedFrom(b)) );
-}
-inline bool type_match_with_cast(Type *type, bool is_class, bool is_modifiable, Type *wanted, int &penalty, int &cast);
+bool direct_type_match(Type *a, Type *b);
+bool type_match_with_cast(Type *type, bool is_class, bool is_modifiable, Type *wanted, int &penalty, int &cast);
 
 
 long long s2i2(const string &str)
@@ -158,18 +153,10 @@ Command *SyntaxTree::DoClassFunction(Command *ob, ClassFunction &cf, Block *bloc
 	msg_db_f("DoClassFunc", 4);
 
 	// the function
-	Function *ff = cf.script->syntax->functions[cf.nr];
-	/*if (cf.virtual_index >= 0){
-		Command *cmd = AddCommand(KindVirtualFunction, cf.virtual_index, ff->literal_return_type);
-		cmd->set_num_params(ff->num_params);
-		cmd->script = cf.script;
-		cmd->set_instance(ob);
-		return GetFunctionCall("(virtual)." + cf.name, cmd, f);
-	}*/
+	Function *ff = cf.GetFunc();
 
 	Command *cmd = add_command_classfunc(&cf, ob);
-	cmd = GetFunctionCall(ff->name, cmd, block);
-	return cmd;
+	return GetFunctionCall(ff->name, cmd, block);
 }
 
 Command *SyntaxTree::GetOperandExtensionElement(Command *Operand, Block *block)
@@ -676,23 +663,7 @@ Command *SyntaxTree::GetPrimitiveOperator(Block *block)
 	return 0;
 }*/
 
-// both operand types have to match the operator's types
-//   (operator wants a pointer -> all pointers are allowed!!!)
-//   (same for classes of same type...)
-inline bool type_match(Type *type, bool is_class, Type *wanted)
-{
-	if (type == wanted)
-		return true;
-	if ((type->is_pointer) and (wanted == TypePointer))
-		return true;
-	if ((is_class) and (wanted == TypeClass))
-		return true;
-	if (type->IsDerivedFrom(wanted))
-		return true;
-	return false;
-}
-
-inline bool type_match_with_cast(Type *type, bool is_class, bool is_modifiable, Type *wanted, int &penalty, int &cast)
+bool type_match_with_cast(Type *type, bool is_class, bool is_modifiable, Type *wanted, int &penalty, int &cast)
 {
 	penalty = 0;
 	cast = -1;

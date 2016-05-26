@@ -1,23 +1,21 @@
-t3
+t5
 // Number Of Resources
-3
+4
 // Resource
 SizableDialog
 command_dialog
 
+
 1
+32722
+0
 550
 65
 0
-0
-0
-0
-0
-
-
-5
+1
 ControlTable
-rand_id_193624
+rand_id_131285
+
 
 1
 0
@@ -25,12 +23,10 @@ rand_id_193624
 1
 2
 -1
-0
-0
-
-
+2
 Edit
 command
+expandx
 
 1
 0
@@ -39,11 +35,9 @@ command
 1
 -1
 0
-0
-rand_id_193624
-
 ControlTable
-cmd_buttonbar
+rand_id_908907
+buttonbar
 
 1
 0
@@ -51,12 +45,10 @@ cmd_buttonbar
 2
 1
 -1
-0
-0
-rand_id_193624
-
+2
 Button
 cancel
+
 hui:cancel
 1
 0
@@ -65,11 +57,9 @@ hui:cancel
 1
 -1
 0
-0
-cmd_buttonbar
-
 DefButton
 ok
+
 hui:ok
 1
 1
@@ -78,39 +68,32 @@ hui:ok
 1
 -1
 0
-0
-cmd_buttonbar
-
 // Resource
 Menu
 menu
 
+
 1
+32722
+0
+550
+65
+0
 4
-0
-0
-0
-0
-0
-0
-
-
-31
 ItemPopup
 menu_file
 
+
 1
+0
+0
+0
+0
+0
 9
-0
-0
-0
-0
-0
-0
-
-
-ItemImage
+Item
 new
+
 hui:new
 1
 0
@@ -119,11 +102,9 @@ hui:new
 0
 0
 0
-0
-
-
-ItemImage
+Item
 open
+
 hui:open
 1
 0
@@ -132,11 +113,9 @@ hui:open
 0
 0
 0
-0
-
-
-ItemImage
+Item
 save
+
 hui:save
 1
 0
@@ -145,11 +124,9 @@ hui:save
 0
 0
 0
-0
-
-
-ItemImage
+Item
 save_as
+
 hui:save-as
 1
 0
@@ -158,10 +135,8 @@ hui:save-as
 0
 0
 0
-0
+Separator
 
-
-ItemSeparator
 
 
 1
@@ -171,11 +146,9 @@ ItemSeparator
 0
 0
 0
-0
-
-
-ItemImage
+Item
 reload
+
 hui:refresh
 1
 0
@@ -184,24 +157,9 @@ hui:refresh
 0
 0
 0
-0
-
-
 Item
 follow
 
-1
-0
-0
-0
-0
-0
-0
-0
-
-
-ItemSeparator
-
 
 1
 0
@@ -210,11 +168,20 @@ ItemSeparator
 0
 0
 0
+Separator
+
+
+
+1
 0
-
-
-ItemImage
+0
+0
+0
+0
+0
+Item
 exit
+
 hui:quit
 1
 0
@@ -223,24 +190,20 @@ hui:quit
 0
 0
 0
-0
-
-
 ItemPopup
 menu_edit
 
+
 1
+0
+0
+0
+0
+0
 11
-0
-0
-0
-0
-0
-0
-
-
-ItemImage
+Item
 undo
+
 hui:undo
 1
 0
@@ -249,11 +212,9 @@ hui:undo
 0
 0
 0
-0
-
-
-ItemImage
+Item
 redo
+
 hui:redo
 1
 0
@@ -262,10 +223,8 @@ hui:redo
 0
 0
 0
-0
+Separator
 
-
-ItemSeparator
 
 
 1
@@ -275,11 +234,9 @@ ItemSeparator
 0
 0
 0
-0
-
-
-ItemImage
+Item
 cut
+
 hui:cut
 1
 0
@@ -288,11 +245,9 @@ hui:cut
 0
 0
 0
-0
-
-
-ItemImage
+Item
 copy
+
 hui:copy
 1
 0
@@ -301,11 +256,9 @@ hui:copy
 0
 0
 0
-0
-
-
-ItemImage
+Item
 paste
+
 hui:paste
 1
 0
@@ -314,10 +267,8 @@ hui:paste
 0
 0
 0
-0
+Separator
 
-
-ItemSeparator
 
 
 1
@@ -327,11 +278,9 @@ ItemSeparator
 0
 0
 0
-0
-
-
-ItemImage
+Item
 find
+
 hui:find
 1
 0
@@ -340,11 +289,9 @@ hui:find
 0
 0
 0
-0
-
-
-ItemImage
+Item
 execute_command
+
 hui:execute
 1
 0
@@ -353,10 +300,8 @@ hui:execute
 0
 0
 0
-0
+Separator
 
-
-ItemSeparator
 
 
 1
@@ -366,11 +311,9 @@ ItemSeparator
 0
 0
 0
-0
-
-
-ItemImage
+Item
 settings
+
 hui:preferences
 1
 0
@@ -379,24 +322,20 @@ hui:preferences
 0
 0
 0
-0
-
-
 ItemPopup
 menu_script
 
+
 1
+0
+0
+0
+0
+0
 5
-0
-0
-0
-0
-0
-0
-
-
-ItemImage
+Item
 show_data_type
+
 hui:find
 1
 0
@@ -405,10 +344,8 @@ hui:find
 0
 0
 0
-0
+Separator
 
-
-ItemSeparator
 
 
 1
@@ -418,11 +355,9 @@ ItemSeparator
 0
 0
 0
-0
-
-
-ItemImage
+Item
 compile
+
 hui:media-record
 1
 0
@@ -431,11 +366,9 @@ hui:media-record
 0
 0
 0
-0
-
-
-ItemImage
+Item
 compile_and_run
+
 hui:media-play
 1
 0
@@ -444,11 +377,9 @@ hui:media-play
 0
 0
 0
-0
-
-
-ItemImage
+Item
 compile_and_run_verbose
+
 hui:media-play
 1
 0
@@ -457,24 +388,20 @@ hui:media-play
 0
 0
 0
-0
-
-
 ItemPopup
 menu_help
 
+
 1
+0
+0
+0
+0
+0
 2
-0
-0
-0
-0
-0
-0
-
-
-ItemImage
+Item
 show_script_docu
+
 hui:help
 1
 0
@@ -483,11 +410,9 @@ hui:help
 0
 0
 0
-0
-
-
-ItemImage
+Item
 about
+
 hui:about
 1
 0
@@ -496,26 +421,21 @@ hui:about
 0
 0
 0
-0
-
-
 // Resource
 SizableDialog
 settings_dialog
 
+
 1
+32722
+0
 340
 550
 0
-0
-0
-0
-0
-
-
-26
+1
 ControlTable
-rand_id_398374
+rand_id_594009
+
 
 1
 0
@@ -523,25 +443,21 @@ rand_id_398374
 1
 3
 -1
-0
-0
-
-
+3
 Group
 cdt_font
 
+
 1
 0
 0
 1
 1
 -1
-0
-0
-rand_id_398374
-
+1
 ControlTable
-rand_id_614031
+rand_id_855637
+
 
 1
 0
@@ -549,12 +465,10 @@ rand_id_614031
 1
 2
 -1
-0
-0
-cdt_font
-
+2
 Button
 font
+expandx
 
 1
 0
@@ -563,11 +477,9 @@ font
 1
 -1
 0
-0
-rand_id_614031
-
 ControlTable
-rand_id_414820
+rand_id_108357
+
 
 1
 0
@@ -575,13 +487,11 @@ rand_id_414820
 2
 1
 -1
-0
-0
-rand_id_614031
-
+2
 Text
 cdt_tab
 
+
 1
 0
 0
@@ -589,11 +499,9 @@ cdt_tab
 1
 -1
 0
-0
-rand_id_414820
-
 SpinButton
 tab_width
+expandx
 
 1
 1
@@ -602,24 +510,20 @@ tab_width
 1
 -1
 0
-0
-rand_id_414820
-
 Group
 cdt_highlighting
 
+
 1
 0
 1
 1
 1
 -1
-0
-0
-rand_id_398374
-
+1
 ControlTable
-rand_id_584
+rand_id_321579
+
 
 1
 0
@@ -627,12 +531,10 @@ rand_id_584
 1
 3
 -1
-0
-0
-cdt_highlighting
-
+4
 ControlTable
-rand_id_286417
+rand_id_810659
+
 
 1
 0
@@ -640,12 +542,10 @@ rand_id_286417
 3
 1
 -1
-0
-0
-rand_id_584
-
+3
 ComboBox
 schemes
+expandx
 
 1
 0
@@ -654,11 +554,9 @@ schemes
 1
 -1
 0
-0
-rand_id_286417
-
 Button
 copy_scheme
+
 hui:copy
 1
 1
@@ -667,11 +565,9 @@ hui:copy
 1
 -1
 0
-0
-rand_id_286417
-
 Button
 save_scheme
+
 hui:save
 1
 2
@@ -680,11 +576,9 @@ hui:save
 1
 -1
 0
-0
-rand_id_286417
-
 ControlTable
-rand_id_550158
+rand_id_323622
+
 
 1
 0
@@ -692,13 +586,11 @@ rand_id_550158
 2
 1
 -1
-0
-0
-rand_id_584
-
+2
 Text
 cdt_scheme_bg
 
+
 1
 0
 0
@@ -706,11 +598,9 @@ cdt_scheme_bg
 1
 -1
 0
-0
-rand_id_550158
-
 ColorButton
 scheme_background
+expandx
 
 1
 1
@@ -719,11 +609,9 @@ scheme_background
 1
 -1
 0
-0
-rand_id_550158
-
 ListView
 context_list
+nobar,select-single
 
 1
 0
@@ -732,11 +620,9 @@ context_list
 1
 -1
 0
-0
-rand_id_584
-
 ControlTable
-rand_id_535731
+rand_id_860384
+
 
 1
 0
@@ -744,13 +630,11 @@ rand_id_535731
 2
 4
 -1
-0
-0
-rand_id_584
-
+6
 Text
 cdt_col_text
 
+
 1
 0
 0
@@ -758,11 +642,9 @@ cdt_col_text
 1
 -1
 0
-0
-rand_id_535731
-
 ColorButton
 color_text
+expandx
 
 1
 1
@@ -771,12 +653,10 @@ color_text
 1
 -1
 0
-0
-rand_id_535731
-
 CheckBox
 overwrite_background
 
+
 1
 0
 1
@@ -784,12 +664,10 @@ overwrite_background
 1
 -1
 0
-0
-rand_id_535731
-
 ColorButton
 color_background
 
+
 1
 1
 1
@@ -797,11 +675,9 @@ color_background
 1
 -1
 0
-0
-rand_id_535731
-
 CheckBox
 bold
+
 
 1
 1
@@ -810,11 +686,9 @@ bold
 1
 -1
 0
-0
-rand_id_535731
-
 CheckBox
 italic
+
 
 1
 1
@@ -823,11 +697,9 @@ italic
 1
 -1
 0
-0
-rand_id_535731
-
 ControlTable
-cdt_buttonbar
+rand_id_39881
+buttonbar
 
 1
 0
@@ -835,12 +707,10 @@ cdt_buttonbar
 1
 1
 -1
-0
-0
-rand_id_398374
-
+1
 DefButton
 close
+
 hui:close
 1
 0
@@ -849,134 +719,244 @@ hui:close
 1
 -1
 0
-0
-cdt_buttonbar
+// Resource
+Toolbar
+toolbar
 
+
+1
+32722
+0
+340
+550
+0
+9
+Item
+new
+
+hui:new
+1
+0
+0
+0
+0
+0
+0
+Item
+open
+
+hui:open
+1
+0
+0
+0
+0
+0
+0
+Item
+save
+
+hui:save
+1
+0
+0
+0
+0
+0
+0
+Separator
+
+
+
+1
+0
+0
+0
+0
+0
+0
+Item
+undo
+
+hui:undo
+1
+0
+0
+0
+0
+0
+0
+Item
+redo
+
+hui:redo
+1
+0
+0
+0
+0
+0
+0
+Separator
+
+
+
+1
+0
+0
+0
+0
+0
+0
+Item
+compile
+
+hui:media-record
+1
+0
+0
+0
+0
+0
+0
+Item
+compile_and_run
+
+hui:media-play
+1
+0
+0
+0
+0
+0
+0
 // Number Of Languages
 1
 // Language
 Deutsch
-// NumIDs
-59
+// Number Of IDs
+40
 // Text
-about
+/about
 Info...
-bold
-Fett
-cancel
+
+/cancel
 Abbrechen
-cdt_buttonbar
-!buttonbar\\
-cdt_col_text
-Text
-cdt_font
-Font
-cdt_highlighting
-Syntax Highlighting
-cdt_scheme_bg
-Hintergrund
-cdt_tab
-Tabbreite
-close
+
+/close
 Schließen
-cmd_buttonbar
-!buttonbar\\
-color_background
 
-color_text
-!expandx\\
-command
-!expandx\\
-command_dialog
-Befehl
-compile
+/compile
 Übersetzen
-compile_and_run
+
+/compile_and_run
 Ausführen (schnell)
-compile_and_run_verbose
+
+/compile_and_run_verbose
 Ausführen (debug)
-context_list
-!nobar,select-single\\context
-copy
+
+/copy
 Kopieren
-copy_scheme
 
-cut
+/cut
 Ausschneiden
-execute_command
+
+/execute_command
 Befehl ausführen...
-exit
+
+/exit
 Beenden
-find
+
+/find
 Suchen...
-follow
+
+/follow
 Verfolgen
-font
-!expandx\\
-italic
-Kursiv
-menu
 
-menu_edit
-Bearbeiten
-menu_file
-Datei
-menu_help
-Hilfe
-menu_script
-Script
-new
+/new
 Neu
-ok
+
+/ok
 OK
-open
+
+/open
 Öffnen...
-overwrite_background
-Hintergrund
-paste
+
+/paste
 Einfügen
-rand_id_202445
 
-rand_id_320438
-
-rand_id_56548
-
-rand_id_60253
-
-rand_id_832680
-
-rand_id_871924
-
-rand_id_904439
-
-rand_id_918001
-
-redo
+/redo
 Wiederherstellen
-reload
-Aktualisieren
-save
-Speichern
-save_as
-Speichern unter...
-save_scheme
 
-scheme_background
-!expandx\\
-schemes
-!expandx\\
-settings
+/reload
+Aktualisieren
+
+/save
+Speichern
+
+/save_as
+Speichern unter...
+
+/settings
 Einstellungen
-settings_dialog
-dialog
-show_data_type
-Datentypen anzeigen
-show_script_docu
-Script Referenz
-tab_width
-!expandx\\1\\1\\32
-undo
+
+/undo
 Rückgängig
+
+command_dialog/command_dialog
+Befehl
+
+menu/menu_edit
+Bearbeiten
+
+menu/menu_file
+Datei
+
+menu/menu_help
+Hilfe
+
+menu/menu_script
+Script
+
+menu/show_data_type
+Datentypen anzeigen
+
+menu/show_script_docu
+Script Referenz
+
+settings_dialog/bold
+Fett
+
+settings_dialog/cdt_col_text
+Text
+
+settings_dialog/cdt_font
+Font
+
+settings_dialog/cdt_highlighting
+Syntax Highlighting
+
+settings_dialog/cdt_scheme_bg
+Hintergrund
+
+settings_dialog/cdt_tab
+Tabbreite
+
+settings_dialog/context_list
+context
+
+settings_dialog/italic
+Kursiv
+
+settings_dialog/overwrite_background
+Hintergrund
+
+settings_dialog/settings_dialog
+dialog
+
+settings_dialog/tab_width
+1\\1\\32
+
 // Num Language Strings
 0
 // Text

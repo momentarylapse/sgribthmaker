@@ -16,18 +16,18 @@ HuiControlSlider::HuiControlSlider(const string &title, const string &id, bool _
 	HuiControl(HUI_KIND_SLIDER, id)
 {
 	vertical = _vertical;
-	GetPartStrings(id, title);
+	GetPartStrings(title);
 	if (OptionString.find("vertical") >= 0)
 		vertical = true;
 	if (vertical){
-#if GTK_MAJOR_VERSION >= 3
+#if GTK_CHECK_VERSION(3,0,0)
 		widget = gtk_scale_new_with_range(GTK_ORIENTATION_VERTICAL, 0.0, 1.0, 0.0001);
 #else
 		widget = gtk_vscale_new_with_range(0.0, 1.0, 0.0001);
 #endif
 		gtk_range_set_inverted(GTK_RANGE(widget), true);
 	}else{
-#if GTK_MAJOR_VERSION >= 3
+#if GTK_CHECK_VERSION(3,0,0)
 		widget = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 1.0, 0.0001);
 #else
 		widget = gtk_vscale_new_with_range(0.0, 1.0, 0.0001);

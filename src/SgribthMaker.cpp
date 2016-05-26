@@ -15,7 +15,7 @@
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.4.0";
+string AppVersion = "0.4.4.1";
 
 #define ALLOW_LOGGING			true
 //#define ALLOW_LOGGING			false
@@ -599,16 +599,7 @@ public:
 		MainWin->embed(console, "table_main", 0, 1);
 		console->show(false);
 
-		MainWin->toolbar[0]->enable(true);
-		MainWin->toolbar[0]->addItem("", "hui:new", "new");
-		MainWin->toolbar[0]->addItem("", "hui:open", "open");
-		MainWin->toolbar[0]->addItem("", "hui:save", "save");
-		MainWin->toolbar[0]->addSeparator();
-		MainWin->toolbar[0]->addItem("", "hui:undo", "undo");
-		MainWin->toolbar[0]->addItem("", "hui:redo", "redo");
-		MainWin->toolbar[0]->addSeparator();
-		MainWin->toolbar[0]->addItem("", "hui:find", "compile");
-		MainWin->toolbar[0]->addItem("", "hui:media-play", "compile_and_run");
+		MainWin->toolbar[0]->setByID("toolbar");
 
 		MainWin->setTooltip("new", _("neue Datei"));
 		MainWin->setTooltip("open", _("eine Datei &offnen"));

@@ -1,6 +1,6 @@
 Dialog command_dialog "Befehl" 550 65
 	Grid ? "" 1 2
 		Edit command "" expandx
-		Grid cmd_buttonbar "" 2 1 buttonbar
-			Button cancel "Abbrechen" image=hui:cancel
-			DefButton ok "OK" image=hui:ok
+		Grid ? "" 2 1 buttonbar
+			Button /cancel "Abbrechen" image=hui:cancel
+			DefButton /ok "OK" image=hui:ok

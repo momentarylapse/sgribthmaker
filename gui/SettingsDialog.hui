@@ -25,5 +25,5 @@ Dialog settings_dialog "dialog" 340 550
 					CheckBox bold "Fett"
 					.
 					CheckBox italic "Kursiv"
-		Grid cdt_buttonbar "" 1 1 buttonbar
-			DefButton close "Schließen" image=hui:close
+		Grid ? "" 1 1 buttonbar
+			DefButton /close "Schließen" image=hui:close

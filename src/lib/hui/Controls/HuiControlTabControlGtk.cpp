@@ -21,7 +21,7 @@ void OnGtkTabControlSwitch(GtkWidget *widget, GtkWidget *page, guint page_num, g
 HuiControlTabControl::HuiControlTabControl(const string &title, const string &id, HuiPanel *panel) :
 	HuiControl(HUI_KIND_TABCONTROL, id)
 {
-	GetPartStrings(id, title);
+	GetPartStrings(title);
 	widget = gtk_notebook_new();
 	this->panel = panel; // for addPage()
 
@@ -69,8 +69,12 @@ void HuiControlTabControl::__removeString(int row)
 void HuiControlTabControl::addPage(const string &str)
 {
 	GtkWidget *inside;
-	if (panel->win->is_resizable){
-#if GTK_MAJOR_VERSION >= 3
+	bool resizable = true;
+	if (panel->win)
+		if (!panel->win->is_resizable)
+			resizable = false;
+	if (resizable){
+#if GTK_CHECK_VERSION(3,0,0)
 		inside = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 #else
 		inside = gtk_hbox_new(true, 0);
