@@ -41,23 +41,23 @@ Command *SyntaxTree::cp_command(Command *c)
 	return cmd;
 }
 
-Command *SyntaxTree::ref_command(Command *sub, Type *overwrite_type)
+Command *SyntaxTree::ref_command(Command *sub, Type *override_type)
 {
-	Type *t = overwrite_type ? overwrite_type : sub->type->GetPointer();
+	Type *t = override_type ? override_type : sub->type->GetPointer();
 	Command *c = AddCommand(KIND_REFERENCE, 0, t);
 	c->set_num_params(1);
 	c->set_param(0, sub);
 	return c;
 }
 
-Command *SyntaxTree::deref_command(Command *sub, Type *overwrite_type)
+Command *SyntaxTree::deref_command(Command *sub, Type *override_type)
 {
 	Command *c = AddCommand(KIND_UNKNOWN, 0, TypeVoid);
 	c->kind = KIND_DEREFERENCE;
 	c->set_num_params(1);
 	c->set_param(0, sub);
-	if (overwrite_type)
-		c->type = overwrite_type;
+	if (override_type)
+		c->type = override_type;
 	else
 		c->type = sub->type->parent;
 	return c;
@@ -260,7 +260,7 @@ string LinkNr2Str(SyntaxTree *s,int kind,int nr)
 	return i2s(nr);
 }
 
-void SyntaxTree::DoError(const string &str, int overwrite_line)
+void SyntaxTree::DoError(const string &str, int override_line)
 {
 	// what data do we have?
 	int line = -1;
@@ -273,8 +273,8 @@ void SyntaxTree::DoError(const string &str, int overwrite_line)
 			pos = Exp.cur_line->exp[Exp.cur_exp].pos;
 		}
 	}
-	if (overwrite_line >= 0){
-		line = overwrite_line;
+	if (override_line >= 0){
+		line = override_line;
 		pos = 0;
 	}
 

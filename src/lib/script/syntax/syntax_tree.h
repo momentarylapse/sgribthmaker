@@ -171,7 +171,7 @@ public:
 	void ParseBuffer(const string &buffer, bool just_analyse);
 	void AddIncludeData(Script *s);
 
-	void DoError(const string &msg, int overwrite_line = -1);
+	void DoError(const string &msg, int override_line = -1);
 	void ExpectNoNewline();
 	void ExpectNewline();
 	void ExpectIndent();
@@ -185,7 +185,7 @@ public:
 	void ParseClass();
 	Function *ParseFunctionHeader(Type *class_type, bool as_extern);
 	void ParseFunctionBody(Function *f);
-	void ParseClassFunctionHeader(Type *t, bool as_extern, bool as_virtual, bool overwrite);
+	void ParseClassFunctionHeader(Type *t, bool as_extern, bool as_virtual, bool override);
 	bool ParseFunctionCommand(Function *f, ExpressionBuffer::Line *this_line);
 	Type *ParseType();
 	void ParseVariableDef(bool single, Block *block);
@@ -271,8 +271,8 @@ public:
 	Command *add_command_parray(Command *p, Command *index, Type *type);
 	Command *add_command_block(Block *b);
 	Command *cp_command(Command *c);
-	Command *ref_command(Command *sub, Type *overwrite_type = NULL);
-	Command *deref_command(Command *sub, Type *overwrite_type = NULL);
+	Command *ref_command(Command *sub, Type *override_type = NULL);
+	Command *deref_command(Command *sub, Type *override_type = NULL);
 	Command *shift_command(Command *sub, bool deref, int shift, Type *type);
 
 	// pre processor

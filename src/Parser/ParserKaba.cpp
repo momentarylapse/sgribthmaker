@@ -33,7 +33,7 @@ ParserKaba::ParserKaba()
 	special_words.add("delete");
 	special_words.add("extern");
 	special_words.add("virtual");
-	special_words.add("overwrite");
+	special_words.add("override");
 	special_words.add("static");
 	special_words.add("const");
 	special_words.add("self");
@@ -82,7 +82,7 @@ Array<Parser::Label> ParserKaba::FindLabels(SourceView *sv)
 		}else if ((last_class.num > 0) && (s[0] == '\t') && (char_type(s[1]) == CHAR_LETTER)){
 			if (s.find("(") < 0)
 				continue;
-			s = s.replace("virtual ", "").replace("overwrite ", "").trim();
+			s = s.replace("virtual ", "").replace("override ", "").trim();
 			labels.add(Label(s, l, 1));
 		}
 	}

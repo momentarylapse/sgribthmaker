@@ -1470,7 +1470,7 @@ void SyntaxTree::ParseEnum()
 	Exp.cur_line --;
 }
 
-void SyntaxTree::ParseClassFunctionHeader(Type *t, bool as_extern, bool as_virtual, bool overwrite)
+void SyntaxTree::ParseClassFunctionHeader(Type *t, bool as_extern, bool as_virtual, bool override)
 {
 	Function *f = ParseFunctionHeader(t, as_extern);
 	int n = -1;
@@ -1478,7 +1478,7 @@ void SyntaxTree::ParseClassFunctionHeader(Type *t, bool as_extern, bool as_virtu
 		if (f == g)
 			n = i;
 
-	t->AddFunction(this, n, as_virtual, overwrite);
+	t->AddFunction(this, n, as_virtual, override);
 }
 
 inline bool type_needs_alignment(Type *t)
@@ -1545,12 +1545,12 @@ void SyntaxTree::ParseClass()
 
 		// virtual?
 		bool next_virtual = false;
-		bool overwrite = false;
+		bool override = false;
 		if (Exp.cur == "virtual"){
 			next_virtual = true;
 			Exp.next();
-		}else if (Exp.cur == "overwrite"){
-			overwrite = true;
+		}else if (Exp.cur == "override"){
+			override = true;
 			Exp.next();
 		}
 		int ie = Exp.cur_exp;
@@ -1571,25 +1571,25 @@ void SyntaxTree::ParseClass()
 			if (is_function){
 				Exp.cur_exp = ie;
 				Exp.cur = Exp.cur_line->exp[Exp.cur_exp].name;
-				ParseClassFunctionHeader(_class, next_extern, next_virtual, overwrite);
+				ParseClassFunctionHeader(_class, next_extern, next_virtual, override);
 
 				break;
 			}
 
-			// overwrite?
+			// override?
 			ClassElement *orig = NULL;
 			foreachi(ClassElement &e, _class->element, i)
 				if (e.name == el.name) //and e.type->is_pointer and el.type->is_pointer)
 						orig = &e;
-			if (overwrite and ! orig)
-				DoError(format("can not overwrite element '%s', no previous definition", el.name.c_str()));
-			if (!overwrite and orig)
-				DoError(format("element '%s' is already defined, use 'overwrite' to overwrite", el.name.c_str()));
-			if (overwrite){
+			if (override and ! orig)
+				DoError(format("can not override element '%s', no previous definition", el.name.c_str()));
+			if (!override and orig)
+				DoError(format("element '%s' is already defined, use 'override' to override", el.name.c_str()));
+			if (override){
 				if (orig->type->is_pointer and el.type->is_pointer)
 					orig->type = el.type;
 				else
-					DoError("can only overwrite pointer elements with other pointer type");
+					DoError("can only override pointer elements with other pointer type");
 				continue;
 			}
 
