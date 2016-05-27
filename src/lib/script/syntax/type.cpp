@@ -389,12 +389,12 @@ void Type::AddFunction(SyntaxTree *s, int func_no, bool as_virtual, bool overwri
 	if (!overwrite and orig)
 		s->DoError(format("function '%s' is already defined, use 'overwrite' to overwrite", func_signature(f).c_str()));
 	if (overwrite){
-		if (cf.name == "__init__"){
+		/*if (cf.name == "__init__"){
 			msg_error("overwrite");
 			class_func_out(this, orig);
 			class_func_out(this, &cf);
 			//msg_write(name + "  " + i2s(orig->param_type.num) + " > " + i2s(cf.param_type.num));
-		}
+		}*/
 		orig->script = cf.script;
 		orig->nr = cf.nr;
 		orig->needs_overwriting = false;

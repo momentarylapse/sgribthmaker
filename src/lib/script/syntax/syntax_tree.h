@@ -144,6 +144,7 @@ struct Command
 	Command *instance;
 	// return value
 	Type *type;
+	Command();
 	Command(int kind, long long link_no, Script *script, Type *type);
 	Block *as_block() const;
 	void set_num_params(int n);
@@ -218,8 +219,8 @@ public:
 	Type *AddType(Type *type);
 	Type *CreateNewType(const string &name, int size, bool is_pointer, bool is_silent, bool is_array, int array_size, Type *sub);
 	Type *CreateArrayType(Type *element_type, int num_elements, const string &name_pre = "", const string &suffix = "");
-	bool GetExistence(const string &name, Block *block);
-	bool GetExistenceShared(const string &name);
+	Array<Command> GetExistence(const string &name, Block *block);
+	Array<Command> GetExistenceShared(const string &name);
 	void LinkMostImportantOperator(Array<Command*> &operand, Array<Command*> &_operator, Array<int> &op_exp);
 	Command *LinkOperator(int op_no, Command *param1, Command *param2);
 	Command *GetOperandExtension(Command *operand, Block *block);
@@ -229,11 +230,12 @@ public:
 	void ParseCompleteCommand(Block *block);
 	Command *GetOperand(Block *block);
 	Command *GetPrimitiveOperator(Block *block);
-	void FindFunctionParameters(Array<Type*> &wanted_type, Block *block, Command *cmd);
-	void FindFunctionSingleParameter(int p, Array<Type*> &wanted_type, Block *block, Command *cmd);
-	Command *GetFunctionCall(const string &f_name, Command *operand, Block *block);
-	Command *DoClassFunction(Command *ob, ClassFunction &cf, Block *block);
-	Command *GetSpecialFunctionCall(const string &f_name, Command *operand, Block *block);
+	Array<Command*> FindFunctionParameters(Block *block);
+	//void FindFunctionSingleParameter(int p, Array<Type*> &wanted_type, Block *block, Command *cmd);
+	Array<Type*> GetFunctionWantedParams(Command &link);
+	Command *GetFunctionCall(const string &f_name, Array<Command> &links, Block *block);
+	Command *DoClassFunction(Command *ob, Array<ClassFunction> &cfs, Block *block);
+	Command *GetSpecialFunctionCall(const string &f_name, Command &link, Block *block);
 	Command *CheckParamLink(Command *link, Type *type, const string &f_name = "", int param_no = -1);
 	void ParseSpecialCommand(Block *block);
 	void ParseSpecialCommandFor(Block *block);
@@ -289,7 +291,6 @@ public:
 // data
 
 	ExpressionBuffer Exp;
-	Command GetExistenceLink;
 
 	// compiler options
 	bool flag_immortal;
