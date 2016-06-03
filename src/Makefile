@@ -19,7 +19,7 @@ OBJ = lib/base/strings.o lib/file/msg.o lib/script/script.o lib/hui/HuiApplicati
  Console.o HighlightScheme.o \
  Parser/BaseParser.o Parser/ParserKaba.o Parser/ParserText.o \
  Parser/ParserC.o Parser/ParserShader.o Parser/ParserPython.o
-CPP  = g++
+CPP  = g++ -std=c++11
 #GLOBALFLAGS = -O3
 #GLOBALFLAGS = -g -O3
 GLOBALFLAGS = -g
