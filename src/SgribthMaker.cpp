@@ -15,10 +15,10 @@
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.4.1";
+string AppVersion = "0.4.4.2";
 
-#define ALLOW_LOGGING			true
-//#define ALLOW_LOGGING			false
+//#define ALLOW_LOGGING			true
+#define ALLOW_LOGGING			false
 
 HuiWindow *MainWin;
 string LastCommand;

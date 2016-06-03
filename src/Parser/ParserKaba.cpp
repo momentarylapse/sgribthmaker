@@ -15,31 +15,32 @@ ParserKaba::ParserKaba()
 {
 	macro_begin = "#";
 	line_comment_begin = "//";
-	special_words.add("enum");
-	special_words.add("class");
-	special_words.add("use");
+	special_words.add(Script::IDENTIFIER_ENUM);
+	special_words.add(Script::IDENTIFIER_CLASS);
+	special_words.add(Script::IDENTIFIER_EXTENDS);
+	special_words.add(Script::IDENTIFIER_USE);
 	special_words.add("import");
-	special_words.add("if");
-	special_words.add("else");
-	special_words.add("while");
-	special_words.add("for");
-	special_words.add("in");
-	special_words.add("return");
-	special_words.add("break");
-	special_words.add("continue");
-	special_words.add("and");
-	special_words.add("or");
-	special_words.add("new");
-	special_words.add("delete");
-	special_words.add("extern");
-	special_words.add("virtual");
-	special_words.add("override");
-	special_words.add("static");
-	special_words.add("const");
-	special_words.add("self");
-	special_words.add("super");
-	special_words.add("namespace");
-	special_words.add("asm");
+	special_words.add(Script::IDENTIFIER_IF);
+	special_words.add(Script::IDENTIFIER_ELSE);
+	special_words.add(Script::IDENTIFIER_WHILE);
+	special_words.add(Script::IDENTIFIER_FOR);
+	special_words.add(Script::IDENTIFIER_IN);
+	special_words.add(Script::IDENTIFIER_RETURN);
+	special_words.add(Script::IDENTIFIER_BREAK);
+	special_words.add(Script::IDENTIFIER_CONTINUE);
+	special_words.add(Script::IDENTIFIER_AND);
+	special_words.add(Script::IDENTIFIER_OR);
+	special_words.add(Script::IDENTIFIER_NEW);
+	special_words.add(Script::IDENTIFIER_DELETE);
+	special_words.add(Script::IDENTIFIER_EXTERN);
+	special_words.add(Script::IDENTIFIER_VIRTUAL);
+	special_words.add(Script::IDENTIFIER_OVERRIDE);
+	special_words.add(Script::IDENTIFIER_STATIC);
+	special_words.add(Script::IDENTIFIER_CONST);
+	special_words.add(Script::IDENTIFIER_SELF);
+	special_words.add(Script::IDENTIFIER_SUPER);
+	special_words.add(Script::IDENTIFIER_NAMESPACE);
+	special_words.add(Script::IDENTIFIER_ASM);
 	foreach(Script::Package &p, Script::Packages){
 		for (int i=0;i<p.script->syntax->types.num;i++)
 			types.add(p.script->syntax->types[i]->name);
@@ -76,13 +77,13 @@ Array<Parser::Label> ParserKaba::FindLabels(SourceView *sv)
 				last_class = "";
 			}else
 				continue;
-			if (s.find("extern") >= 0)
+			if (s.find(Script::IDENTIFIER_EXTERN) >= 0)
 				continue;
 			labels.add(Label(s, l, 0));
 		}else if ((last_class.num > 0) && (s[0] == '\t') && (char_type(s[1]) == CHAR_LETTER)){
 			if (s.find("(") < 0)
 				continue;
-			s = s.replace("virtual ", "").replace("override ", "").trim();
+			s = s.replace(Script::IDENTIFIER_VIRTUAL + " ", "").replace(Script::IDENTIFIER_OVERRIDE + " ", "").trim();
 			labels.add(Label(s, l, 1));
 		}
 	}
