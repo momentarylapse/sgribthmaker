@@ -59,16 +59,16 @@ int Parser::WordType(const string &name)
 {
 	if (name.head(macro_begin.num) == macro_begin)
 		return IN_MACRO;
-	foreach(string &n, special_words)
+	for (string &n : special_words)
 		if (name == n)
 			return IN_WORD_SPECIAL;
-	foreach(string &n, types)
+	for (string &n : types)
 		if (name == n)
 			return IN_WORD_TYPE;
-	foreach(string &n, compiler_functions)
+	for (string &n : compiler_functions)
 		if (name == n)
 			return IN_WORD_COMPILER_FUNCTION;
-	foreach(string &n, globals)
+	for (string &n : globals)
 		if (name == n)
 			return IN_WORD_GLOBAL_VARIABLE;
 	return IN_WORD;
@@ -224,7 +224,7 @@ void InitParser()
 Parser *GetParser(const string &filename)
 {
 	string ext = filename.extension();
-	foreach(ParserAssociation &a, ParserAssociations)
+	for (ParserAssociation &a : ParserAssociations)
 		if (ext == a.extension)
 			return a.parser;
 	return ParserAssociations[0].parser;

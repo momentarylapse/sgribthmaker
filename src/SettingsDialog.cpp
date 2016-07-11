@@ -84,7 +84,7 @@ void SettingsDialog::onFont()
 	if (HuiSelectFont(this, _("Font w&ahlen"))){
 		setString("font", HuiFontname);
 		HuiConfig.setStr("Font", HuiFontname);
-		foreach(SourceView *sv, source_view)
+		for (SourceView *sv : source_view)
 			sv->UpdateFont();
 	}
 }
@@ -92,7 +92,7 @@ void SettingsDialog::onFont()
 void SettingsDialog::onTabWidth()
 {
 	HuiConfig.setInt("TabWidth", getInt("tab_width"));
-	foreach(SourceView *sv, source_view)
+	for (SourceView *sv : source_view)
 		sv->UpdateTabSize();
 }
 
@@ -129,7 +129,7 @@ void SettingsDialog::onSchemeChange()
 	c.bold = isChecked("bold");
 	c.italic = isChecked("italic");
 	s->changed = true;
-	foreach(SourceView *sv, source_view)
+	for (SourceView *sv : source_view)
 		sv->ApplyScheme(s);
 	fillSchemeList();
 }
@@ -139,7 +139,7 @@ void SettingsDialog::onSchemes()
 	int n = getInt("");
 	HighlightScheme *s = HighlightScheme::get_all()[n];
 	HighlightScheme::default_scheme = s;
-	foreach(SourceView *sv, source_view)
+	for (SourceView *sv : source_view)
 		sv->ApplyScheme(s);
 	onContextListSelect();
 }
@@ -147,7 +147,7 @@ void SettingsDialog::onSchemes()
 void SettingsDialog::onCopyScheme()
 {
 	HighlightScheme *s = HighlightScheme::default_scheme->copy(_("neues Schema"));
-	foreach(SourceView *sv, source_view)
+	for (SourceView *sv : source_view)
 		sv->ApplyScheme(s);
 	fillSchemeList();
 	onContextListSelect();

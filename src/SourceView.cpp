@@ -104,7 +104,7 @@ void populate_popup(GtkTextView *text_view, GtkMenu *menu, gpointer user_data)
 		gtk_widget_show(m);
 	}
 	sv->jump_data.clear();
-	foreach(Parser::Label &l, labels)
+	for (Parser::Label &l : labels)
 		sv->jump_data.add(SourceView::JumpData(sv, l.line));
 	foreachib(Parser::Label &l, labels, i){
 		if (l.level > 0)

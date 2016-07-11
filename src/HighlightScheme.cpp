@@ -94,7 +94,7 @@ HighlightScheme *HighlightScheme::get(const string &name)
 {
 	if (HighlightSchemas.num == 0)
 		init();
-	foreach(HighlightScheme *s, HighlightSchemas)
+	for (HighlightScheme *s : HighlightSchemas)
 		if (s->name == name)
 			return s;
 	return HighlightSchemas[0];

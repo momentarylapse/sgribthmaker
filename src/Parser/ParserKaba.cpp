@@ -41,7 +41,7 @@ ParserKaba::ParserKaba()
 	special_words.add(Script::IDENTIFIER_SUPER);
 	special_words.add(Script::IDENTIFIER_NAMESPACE);
 	special_words.add(Script::IDENTIFIER_ASM);
-	foreach(Script::Package &p, Script::Packages){
+	for (Script::Package &p : Script::Packages){
 		for (int i=0;i<p.script->syntax->types.num;i++)
 			types.add(p.script->syntax->types[i]->name);
 		for (int i=0;i<p.script->syntax->root_of_all_evil.var.num;i++)

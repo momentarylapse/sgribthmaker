@@ -15,7 +15,7 @@
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.4.2";
+string AppVersion = "0.4.4.3";
 
 //#define ALLOW_LOGGING			true
 #define ALLOW_LOGGING			false
@@ -118,7 +118,7 @@ bool Save(Document *doc);
 
 bool AllowTermination()
 {
-	foreach(Document *d, documents)
+	for (Document *d : documents)
 	if (d->history->changed){
 		SetActiveDocument(d);
 		string answer = HuiQuestionBox(MainWin, _("dem&utige aber h&ofliche Frage"), _("Sie haben die Entropie erh&oht. Wollen Sie Ihr Werk speichern?"), true);
