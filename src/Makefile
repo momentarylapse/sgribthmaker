@@ -25,7 +25,7 @@ CPP  = g++ -std=c++11
 GLOBALFLAGS = -g
 LIB_DIR = lib
 CXXFLAGS = `pkg-config --cflags gtk+-3.0` $(GLOBALFLAGS)
-CXXFLAGSLINKING =  `pkg-config --cflags --libs gtk+-3.0` -lGL -lGLU -lX11 -lz -I/usr/include/AL -lopenal -lvorbis -lvorbisfile $(GLOBALFLAGS)
+CXXFLAGSLINKING =  `pkg-config --cflags --libs gtk+-3.0` -lGL -lGLU -lX11 -lz -I/usr/include/AL -lopenal -lvorbis -lvorbisfile -lunwind $(GLOBALFLAGS)
 
 
 $(BIN) : $(MAINSOURCE) $(OBJ) $(MODULES)

@@ -33,15 +33,28 @@ Function* ClassFunction::GetFunc()
 	return script->syntax->functions[nr];
 }
 
-bool direct_type_match(Type *a, Type *b)
+bool _direct_type_match(Type *a, Type *b)
 {
-	return ( (a==b) or ( (a->is_pointer) and (b->is_pointer) ) or (a->IsDerivedFrom(b)) );
+	if (a == b)
+		return true;
+	if ((a->is_pointer) and (b->is_pointer))
+		return true;
+	return a->IsDerivedFrom(b);
+}
+
+bool direct_type_match_x(Type *given, Type *wanted)
+{
+	if (given == wanted)
+		return true;
+	if ((given->is_pointer) and (wanted->is_pointer))
+		return (wanted == TypePointer) or (given->parent->IsDerivedFrom(wanted->parent));
+	return given->IsDerivedFrom(wanted);
 }
 
 // both operand types have to match the operator's types
 //   (operator wants a pointer -> all pointers are allowed!!!)
 //   (same for classes of same type...)
-bool type_match(Type *type, bool is_class, Type *wanted)
+bool _type_match(Type *type, bool is_class, Type *wanted)
 {
 	if (type == wanted)
 		return true;
@@ -330,7 +343,7 @@ bool class_func_match(ClassFunction &a, ClassFunction &b)
 	if (a.param_type.num != b.param_type.num)
 		return false;
 	for (int i=0; i<a.param_type.num; i++)
-		if (!direct_type_match(b.param_type[i], a.param_type[i]))
+		if (!direct_type_match_x(b.param_type[i], a.param_type[i]))
 			return false;
 	return true;
 }
