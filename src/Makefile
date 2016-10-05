@@ -4,7 +4,7 @@ BIN  = ../sgribthmaker
 MAINSOURCE = SgribthMaker.cpp
 all : $(BIN)
 MODULES = \
- lib/script/script.a \
+ lib/kaba/kaba.a \
  lib/file/file.a \
  lib/math/math.a \
  lib/nix/nix.a \
@@ -14,7 +14,7 @@ MODULES = \
  lib/any/any.a \
  lib/algebra/algebra.a \
  lib/base/base.a
-OBJ = lib/base/strings.o lib/file/msg.o lib/script/script.o lib/hui/HuiApplication.o \
+OBJ = lib/base/strings.o lib/file/msg.o lib/kaba/kaba.o lib/hui/HuiApplication.o \
  History.o CommandDialog.o SettingsDialog.o SourceView.o Document.o \
  Console.o HighlightScheme.o \
  Parser/BaseParser.o Parser/ParserKaba.o Parser/ParserText.o \
@@ -89,7 +89,7 @@ include lib/file/file.mk
 include lib/hui/hui.mk
 include lib/nix/nix.mk
 include lib/image/image.mk
-include lib/script/script.mk
+include lib/kaba/kaba.mk
 include lib/net/net.mk
 include lib/math/math.mk
 include lib/any/any.mk

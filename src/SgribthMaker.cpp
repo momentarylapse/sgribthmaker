@@ -2,7 +2,6 @@
 #include "lib/hui/hui.h"
 #include "lib/nix/nix.h"
 #include "lib/file/file.h"
-#include "lib/script/script.h"
 #include "SettingsDialog.h"
 #include "CommandDialog.h"
 #include "Console.h"
@@ -11,11 +10,12 @@
 #include "SourceView.h"
 #include "Parser/BaseParser.h"
 #include "Document.h"
+#include "lib/kaba/kaba.h"
 
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.4.3";
+string AppVersion = "0.4.5.0";
 
 //#define ALLOW_LOGGING			true
 #define ALLOW_LOGGING			false
@@ -300,10 +300,11 @@ void CompileKaba()
 
 	HuiTimer CompileTimer;
 
-	Script::config.compile_silently = true;
+	Kaba::config.compile_silently = true;
+	Kaba::config.verbose = true;
 
 	try{
-		Script::Script *compile_script = Script::Load(cur_doc->filename, true);
+		Kaba::Script *compile_script = Kaba::Load(cur_doc->filename, true);
 
 		float dt = CompileTimer.get();
 
@@ -311,14 +312,14 @@ void CompileKaba()
 
 		SetMessage(format(_("Script ist fehler-frei &ubersetzbar!        (in %s)"), get_time_str(dt).c_str()));
 
-	}catch(const Script::Exception &e){
+	}catch(const Kaba::Exception &e){
 		e.print();
 		HuiErrorBox(MainWin, _("Fehler"), e.message);
 		cur_doc->source_view->MoveCursorTo(e.line, e.column);
 	}
 
 	//RemoveScript(compile_script);
-	Script::DeleteAllScripts(true, true);
+	Kaba::DeleteAllScripts(true, true);
 
 	msg_db_m("set verbose...",1);
 	msg_set_verbose(ALLOW_LOGGING);
@@ -379,10 +380,11 @@ void CompileAndRun(bool verbose)
 
 	// compile
 	HuiTimer CompileTimer;
-	Script::config.compile_silently = true;
+	Kaba::config.compile_silently = true;
+	Kaba::config.verbose = true;
 
 	try{
-		Script::Script *compile_script = Script::Load(cur_doc->filename);
+		Kaba::Script *compile_script = Kaba::Load(cur_doc->filename);
 		float dt_compile = CompileTimer.get();
 
 		if (!verbose)
@@ -411,7 +413,7 @@ void CompileAndRun(bool verbose)
 		if (msg_size > msg_size0)
 			console->set(msg_get_buffer(msg_size - msg_size0));
 
-	}catch(const Script::Exception &e){
+	}catch(const Kaba::Exception &e){
 		e.print();
 		HuiErrorBox(MainWin, _("Fehler"), e.message);
 		cur_doc->source_view->MoveCursorTo(e.line, e.column);
@@ -419,7 +421,7 @@ void CompileAndRun(bool verbose)
 	
 
 	//RemoveScript(compile_script);
-	Script::DeleteAllScripts(true, true);
+	Kaba::DeleteAllScripts(true, true);
 
 	msg_set_verbose(ALLOW_LOGGING);
 }
@@ -532,7 +534,7 @@ public:
 
 		HuiRegisterFileType("kaba","MichiSoft Script Datei",HuiAppDirectory + "Data/kaba.ico",HuiAppFilename,"open",true);
 
-		Script::Init();
+		Kaba::Init();
 	}
 
 	virtual bool onStartup(const Array<string> &arg)

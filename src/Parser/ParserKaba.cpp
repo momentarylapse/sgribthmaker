@@ -7,52 +7,52 @@
 
 #include "ParserKaba.h"
 #include "../HighlightScheme.h"
+#include "../lib/kaba/kaba.h"
 #include "../SourceView.h"
-#include "../lib/script/script.h"
 
 
 ParserKaba::ParserKaba()
 {
 	macro_begin = "#";
 	line_comment_begin = "//";
-	special_words.add(Script::IDENTIFIER_ENUM);
-	special_words.add(Script::IDENTIFIER_CLASS);
-	special_words.add(Script::IDENTIFIER_EXTENDS);
-	special_words.add(Script::IDENTIFIER_USE);
+	special_words.add(Kaba::IDENTIFIER_ENUM);
+	special_words.add(Kaba::IDENTIFIER_CLASS);
+	special_words.add(Kaba::IDENTIFIER_EXTENDS);
+	special_words.add(Kaba::IDENTIFIER_USE);
 	special_words.add("import");
-	special_words.add(Script::IDENTIFIER_IF);
-	special_words.add(Script::IDENTIFIER_ELSE);
-	special_words.add(Script::IDENTIFIER_WHILE);
-	special_words.add(Script::IDENTIFIER_FOR);
-	special_words.add(Script::IDENTIFIER_IN);
-	special_words.add(Script::IDENTIFIER_RETURN);
-	special_words.add(Script::IDENTIFIER_BREAK);
-	special_words.add(Script::IDENTIFIER_CONTINUE);
-	special_words.add(Script::IDENTIFIER_AND);
-	special_words.add(Script::IDENTIFIER_OR);
-	special_words.add(Script::IDENTIFIER_NEW);
-	special_words.add(Script::IDENTIFIER_DELETE);
-	special_words.add(Script::IDENTIFIER_EXTERN);
-	special_words.add(Script::IDENTIFIER_VIRTUAL);
-	special_words.add(Script::IDENTIFIER_OVERRIDE);
-	special_words.add(Script::IDENTIFIER_STATIC);
-	special_words.add(Script::IDENTIFIER_CONST);
-	special_words.add(Script::IDENTIFIER_SELF);
-	special_words.add(Script::IDENTIFIER_SUPER);
-	special_words.add(Script::IDENTIFIER_NAMESPACE);
-	special_words.add(Script::IDENTIFIER_ASM);
-	for (Script::Package &p : Script::Packages){
-		for (int i=0;i<p.script->syntax->types.num;i++)
-			types.add(p.script->syntax->types[i]->name);
-		for (int i=0;i<p.script->syntax->root_of_all_evil.var.num;i++)
-			globals.add(p.script->syntax->root_of_all_evil.var[i].name);
-		for (int i=0;i<p.script->syntax->constants.num;i++)
-			globals.add(p.script->syntax->constants[i].name);
-		for (int i=0;i<p.script->syntax->functions.num;i++)
-			compiler_functions.add(p.script->syntax->functions[i]->name);
+	special_words.add(Kaba::IDENTIFIER_IF);
+	special_words.add(Kaba::IDENTIFIER_ELSE);
+	special_words.add(Kaba::IDENTIFIER_WHILE);
+	special_words.add(Kaba::IDENTIFIER_FOR);
+	special_words.add(Kaba::IDENTIFIER_IN);
+	special_words.add(Kaba::IDENTIFIER_RETURN);
+	special_words.add(Kaba::IDENTIFIER_BREAK);
+	special_words.add(Kaba::IDENTIFIER_CONTINUE);
+	special_words.add(Kaba::IDENTIFIER_AND);
+	special_words.add(Kaba::IDENTIFIER_OR);
+	special_words.add(Kaba::IDENTIFIER_NEW);
+	special_words.add(Kaba::IDENTIFIER_DELETE);
+	special_words.add(Kaba::IDENTIFIER_EXTERN);
+	special_words.add(Kaba::IDENTIFIER_VIRTUAL);
+	special_words.add(Kaba::IDENTIFIER_OVERRIDE);
+	special_words.add(Kaba::IDENTIFIER_STATIC);
+	special_words.add(Kaba::IDENTIFIER_CONST);
+	special_words.add(Kaba::IDENTIFIER_SELF);
+	special_words.add(Kaba::IDENTIFIER_SUPER);
+	special_words.add(Kaba::IDENTIFIER_NAMESPACE);
+	special_words.add(Kaba::IDENTIFIER_ASM);
+	for (auto &p: Kaba::Packages){
+		for (auto c: p.script->syntax->classes)
+			types.add(c->name);
+		for (auto &v: p.script->syntax->root_of_all_evil.var)
+			globals.add(v.name);
+		for (auto &c: p.script->syntax->constants)
+			globals.add(c.name);
+		for (auto f: p.script->syntax->functions)
+			compiler_functions.add(f->name);
 	}
-	for (int i=0;i<Script::PreCommands.num;i++)
-		compiler_functions.add(Script::PreCommands[i].name);
+	for (auto &c: Kaba::PreCommands)
+		compiler_functions.add(c.name);
 }
 
 ParserKaba::~ParserKaba()
@@ -77,13 +77,13 @@ Array<Parser::Label> ParserKaba::FindLabels(SourceView *sv)
 				last_class = "";
 			}else
 				continue;
-			if (s.find(Script::IDENTIFIER_EXTERN) >= 0)
+			if (s.find(Kaba::IDENTIFIER_EXTERN) >= 0)
 				continue;
 			labels.add(Label(s, l, 0));
 		}else if ((last_class.num > 0) && (s[0] == '\t') && (char_type(s[1]) == CHAR_LETTER)){
 			if (s.find("(") < 0)
 				continue;
-			s = s.replace(Script::IDENTIFIER_VIRTUAL + " ", "").replace(Script::IDENTIFIER_OVERRIDE + " ", "").trim();
+			s = s.replace(Kaba::IDENTIFIER_VIRTUAL + " ", "").replace(Kaba::IDENTIFIER_OVERRIDE + " ", "").trim();
 			labels.add(Label(s, l, 1));
 		}
 	}
