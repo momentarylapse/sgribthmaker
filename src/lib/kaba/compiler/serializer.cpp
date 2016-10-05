@@ -602,26 +602,26 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, Block *block, int 
 {
 	// for/while need a marker to this point
 	int marker_before_params = -1;
-	if ((com->kind == KIND_COMPILER_FUNCTION) and ((com->link_no == COMMAND_WHILE) or (com->link_no == COMMAND_FOR)))
+	if ((com->kind == KIND_STATEMENT) and ((com->link_no == STATEMENT_WHILE) or (com->link_no == STATEMENT_FOR)))
 		marker_before_params = add_marker();
 
 	// return value
-	bool create_constructor_for_return = ((com->kind != KIND_COMPILER_FUNCTION) and (com->kind != KIND_FUNCTION) and (com->kind != KIND_VIRTUAL_FUNCTION));
+	bool create_constructor_for_return = ((com->kind != KIND_STATEMENT) and (com->kind != KIND_FUNCTION) and (com->kind != KIND_VIRTUAL_FUNCTION));
 	SerialCommandParam ret = add_temp(com->type, create_constructor_for_return);
 
 
-	Array<SerialCommandParam> param;
+	Array<SerialCommandParam> params;
 
 	// special new-operator work-around
-	if ((com->kind == KIND_COMPILER_FUNCTION) and (com->link_no == COMMAND_NEW)){
+	if ((com->kind == KIND_STATEMENT) and (com->link_no == STATEMENT_NEW)){
 
 		// com->param[0] might be a function to call...
 	}else{
 
 		// compile parameters
-		param.resize(com->param.num);
+		params.resize(com->param.num);
 		for (int p=0;p<com->param.num;p++)
-			param[p] = SerializeParameter(com->param[p], block, index);
+			params[p] = SerializeParameter(com->param[p], block, index);
 	}
 
 	// class function -> compile instance
@@ -643,28 +643,28 @@ SerialCommandParam Serializer::SerializeCommand(Command *com, Block *block, int 
 		// inline function?
 		if (com->script->syntax->functions[com->link_no]->inline_no >= 0){
 			Command c = *com;
-			c.kind = KIND_COMPILER_FUNCTION;
+			c.kind = KIND_INLINE_FUNCTION;
 			c.link_no = com->script->syntax->functions[com->link_no]->inline_no;
 
-			SerializeCompilerFunction(&c, param, ret, block, index, marker_before_params);
+			SerializeInlineFunction(&c, params, ret);
 			return ret;
 		}
 
-		AddFunctionCall(com->script, com->link_no, instance, param, ret);
+		AddFunctionCall(com->script, com->link_no, instance, params, ret);
 
 	}else if (com->kind == KIND_VIRTUAL_FUNCTION){
 
-		AddClassFunctionCall(instance.type->parent->GetVirtualFunction(com->link_no), instance, param, ret);
+		AddClassFunctionCall(instance.type->parent->GetVirtualFunction(com->link_no), instance, params, ret);
 
-	}else if (com->kind == KIND_COMPILER_FUNCTION){
-		SerializeCompilerFunction(com, param, ret, block, index, marker_before_params);
+	}else if (com->kind == KIND_STATEMENT){
+		SerializeStatement(com, params, ret, block, index, marker_before_params);
 	}else if (com->kind == KIND_ARRAY_BUILDER){
 		ClassFunction *cf = com->type->GetFunc("add", TypeVoid, 1);
 		if (!cf)
 			DoError(format("[..]: can not find %s.add() function???", com->type->name.c_str()));
 		instance = AddReference(ret, com->type->GetPointer());
 		for (int i=0; i<com->param.num; i++){
-			AddFunctionCall(cf->script, cf->nr, instance, param[i], p_none);
+			AddFunctionCall(cf->script, cf->nr, instance, params[i], p_none);
 		}
 	}else if (com->kind == KIND_BLOCK){
 		SerializeBlock(com->as_block());
@@ -1713,7 +1713,7 @@ void Serializer::SerializeFunction(Function *f)
 	// outro (if last command != return)
 	bool need_outro = true;
 	if (f->block->commands.num > 0)
-		if ((f->block->commands.back()->kind == KIND_COMPILER_FUNCTION) and (f->block->commands.back()->link_no == COMMAND_RETURN))
+		if ((f->block->commands.back()->kind == KIND_STATEMENT) and (f->block->commands.back()->link_no == STATEMENT_RETURN))
 			need_outro = false;
 	if (need_outro)
 		AddFunctionOutro(f);

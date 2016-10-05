@@ -311,7 +311,7 @@ Command *SyntaxTree::GetOperandExtension(Command *Operand, Block *block)
 Command *SyntaxTree::GetSpecialFunctionCall(const string &f_name, Command &link, Block *block)
 {
 	// sizeof
-	if ((link.kind != KIND_COMPILER_FUNCTION) or (link.link_no != COMMAND_SIZEOF))
+	if ((link.kind != KIND_STATEMENT) or (link.link_no != STATEMENT_SIZEOF))
 		DoError("evil special function");
 
 	Exp.next();
@@ -351,11 +351,11 @@ Array<Class*> SyntaxTree::GetFunctionWantedParams(Command &link)
 		if (!cf)
 			DoError("FindFunctionSingleParameter: can't find virtual function...?!?");
 		return cf->param_types;
-	}else if (link.kind == KIND_COMPILER_FUNCTION){
+	/*}else if (link.kind == KIND_STATEMENT){
 		Array<Class*> wanted_types;
-		for (PreCommandParam &p: PreCommands[link.link_no].param)
+		for (PreCommandParam &p: Statement[link.link_no].param)
 			wanted_types.add(p.type);
-		return wanted_types;
+		return wanted_types;*/
 	}else
 		DoError("evil function...");
 
@@ -452,8 +452,8 @@ Command *SyntaxTree::GetFunctionCall(const string &f_name, Array<Command> &links
 
 
 	// "special" functions
-    if (links[0].kind == KIND_COMPILER_FUNCTION)
-	    if (links[0].link_no == COMMAND_SIZEOF){
+    if (links[0].kind == KIND_STATEMENT)
+	    if (links[0].link_no == STATEMENT_SIZEOF){
 			return GetSpecialFunctionCall(f_name, links[0], block);
 	    }
 
@@ -623,7 +623,7 @@ Command *SyntaxTree::GetOperand(Block *block)
 	}else if (Exp.cur == "new"){ // new operator
 		Exp.next();
 		Class *t = ParseType();
-		operand = add_command_compilerfunc(COMMAND_NEW);
+		operand = add_command_statement(STATEMENT_NEW);
 		operand->type = t->GetPointer();
 		if (Exp.cur == "("){
 			Array<ClassFunction> cfs;
@@ -637,7 +637,7 @@ Command *SyntaxTree::GetOperand(Block *block)
 		}
 	}else if (Exp.cur == "delete"){ // delete operator
 		Exp.next();
-		operand = add_command_compilerfunc(COMMAND_DELETE);
+		operand = add_command_statement(STATEMENT_DELETE);
 		operand->set_param(0, GetOperand(block));
 		if (!operand->param[0]->type->is_pointer)
 			DoError("pointer expected after delete");
@@ -650,7 +650,7 @@ Command *SyntaxTree::GetOperand(Block *block)
 			// variables get linked directly...
 
 			// operand is executable
-			if ((links[0].kind == KIND_FUNCTION) or (links[0].kind == KIND_VIRTUAL_FUNCTION) or (links[0].kind == KIND_COMPILER_FUNCTION)){
+			if ((links[0].kind == KIND_FUNCTION) or (links[0].kind == KIND_VIRTUAL_FUNCTION) or (links[0].kind == KIND_STATEMENT)){
 				operand = GetFunctionCall(f_name, links, block);
 
 			}else if (links[0].kind == KIND_PRIMITIVE_OPERATOR){
@@ -808,8 +808,8 @@ Command *apply_type_cast(SyntaxTree *ps, int tc, Command *param)
 			Command *c = ps->add_command_func(TypeCasts[tc].script, TypeCasts[tc].func_no, TypeCasts[tc].dest);
 			c->set_param(0, param);
 			return c;
-		}else if (TypeCasts[tc].kind == KIND_COMPILER_FUNCTION){
-			Command *c = ps->add_command_compilerfunc(TypeCasts[tc].func_no);
+		}else if (TypeCasts[tc].kind == KIND_STATEMENT){
+			Command *c = ps->add_command_statement(TypeCasts[tc].func_no);
 			c->set_param(0, param);
 			return c;
 		}
@@ -1016,7 +1016,7 @@ void SyntaxTree::ParseSpecialCommandFor(Block *block)
 	// while(for_var < val1)
 	Command *cmd_cmp = add_command_operator(for_var, val1, OperatorIntSmaller);
 
-	Command *cmd_while = add_command_compilerfunc(COMMAND_FOR);
+	Command *cmd_while = add_command_statement(STATEMENT_FOR);
 	cmd_while->set_param(0, cmd_cmp);
 	block->commands.add(cmd_while);
 	ExpectNewline();
@@ -1109,7 +1109,7 @@ void SyntaxTree::ParseSpecialCommandForall(Block *block)
 	// while(for_index < val1)
 	Command *cmd_cmp = add_command_operator(for_index, val1, OperatorIntSmaller);
 
-	Command *cmd_while = add_command_compilerfunc(COMMAND_FOR);
+	Command *cmd_while = add_command_statement(STATEMENT_FOR);
 	cmd_while->set_param(0, cmd_cmp);
 	block->commands.add(cmd_while);
 	ExpectNewline();
@@ -1159,7 +1159,7 @@ void SyntaxTree::ParseSpecialCommandWhile(Block *block)
 	Command *cmd_cmp = CheckParamLink(GetCommand(block), TypeBool, "while", 0);
 	ExpectNewline();
 
-	Command *cmd_while = add_command_compilerfunc(COMMAND_WHILE);
+	Command *cmd_while = add_command_statement(STATEMENT_WHILE);
 	cmd_while->set_param(0, cmd_cmp);
 	block->commands.add(cmd_while);
 	// ...block
@@ -1171,21 +1171,21 @@ void SyntaxTree::ParseSpecialCommandWhile(Block *block)
 void SyntaxTree::ParseSpecialCommandBreak(Block *block)
 {
 	Exp.next();
-	Command *cmd = add_command_compilerfunc(COMMAND_BREAK);
+	Command *cmd = add_command_statement(STATEMENT_BREAK);
 	block->commands.add(cmd);
 }
 
 void SyntaxTree::ParseSpecialCommandContinue(Block *block)
 {
 	Exp.next();
-	Command *cmd = add_command_compilerfunc(COMMAND_CONTINUE);
+	Command *cmd = add_command_statement(STATEMENT_CONTINUE);
 	block->commands.add(cmd);
 }
 
 void SyntaxTree::ParseSpecialCommandReturn(Block *block)
 {
 	Exp.next();
-	Command *cmd = add_command_compilerfunc(COMMAND_RETURN);
+	Command *cmd = add_command_statement(STATEMENT_RETURN);
 	block->commands.add(cmd);
 	if (block->function->return_type == TypeVoid){
 		cmd->set_num_params(0);
@@ -1204,7 +1204,7 @@ void SyntaxTree::ParseSpecialCommandIf(Block *block)
 	Command *cmd_cmp = CheckParamLink(GetCommand(block), TypeBool, IDENTIFIER_IF, 0);
 	ExpectNewline();
 
-	Command *cmd_if = add_command_compilerfunc(COMMAND_IF);
+	Command *cmd_if = add_command_statement(STATEMENT_IF);
 	cmd_if->set_param(0, cmd_cmp);
 	block->commands.add(cmd_if);
 	// ...block
@@ -1215,7 +1215,7 @@ void SyntaxTree::ParseSpecialCommandIf(Block *block)
 
 	// else?
 	if ((!Exp.end_of_file()) and (Exp.cur == IDENTIFIER_ELSE) and (Exp.cur_line->indent >= ind)){
-		cmd_if->link_no = COMMAND_IF_ELSE;
+		cmd_if->link_no = STATEMENT_IF_ELSE;
 		Exp.next();
 		// iterative if
 		if (Exp.cur == IDENTIFIER_IF){
@@ -1304,7 +1304,7 @@ void SyntaxTree::ParseCompleteCommand(Block *block)
 	// assembler block
 	}else if (Exp.cur == "-asm-"){
 		Exp.next();
-		Command *c = add_command_compilerfunc(COMMAND_ASM);
+		Command *c = add_command_statement(STATEMENT_ASM);
 		block->commands.add(c);
 
 	// local (variable) definitions...

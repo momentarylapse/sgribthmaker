@@ -19,7 +19,8 @@ public:
 	virtual void AddFunctionIntro(Function *f);
 	virtual void AddFunctionOutro(Function *f);
 	virtual SerialCommandParam SerializeParameter(Command *link, Block *block, int index);
-	virtual void SerializeCompilerFunction(Command *com, const Array<SerialCommandParam> &params, const SerialCommandParam &ret, Block *block, int index, int marker_before_params);
+	virtual void SerializeStatement(Command *com, const Array<SerialCommandParam> &params, const SerialCommandParam &ret, Block *block, int index, int marker_before_params);
+	virtual void SerializeInlineFunction(Command *com, const Array<SerialCommandParam> &params, const SerialCommandParam &ret);
 
 	virtual void DoMapping();
 	void ProcessReferences();

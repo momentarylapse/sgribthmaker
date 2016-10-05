@@ -117,35 +117,38 @@ struct PreCommandParam
 	string name;
 	Class *type;
 };
-struct PreCommand
+struct Statement
 {
 	string name;
 	Class *return_type;
-	Array<PreCommandParam> param;
-	int package;
-	bool hide_docu;
+	int num_params;
 };
-extern Array<PreCommand> PreCommands;
+extern Array<Statement> Statements;
 
 
+// statements
 enum
 {
 	// structural commands
-	COMMAND_RETURN,
-	COMMAND_IF,
-	COMMAND_IF_ELSE,
-	COMMAND_WHILE,
-	COMMAND_FOR,
-	COMMAND_BREAK,
-	COMMAND_CONTINUE,
-	COMMAND_NEW,
-	COMMAND_DELETE,
-	COMMAND_SIZEOF,
+	STATEMENT_RETURN,
+	STATEMENT_IF,
+	STATEMENT_IF_ELSE,
+	STATEMENT_WHILE,
+	STATEMENT_FOR,
+	STATEMENT_BREAK,
+	STATEMENT_CONTINUE,
+	STATEMENT_NEW,
+	STATEMENT_DELETE,
+	STATEMENT_SIZEOF,
+	STATEMENT_ASM,
+	NUM_STATEMENTS
+};
+
+// inline commands
+enum{
 	COMMAND_WAIT,
 	COMMAND_WAIT_RT,
 	COMMAND_WAIT_ONE_FRAME,
-	COMMAND_ASM,
-	NUM_INTERN_PRE_COMMANDS,
 	COMMAND_INLINE_FLOAT_TO_INT,
 	COMMAND_INLINE_FLOAT_TO_FLOAT64,
 	COMMAND_INLINE_FLOAT64_TO_FLOAT,

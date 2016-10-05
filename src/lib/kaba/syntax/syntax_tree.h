@@ -44,7 +44,8 @@ enum
 	// execution
 	KIND_FUNCTION,           // = real function call
 	KIND_VIRTUAL_FUNCTION,   // = virtual function call
-	KIND_COMPILER_FUNCTION,  // = special internal functions
+	KIND_INLINE_FUNCTION,    // = function defined inside the compiler...
+	KIND_STATEMENT,          // = if/while/break/...
 	KIND_BLOCK,              // = block of commands {...}
 	KIND_PRIMITIVE_OPERATOR, // tentative...
 	// data altering
@@ -205,7 +206,7 @@ public:
 	void ParseVariableDef(bool single, Block *block);
 	void ParseGlobalConst(const string &name, Class *type);
 	int WhichPrimitiveOperator(const string &name);
-	int WhichCompilerFunction(const string &name);
+	int WhichStatement(const string &name);
 	void CommandSetCompilerFunction(int CF,Command *Com);
 	int WhichType(const string &name);
 	void AddType();
@@ -276,7 +277,7 @@ public:
 	// command
 	Command *AddCommand(int kind, long long link_no, Class *type);
 	Command *AddCommand(int kind, long long link_no, Class *type, Script *s);
-	Command *add_command_compilerfunc(int cf);
+	Command *add_command_statement(int index);
 	Command *add_command_classfunc(ClassFunction *f, Command *inst, bool force_non_virtual = false);
 	Command *add_command_func(Script *script, int no, Class *return_type);
 	Command *add_command_const(int nc);

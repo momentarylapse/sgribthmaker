@@ -146,7 +146,6 @@ Script *cur_package_script = NULL;
 int cur_package_index;
 
 
-static PreCommand *cur_cmd = NULL;
 static Function *cur_func = NULL;
 static Class *cur_class;
 static ClassFunction *cur_class_func = NULL;
@@ -453,36 +452,28 @@ int _cdecl _Char2Int(char c){	return (int)c;	}
 bool _cdecl _Pointer2Bool(void *p){	return (p != NULL);	}
 
 
-Array<PreCommand> PreCommands;
+Array<Statement> Statements;
 
 int add_func(const string &name, Class *return_type, void *func, ScriptFlag flag)
 {
 	Function *f = new Function(cur_package_script->syntax, name, return_type);
-	f->literal_return_type = return_type;
-	f->num_params = 0;
-	f->_class = NULL;
 	f->is_pure = ((flag & FLAG_PURE) > 0);
 	cur_package_script->syntax->functions.add(f);
 	cur_package_script->func.add(config.allow_std_lib ? (void (*)())func : NULL);
-	cur_cmd = NULL;
 	cur_func = f;
 	cur_class_func = NULL;
 	return cur_package_script->syntax->functions.num - 1;
 }
 
-int add_compiler_func(const string &name, Class *return_type, int index, bool hide_docu)
+int add_statement(const string &name, int index, Class *return_type, int num_params)
 {
-	PreCommand c;
-	c.name = name;
-	c.return_type = return_type;
-	c.package = cur_package_index;
-	c.hide_docu = hide_docu;
-	if (PreCommands.num < NUM_INTERN_PRE_COMMANDS)
-		PreCommands.resize(NUM_INTERN_PRE_COMMANDS);
-	PreCommands[index] = c;
-	cur_func = NULL;
-	cur_cmd = &PreCommands[index];
-	cur_class_func = NULL;
+	Statement s;
+	s.name = name;
+	s.return_type = return_type;
+	s.num_params = num_params;
+	if (Statements.num < NUM_STATEMENTS)
+		Statements.resize(NUM_STATEMENTS);
+	Statements[index] = s;
 	return index;
 }
 
@@ -494,23 +485,16 @@ void func_set_inline(int index)
 
 void func_add_param(const string &name, Class *type)
 {
-	if (cur_cmd){
-		PreCommandParam p;
-		p.name = name;
-		p.type = type;
-		cur_cmd->param.add(p);
-	}else if (cur_func){
-		Variable v;
-		v.name = name;
-		v.type = type;
-		if (cur_func){
-			cur_func->var.add(v);
-			cur_func->literal_param_type.add(type);
-			cur_func->num_params ++;
-		}
-		if (cur_class_func)
-			cur_class_func->param_types.add(type);
+	Variable v;
+	v.name = name;
+	v.type = type;
+	if (cur_func){
+		cur_func->var.add(v);
+		cur_func->literal_param_type.add(type);
+		cur_func->num_params ++;
 	}
+	if (cur_class_func)
+		cur_class_func->param_types.add(type);
 }
 
 void script_make_super_array(Class *t, SyntaxTree *ps)
@@ -661,13 +645,13 @@ void add_type_cast(int penalty, Class *source, Class *dest, const string &cmd, v
 	TypeCast c;
 	c.penalty = penalty;
 	c.func_no = -1;
-	for (int i=0;i<PreCommands.num;i++)
+	/*for (int i=0;i<PreCommands.num;i++)
 		if (PreCommands[i].name == cmd){
-			c.kind = KIND_COMPILER_FUNCTION;
+			c.kind = KIND_STATEMENT;
 			c.func_no = i;
 			c.script = cur_package_script;
 			break;
-		}
+		}*/
 	if (c.func_no < 0)
 	for (int i=0;i<cur_package_script->syntax->functions.num;i++)
 		if (cur_package_script->syntax->functions[i]->name == cmd){
@@ -1140,30 +1124,28 @@ void SIAddBasicCommands()
 
 
 // "intern" functions
-	add_compiler_func(IDENTIFIER_RETURN,		TypeVoid,	COMMAND_RETURN);
-		func_add_param("return_value",	TypeVoid); // return: ParamType will be defined by the parser!
-	add_compiler_func(IDENTIFIER_IF,		TypeVoid,	COMMAND_IF);
-		func_add_param("b",	TypeBool);
-	add_compiler_func("-if/else-",	TypeVoid,	COMMAND_IF_ELSE);
-		func_add_param("b",	TypeBool);
-	add_compiler_func(IDENTIFIER_WHILE,		TypeVoid,	COMMAND_WHILE);
-		func_add_param("b",	TypeBool);
-	add_compiler_func(IDENTIFIER_FOR,		TypeVoid,	COMMAND_FOR);
-		func_add_param("b",	TypeBool); // internally like a while-loop... but a bit different...
-	add_compiler_func(IDENTIFIER_BREAK,		TypeVoid,	COMMAND_BREAK);
-	add_compiler_func(IDENTIFIER_CONTINUE,	TypeVoid,	COMMAND_CONTINUE);
-	add_compiler_func(IDENTIFIER_NEW,	TypePointer,	COMMAND_NEW);
-	add_compiler_func(IDENTIFIER_DELETE,	TypeVoid,	COMMAND_DELETE);
-		func_add_param("p",	TypePointer);
-	add_compiler_func("sizeof",		TypeInt,	COMMAND_SIZEOF, false);
-		func_add_param("type",	TypeVoid);
+	add_statement(IDENTIFIER_RETURN, STATEMENT_RETURN, TypeVoid, 0);
+//		func_add_param("return_value",	TypeVoid); // return: ParamType will be defined by the parser!
+	add_statement(IDENTIFIER_IF, STATEMENT_IF, TypeVoid, 1);
+	add_statement("-if/else-",	STATEMENT_IF_ELSE, TypeVoid, 1);
+	add_statement(IDENTIFIER_WHILE, STATEMENT_WHILE, TypeVoid, 1);
+	add_statement(IDENTIFIER_FOR, STATEMENT_FOR, TypeVoid, 1);
+//		func_add_param("b",	TypeBool); // internally like a while-loop... but a bit different...
+	add_statement(IDENTIFIER_BREAK, STATEMENT_BREAK, TypeVoid, 0);
+	add_statement(IDENTIFIER_CONTINUE, STATEMENT_CONTINUE, TypeVoid, 0);
+	add_statement(IDENTIFIER_NEW, STATEMENT_NEW, TypePointer, 0);
+	add_statement(IDENTIFIER_DELETE, STATEMENT_DELETE, TypeVoid, 1);
+	add_statement("sizeof", STATEMENT_SIZEOF, TypeInt, 1);
+	add_statement(IDENTIFIER_ASM, STATEMENT_ASM, TypeVoid, 0);
 	
-	add_compiler_func("wait",		TypeVoid,	COMMAND_WAIT, false);
+	add_func("wait", TypeVoid, NULL);
+		func_set_inline(COMMAND_WAIT);
 		func_add_param("time",	TypeFloat32);
-	add_compiler_func("wait_rt",		TypeVoid,	COMMAND_WAIT_RT, false);
-		func_add_param("time",	TypeFloat32);
-	add_compiler_func("wait_of",		TypeVoid,	COMMAND_WAIT_ONE_FRAME, false);
-	add_compiler_func(IDENTIFIER_ASM,		TypeVoid,	COMMAND_ASM);
+	add_func("wait_rt", TypeVoid, NULL);
+		func_set_inline(COMMAND_WAIT_RT);
+		func_add_param("time", TypeFloat32);
+	add_func("wait_of", TypeVoid, NULL);
+		func_set_inline(COMMAND_WAIT_ONE_FRAME);
 }
 
 

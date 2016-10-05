@@ -51,8 +51,8 @@ ParserKaba::ParserKaba()
 		for (auto f: p.script->syntax->functions)
 			compiler_functions.add(f->name);
 	}
-	for (auto &c: Kaba::PreCommands)
-		compiler_functions.add(c.name);
+	for (auto &s: Kaba::Statements)
+		compiler_functions.add(s.name);
 }
 
 ParserKaba::~ParserKaba()

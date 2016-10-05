@@ -144,17 +144,16 @@ void SerializerARM::add_function_call(Script *script, int func_no, const SerialC
 
 void SerializerARM::add_virtual_function_call(int virtual_index, const SerialCommandParam &instance, const Array<SerialCommandParam> &param, const SerialCommandParam &ret){}
 
-void SerializerARM::SerializeCompilerFunction(Command *com, const Array<SerialCommandParam> &param, const SerialCommandParam &ret, Block *block, int index, int marker_before_params)
+void SerializerARM::SerializeStatement(Command *com, const Array<SerialCommandParam> &param, const SerialCommandParam &ret, Block *block, int index, int marker_before_params)
 {
-
 	switch(com->link_no){
-		case COMMAND_IF:{
+		case STATEMENT_IF:{
 			// cmp;  jz m;  -block-  m;
 			add_cmd(Asm::INST_CMP, param[0], param_const(TypeBool, 0x0));
 			int m_after_true = add_marker_after_command(block->level, index + 1);
 			add_cmd(Asm::ARM_COND_EQUAL, Asm::INST_B, param_marker(m_after_true), p_none, p_none);
 			}break;
-		case COMMAND_IF_ELSE:{
+		case STATEMENT_IF_ELSE:{
 			// cmp;  jz m1;  -block-  jmp m2;  m1;  -block-  m2;
 			add_cmd(Asm::INST_CMP, param[0], param_const(TypeBool, 0x0));
 			int m_after_true = add_marker_after_command(block->level, index + 1);
@@ -162,8 +161,8 @@ void SerializerARM::SerializeCompilerFunction(Command *com, const Array<SerialCo
 			add_cmd(Asm::ARM_COND_EQUAL, Asm::INST_B, param_marker(m_after_true), p_none, p_none); // jz ...
 			add_jump_after_command(block->level, index + 1, m_after_false); // insert before <m_after_true> is inserted!
 			}break;
-		case COMMAND_WHILE:
-		case COMMAND_FOR:{
+		case STATEMENT_WHILE:
+		case STATEMENT_FOR:{
 			// m1;  cmp;  jz m2;  -block-             jmp m1;  m2;     (while)
 			// m1;  cmp;  jz m2;  -block-  m3;  i++;  jmp m1;  m2;     (for)
 			add_cmd(Asm::INST_CMP, param[0], param_const(TypeBool, 0x0));
@@ -172,7 +171,7 @@ void SerializerARM::SerializeCompilerFunction(Command *com, const Array<SerialCo
 			add_jump_after_command(block->level, index + 1, marker_before_params); // insert before <marker_after_while> is inserted!
 
 			int marker_continue = marker_before_params;
-			if (com->link_no == COMMAND_FOR){
+			if (com->link_no == STATEMENT_FOR){
 				// NextCommand is a block!
 				if (next_command->kind != KIND_BLOCK)
 					DoError("command block in \"for\" loop missing");
@@ -181,13 +180,13 @@ void SerializerARM::SerializeCompilerFunction(Command *com, const Array<SerialCo
 			LoopData l = {marker_continue, marker_after_while, block->level, index};
 			loop.add(l);
 			}break;
-		case COMMAND_BREAK:
+		case STATEMENT_BREAK:
 			add_cmd(Asm::INST_B, param_marker(loop.back().marker_break));
 			break;
-		case COMMAND_CONTINUE:
+		case STATEMENT_CONTINUE:
 			add_cmd(Asm::INST_B, param_marker(loop.back().marker_continue));
 			break;
-		case COMMAND_RETURN:
+		case STATEMENT_RETURN:
 			if (com->param.num > 0){
 				if (cur_func->return_type->UsesReturnByMemory()){ // we already got a return address in [ebp+0x08] (> 4 byte)
 					FillInDestructorsBlock(block, true);
@@ -211,7 +210,7 @@ void SerializerARM::SerializeCompilerFunction(Command *com, const Array<SerialCo
 				AddFunctionOutro(cur_func);
 			}
 			break;
-		case COMMAND_NEW:{
+		case STATEMENT_NEW:{
 			Array<Command> links = syntax_tree->GetExistence("@malloc", NULL);
 			if (links.num == 0)
 				DoError("@malloc not found????");
@@ -225,17 +224,25 @@ void SerializerARM::SerializeCompilerFunction(Command *com, const Array<SerialCo
 			}else
 				add_cmd_constructor(ret, -1);
 			break;}
-		case COMMAND_DELETE:{
+		case STATEMENT_DELETE:{
 			add_cmd_destructor(param[0], false);
 			Array<Command> links = syntax_tree->GetExistence("@free", NULL);
 			if (links.num == 0)
 				DoError("@free not found????");
 			AddFunctionCall(links[0].script, links[0].link_no, p_none, param[0], p_none);
 			break;}
-		case COMMAND_ASM:
+		case STATEMENT_ASM:
 			add_cmd(INST_ASM);
 			break;
+		default:
+			DoError("statement unimplemented: " + Statements[com->link_no].name);
+	}
+}
 
+void SerializerARM::SerializeInlineFunction(Command *com, const Array<SerialCommandParam> &param, const SerialCommandParam &ret)
+{
+
+	switch(com->link_no){
 		case OperatorIntAssign:
 		case OperatorInt64Assign:
 		case OperatorFloatAssign:
@@ -375,7 +382,7 @@ void SerializerARM::SerializeCompilerFunction(Command *com, const Array<SerialCo
 			add_cmd(Asm::INST_SUB, ret, ret, param[0]);
 			break;
 		default:
-			DoError("compiler function unimplemented: " + PreCommands[com->link_no].name);
+			DoError("inline function unimplemented: #" + i2s(com->link_no));
 	}
 }
 
@@ -437,7 +444,7 @@ SerialCommandParam SerializerARM::SerializeParameter(Command *link, Block *block
 		}else{
 			return param_lookup(p.type, add_global_ref(*(int**)pp));
 		}
-	}else if ((link->kind==KIND_FUNCTION) or (link->kind==KIND_VIRTUAL_FUNCTION) or (link->kind==KIND_COMPILER_FUNCTION) or (link->kind==KIND_ARRAY_BUILDER)){
+	}else if ((link->kind==KIND_FUNCTION) or (link->kind==KIND_VIRTUAL_FUNCTION) or (link->kind==KIND_STATEMENT) or (link->kind==KIND_ARRAY_BUILDER)){
 		return SerializeCommand(link, block, index);
 	}else if (link->kind == KIND_REFERENCE){
 		SerialCommandParam param = SerializeParameter(link->param[0], block, index);

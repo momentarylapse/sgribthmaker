@@ -128,8 +128,8 @@ public:
 	void SerializeBlock(Block *block);
 	virtual SerialCommandParam SerializeParameter(Command *link, Block *block, int index) = 0;
 	SerialCommandParam SerializeCommand(Command *com, Block *block, int index);
-	virtual void SerializeCompilerFunction(Command *com, const Array<SerialCommandParam> &param, const SerialCommandParam &ret, Block *block, int index, int marker_before_params) = 0;
-	//virtual void SerializeOperator(Command *com, Array<SerialCommandParam> &param, SerialCommandParam &ret) = 0;
+	virtual void SerializeStatement(Command *com, const Array<SerialCommandParam> &param, const SerialCommandParam &ret, Block *block, int index, int marker_before_params) = 0;
+	virtual void SerializeInlineFunction(Command *com, const Array<SerialCommandParam> &param, const SerialCommandParam &ret) = 0;
 	virtual void AddFunctionIntro(Function *f) = 0;
 	virtual void AddFunctionOutro(Function *f) = 0;
 	virtual void CorrectReturn(){};

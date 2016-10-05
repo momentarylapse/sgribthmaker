@@ -71,9 +71,9 @@ Command *SyntaxTree::shift_command(Command *sub, bool deref, int shift, Class *t
 	return c;
 }
 
-Command *SyntaxTree::add_command_compilerfunc(int cf)
+Command *SyntaxTree::add_command_statement(int index)
 {
-	Command *c = AddCommand(KIND_COMPILER_FUNCTION, cf, TypeVoid);
+	Command *c = AddCommand(KIND_STATEMENT, index, TypeVoid);
 
 	//if (FlagCompileOS)
 	//	DoError(format("external function call (%s) not allowed with #os", PreCommands[CF].name.c_str()));
@@ -82,8 +82,8 @@ Command *SyntaxTree::add_command_compilerfunc(int cf)
 	c->script = Packages[0].script;
 	c->instance = NULL;
 
-	c->set_num_params(PreCommands[cf].param.num);
-	c->type = PreCommands[cf].return_type;
+	c->set_num_params(Statements[index].num_params);
+	c->type = Statements[index].return_type;
 	return c;
 }
 
@@ -200,7 +200,7 @@ string Kind2Str(int kind)
 	if (kind == KIND_REF_TO_CONST)			return "reference to const";
 	if (kind == KIND_FUNCTION)			return "function";
 	if (kind == KIND_VIRTUAL_FUNCTION)	return "virtual function";
-	if (kind == KIND_COMPILER_FUNCTION)	return "compiler function";
+	if (kind == KIND_STATEMENT)	return "compiler function";
 	if (kind == KIND_PRIMITIVE_OPERATOR)	return "PRIMITIVE operator";
 	if (kind == KIND_BLOCK)				return "command block";
 	if (kind == KIND_ADDRESS_SHIFT)		return "address shift";
@@ -239,7 +239,7 @@ string LinkNr2Str(SyntaxTree *s, int kind, int nr)
 	if (kind == KIND_CONSTANT)			return i2s(nr);//s->Constants[nr].type->var2str(s->Constants[nr].data);
 	if (kind == KIND_FUNCTION)			return s->functions[nr]->name;
 	if (kind == KIND_VIRTUAL_FUNCTION)	return i2s(nr);//s->Functions[nr]->name;
-	if (kind == KIND_COMPILER_FUNCTION)	return PreCommands[nr].name;
+	if (kind == KIND_STATEMENT)			return Statements[nr].name;
 	if (kind == KIND_PRIMITIVE_OPERATOR)	return PrimitiveOperators[nr].name;
 	if (kind == KIND_BLOCK)				return i2s(nr);
 	if (kind == KIND_ADDRESS_SHIFT)		return i2s(nr);
@@ -489,11 +489,11 @@ int SyntaxTree::WhichType(const string &name)
 
 Array<int> MultipleFunctionList;
 
-int SyntaxTree::WhichCompilerFunction(const string &name)
+int SyntaxTree::WhichStatement(const string &name)
 {
 	MultipleFunctionList.clear();
-	for (int i=0;i<PreCommands.num;i++)
-		if (name == PreCommands[i].name)
+	for (int i=0;i<Statements.num;i++)
+		if (name == Statements[i].name)
 			MultipleFunctionList.add(i);
 			//return i;
 	if (MultipleFunctionList.num > 0)
@@ -632,12 +632,12 @@ Array<Command> SyntaxTree::GetExistence(const string &name, Block *block)
 		return links;
 
 	// then the compiler functions
-	int w = WhichCompilerFunction(name);
+	int w = WhichStatement(name);
 	if (w >= 0){
-		link.kind = KIND_COMPILER_FUNCTION;
+		link.kind = KIND_STATEMENT;
 		link.link_no = w;
-		link.type = PreCommands[w].return_type;
-		link.set_num_params(PreCommands[w].param.num);
+		link.type = Statements[w].return_type;
+		link.set_num_params(Statements[w].num_params);
 		links.add(link);
 		return links;
 	}
@@ -759,7 +759,7 @@ void conv_return(SyntaxTree *ps, commands *c)
 	for (int i=0;i<c->num_params;i++)
 		conv_return(ps, c->param[i]);
 	
-	if ((c->kind == KIND_COMPILER_FUNCTION) and (c->link_no == COMMAND_RETURN)){
+	if ((c->kind == KIND_STATEMENT) and (c->link_no == COMMAND_RETURN)){
 		msg_write("conv ret");
 		ref_command_old(ps, c);
 	}
@@ -772,7 +772,7 @@ Command *conv_calls(SyntaxTree *ps, Command *c, int tt)
 	// recursion...
 	TRANSFORM_COMMANDS_RECURSION(conv_calls, ps, tt, c)
 
-	if ((c->kind == KIND_COMPILER_FUNCTION) and (c->link_no == COMMAND_RETURN))
+	if ((c->kind == KIND_STATEMENT) and (c->link_no == STATEMENT_RETURN))
 		if (c->param.num > 0){
 			if ((c->param[0]->type->is_array) /*or (c->Param[j]->Type->IsSuperArray)*/){
 				c->set_param(0, ps->ref_command(c->param[0]));
@@ -796,7 +796,7 @@ Command *conv_calls(SyntaxTree *ps, Command *c, int tt)
 			return ps->deref_command(c);
 			//deref_command_old(this, c);
 		}
-	}else if (c->kind == KIND_COMPILER_FUNCTION){
+	}else if (c->kind == KIND_STATEMENT){
 
 		/*if (c->instance){
 			c->set_instance(ps->deref_command(c->instance));
@@ -852,7 +852,7 @@ void convert_return_by_memory(SyntaxTree *ps, Block *b, Function *f)
 		// recursion...
 		if (c->kind == KIND_BLOCK)
 			convert_return_by_memory(ps, c->as_block(), f);
-		if ((c->kind != KIND_COMPILER_FUNCTION) or (c->link_no != COMMAND_RETURN))
+		if ((c->kind != KIND_STATEMENT) or (c->link_no != STATEMENT_RETURN))
 			continue;
 
 		// convert into   *-return- = param
@@ -1151,6 +1151,9 @@ void SyntaxTree::ShowCommand(Command *c)
 	msg_right();
 	if (c->instance)
 		ShowCommand(c->instance);
+	msg_write(c->param.num);
+	if (c->param.num > 10)
+		return;
 	for (Command *p: c->param)
 		if (p)
 			ShowCommand(p);
