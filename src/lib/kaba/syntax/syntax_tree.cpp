@@ -75,15 +75,10 @@ Command *SyntaxTree::add_command_statement(int index)
 {
 	Command *c = AddCommand(KIND_STATEMENT, index, TypeVoid);
 
-	//if (FlagCompileOS)
-	//	DoError(format("external function call (%s) not allowed with #os", PreCommands[CF].name.c_str()));
-
-// a function the compiler knows
 	c->script = Packages[0].script;
 	c->instance = NULL;
-
 	c->set_num_params(Statements[index].num_params);
-	c->type = Statements[index].return_type;
+
 	return c;
 }
 
@@ -631,13 +626,12 @@ Array<Command> SyntaxTree::GetExistence(const string &name, Block *block)
 	if (links.num > 0)
 		return links;
 
-	// then the compiler functions
+	// then the statements
 	int w = WhichStatement(name);
 	if (w >= 0){
 		link.kind = KIND_STATEMENT;
 		link.link_no = w;
-		link.type = Statements[w].return_type;
-		link.set_num_params(Statements[w].num_params);
+		link.type = TypeVoid;
 		links.add(link);
 		return links;
 	}

@@ -465,11 +465,10 @@ int add_func(const string &name, Class *return_type, void *func, ScriptFlag flag
 	return cur_package_script->syntax->functions.num - 1;
 }
 
-int add_statement(const string &name, int index, Class *return_type, int num_params)
+int add_statement(const string &name, int index, int num_params = 0)
 {
 	Statement s;
 	s.name = name;
-	s.return_type = return_type;
 	s.num_params = num_params;
 	if (Statements.num < NUM_STATEMENTS)
 		Statements.resize(NUM_STATEMENTS);
@@ -736,20 +735,31 @@ public:
 };
 
 
-void op_int_add(string &r, string &a, string &b)
-{	*(int*)r.data = *(int*)a.data + *(int*)b.data;	}
-void op_int_sub(string &r, string &a, string &b)
-{	*(int*)r.data = *(int*)a.data - *(int*)b.data;	}
-void op_int_mul(string &r, string &a, string &b)
-{	*(int*)r.data = *(int*)a.data * *(int*)b.data;	}
-void op_int_div(string &r, string &a, string &b)
-{	*(int*)r.data = *(int*)a.data / *(int*)b.data;	}
-void op_int_mod(string &r, string &a, string &b)
-{	*(int*)r.data = *(int*)a.data % *(int*)b.data;	}
-void op_int_shr(string &r, string &a, string &b)
-{	*(int*)r.data = *(int*)a.data >> *(int*)b.data;	}
-void op_int_shl(string &r, string &a, string &b)
-{	*(int*)r.data = *(int*)a.data << *(int*)b.data;	}
+void op_int_assign(int *me, int b)
+{	*me = b;	}
+int op_int_add(int *me, int b)
+{	return *me + b;	}
+int op_int_sub(int *me, int b)
+{	return *me - b;	}
+int op_int_mul(int *me, int b)
+{	return *me * b;	}
+int op_int_div(int *me, int b)
+{	return *me / b;	}
+int op_int_mod(int *me, int b)
+{	return *me % b;	}
+int op_int_shr(int *me, int b)
+{	return *me >> b;	}
+int op_int_shl(int *me, int b)
+{	return *me << b;	}
+void op_int_adds(int *me, int b)
+{	*me += b;	}
+void op_int_subs(int *me, int b)
+{	*me -= b;	}
+void op_int_muls(int *me, int b)
+{	*me *= b;	}
+void op_int_divs(int *me, int b)
+{	*me /= b;	}
+
 void op_float_add(string &r, string &a, string &b)
 {	*(float*)r.data = *(float*)a.data + *(float*)b.data;	}
 void op_float_sub(string &r, string &a, string &b)
@@ -773,6 +783,7 @@ void op_int64_shr(string &r, string &a, string &b)
 {	*(long long*)r.data = *(long long*)a.data >> *(long long*)b.data;	}
 void op_int64_shl(string &r, string &a, string &b)
 {	*(long long*)r.data = *(long long*)a.data << *(long long*)b.data;	}
+
 void op_float64_add(string &r, string &a, string &b)
 {	*(double*)r.data = *(double*)a.data + *(double*)b.data;	}
 void op_float64_sub(string &r, string &a, string &b)
@@ -894,17 +905,20 @@ void SIAddPackageBase()
 
 
 	add_class(TypeInt);
-	class_add_operator(OPERATOR_ASSIGN,        TypeVoid,    TypeInt,     OperatorIntAssign);
-	class_add_operator(OPERATOR_ADD,           TypeInt,     TypeInt,     OperatorIntAdd, (void*)op_int_add);
+	class_add_operator(OPERATOR_ASSIGN,        TypeVoid,    TypeInt,     -1, (void*)op_int_assign);
+	//class_add_operator(OPERATOR_ASSIGN,        TypeVoid,    TypeInt,     OperatorIntAssign, (void*)op_int_assign);
+	class_add_operator(OPERATOR_ADD,           TypeInt,     TypeInt,     -1, (void*)op_int_add);
+	//class_add_operator(OPERATOR_ADD,           TypeInt,     TypeInt,     OperatorIntAdd, (void*)op_int_add);
 	class_add_operator(OPERATOR_SUBTRACT,      TypeInt,     TypeInt,     OperatorIntSubtract, (void*)op_int_sub);
 	class_add_operator(OPERATOR_MULTIPLY,      TypeInt,     TypeInt,     OperatorIntMultiply, (void*)op_int_mul);
 	class_add_operator(OPERATOR_MULTIPLY,      TypeFloat32, TypeFloat32, OperatorFloatMultiplyIF, NULL);
 	class_add_operator(OPERATOR_MULTIPLY,      TypeFloat64, TypeFloat64, OperatorFloat64MultiplyIF, NULL);
 	class_add_operator(OPERATOR_DIVIDE,        TypeInt,     TypeInt,     OperatorIntDivide, (void*)op_int_div);
-	class_add_operator(OPERATOR_ADDS,          TypeVoid,    TypeInt,     OperatorIntAddS);
-	class_add_operator(OPERATOR_SUBTRACTS,     TypeVoid,    TypeInt,     OperatorIntSubtractS);
-	class_add_operator(OPERATOR_MULTIPLYS,     TypeVoid,    TypeInt,     OperatorIntMultiplyS);
-	class_add_operator(OPERATOR_DIVIDES,       TypeVoid,    TypeInt,     OperatorIntDivideS);
+	//class_add_operator(OPERATOR_ADDS,          TypeVoid,    TypeInt,     OperatorIntAddS, (void*)op_int_adds);
+	class_add_operator(OPERATOR_ADDS,          TypeVoid,    TypeInt,     -1, (void*)op_int_adds);
+	class_add_operator(OPERATOR_SUBTRACTS,     TypeVoid,    TypeInt,     OperatorIntSubtractS, (void*)op_int_subs);
+	class_add_operator(OPERATOR_MULTIPLYS,     TypeVoid,    TypeInt,     OperatorIntMultiplyS, (void*)op_int_muls);
+	class_add_operator(OPERATOR_DIVIDES,       TypeVoid,    TypeInt,     OperatorIntDivideS, (void*)op_int_divs);
 	class_add_operator(OPERATOR_MODULO,        TypeInt,     TypeInt,     OperatorIntModulo, (void*)op_int_mod);
 	class_add_operator(OPERATOR_EQUAL,         TypeBool,    TypeInt,     OperatorIntEqual);
 	class_add_operator(OPERATOR_NOTEQUAL,      TypeBool,    TypeInt,     OperatorIntNotEqual);
@@ -1096,47 +1110,19 @@ void SIAddPackageBase()
 
 void SIAddBasicCommands()
 {
-/*
-	CommandReturn,
-	CommandIf,
-	CommandIfElse,
-	CommandWhile,
-	CommandFor,
-	CommandBreak,
-	CommandContinue,
-	CommandNew,
-	CommandDelete,
-	CommandSizeof,
-	CommandWait,
-	CommandWaitRT,
-	CommandWaitOneFrame,
-	CommandFloatToInt,
-	CommandIntToFloat,
-	CommandIntToChar,
-	CommandCharToInt,
-	CommandPointerToBool,
-	CommandComplexSet,
-	CommandVectorSet,
-	CommandRectSet,
-	CommandColorSet,
-	CommandAsm,
-*/
+	// statements
+	add_statement(IDENTIFIER_RETURN, STATEMENT_RETURN); // return: ParamType will be defined by the parser!
+	add_statement(IDENTIFIER_IF, STATEMENT_IF, 1);
+	add_statement("-if/else-",	STATEMENT_IF_ELSE, 1);
+	add_statement(IDENTIFIER_WHILE, STATEMENT_WHILE, 1);
+	add_statement(IDENTIFIER_FOR, STATEMENT_FOR, 1); // internally like a while-loop... but a bit different...
+	add_statement(IDENTIFIER_BREAK, STATEMENT_BREAK);
+	add_statement(IDENTIFIER_CONTINUE, STATEMENT_CONTINUE);
+	add_statement(IDENTIFIER_NEW, STATEMENT_NEW);
+	add_statement(IDENTIFIER_DELETE, STATEMENT_DELETE);
+	add_statement("sizeof", STATEMENT_SIZEOF, 1);
+	add_statement(IDENTIFIER_ASM, STATEMENT_ASM);
 
-
-// "intern" functions
-	add_statement(IDENTIFIER_RETURN, STATEMENT_RETURN, TypeVoid, 0);
-//		func_add_param("return_value",	TypeVoid); // return: ParamType will be defined by the parser!
-	add_statement(IDENTIFIER_IF, STATEMENT_IF, TypeVoid, 1);
-	add_statement("-if/else-",	STATEMENT_IF_ELSE, TypeVoid, 1);
-	add_statement(IDENTIFIER_WHILE, STATEMENT_WHILE, TypeVoid, 1);
-	add_statement(IDENTIFIER_FOR, STATEMENT_FOR, TypeVoid, 1);
-//		func_add_param("b",	TypeBool); // internally like a while-loop... but a bit different...
-	add_statement(IDENTIFIER_BREAK, STATEMENT_BREAK, TypeVoid, 0);
-	add_statement(IDENTIFIER_CONTINUE, STATEMENT_CONTINUE, TypeVoid, 0);
-	add_statement(IDENTIFIER_NEW, STATEMENT_NEW, TypePointer, 0);
-	add_statement(IDENTIFIER_DELETE, STATEMENT_DELETE, TypeVoid, 1);
-	add_statement("sizeof", STATEMENT_SIZEOF, TypeInt, 1);
-	add_statement(IDENTIFIER_ASM, STATEMENT_ASM, TypeVoid, 0);
 	
 	add_func("wait", TypeVoid, NULL);
 		func_set_inline(COMMAND_WAIT);

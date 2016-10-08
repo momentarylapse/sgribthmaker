@@ -34,7 +34,7 @@ int SerializerAMD64::fc_begin(const SerialCommandParam &instance, const Array<Se
 	// return as _very_ first parameter
 	if (type->UsesReturnByMemory()){
 		//add_temp(type, ret_temp);
-		ret_ref = AddReference(/*ret_temp*/ ret);
+//		ret_ref = AddReference(/*ret_temp*/ ret);
 		params.insert(ret_ref, 0);
 	}
 
@@ -108,7 +108,7 @@ int SerializerAMD64::fc_begin(const SerialCommandParam &instance, const Array<Se
 
 void SerializerAMD64::fc_end(int push_size, const SerialCommandParam &instance, const Array<SerialCommandParam> &params, const SerialCommandParam &ret)
 {
-	Class *type = instance.get_type_save();
+	Class *type = ret.get_type_save();
 
 	// return > 4b already got copied to [ret] by the function!
 	if ((type != TypeVoid) and (!type->UsesReturnByMemory())){

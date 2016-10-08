@@ -112,15 +112,9 @@ extern PrimitiveOperator PrimitiveOperators[];
 //--------------------------------------------------------------------------------------------------
 // commands
 
-struct PreCommandParam
-{
-	string name;
-	Class *type;
-};
 struct Statement
 {
 	string name;
-	Class *return_type;
 	int num_params;
 };
 extern Array<Statement> Statements;
