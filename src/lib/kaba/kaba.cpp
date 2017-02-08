@@ -6,10 +6,10 @@
 |                                                                              |
 | last updated: 2010.07.07 (c) by MichiSoft TM                                 |
 \*----------------------------------------------------------------------------*/
-#include "kaba.h"
-
 #include "../file/file.h"
 #include <stdarg.h>
+#include "kaba.h"
+
 #include "../config.h"
 #ifdef _X_ALLOW_X_
 	#include "../../meta.h"
@@ -24,7 +24,7 @@
 
 namespace Kaba{
 
-string Version = "0.15.-1.0";
+string Version = "0.14.7.1";
 
 //#define ScriptDebug
 

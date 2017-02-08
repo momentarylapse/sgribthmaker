@@ -20,7 +20,6 @@ void func_set_inline(int index);
 void func_add_param(const string &name, Class *type);
 void add_class(Class *root_type);
 void class_add_element(const string &name, Class *type, int offset, ScriptFlag = FLAG_NONE);
-void class_add_operator(int primitive_op, Class *return_type, Class *param_type2, int inline_index, void *func = NULL);
 void class_add_func(const string &name, Class *return_type, void *func, ScriptFlag = FLAG_NONE);
 void class_add_func_virtual(const string &name, Class *return_type, void *func, ScriptFlag = FLAG_NONE);
 void class_link_vtable(void *p);

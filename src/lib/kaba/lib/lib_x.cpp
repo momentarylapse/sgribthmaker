@@ -1,6 +1,6 @@
 #include "../../file/file.h"
-#include "../../config.h"
 #include "../kaba.h"
+#include "../../config.h"
 #include "common.h"
 
 
@@ -90,8 +90,9 @@ extern Class *TypeFloatList;
 extern Class *TypeIntList;
 extern Class *TypeVectorList;
 extern Class *TypeVectorArray;
+extern Class *TypeIntArray;
 extern Class *TypeFloatArray;
-extern Class *TypeFloatP;
+extern Class *TypeFloatPs;
 extern Class *TypePlaneList;
 extern Class *TypeSocketP;
 extern Class *TypeSocketPList;
@@ -593,7 +594,7 @@ void SIAddPackageX()
 			func_add_param("param1",		TypeFloat32);
 			func_add_param("param2",		TypeFloat32);
 			func_add_param("move",			TypeInt);
-			func_add_param("time",			TypeFloatP);
+			func_add_param("time",			TypeFloatPs);
 			func_add_param("dt",			TypeFloat32);
 			func_add_param("v",				TypeFloat32);
 			func_add_param("loop",			TypeBool);

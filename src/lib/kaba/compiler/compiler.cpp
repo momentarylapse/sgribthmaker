@@ -75,6 +75,60 @@ void init_all_global_objects(SyntaxTree *ps, Array<char*> &g_var)
 		try_init_global_var(v.type, g_var[i]);
 }
 
+static long _opcode_rand_state_ = 10000;
+
+void* get_nice_random_addr()
+{
+	long p = ((long)&Init) & 0xfffffffffffff000;
+	_opcode_rand_state_ = (_opcode_rand_state_ * 1664525 + 1013904223);
+	p += (long)(_opcode_rand_state_ & 0x3fff) * 4096;
+	return (void*)p;
+
+}
+
+void* get_nice_memory(long size, bool executable)
+{
+	void *mem = NULL;
+	size = mem_align(size, 4096);
+	if (config.verbose)
+		msg_write("get nice...");
+
+#ifdef OS_WINDOWS
+	mem = (char*)VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+#else
+
+	// try in 32bit distance from current opcode
+	for (int i=0; i<100; i++){
+		void *addr0 = get_nice_random_addr();
+		//opcode = (char*)mmap(addr0, max_opcode, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS | MAP_EXECUTABLE | MAP_32BIT, -1, 0);
+		mem = (char*)mmap(addr0, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS | MAP_EXECUTABLE, -1, 0);
+		if (config.verbose)
+			printf("%d  %p  ->  %p\n", i, addr0, mem);
+		if ((long)mem != -1){
+			if (labs((long)mem - (long)addr0) < 1000000000)
+				return mem;
+			else
+				munmap(mem, size);
+			if (config.verbose)
+				msg_write("...try again");
+		}
+	}
+
+	// no?...ok, try anywhere
+	mem = (char*)mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS | MAP_EXECUTABLE, -1, 0);
+	if ((long)mem == -1)
+		mem = NULL;
+#endif
+
+	// failed...
+	if (!mem){
+		msg_error(string("Script:  could not allocate executable memory: ") + strerror(errno));
+		mem = new char[size];
+	}
+
+	return mem;
+}
+
 void Script::AllocateMemory()
 {
 	// get memory size needed
@@ -84,30 +138,19 @@ void Script::AllocateMemory()
 			memory_size += mem_align(syntax->root_of_all_evil.var[i].type->size, 4);
 
 	// constants
-	foreachi(Constant &c, syntax->constants, i){
-		int s = c.type->size;
-		if (c.type == TypeString){
-			// const string -> variable length   (+ super array frame)
-			s = c.value.num + config.super_array_size;
-		}
-		memory_size += mem_align(s, 4);
-	}
+	foreachi(Constant *c, syntax->constants, i)
+		memory_size += mem_align(c->mapping_size(), 4);
+
+	// vtables
 	for (Class *t: syntax->classes)
 		if (t->vtable.num > 0)
 			memory_size += config.pointer_size;
 
 	// allocate
 	if (memory_size > 0){
-#ifdef OS_WINDOWS
-		memory = (char*)VirtualAlloc(NULL, memory_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-#else
-		//Memory = (char*)mmap(0, MemorySize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS /*| MAP_EXECUTABLE*/ | MAP_32BIT, -1, 0);
-		memory = (char*)mmap(0, mem_align(memory_size, 4096), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS /*| MAP_EXECUTABLE*/ | MAP_32BIT, -1, 0);
-		if (memory == (char*)-1)
-			memory = new char[memory_size];
-			//DoErrorInternal(format("can not allocate memory, (%d) ", errno) + strerror(errno));
-#endif
-		//Memory = new char[MemorySize];
+		memory = (char*)get_nice_memory(memory_size, false);
+		if (config.verbose)
+			msg_write("memory:  " + p2s(memory));
 	}
 }
 
@@ -116,13 +159,13 @@ void Script::AllocateStack()
 	// use your own stack if needed
 	//   wait() used -> needs to switch stacks ("tasks")
 	__stack = NULL;
-	for (Command *cmd: syntax->commands){
-		if (cmd->kind == KIND_INLINE_FUNCTION)
+	/*for (Command *cmd: syntax->commands){
+		if (cmd->kind == KIND_COMPILER_FUNCTION)
 			if ((cmd->link_no == COMMAND_WAIT) or (cmd->link_no == COMMAND_WAIT_RT) or (cmd->link_no == COMMAND_WAIT_ONE_FRAME)){
 				__stack = new char[config.stack_size];
 				break;
 			}
-	}
+	}*/
 }
 
 void Script::AllocateOpcode()
@@ -130,17 +173,11 @@ void Script::AllocateOpcode()
 	int max_opcode = MAX_OPCODE;
 	if (config.compile_os)
 		max_opcode *= 10;
-	// allocate some memory for the opcode......    has to be executable!!!   (important on amd64)
-#ifdef OS_WINDOWS
-	opcode=(char*)VirtualAlloc(NULL,max_opcode,MEM_COMMIT | MEM_RESERVE,PAGE_EXECUTE_READWRITE);
-#else
-	opcode = (char*)mmap(0, max_opcode, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED | MAP_ANONYMOUS | MAP_EXECUTABLE | MAP_32BIT, -1, 0);
-#endif
-	if ((long)opcode == -1){
-		//DoErrorInternal(string("Script:  could not allocate executable memory: ") + strerror(errno));
-		msg_error(string("Script:  could not allocate executable memory: ") + strerror(errno));
-		opcode = new char[max_opcode];
-	}
+
+	opcode = (char*)get_nice_memory(max_opcode, true);
+	if (config.verbose)
+		msg_write("opcode:  " + p2s(opcode));
+
 	if (config.override_code_origin)
 		syntax->asm_meta_info->code_origin = config.code_origin;
 	else
@@ -152,21 +189,10 @@ void Script::MapConstantsToMemory()
 {
 	// constants -> Memory
 	cnst.resize(syntax->constants.num);
-	foreachi(Constant &c, syntax->constants, i){
+	foreachi(Constant *c, syntax->constants, i){
 		cnst[i] = &memory[memory_size];
-		int s = c.type->size;
-		if (c.type == TypeString){
-			// const string -> variable length
-			s = syntax->constants[i].value.num;
-
-			*(void**)&memory[memory_size] = &memory[memory_size + config.super_array_size]; // .data
-			*(int*)&memory[memory_size + config.pointer_size    ] = s; // .num
-			*(int*)&memory[memory_size + config.pointer_size + 4] = 0; // .reserved
-			*(int*)&memory[memory_size + config.pointer_size + 8] = 1; // .item_size
-			memory_size += config.super_array_size;
-		}
-		memcpy(&memory[memory_size], (void*)c.value.data, s);
-		memory_size += mem_align(s, 4);
+		c->map_into(cnst[i], cnst[i]);
+		memory_size += mem_align(c->mapping_size(), 4);
 	}
 }
 
@@ -220,37 +246,17 @@ void Script::MapConstantsToOpcode()
 	for (Class *t: syntax->classes)
 		if (t->vtable.num > 0){
 			t->_vtable_location_compiler_ = &opcode[opcode_size];
-			t->_vtable_location_target_ = (void*)(opcode_size + syntax->asm_meta_info->code_origin);
+			t->_vtable_location_target_ = (void*)(syntax->asm_meta_info->code_origin + opcode_size);
 			opcode_size += config.pointer_size * t->vtable.num;
-			for (Constant &c: syntax->constants)
-				if ((c.type == TypePointer) and (*(int*)c.value.data == (int)(long)t->vtable.data))
-					memcpy(c.value.data, &t->_vtable_location_target_, config.pointer_size);
+			for (Constant *c: syntax->constants)
+				if ((c->type == TypePointer) and (*(int*)c->value.data == (int)(long)t->vtable.data))
+					memcpy(c->value.data, &t->_vtable_location_target_, config.pointer_size);
 		}
 
-	// put all constants into Opcode!
-	foreachi(Constant &c, syntax->constants, i){
-		if (config.compile_os){// && (c.type == TypeCString)){
-			cnst[i] = (char*)(opcode_size + syntax->asm_meta_info->code_origin);
-			int s = c.type->size;
-			if (c.type == TypeString){
-				// const string -> variable length
-				s = syntax->constants[i].value .num;
-
-				*(void**)&opcode[opcode_size] = (char*)(opcode_size + syntax->asm_meta_info->code_origin + config.super_array_size); // .data
-				*(int*)&opcode[opcode_size + config.pointer_size    ] = s; // .num
-				*(int*)&opcode[opcode_size + config.pointer_size + 4] = 0; // .reserved
-				*(int*)&opcode[opcode_size + config.pointer_size + 8] = 1; // .item_size
-				opcode_size += config.super_array_size;
-			}else if (c.type == TypeCString){
-				s = syntax->constants[i].value .num;
-			}
-			memcpy(&opcode[opcode_size], (void*)c.value.data, s);
-			opcode_size += s;
-
-			// cstring -> 0 terminated
-			if (c.type == TypeCString)
-				opcode[opcode_size ++] = 0;
-		}
+	foreachi(Constant *c, syntax->constants, i){
+		cnst[i] = (char*)(syntax->asm_meta_info->code_origin + opcode_size);
+		c->map_into(&opcode[opcode_size], cnst[i]);
+		opcode_size += mem_align(c->mapping_size(), 4);
 	}
 
 	AlignOpcode();
@@ -367,7 +373,7 @@ struct IncludeTranslationData
 
 void relink_calls(Script *s, Script *a, IncludeTranslationData &d)
 {
-	for (Command *c: s->syntax->commands){
+	for (Node *c: s->syntax->nodes){
 		// keep commands... just redirect var/const/func
 		//msg_write(p2s(c->script));
 		if (c->script != d.source)
@@ -386,7 +392,7 @@ void relink_calls(Script *s, Script *a, IncludeTranslationData &d)
 
 	// we might need some constructors later on...
 	for (Class *t: s->syntax->classes)
-		for (ClassFunction &f: t->function)
+		for (ClassFunction &f: t->functions)
 			if (f.script == d.source){
 				f.script = a;
 				f.nr += d.func_off;
@@ -401,7 +407,12 @@ IncludeTranslationData import_deep(SyntaxTree *a, SyntaxTree *b)
 	d.func_off = a->functions.num;
 	d.source = b->script;
 
-	a->constants.append(b->constants);
+	for (Constant *c: b->constants){
+		Constant *cc = new Constant(c->type);
+		cc->name = c->name;
+		cc->set(*c);
+		a->constants.add(cc);
+	}
 
 	a->root_of_all_evil.var.append(b->root_of_all_evil.var);
 
@@ -447,6 +458,39 @@ void import_includes(Script *s)
 	}
 }
 
+void Script::LinkFunctions()
+{
+	for (Asm::WantedLabel &l: functions_to_link){
+		string name = l.name.substr(10, -1);
+		bool found = false;
+		foreachi(Function *f, syntax->functions, i)
+			if (f->name == name){
+				*(int*)&opcode[l.pos] = (long)func[i] - (syntax->asm_meta_info->code_origin + l.pos + 4);
+				found = true;
+				break;
+			}
+		if (!found)
+			DoErrorLink("could not link function: " + name);
+	}
+	for (int n: function_vars_to_link){
+		long p = (n + 0xefef0000);
+		long q = (long)func[n];
+		if (!find_and_replace(opcode, opcode_size, (char*)&p, config.pointer_size, (char*)&q))
+			DoErrorLink("could not link function as variable: " + syntax->functions[n]->name);
+	}
+
+
+	// link virtual functions into vtables
+	for (Class *t: syntax->classes){
+		t->LinkVirtualTable();
+
+		if (config.compile_os){
+			for (int i=0; i<t->vtable.num; i++)
+				memcpy((char*)t->_vtable_location_compiler_ + i*config.pointer_size, &t->vtable[i], config.pointer_size);
+		}
+	}
+}
+
 // generate opcode
 void Script::Compiler()
 {
@@ -462,7 +506,8 @@ void Script::Compiler()
 	syntax->Show();
 #endif
 
-	syntax->Simplify();
+	syntax->SimplifyRefDeref();
+	syntax->SimplifyShiftDeref();
 	syntax->PreProcessor();
 
 	if (config.verbose)
@@ -500,34 +545,7 @@ void Script::Compiler()
 	CompileFunctions(opcode, opcode_size);
 
 // link functions
-	for (Asm::WantedLabel &l: functions_to_link){
-		string name = l.name.substr(10, -1);
-		bool found = false;
-		foreachi(Function *f, syntax->functions, i)
-			if (f->name == name){
-				*(int*)&opcode[l.pos] = (long)func[i] - (syntax->asm_meta_info->code_origin + l.pos + 4);
-				found = true;
-				break;
-			}
-		if (!found)
-			DoErrorLink("could not link function: " + name);
-	}
-	for (int n: function_vars_to_link){
-		long p = (n + 0xefef0000);
-		long q = (long)func[n];
-		if (!find_and_replace(opcode, opcode_size, (char*)&p, config.pointer_size, (char*)&q))
-			DoErrorLink("could not link function as variable: " + syntax->functions[n]->name);
-	}
-
-// link virtual functions into vtables
-	for (Class *t: syntax->classes){
-		t->LinkVirtualTable();
-
-		if (config.compile_os){
-			for (int i=0; i<t->vtable.num; i++)
-				memcpy((char*)t->_vtable_location_compiler_ + i*config.pointer_size, &t->vtable[i], config.pointer_size);
-		}
-	}
+	LinkFunctions();
 
 
 // "task" for the first execution of main() -> ThreadOpcode

@@ -1,6 +1,6 @@
 #include "../../file/file.h"
-#include "../../config.h"
 #include "../kaba.h"
+#include "../../config.h"
 #include "common.h"
 
 #ifdef _X_USE_NIX_

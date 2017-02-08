@@ -42,13 +42,13 @@ ParserKaba::ParserKaba()
 	special_words.add(Kaba::IDENTIFIER_NAMESPACE);
 	special_words.add(Kaba::IDENTIFIER_ASM);
 	for (auto &p: Kaba::Packages){
-		for (auto c: p.script->syntax->classes)
+		for (auto *c: p.script->syntax->classes)
 			types.add(c->name);
 		for (auto &v: p.script->syntax->root_of_all_evil.var)
 			globals.add(v.name);
-		for (auto &c: p.script->syntax->constants)
-			globals.add(c.name);
-		for (auto f: p.script->syntax->functions)
+		for (auto *c: p.script->syntax->constants)
+			globals.add(c->name);
+		for (auto *f: p.script->syntax->functions)
 			compiler_functions.add(f->name);
 	}
 	for (auto &s: Kaba::Statements)

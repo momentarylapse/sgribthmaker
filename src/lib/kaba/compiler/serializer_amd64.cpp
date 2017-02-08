@@ -1,6 +1,5 @@
 #include "../kaba.h"
 #include "serializer_amd64.h"
-
 #include "../../file/file.h"
 
 
@@ -8,12 +7,12 @@
 namespace Kaba{
 
 
-int SerializerAMD64::fc_begin(const SerialCommandParam &instance, const Array<SerialCommandParam> &_params, const SerialCommandParam &ret)
+int SerializerAMD64::fc_begin(const SerialNodeParam &instance, const Array<SerialNodeParam> &_params, const SerialNodeParam &ret)
 {
 	Class *type = ret.get_type_save();
 
 	// return data too big... push address
-	SerialCommandParam ret_ref;
+	SerialNodeParam ret_ref;
 	if (type->UsesReturnByMemory()){
 		//add_temp(type, ret_temp);
 		ret_ref = AddReference(/*ret_temp*/ ret);
@@ -25,7 +24,7 @@ int SerializerAMD64::fc_begin(const SerialCommandParam &instance, const Array<Se
 //	add_cmd(- cur_func->_VarSize - LocalOffset - 8);
 	long push_size = 0;
 
-	Array<SerialCommandParam> params = _params;
+	Array<SerialNodeParam> params = _params;
 		
 	// instance as first parameter
 	if (instance.type)
@@ -39,10 +38,10 @@ int SerializerAMD64::fc_begin(const SerialCommandParam &instance, const Array<Se
 	}
 
 	// map params...
-	Array<SerialCommandParam> reg_param;
-	Array<SerialCommandParam> stack_param;
-	Array<SerialCommandParam> xmm_param;
-	for (SerialCommandParam &p: params){
+	Array<SerialNodeParam> reg_param;
+	Array<SerialNodeParam> stack_param;
+	Array<SerialNodeParam> xmm_param;
+	for (SerialNodeParam &p: params){
 		if ((p.type == TypeInt) or (p.type == TypeInt64) or (p.type == TypeChar) or (p.type == TypeBool) or (p.type->is_pointer)){
 			if (reg_param.num < 6){
 				reg_param.add(p);
@@ -65,12 +64,14 @@ int SerializerAMD64::fc_begin(const SerialCommandParam &instance, const Array<Se
 		add_cmd(Asm::INST_ADD, param_preg(TypePointer, Asm::REG_RSP), param_const(TypeInt, push_size));
 	else if (push_size > 0)
 		add_cmd(Asm::INST_ADD, param_preg(TypePointer, Asm::REG_RSP), param_const(TypeChar, push_size));
-	foreachb(SerialCommandParam &p, stack_param)
-		add_cmd(Asm::INST_PUSH, p);
+	foreachb(SerialNodeParam &p, stack_param){
+		add_cmd(Asm::INST_MOV, p_rax, p);
+		add_cmd(Asm::INST_PUSH, p_rax);
+	}
 	max_push_size = max(max_push_size, (int)push_size);
 
 	// xmm0-7
-	foreachib(SerialCommandParam &p, xmm_param, i){
+	foreachib(SerialNodeParam &p, xmm_param, i){
 		int reg = Asm::REG_XMM0 + i;
 		if (p.type == TypeFloat64)
 			add_cmd(Asm::INST_MOVSD, param_preg(TypeReg128, reg), p);
@@ -82,7 +83,7 @@ int SerializerAMD64::fc_begin(const SerialCommandParam &instance, const Array<Se
 
 	// rdi, rsi,rdx, rcx, r8, r9 
 	int param_regs_root[6] = {7, 6, 2, 1, 8, 9};
-	foreachib(SerialCommandParam &p, reg_param, i){
+	foreachib(SerialNodeParam &p, reg_param, i){
 		int root = param_regs_root[i];
 		int preg = get_reg(root, p.type->size);
 		if (preg >= 0){
@@ -106,7 +107,7 @@ int SerializerAMD64::fc_begin(const SerialCommandParam &instance, const Array<Se
 	return push_size;
 }
 
-void SerializerAMD64::fc_end(int push_size, const SerialCommandParam &instance, const Array<SerialCommandParam> &params, const SerialCommandParam &ret)
+void SerializerAMD64::fc_end(int push_size, const SerialNodeParam &instance, const Array<SerialNodeParam> &params, const SerialNodeParam &ret)
 {
 	Class *type = ret.get_type_save();
 
@@ -132,7 +133,7 @@ void SerializerAMD64::fc_end(int push_size, const SerialCommandParam &instance, 
 	}
 }
 
-void SerializerAMD64::add_function_call(Script *script, int func_no, const SerialCommandParam &instance, const Array<SerialCommandParam> &params, const SerialCommandParam &ret)
+void SerializerAMD64::add_function_call(Script *script, int func_no, const SerialNodeParam &instance, const Array<SerialNodeParam> &params, const SerialNodeParam &ret)
 {
 	int push_size = fc_begin(instance, params, ret);
 
@@ -142,24 +143,34 @@ void SerializerAMD64::add_function_call(Script *script, int func_no, const Seria
 		void *func = (void*)script->func[func_no];
 		if (!func)
 			DoErrorLink("could not link function " + script->syntax->functions[func_no]->name);
-		add_cmd(Asm::INST_CALL, param_const(TypeReg32, (long)func)); // the actual call
-		// function pointer will be shifted later...
+		long d = (long)func - (long)this->script->opcode;
+		if (d < 0)
+			d = -d;
+		if (d < 0x70000000){
+			// 32bit call distance
+			add_cmd(Asm::INST_CALL, param_const(TypeReg32, (long)func)); // the actual call
+			// function pointer will be shifted later...(asm translates to RIP-relative)
+		}else{
+			// 64bit call distance
+			add_cmd(Asm::INST_MOV, p_rax, param_const(TypeReg64, (long)func));
+			add_cmd(Asm::INST_CALL, p_rax);
+		}
 	}
 
 	fc_end(push_size, instance, params, ret);
 }
 
-void SerializerAMD64::add_virtual_function_call(int virtual_index, const SerialCommandParam &instance, const Array<SerialCommandParam> &params, const SerialCommandParam &ret)
+void SerializerAMD64::add_virtual_function_call(int virtual_index, const SerialNodeParam &instance, const Array<SerialNodeParam> &params, const SerialNodeParam &ret)
 {
 	//DoError("virtual function call on amd64 not yet implemented!");
 
 	int push_size = fc_begin(instance, params, ret);
 
 	add_cmd(Asm::INST_MOV, p_rax, instance);
-	add_cmd(Asm::INST_MOV, p_eax, p_deref_eax);
-	add_cmd(Asm::INST_ADD, p_eax, param_const(TypeInt, 8 * virtual_index));
-	add_cmd(Asm::INST_MOV, p_eax, p_deref_eax);
-	add_cmd(Asm::INST_CALL, p_eax); // the actual call
+	add_cmd(Asm::INST_MOV, p_rax, p_deref_eax);
+	add_cmd(Asm::INST_ADD, p_rax, param_const(TypeInt, 8 * virtual_index));
+	add_cmd(Asm::INST_MOV, p_rax, p_deref_eax);
+	add_cmd(Asm::INST_CALL, p_rax); // the actual call
 
 	fc_end(push_size, instance, params, ret);
 }
@@ -248,7 +259,9 @@ void SerializerAMD64::AddFunctionOutro(Function *f)
 	add_cmd(Asm::INST_RET);
 }
 
-void SerializerAMD64::CorrectUnallowedParamCombis2(SerialCommand &c)
+//#define debug_evil_corrections
+
+void SerializerAMD64::CorrectUnallowedParamCombis2(SerialNode &c)
 {
 	// push 8 bit -> push 32 bit
 	if (c.inst == Asm::INST_PUSH)
@@ -261,38 +274,39 @@ void SerializerAMD64::CorrectUnallowedParamCombis2(SerialCommand &c)
 	if (config.instruction_set == Asm::INSTRUCTION_SET_AMD64){
 		if ((c.inst == Asm::INST_ADD) or (c.inst == Asm::INST_MOV)){
 			if ((c.p[0].kind == KIND_REGISTER) and (c.p[1].kind == KIND_REF_TO_CONST)){
-				if (c.p[0].type->is_pointer){
+				// TODO: should become an optimization if value fits into 32 bit...
+				/*if (c.p[0].type->is_pointer){
 #ifdef debug_evil_corrections
 					msg_write("----evil resize a");
-					msg_write(cmd2str(c));
+					msg_write(c.str());
 #endif
 					c.p[0].type = TypeReg32;
 					c.p[0].p = reg_resize(c.p[0].p, 4);
 #ifdef debug_evil_corrections
-					msg_write(cmd2str(c));
+					msg_write(c.str());
 #endif
-				}
+				}*/
 			}
 			if ((c.p[0].type->size == 8) and (c.p[1].type->size == 4)){
 				/*if ((c.p[0].kind == KindRegister) and ((c.p[1].kind == KindRegister) or (c.p[1].kind == KindConstant) or (c.p[1].kind == KindRefToConst))){
 #ifdef debug_evil_corrections
 					msg_write("----evil resize b");
-					msg_write(cmd2str(c));
+					msg_write(c.str());
 #endif
 					c.p[0].type = c.p[1].type;
 					c.p[0].p = (char*)(long)reg_resize((long)c.p[0].p, c.p[1].type->size);
 #ifdef debug_evil_corrections
-					msg_write(cmd2str(c));
+					msg_write(c.str());
 #endif
 				}else*/ if (c.p[1].kind == KIND_REGISTER){
 #ifdef debug_evil_corrections
 					msg_write("----evil resize c");
-					msg_write(cmd2str(c));
+					msg_write(c.str());
 #endif
 					c.p[1].type = c.p[0].type;
 					c.p[1].p = reg_resize(c.p[1].p, c.p[0].type->size);
 #ifdef debug_evil_corrections
-					msg_write(cmd2str(c));
+					msg_write(c.str());
 #endif
 				}
 			}
@@ -300,12 +314,12 @@ void SerializerAMD64::CorrectUnallowedParamCombis2(SerialCommand &c)
 				if ((c.p[0].kind == KIND_REGISTER) and ((c.p[1].kind == KIND_REGISTER) or (c.p[1].kind == KIND_DEREF_REGISTER))){
 #ifdef debug_evil_corrections
 					msg_write("----evil resize d");
-					msg_write(cmd2str(c));
+					msg_write(c.str());
 #endif
 					c.p[0].type = c.p[1].type;
 					c.p[0].p = reg_resize(c.p[0].p, c.p[1].type->size);
 #ifdef debug_evil_corrections
-					msg_write(cmd2str(c));
+					msg_write(c.str());
 #endif
 				}
 			}

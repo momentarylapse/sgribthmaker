@@ -14,14 +14,16 @@ struct Function;
 struct ClassElement{
 	string name;
 	Class *type;
-	int offset;
+	long long offset;
 	bool hidden;
 	ClassElement();
 };
+
+// TODO: use Function instead!
 struct ClassFunction{
 	string name;
 	Script *script;
-	int nr; // index in Functions[]
+	int nr; // index in functions[]
 	// _func_(x)  ->  p.func(x)
 	Array<Class*> param_types;
 	Class *return_type;
@@ -40,13 +42,13 @@ public:
 	//Class(const string &name, int size, SyntaxTree *owner);
 	~Class();
 	string name;
-	int size; // complete size of type
+	long long size; // complete size of type
 	int array_length;
 	bool is_array, is_super_array; // mutially exclusive!
 	bool is_pointer, is_silent; // pointer silent (&)
 	bool fully_parsed;
-	Array<ClassElement> element;
-	Array<ClassFunction> function;
+	Array<ClassElement> elements;
+	Array<ClassFunction> functions;
 	Class *parent;
 	SyntaxTree *owner; // to share and be able to delete...
 	Array<void*> vtable;
@@ -88,7 +90,7 @@ extern Class *TypeReg16; // dummy for compilation
 extern Class *TypeReg8; // dummy for compilation
 extern Class *TypeVoid;
 extern Class *TypePointer;
-extern Class *TypeChunk; // generic data type for some = operators etc
+extern Class *TypeChunk;
 extern Class *TypeBool;
 extern Class *TypeInt;
 extern Class *TypeInt64;

@@ -1,6 +1,6 @@
 #include "../../file/file.h"
-#include "../../config.h"
 #include "../kaba.h"
+#include "../../config.h"
 #include "common.h"
 
 namespace Kaba{
