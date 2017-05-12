@@ -14,7 +14,7 @@ MODULES = \
  lib/any/any.a \
  lib/algebra/algebra.a \
  lib/base/base.a
-OBJ = lib/base/strings.o lib/file/msg.o lib/kaba/kaba.o lib/hui/HuiApplication.o \
+OBJ = lib/base/strings.o lib/file/msg.o lib/kaba/kaba.o lib/hui/Application.o \
  History.o CommandDialog.o SettingsDialog.o SourceView.o Document.o \
  Console.o HighlightScheme.o \
  Parser/BaseParser.o Parser/ParserKaba.o Parser/ParserText.o \

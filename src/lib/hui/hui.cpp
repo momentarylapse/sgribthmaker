@@ -63,26 +63,14 @@ string Version = "0.6.0.0";
 #endif
 
 
-void _so(const char *str)
-{
-	printf("%s\n",str);
-}
-
-void _so(int i)
-{
-	printf("%d\n",i);
-}
-
-
 
 
 Callback _idle_function_;
 Callback _error_function_;
-bool HuiHaveToExit;
 bool Running = false;
 bool EndKeepMsgAlive = false;
 int _main_level_ = -1;
-Array<bool> HuiMainLevelRunning;
+Array<bool> _main_level_running_;
 
 Array<Window*> _hui_windows_;
 
@@ -219,7 +207,7 @@ namespace hui
 
 	gboolean GtkRunLaterFunction(gpointer data)
 	{
-		HuiGtkRunner *c = (HuiGtkRunner*)data;
+		HuiGtkRunner *c = reinterpret_cast<HuiGtkRunner*>(data);
 		if (c->func)
 			c->func();
 		_hui_runner_delete_(c->id);
@@ -228,7 +216,7 @@ namespace hui
 
 	gboolean GtkRunRepeatedFunction(gpointer data)
 	{
-		HuiGtkRunner *c = (HuiGtkRunner*)data;
+		HuiGtkRunner *c = reinterpret_cast<HuiGtkRunner*>(data);
 		if (c->func)
 			c->func();
 		return TRUE;
@@ -439,12 +427,12 @@ void Init(const string &program, bool load_res, const string &def_lang)
 int Run()
 {
 	Running = true;
-	HuiMainLevelRunning[_main_level_] = true;
+	_main_level_running_[_main_level_] = true;
 	//HuiPushMainLevel();
 #ifdef HUI_API_WIN
 	MSG messages;
 	messages.message = 0;
-	HuiHaveToExit = false;
+	bool HuiHaveToExit = false;
 	bool got_message;
 	while ((!HuiHaveToExit) and (WM_QUIT!=messages.message)){
 		bool allow=true;
@@ -515,7 +503,7 @@ void DoSingleMainLoop()
 void PushMainLevel()
 {
 	_main_level_ ++;
-	HuiMainLevelRunning.add(false);
+	_main_level_running_.add(false);
 }
 
 void CleanUpMainLevel()
@@ -535,7 +523,7 @@ void PopMainLevel()
 	if (_main_level_ < 0)
 		SetErrorFunction(NULL);
 	else
-		HuiMainLevelRunning.pop();
+		_main_level_running_.pop();
 	DoSingleMainLoop();
 }
 
@@ -550,7 +538,7 @@ void End()
 	PostQuitMessage(0);
 #endif
 #ifdef HUI_API_GTK
-	if (HuiMainLevelRunning.back())
+	if (_main_level_running_.back())
 		gtk_main_quit();
 #endif
 
