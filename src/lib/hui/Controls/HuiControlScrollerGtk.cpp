@@ -9,6 +9,9 @@
 
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 HuiControlScroller::HuiControlScroller(const string &title, const string &id) :
 	HuiControl(HUI_KIND_SCROLLER, id)
 {
@@ -28,5 +31,7 @@ void HuiControlScroller::add(HuiControl *child, int x, int y)
 	children.add(child);
 	child->parent = this;
 }
+
+};
 
 #endif

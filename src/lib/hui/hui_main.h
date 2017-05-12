@@ -8,6 +8,8 @@
 #ifndef HUI_MAIN_H_
 #define HUI_MAIN_H_
 
+namespace hui
+{
 
 // execution
 void HuiInit(const string &program, bool load_res, const string &def_lang);
@@ -39,5 +41,6 @@ void HuiCancelRunner(int i);
 void HuiDoSingleMainLoop();
 void HuiEnd();
 
+};
 
 #endif /* HUI_MAIN_H_ */

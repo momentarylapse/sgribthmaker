@@ -10,6 +10,9 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
+
 class HuiControlExpander : public HuiControl
 {
 public:
@@ -20,6 +23,8 @@ public:
 	virtual bool isExpanded(int row);
 
 	virtual void add(HuiControl *child, int x, int y);
+};
+
 };
 
 #endif /* HUICONTROLEXPANDER_H_ */

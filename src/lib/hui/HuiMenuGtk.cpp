@@ -25,6 +25,9 @@
 	#include <gdk/gdkx.h>
 #endif*/
 
+namespace hui
+{
+
 
 GtkAccelGroup *accel_group = NULL;
 
@@ -238,5 +241,6 @@ void *get_gtk_image_pixbuf(const string &image)
 }*/
 
 
+};
 
 #endif

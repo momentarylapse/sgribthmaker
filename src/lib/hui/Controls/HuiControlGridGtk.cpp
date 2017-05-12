@@ -10,6 +10,9 @@
 
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 HuiControlGrid::HuiControlGrid(const string &title, const string &id, int num_x, int num_y, HuiPanel *panel) :
 	HuiControl(HUI_KIND_GRID, id)
 {
@@ -41,5 +44,7 @@ void HuiControlGrid::add(HuiControl *child, int x, int y)
 		//gtk_widget_set_halign(child_widget, GTK_ALIGN_END);
 	}
 }
+
+};
 
 #endif

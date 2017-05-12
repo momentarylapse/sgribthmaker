@@ -9,10 +9,15 @@
 
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 HuiToolItemSeparator::HuiToolItemSeparator() :
 	HuiControl(HUI_KIND_TOOL_SEPARATOR, "")
 {
 	widget = GTK_WIDGET(gtk_separator_tool_item_new());
+}
+
 }
 
 #endif

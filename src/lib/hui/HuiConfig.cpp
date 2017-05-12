@@ -8,9 +8,15 @@
 #include "HuiConfig.h"
 #include "hui.h"
 
+#ifdef OS_WINDOWS
+#include <tchar.h>
+#endif
+
+namespace hui
+{
+
 
 #ifdef OS_WINDOWS
-	#include <tchar.h>
 	int _tchar_str_size_(TCHAR *str);
 #endif
 
@@ -185,4 +191,6 @@ void HuiRegisterFileType(const string &ending, const string &description, const 
 #endif
 #endif
 }
+
+};
 

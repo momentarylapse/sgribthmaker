@@ -8,7 +8,8 @@
 #ifndef HUI_ERROR_H_
 #define HUI_ERROR_H_
 
-
+namespace hui
+{
 
 // error handling
 void HuiSetErrorFunction(const HuiCallback &function);
@@ -16,5 +17,6 @@ void HuiSetDefaultErrorHandler(const HuiCallback &error_cleanup_function);
 void HuiRaiseError(const string &message);
 void HuiSendBugReport(HuiWindow *parent);
 
+};
 
 #endif /* HUI_ERROR_H_ */

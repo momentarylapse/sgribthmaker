@@ -10,10 +10,15 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
+
 class HuiToolItemButton : public HuiControl
 {
 public:
 	HuiToolItemButton(const string &title, const string &image, const string &id);
 };
+
+}
 
 #endif /* HUITOOLITEMBUTTON_H_ */

@@ -10,6 +10,9 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
+
 class HuiMenu;
 
 class HuiMenuItemSubmenu : public HuiControl
@@ -19,6 +22,8 @@ public:
 	virtual ~HuiMenuItemSubmenu();
 
 	HuiMenu *sub_menu;
+};
+
 };
 
 #endif /* HUIMENUITEMSUBMENU_H_ */

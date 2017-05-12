@@ -4,6 +4,9 @@
 #include <ShlObj.h>
 #include <tchar.h>
 
+namespace hui
+{
+
 #define TCHAR_STRING_LENGTH			1024
 
 
@@ -181,5 +184,7 @@ void HuiAboutBox(HuiWindow *win)
 	msg_todo("HuiAboutBox (Win)");
 	HuiInfoBox(win,_("Description"), HuiGetProperty("name") + " " + HuiGetProperty("version") + " " + HuiGetProperty("copyright"));
 }
+
+};
 
 #endif

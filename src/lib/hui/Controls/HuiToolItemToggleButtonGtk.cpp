@@ -9,6 +9,9 @@
 
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 void *get_gtk_image(const string &image, bool large);
 
 void OnGtkToolbarItemPress(GtkWidget *widget, gpointer data);
@@ -34,6 +37,8 @@ void HuiToolItemToggleButton::__check(bool checked)
 bool HuiToolItemToggleButton::isChecked()
 {
 	return gtk_toggle_tool_button_get_active(GTK_TOGGLE_TOOL_BUTTON(widget));
+}
+
 }
 
 #endif

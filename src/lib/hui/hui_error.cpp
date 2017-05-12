@@ -15,6 +15,9 @@
 
 #include <signal.h>
 
+namespace hui
+{
+
 extern HuiCallback HuiIdleFunction, HuiErrorFunction;
 extern Array<HuiWindow*> HuiWindows;
 
@@ -187,5 +190,5 @@ void HuiRaiseError(const string &message)
 }
 
 
-
+};
 

@@ -10,6 +10,8 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
 
 class HuiControlEdit : public HuiControl
 {
@@ -20,6 +22,8 @@ public:
 	virtual void completionAdd(const string &text);
 	virtual void completionClear();
 	virtual void __setOption(const string &op, const string &value);
+};
+
 };
 
 #endif /* HUICONTROLEDIT_H_ */

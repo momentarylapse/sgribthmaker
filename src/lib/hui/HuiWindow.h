@@ -12,13 +12,18 @@
 #include "hui_input.h"
 #include "HuiPanel.h"
 
+
+class rect;
+class Painter;
+
+namespace hui
+{
+
 class HuiMenu;
 class HuiEvent;
 class HuiControl;
 class HuiWindow;
-class Painter;
 class HuiToolbar;
-class rect;
 class HuiResourceNew;
 
 
@@ -240,5 +245,6 @@ enum{
 	HUI_TOOLBAR_RIGHT
 };
 
+};
 
 #endif

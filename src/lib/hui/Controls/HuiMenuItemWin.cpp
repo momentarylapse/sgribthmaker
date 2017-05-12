@@ -9,6 +9,9 @@
 #include "../hui.h"
 #include "../hui_internal.h"
 
+namespace hui
+{
+
 #ifdef HUI_API_WIN
 
 HuiMenuItem::HuiMenuItem(const string &title, const string &id) :
@@ -25,3 +28,5 @@ void HuiMenuItem::SetImage(const string &image)
 }
 
 #endif
+
+}

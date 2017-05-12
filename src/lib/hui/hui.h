@@ -20,6 +20,9 @@
 	typedef int color;
 #endif
 
+	namespace hui
+	{
+
 extern string HuiVersion;
 
 
@@ -54,6 +57,7 @@ extern string HuiAppFilename, HuiAppDirectory, HuiAppDirectoryStatic;
 extern string HuiInitialWorkingDirectory;
 extern bool HuiRunning;
 
+};
 
 
 #include "HuiApplication.h"

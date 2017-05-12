@@ -12,6 +12,9 @@
 #include "HuiToolbar.h"
 
 
+namespace hui
+{
+
 extern int HuiMainLevel;
 
 HuiWindow *HuiCurWindow = NULL;
@@ -278,4 +281,4 @@ HuiSourceDialog::HuiSourceDialog(const string &buffer, HuiWindow *root) :
 	fromSource(buffer);
 }
 
-
+};

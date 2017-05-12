@@ -1,6 +1,8 @@
 #include "hui.h"
 #include "../base/map.h"
 
+namespace hui
+{
 
 // file dialogs
 string HuiFilename;
@@ -29,4 +31,5 @@ string HuiGetProperty(const string &name)
 	return HuiProperties[name];
 }
 
+};
 

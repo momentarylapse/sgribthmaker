@@ -11,6 +11,9 @@
 #include "Controls/HuiControlDrawingArea.h"
 #include "../math/math.h"
 
+namespace hui
+{
+
 #ifdef HUI_API_GTK
 
 HuiPainter::HuiPainter()
@@ -321,5 +324,7 @@ void HuiPainter::setFill(bool fill)
 {
 	mode_fill = fill;
 }
+
+};
 
 #endif

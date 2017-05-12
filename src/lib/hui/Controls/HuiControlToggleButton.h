@@ -10,6 +10,8 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
 
 class HuiControlToggleButton : public HuiControl
 {
@@ -20,6 +22,8 @@ public:
 	virtual void setImage(const string &str);
 	virtual void __check(bool checked);
 	virtual bool isChecked();
+};
+
 };
 
 #endif /* HUICONTROLTOGGLEBUTTON_H_ */

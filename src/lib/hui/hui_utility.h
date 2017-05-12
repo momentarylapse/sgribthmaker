@@ -10,11 +10,15 @@
 #define _HUI_UTIL_EXISTS_
 
 
+namespace hui
+{
+
 void _cdecl HuiSetDirectory(const string &dir);
 int _cdecl HuiGetCpuCount();
 
 void _cdecl HuiOpenDocument(const string &filename);
 
+};
 
 #endif
 

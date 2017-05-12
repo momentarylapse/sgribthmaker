@@ -10,11 +10,15 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
 
 class HuiControlSeparator : public HuiControl
 {
 public:
 	HuiControlSeparator(const string &text, const string &id);
+};
+
 };
 
 #endif /* HUICONTROLSEPARATOR_H_ */

@@ -10,6 +10,9 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
+
 
 class HuiControlColorButton : public HuiControl
 {
@@ -18,6 +21,8 @@ public:
 
 	virtual void __setColor(const color &c);
 	virtual color getColor();
+};
+
 };
 
 #endif /* HUICONTROLCOLORBUTTON_H_ */

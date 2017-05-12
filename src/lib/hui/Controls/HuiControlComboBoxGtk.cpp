@@ -9,6 +9,9 @@
 
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 void OnGtkComboboxChange(GtkWidget *widget, gpointer data)
 {	((HuiControl*)data)->notify("hui:change");	}
 
@@ -79,5 +82,7 @@ void HuiControlComboBox::__reset()
 	msg_todo("ComboBox.Reset for gtk 2.24");
 #endif
 }
+
+};
 
 #endif

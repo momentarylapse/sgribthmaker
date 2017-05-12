@@ -10,6 +10,8 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
 
 class HuiControlTreeView : public HuiControl
 {
@@ -36,6 +38,8 @@ public:
 #ifdef HUI_API_GTK
 	Array<GtkTreeIter> _item_;
 #endif
+};
+
 };
 
 #endif /* HUICONTROLTREEVIEW_H_ */

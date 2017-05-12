@@ -7,6 +7,9 @@
 
 #include "HuiMenuItemToggle.h"
 
+namespace hui
+{
+
 #ifdef HUI_API_WIN
 
 HuiMenuItemToggle::HuiMenuItemToggle(const string &title, const string &id) :
@@ -28,3 +31,5 @@ bool HuiMenuItemToggle::IsChecked()
 }
 
 #endif
+
+}

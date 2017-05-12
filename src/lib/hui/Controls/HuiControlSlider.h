@@ -10,6 +10,8 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
 
 class HuiControlSlider : public HuiControl
 {
@@ -20,6 +22,8 @@ public:
 	virtual void __addString(const string &s);
 	virtual void __setOption(const string &op, const string &value);
 	bool vertical;
+};
+
 };
 
 #endif /* HUICONTROLSLIDER_H_ */

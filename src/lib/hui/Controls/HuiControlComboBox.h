@@ -10,6 +10,9 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
+
 
 class HuiControlComboBox : public HuiControl
 {
@@ -23,6 +26,8 @@ public:
 	virtual void __reset();
 
 	bool editable;
+};
+
 };
 
 #endif /* HUICONTROLCOMBOBOX_H_ */

@@ -10,6 +10,9 @@
 
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 void list_toggle_callback(GtkCellRendererToggle *cell, gchar *path_string, gpointer data);
 void list_edited_callback(GtkCellRendererText *cell, const gchar *path_string, const gchar *new_text, gpointer data);
 Array<GType> CreateTypeList(const string &_format, int size);
@@ -240,5 +243,7 @@ void HuiControlTreeView::__setOption(const string &op, const string &value)
 	else if (op == "bar")
 		gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(widget), value._bool());
 }
+
+};
 
 #endif

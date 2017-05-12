@@ -10,11 +10,15 @@
 
 #include "../image/Painter.h"
 
-class HuiWindow;
 class complex;
 class rect;
 
-class HuiPainter : public Painter
+namespace hui
+{
+
+class HuiWindow;
+
+class HuiPainter : public ::Painter
 {
 	public:
 #ifdef HUI_API_GTK
@@ -52,6 +56,8 @@ class HuiPainter : public Painter
 	virtual float _cdecl getStrWidth(const string &str);
 	virtual void _cdecl drawImage(float x, float y, const Image &image);
 	virtual void _cdecl drawMaskImage(float x, float y, const Image &image);
+};
+
 };
 
 #endif /* HUIPAINTER_H_ */

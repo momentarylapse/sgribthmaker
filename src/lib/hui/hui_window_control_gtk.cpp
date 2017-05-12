@@ -30,6 +30,9 @@
 #include <pango/pangocairo.h>
 #endif
 
+namespace hui
+{
+
 GtkTreeIter dummy_iter;
 
 void GetPartStrings(const string &id, const string &title);
@@ -486,6 +489,7 @@ void HuiPanel::redrawRect(const string &_id, int x, int y, int w, int h)
 	}
 }
 
+};
 
 
 #endif

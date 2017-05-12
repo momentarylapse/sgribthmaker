@@ -11,6 +11,8 @@
 #include "Controls/HuiToolItemToggleButton.h"
 #include "Controls/HuiToolItemSeparator.h"
 
+namespace hui
+{
 
 HuiMenu *_create_res_menu_(const string &ns, HuiResource *res);
 
@@ -96,5 +98,5 @@ void HuiToolbar::setByID(const string &id)
 	msg_db_m(":)",1);
 }
 
-
+};
 

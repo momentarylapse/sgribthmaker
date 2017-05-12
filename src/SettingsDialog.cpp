@@ -10,11 +10,11 @@
 
 extern Array<SourceView*> source_view;
 
-SettingsDialog::SettingsDialog(HuiWindow *parent) :
-	HuiWindow("settings_dialog", parent)
+SettingsDialog::SettingsDialog(hui::HuiWindow *parent) :
+	hui::HuiWindow("settings_dialog", parent)
 {
-	setInt("tab_width", HuiConfig.getInt("TabWidth", 8));
-	setString("font", HuiConfig.getStr("Font", "Monospace 10"));
+	setInt("tab_width", hui::HuiConfig.getInt("TabWidth", 8));
+	setString("font", hui::HuiConfig.getStr("Font", "Monospace 10"));
 	addString("context_list", _("Text"));
 	addString("context_list", _("reserviertes Wort"));
 	addString("context_list", _("Api Funktion"));
@@ -81,18 +81,18 @@ void SettingsDialog::fillSchemeList()
 
 void SettingsDialog::onFont()
 {
-	if (HuiSelectFont(this, _("Font w&ahlen"))){
-		setString("font", HuiFontname);
-		HuiConfig.setStr("Font", HuiFontname);
-		for (SourceView *sv : source_view)
+	if (hui::HuiSelectFont(this, _("Font w&ahlen"))){
+		setString("font", hui::HuiFontname);
+		hui::HuiConfig.setStr("Font", hui::HuiFontname);
+		for (SourceView *sv: source_view)
 			sv->UpdateFont();
 	}
 }
 
 void SettingsDialog::onTabWidth()
 {
-	HuiConfig.setInt("TabWidth", getInt("tab_width"));
-	for (SourceView *sv : source_view)
+	hui::HuiConfig.setInt("TabWidth", getInt("tab_width"));
+	for (SourceView *sv: source_view)
 		sv->UpdateTabSize();
 }
 
@@ -129,7 +129,7 @@ void SettingsDialog::onSchemeChange()
 	c.bold = isChecked("bold");
 	c.italic = isChecked("italic");
 	s->changed = true;
-	for (SourceView *sv : source_view)
+	for (SourceView *sv: source_view)
 		sv->ApplyScheme(s);
 	fillSchemeList();
 }
@@ -139,7 +139,7 @@ void SettingsDialog::onSchemes()
 	int n = getInt("");
 	HighlightScheme *s = HighlightScheme::get_all()[n];
 	HighlightScheme::default_scheme = s;
-	for (SourceView *sv : source_view)
+	for (SourceView *sv: source_view)
 		sv->ApplyScheme(s);
 	onContextListSelect();
 }
@@ -147,7 +147,7 @@ void SettingsDialog::onSchemes()
 void SettingsDialog::onCopyScheme()
 {
 	HighlightScheme *s = HighlightScheme::default_scheme->copy(_("neues Schema"));
-	for (SourceView *sv : source_view)
+	for (SourceView *sv: source_view)
 		sv->ApplyScheme(s);
 	fillSchemeList();
 	onContextListSelect();

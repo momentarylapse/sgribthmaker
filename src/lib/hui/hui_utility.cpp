@@ -11,7 +11,8 @@
 #endif
 
 
-
+namespace hui
+{
 
 
 
@@ -50,5 +51,5 @@ void HuiOpenDocument(const string &filename)
 #endif
 }
 
-
+};
 

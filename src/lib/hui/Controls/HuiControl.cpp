@@ -9,6 +9,9 @@
 #include "../hui.h"
 #include "HuiControlMultilineEdit.h"
 
+namespace hui
+{
+
 void WinTrySendByKeyCode(HuiWindow *win, int key_code);
 
 // safety feature... in case we delete the control while it notifies us
@@ -356,3 +359,4 @@ void HuiControl::notify(const string &message, bool is_default)
 	notify_pop();
 }
 
+};

@@ -11,6 +11,9 @@
 #include "../base/base.h"
 #include "hui_common.h"
 
+namespace hui
+{
+
 enum
 {
 	HUI_FLAG_LOAD_RESOURCE = 1,
@@ -26,15 +29,20 @@ public:
 
 	virtual bool onStartup(const Array<string> &arg) = 0;
 
-	static int _Execute_(HuiApplication *app, const Array<string> &arg);
-
 	int run();
 };
 
-#define HuiExecute(APP_CLASS) \
+}
+
+#define HUI_EXECUTE(APP_CLASS) \
 int hui_main(const Array<string> &arg) \
 { \
-	return HuiApplication::_Execute_(new APP_CLASS, arg); \
+	APP_CLASS *app = new APP_CLASS; \
+	int r = 0; \
+	if (app->onStartup(arg)) \
+		r = app->run(); \
+	delete(app); \
+	return r; \
 }
 
 #endif /* HUIAPPLICATION_H_ */

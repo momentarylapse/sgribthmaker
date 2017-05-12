@@ -9,6 +9,9 @@
 
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 gboolean OnGtkAreaKeyDown(GtkWidget *widget, GdkEventKey *event, gpointer user_data);
 gboolean OnGtkAreaKeyUp(GtkWidget *widget, GdkEventKey *event, gpointer user_data);
 
@@ -85,5 +88,7 @@ void HuiControlMultilineEdit::setTabSize(int tab_size)
 	pango_tab_array_set_tab(ta, 0, PANGO_TAB_LEFT, width * tab_size);
 	gtk_text_view_set_tabs(GTK_TEXT_VIEW(widget), ta);
 }
+
+};
 
 #endif

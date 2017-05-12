@@ -1,6 +1,9 @@
 #include "hui.h"
 #ifdef HUI_API_WIN
 
+namespace hui
+{
+
 
 HuiToolbar::HuiToolbar(HuiWindow *_win, bool vertical)
 {
@@ -229,5 +232,7 @@ bool CHuiWindow::_ToolBarIsChecked_(int id)
 void HuiToolbar::add(HuiControl *c)
 {
 }
+
+};
 
 #endif

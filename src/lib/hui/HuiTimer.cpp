@@ -19,6 +19,9 @@
 #endif
 
 
+namespace hui
+{
+
 
 #ifdef OS_WINDOWS
 	static bool HuiTimerPerfFlag = false;
@@ -86,6 +89,6 @@ void HuiSleep(float duration)
 #endif
 }
 
-
+};
 
 

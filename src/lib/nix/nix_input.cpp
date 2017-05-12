@@ -22,16 +22,16 @@ bool NixMouseStolen = false;
 int NixStealMouseDx = 0;
 int NixStealMouseDy = 0;
 
-static Array<HuiEvent> NixInputEvent;
+static Array<hui::HuiEvent> NixInputEvent;
 static vector _NixMouseDSum;
 int NixKeyRep;
 
 extern string NixControlID;
-HuiInputData NixInputAccum;
+hui::HuiInputData NixInputAccum;
 
 void NixOnEvent()
 {
-	HuiEvent *e = HuiGetEvent();
+	hui::HuiEvent *e = hui::HuiGetEvent();
 	//msg_write(e->message);
 	_NixMouseDSum += vector(e->dx, e->dy, e->scroll_y);
 	if (e->message == "hui:mouse-move"){
@@ -58,7 +58,7 @@ void NixOnEvent()
 	NixInputEvent.add(*e);
 }
 
-HuiInputData NixInputDataCurrent, NixInputDataLast;
+hui::HuiInputData NixInputDataCurrent, NixInputDataLast;
 
 void NixInputInit()
 {
@@ -230,7 +230,7 @@ void NixUpdateInput()
 {
 	NixInputDataLast = NixInputDataCurrent;
 	NixKeyRep = -2;
-	for (HuiEvent &e : NixInputEvent){
+	for (hui::HuiEvent &e: NixInputEvent){
 		if (e.message == "hui:key-down")
 			NixKeyRep = e.key;
 	}
@@ -331,8 +331,8 @@ bool NixGetKey(int key)
 
 bool NixGetKeyDown(int key)
 {
-	if (key == KEY_ANY){
-		for (int i=0;i<HUI_NUM_KEYS;i++)
+	if (key == hui::KEY_ANY){
+		for (int i=0;i<hui::HUI_NUM_KEYS;i++)
 			if (NixInputDataCurrent.key[i] && !NixInputDataLast.key[i])
 				return true;
 		return false;
@@ -347,8 +347,8 @@ int NixGetKeyDownRep()
 
 bool NixGetKeyUp(int key)
 {
-	if (key == KEY_ANY){
-		for (int i=0;i<HUI_NUM_KEYS;i++)
+	if (key == hui::KEY_ANY){
+		for (int i=0;i<hui::HUI_NUM_KEYS;i++)
 			if (!NixInputDataCurrent.key[i] && NixInputDataLast.key[i])
 				return true;
 		return false;
@@ -358,7 +358,7 @@ bool NixGetKeyUp(int key)
 
 string NixGetKeyChar(int key)
 {
-	return HuiGetKeyChar(key);
+	return hui::HuiGetKeyChar(key);
 }
 
 

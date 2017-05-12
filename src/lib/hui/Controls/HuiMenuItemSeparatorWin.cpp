@@ -7,6 +7,9 @@
 
 #include "HuiMenuItemSeparator.h"
 
+namespace hui
+{
+
 #ifdef HUI_API_WIN
 
 HuiMenuItemSeparator::HuiMenuItemSeparator() :
@@ -20,3 +23,4 @@ HuiMenuItemSeparator::~HuiMenuItemSeparator()
 
 #endif
 
+};

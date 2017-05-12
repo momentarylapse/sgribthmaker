@@ -10,6 +10,9 @@
 
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 void *get_gtk_image(const string &image, bool large);
 
 void OnGtkToolbarItemPress(GtkWidget *widget, gpointer data);
@@ -24,6 +27,8 @@ HuiToolItemMenuButton::HuiToolItemMenuButton(const string &title, HuiMenu *menu,
 	gtk_menu_tool_button_set_menu(GTK_MENU_TOOL_BUTTON(widget), menu->widget);
 	//gtk_widget_set_tooltip_text(widget, sys_str(get_lang(id, title)));
 	g_signal_connect(G_OBJECT(widget), "clicked", G_CALLBACK(&OnGtkToolbarItemPress), this);
+}
+
 }
 
 #endif

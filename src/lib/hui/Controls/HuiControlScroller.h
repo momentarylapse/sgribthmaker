@@ -10,6 +10,9 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
+
 class HuiControlScroller : public HuiControl
 {
 public:
@@ -18,6 +21,8 @@ public:
 	virtual void add(HuiControl *child, int x, int y);
 
 	GtkWidget *viewport;
+};
+
 };
 
 #endif /* HUICONTROLSCROLLER_H_ */

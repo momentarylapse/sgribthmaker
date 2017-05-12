@@ -10,6 +10,8 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
 
 class HuiControlListView : public HuiControl
 {
@@ -31,6 +33,8 @@ public:
 
 	bool allow_change_messages;
 	int row_target;
+};
+
 };
 
 #endif /* HUICONTROLLISTVIEW_H_ */

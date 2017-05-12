@@ -10,6 +10,9 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
+
 
 class HuiControlDrawingArea : public HuiControl
 {
@@ -19,6 +22,8 @@ public:
 	void hardReset();
 
 	void *cur_cairo;
+};
+
 };
 
 #endif /* HUICONTROLDRAWINGAREA_H_ */

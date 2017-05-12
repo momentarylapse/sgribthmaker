@@ -10,6 +10,8 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
 
 class HuiControlTabControl : public HuiControl
 {
@@ -27,6 +29,8 @@ public:
 	void addPage(const string &str);
 
 	int cur_page;
+};
+
 };
 
 #endif /* HUICONTROLTABCONTROL_H_ */

@@ -10,6 +10,9 @@
 
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 HuiControlLabel::HuiControlLabel(const string &title, const string &id) :
 	HuiControl(HUI_KIND_LABEL, id)
 {
@@ -62,5 +65,7 @@ void HuiControlLabel::__setOption(const string &op, const string &value)
 		gtk_label_set_angle(GTK_LABEL(widget), value._float());
 	}
 }
+
+};
 
 #endif

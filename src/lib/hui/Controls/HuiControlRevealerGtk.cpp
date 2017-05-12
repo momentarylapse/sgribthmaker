@@ -9,6 +9,9 @@
 
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 void OnGtkExpanderExpand(GObject* object, GParamSpec *param_spec, gpointer user_data);
 
 HuiControlRevealer::HuiControlRevealer(const string &title, const string &id) :
@@ -68,5 +71,7 @@ bool HuiControlRevealer::isRevealed()
 	return (bool)gtk_expander_get_expanded(GTK_EXPANDER(widget));
 #endif
 }
+
+};
 
 #endif

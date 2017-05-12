@@ -9,6 +9,9 @@
 
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 void OnGtkButtonPress(GtkWidget *widget, gpointer data);
 
 
@@ -54,5 +57,7 @@ color HuiControlColorButton::getColor()
 	col.a = gcol.alpha;
 	return col;
 }
+
+};
 
 #endif

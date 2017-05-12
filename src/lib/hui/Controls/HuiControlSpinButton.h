@@ -10,6 +10,8 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
 
 class HuiControlSpinButton : public HuiControl
 {
@@ -22,6 +24,8 @@ public:
 	virtual float getFloat();
 	virtual void __setFloat(float f);
 	virtual void __setOption(const string &op, const string &value);
+};
+
 };
 
 #endif /* HUICONTROLSPINBUTTON_H_ */

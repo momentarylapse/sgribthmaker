@@ -11,6 +11,8 @@
 
 #include "hui_common.h"
 
+namespace hui
+{
 
 class HuiPanel;
 class HuiMenu;
@@ -52,6 +54,8 @@ public:
 #endif
 	Array<HuiControl*> item;
 	HuiPanel *panel;
+};
+
 };
 
 #endif

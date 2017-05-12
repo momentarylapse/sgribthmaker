@@ -11,6 +11,9 @@
 #include "../base/base.h"
 #include "../base/map.h"
 
+namespace hui
+{
+
 typedef MapEntry<string, string> HuiConfigEntry;
 
 class HuiConfiguration
@@ -44,5 +47,7 @@ extern HuiConfiguration HuiConfig;
 
 
 void _cdecl HuiRegisterFileType(const string &ending, const string &description, const string &icon_path, const string &open_with, const string &command_name, bool set_default);
+
+};
 
 #endif /* HUICONFIG_H_ */

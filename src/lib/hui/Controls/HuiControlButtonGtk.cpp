@@ -7,6 +7,9 @@
 
 #include "HuiControlButton.h"
 
+namespace hui
+{
+
 #ifdef HUI_API_GTK
 
 void *get_gtk_image(const string &image, bool large); // -> hui_menu_gtk.cpp
@@ -52,3 +55,5 @@ void HuiControlButton::__setOption(const string &op, const string &value)
 }
 
 #endif
+
+};

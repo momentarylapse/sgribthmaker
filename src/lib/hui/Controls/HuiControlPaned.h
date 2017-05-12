@@ -10,12 +10,17 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
+
 class HuiControlPaned : public HuiControl
 {
 public:
 	HuiControlPaned(const string &text, const string &id);
 
 	virtual void add(HuiControl *child, int x, int y);
+};
+
 };
 
 #endif /* HUICONTROLPANED_H_ */

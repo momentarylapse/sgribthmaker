@@ -10,6 +10,8 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
 
 class HuiControlProgressBar : public HuiControl
 {
@@ -19,6 +21,8 @@ public:
 	virtual void __setString(const string &str);
 	virtual float getFloat();
 	virtual void __setFloat(float f);
+};
+
 };
 
 #endif /* HUICONTROLPROGRESSBAR_H_ */

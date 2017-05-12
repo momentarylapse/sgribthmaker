@@ -9,6 +9,9 @@
 
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 void *get_gtk_image(const string &image, bool large);
 
 void OnGtkToolbarItemPress(GtkWidget *widget, gpointer data)
@@ -30,6 +33,8 @@ HuiToolItemButton::HuiToolItemButton(const string &title, const string &image, c
 	/*gtk_toolbar_insert(GTK_TOOLBAR(cur_toolbar->widget),it,-1);
 	AddToolbarItem(cur_toolbar,id,HuiToolButton,NULL);
 	cur_toolbar->item.back().widget = it;*/
+}
+
 }
 
 #endif

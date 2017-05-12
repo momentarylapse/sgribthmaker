@@ -10,6 +10,9 @@
 
 #include "hui.h"
 
+namespace hui
+{
+
 class HuiWindow;
 
 class HuiToolbar
@@ -42,5 +45,6 @@ public:
 	void add(HuiControl *c);
 };
 
+};
 
 #endif /* HUITOOLBAR_H_ */

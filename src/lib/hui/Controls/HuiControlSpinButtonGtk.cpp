@@ -9,6 +9,9 @@
 
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 void OnGtkEditChange(GtkWidget *widget, gpointer data);
 
 HuiControlSpinButton::HuiControlSpinButton(const string &title, const string &id) :
@@ -94,5 +97,7 @@ void HuiControlSpinButton::__setOption(const string &op, const string &value)
 		gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(widget), false);
 	}
 }
+
+};
 
 #endif

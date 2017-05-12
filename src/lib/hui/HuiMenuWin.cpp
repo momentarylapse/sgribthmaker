@@ -26,6 +26,8 @@
 	#include <gdk/gdkx.h>
 #endif*/
 
+namespace hui
+{
 
 HuiMenu::HuiMenu()
 {
@@ -209,6 +211,6 @@ void HuiMenu::SetText(const string &id, const string &text)
 #endif
 }*/
 
-
+};
 
 #endif

@@ -1,6 +1,9 @@
 #include "hui.h"
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 
 static GtkWindow *get_window_save(HuiWindow *win)
 {
@@ -216,5 +219,6 @@ void HuiAboutBox(HuiWindow *win)
 		delete(aa);
 }
 
+};
 
 #endif

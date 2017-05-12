@@ -1,4 +1,9 @@
 #include "hui.h"
+
+namespace hui
+{
+
+
 #ifdef HUI_API_WIN
 
 
@@ -800,5 +805,6 @@ void HuiWindow::Reset(int id)
 
 #endif
 
-
 #endif
+
+}

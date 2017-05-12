@@ -48,18 +48,23 @@
 #endif
 
 
-#ifdef HUI_API_WIN
-#else
-	extern void *_hui_x_display_;
-	#define hui_x_display (Display*)_hui_x_display_
-#endif
-
 #include "../file/file.h"
 
 #include <functional>
 
-class Painter;
 
+class Painter;
+typedef struct _XDisplay Display; // Xorg
+
+namespace hui
+{
+
+
+
+#ifdef HUI_API_WIN
+#else
+	extern Display *hui_x_display;
+#endif
 
 
 class HuiEventHandler : public VirtualBase
@@ -228,6 +233,8 @@ enum{
 	KEY_CONTROL = 256,
 	KEY_SHIFT = 512,
 	KEY_ALT = 1024
+};
+
 };
 
 #endif

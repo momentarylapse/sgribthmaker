@@ -10,6 +10,8 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
 
 class HuiControlGrid : public HuiControl
 {
@@ -18,6 +20,8 @@ public:
 	virtual void add(HuiControl *child, int x, int y);
 
 	bool button_bar;
+};
+
 };
 
 #endif /* HUICONTROLGRIDGTK_H_ */

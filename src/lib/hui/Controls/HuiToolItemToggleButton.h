@@ -10,6 +10,9 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
+
 class HuiToolItemToggleButton : public HuiControl
 {
 public:
@@ -18,5 +21,7 @@ public:
 	virtual void __check(bool checked);
 	virtual bool isChecked();
 };
+
+}
 
 #endif /* HUITOOLITEMTOGGLEBUTTON_H_ */

@@ -10,10 +10,15 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
+
 class HuiMenuItemSeparator : public HuiControl
 {
 public:
 	HuiMenuItemSeparator();
+};
+
 };
 
 #endif /* HUIMENUITEMSEPARATOR_H_ */

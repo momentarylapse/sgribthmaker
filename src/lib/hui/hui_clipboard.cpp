@@ -8,6 +8,9 @@
 
 #include "hui.h"
 
+namespace hui
+{
+
 void HuiCopyToClipBoard(const string &buffer)
 {
 #ifdef HUI_API_WIN
@@ -96,4 +99,4 @@ string HuiPasteFromClipBoard()
 	return r;
 }
 
-
+};

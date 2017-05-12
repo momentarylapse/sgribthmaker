@@ -8,6 +8,9 @@
 #include "HuiToolItemMenuButton.h"
 #include "../HuiMenu.h"
 
+namespace hui
+{
+
 #ifdef HUI_API_WIN
 
 HuiToolItemMenuButton::HuiToolItemMenuButton(const string &title, HuiMenu *menu, const string &image, const string &id) :
@@ -21,3 +24,4 @@ HuiToolItemMenuButton::~HuiToolItemMenuButton()
 
 #endif
 
+}

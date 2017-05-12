@@ -9,6 +9,9 @@
 
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 void set_list_cell(GtkListStore *store, GtkTreeIter &iter, int column, const string &str);
 
 void OnGtkEditChange(GtkWidget *widget, gpointer data)
@@ -71,5 +74,7 @@ void HuiControlEdit::__setOption(const string &op, const string &value)
 	else if (op == "completion")
 		completionAdd(value);
 }
+
+};
 
 #endif

@@ -15,8 +15,6 @@
 #include "../file/file.h"
 
 
-string HuiVersion = "0.5.21.0";
-
 #include <stdio.h>
 #include <signal.h>
 #ifdef OS_WINDOWS
@@ -45,6 +43,13 @@ string HuiVersion = "0.5.21.0";
 	#include <gdk/gdkx.h>
 #endif
 
+namespace hui
+{
+
+
+string HuiVersion = "0.5.21.0";
+
+
 #ifdef OS_WINDOWS
 	HINSTANCE hui_win_instance;
 #endif
@@ -53,7 +58,7 @@ string HuiVersion = "0.5.21.0";
 	HICON hui_win_main_icon;
 #endif
 #ifdef OS_LINUX
-	void *_hui_x_display_;
+	Display* hui_x_display;
 #endif
 
 
@@ -119,6 +124,8 @@ Array<sHuiImage> HuiImage;
 extern Array<string> HuiMakeArgs(int num_args, char *args[]);
 
 
+}
+
 int hui_main(const Array<string> &);
 
 // for a system independent usage of this library
@@ -157,7 +164,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
 int main(int NumArgs, char *Args[])
 {
-	return hui_main(HuiMakeArgs(NumArgs, Args));
+	return hui_main(hui::HuiMakeArgs(NumArgs, Args));
 }
 
 #endif
@@ -172,6 +179,8 @@ int main(int NumArgs, char *Args[])
 // }
 
 
+namespace hui
+{
 
 
 #ifdef HUI_API_GTK
@@ -323,7 +332,7 @@ void _HuiMakeUsable_()
 #ifdef HUI_API_GTK
 	gtk_init(NULL, NULL);
 	#ifdef OS_LINUX
-		_hui_x_display_ = XOpenDisplay(0);
+		hui_x_display = XOpenDisplay(0);
 	#endif
 
 #if GTK_CHECK_VERSION(3,16,0)
@@ -549,7 +558,7 @@ void HuiEnd()
 #ifdef HUI_API_GTK
 #ifdef OS_LINUX
 		// sometimes freezes...
-		//if (_hui_x_display_)
+		//if (hui_x_display)
 		//	XCloseDisplay(hui_x_display);
 #endif
 
@@ -585,4 +594,4 @@ void HuiDeleteImage(const string &name)
 }
 
 
-
+};

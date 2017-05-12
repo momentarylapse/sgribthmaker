@@ -10,6 +10,9 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
+
 
 class HuiControlCheckBox : public HuiControl
 {
@@ -19,6 +22,8 @@ public:
 	virtual void __setString(const string &str);
 	virtual void __check(bool checked);
 	virtual bool isChecked();
+};
+
 };
 
 #endif /* HUICONTROLCHECKBOX_H_ */

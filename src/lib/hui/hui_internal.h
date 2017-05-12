@@ -2,7 +2,8 @@
 #ifndef _HUI_INTERNAL_EXISTS_
 #define _HUI_INTERNAL_EXISTS_
 
-
+namespace hui
+{
 
 #ifdef OS_WINDOWS
 	extern HINSTANCE hui_win_instance;
@@ -33,7 +34,7 @@ extern Array<sHuiImage> HuiImage;
 // window lists...
 extern Array<HuiWindow*> HuiWindows;
 
-
+};
 
 
 #endif

@@ -15,10 +15,10 @@ class Document;
 class History;
 class Parser;
 
-class SourceView : public HuiEventHandler
+class SourceView : public hui::HuiEventHandler
 {
 public:
-	SourceView(HuiWindow *win, const string &id, Document *d);
+	SourceView(hui::HuiWindow *win, const string &id, Document *d);
 	virtual ~SourceView();
 
 	void Clear();

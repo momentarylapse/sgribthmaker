@@ -12,6 +12,9 @@
 #include "Controls/HuiMenuItemSubmenu.h"
 #include "Controls/HuiMenuItemSeparator.h"
 
+namespace hui
+{
+
 void HuiMenu::__init__()
 {
 	new(this) HuiMenu;
@@ -139,3 +142,5 @@ void HuiMenu::enable(const string &id, bool enabled)
 			dynamic_cast<HuiMenuItemSubmenu*>(c)->sub_menu->enable(id, enabled);
 	}
 }
+
+};

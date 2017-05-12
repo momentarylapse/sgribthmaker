@@ -10,6 +10,9 @@
 
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 HuiMenuItemSubmenu::HuiMenuItemSubmenu(const string &title, HuiMenu *menu, const string &id) :
 	HuiControl(HUI_KIND_MENU_SUBMENU, id)
 {
@@ -23,6 +26,8 @@ HuiMenuItemSubmenu::~HuiMenuItemSubmenu()
 {
 	delete(sub_menu);
 }
+
+};
 
 #endif
 

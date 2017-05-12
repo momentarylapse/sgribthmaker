@@ -8,9 +8,14 @@
 #ifndef HUI_CLIPBOARD_H_
 #define HUI_CLIPBOARD_H_
 
+namespace hui
+{
+
 // clipboard
 void _cdecl HuiCopyToClipBoard(const string &buffer);
 string _cdecl HuiPasteFromClipBoard();
+
+}
 
 
 #endif /* HUI_CLIPBOARD_H_ */

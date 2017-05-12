@@ -10,6 +10,9 @@
 
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 void OnGtkExpanderExpand(GObject* object, GParamSpec *param_spec, gpointer user_data)
 {
 	if (gtk_expander_get_expanded(GTK_EXPANDER(object))){
@@ -60,5 +63,7 @@ void HuiControlExpander::add(HuiControl *child, int x, int y)
 	children.add(child);
 	child->parent = this;
 }
+
+};
 
 #endif

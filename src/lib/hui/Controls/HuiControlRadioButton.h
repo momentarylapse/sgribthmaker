@@ -10,6 +10,8 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
 
 class HuiControlRadioButton : public HuiControl
 {
@@ -19,6 +21,8 @@ public:
 	virtual void __setString(const string &str);
 	virtual void __check(bool checked);
 	virtual bool isChecked();
+};
+
 };
 
 #endif /* HUICONTROLRADIOBUTTON_H_ */

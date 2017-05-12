@@ -12,6 +12,9 @@
 
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 int GtkAreaMouseSet = -1;
 int GtkAreaMouseSetX, GtkAreaMouseSetY;
 
@@ -289,5 +292,7 @@ void HuiControlDrawingArea::hardReset()
 		gtk_widget_grab_focus(da);
 	}
 }
+
+};
 
 #endif

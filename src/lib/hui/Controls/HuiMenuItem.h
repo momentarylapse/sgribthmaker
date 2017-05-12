@@ -10,12 +10,17 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
+
 class HuiMenuItem : public HuiControl
 {
 public:
 	HuiMenuItem(const string &title, const string &id);
 
 	virtual void setImage(const string &image);
+};
+
 };
 
 #endif /* HUIMENUITEM_H_ */

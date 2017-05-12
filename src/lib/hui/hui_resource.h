@@ -9,9 +9,8 @@
 #ifndef _HUI_RESOURCE_EXISTS_
 #define _HUI_RESOURCE_EXISTS_
 
-string str_escape(const string &str);
-string str_unescape(const string &str);
-
+namespace hui
+{
 
 //----------------------------------------------------------------------------------
 // resource handling
@@ -45,5 +44,7 @@ public:
 // resources
 void _cdecl HuiLoadResource(const string &filename);
 HuiResource *HuiGetResource(const string &id);
+
+};
 
 #endif

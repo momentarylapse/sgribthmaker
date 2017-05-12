@@ -10,6 +10,9 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
+
 
 class HuiControlGroup : public HuiControl
 {
@@ -17,6 +20,8 @@ public:
 	HuiControlGroup(const string &text, const string &id);
 
 	virtual void add(HuiControl *child, int x, int y);
+};
+
 };
 
 #endif /* HUICONTROLGROUP_H_ */

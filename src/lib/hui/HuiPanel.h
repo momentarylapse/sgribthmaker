@@ -10,6 +10,12 @@
 
 #include "hui.h"
 
+
+class Painter;
+
+namespace hui
+{
+
 class HuiMenu;
 class HuiResource;
 class HuiPainter;
@@ -17,7 +23,6 @@ class HuiEvent;
 class HuiEventListener;
 class HuiControl;
 class HuiControlRadioButton;
-class Painter;
 
 class HuiPanel : public HuiEventHandler
 {
@@ -182,6 +187,8 @@ public:
 	HuiWindow *win;
 	HuiPanel *parent;
 	Array<HuiPanel*> children;
+};
+
 };
 
 #endif /* HUIPANEL_H_ */

@@ -1,6 +1,10 @@
 #include "hui.h"
 #include "Controls/HuiControl.h"
 
+namespace hui
+{
+
+
 //    for all
 bool HuiPanel::isEnabled(const string &id)
 {
@@ -78,4 +82,4 @@ void GetPartStrings(const string &title)
 //	msg_write(HuiFormatString);
 }
 
-
+};

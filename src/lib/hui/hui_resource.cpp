@@ -3,52 +3,8 @@
 #include "Controls/HuiControl.h"
 #include "../math/math.h"
 
-//----------------------------------------------------------------------------------
-// resource functions
-
-string str_unescape(const string &str)
+namespace hui
 {
-	string r;
-	for (int i=0;i<str.num;i++){
-		if ((str[i]=='\\')and(str[i+1]=='n')){
-			r += "\n";
-			i ++;
-		}else if ((str[i]=='\\')and(str[i+1]=='\\')){
-			r += "\\";
-			i++;
-		}else if ((str[i]=='\\')and(str[i+1]=='?')){
-			r += "?";
-			i++;
-		}else if ((str[i]=='\\')and(str[i+1]=='t')){
-			r += "\t";
-			i++;
-		}else if ((str[i]=='\\')and(str[i+1]=='"')){
-			r += "\"";
-			i++;
-		}else
-			r.add(str[i]);
-	}
-	return r;
-}
-
-
-string str_escape(const string &str)
-{
-	string r;
-	for (int i=0;i<str.num;i++){
-		if (str[i] == '\t')
-			r += "\\t";
-		else if (str[i] == '\n')
-			r += "\\n";
-		else if (str[i] == '\\')
-			r += "\\\\";
-		else if (str[i] == '\"')
-			r += "\\\"";
-		else
-			r.add(str[i]);
-	}
-	return r;
-}
 
 extern Array<HuiLanguage> _HuiLanguage_;
 Array<HuiResource> _HuiResource_;
@@ -487,4 +443,6 @@ void HuiResource::load(const string &buffer)
 	//HuiResourceNew c;
 	res_load_rec(lines, cur_line, *this);
 }
+
+};
 

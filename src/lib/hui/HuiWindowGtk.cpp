@@ -12,6 +12,9 @@
 	#include <gdk/gdkx.h>
 #endif
 
+namespace hui
+{
+
 
 void add_key_to_buffer(HuiInputData *d, int key);
 
@@ -566,7 +569,7 @@ bool HuiPanel::isActive(const string &control_id)
 	return (bool)gtk_widget_has_focus(win->window);
 }
 
-
+};
 
 
 #endif

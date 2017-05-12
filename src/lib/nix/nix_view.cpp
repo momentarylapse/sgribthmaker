@@ -444,8 +444,8 @@ void NixEnd()
 			#endif
 			//glutSwapBuffers();
 			if (NixGLDoubleBuffered){
-				HuiControl *c = NixWindow->_get_control_(NixControlID);
-				glXSwapBuffers(hui_x_display,GDK_WINDOW_XID(gtk_widget_get_window(c->widget)));
+				hui::HuiControl *c = NixWindow->_get_control_(NixControlID);
+				glXSwapBuffers(hui::hui_x_display,GDK_WINDOW_XID(gtk_widget_get_window(c->widget)));
 			}
 		#endif
 	}

@@ -9,6 +9,9 @@
 
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 void OnGtkSliderChange(GtkWidget *widget, gpointer data)
 {	((HuiControl*)data)->notify("hui:change");	}
 
@@ -87,5 +90,7 @@ void HuiControlSlider::__setOption(const string &op, const string &value)
 	else if (op == "clear-marks")
 		gtk_scale_clear_marks(GTK_SCALE(widget));
 }
+
+};
 
 #endif

@@ -10,6 +10,9 @@
 
 #include "hui.h"
 
+namespace hui
+{
+
 void HuiInitTimers();
 
 class HuiTimer
@@ -33,5 +36,7 @@ private:
 
 
 void _cdecl HuiSleep(float duration);
+
+};
 
 #endif /* HUITIMER_H_ */

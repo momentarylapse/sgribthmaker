@@ -10,6 +10,9 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
+
 class HuiMenu;
 
 class HuiToolItemMenuButton : public HuiControl
@@ -17,5 +20,7 @@ class HuiToolItemMenuButton : public HuiControl
 public:
 	HuiToolItemMenuButton(const string &title, HuiMenu *menu, const string &image, const string &id);
 };
+
+}
 
 #endif /* HUITOOLITEMMENUBUTTON_H_ */

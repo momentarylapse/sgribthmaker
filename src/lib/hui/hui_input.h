@@ -9,6 +9,8 @@
 #ifndef _HUI_INPUT_EXISTS_
 #define _HUI_INPUT_EXISTS_
 
+namespace hui
+{
 
 class HuiEventHandler;
 
@@ -87,5 +89,7 @@ string _cdecl HuiGetKeyChar(int key_code);
 #ifdef HUI_API_GTK
 extern GdkEvent *HuiGdkEvent;
 #endif
+
+};
 
 #endif

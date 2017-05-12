@@ -11,6 +11,9 @@
 
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 void *get_gtk_image(const string &image, bool large);
 
 void try_add_accel(GtkWidget *item, const string &id);
@@ -39,5 +42,7 @@ void HuiMenuItem::setImage(const string &image)
 	if (im)
 		gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(widget), im);*/
 }
+
+};
 
 #endif

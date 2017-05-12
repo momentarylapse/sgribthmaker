@@ -1,10 +1,12 @@
 #include "hui.h"
 #include "hui_internal.h"
 
+#ifdef OS_WINDOWS
+#include <tchar.h>
+#endif
+
 // character set....
 #ifdef OS_WINDOWS
-
-	#include <tchar.h>
 
 	#define NUM_TCHAR_STRINGS				32
 	#define TCHAR_STRING_LENGTH			1024
@@ -71,80 +73,6 @@
 #endif
 
 
-	string str_m_to_utf8(const string &str)
-	{
-		string r;
-		for (int i=0;i<str.num;i++){
-			if ((str[i] == '&') and (i < str.num - 1)){
-				if (str[i+1]=='a'){
-					r.add(0xc3);
-					r.add(0xa4);
-				}else if (str[i+1]=='o'){
-					r.add(0xc3);
-					r.add(0xb6);
-				}else if (str[i+1]=='u'){
-					r.add(0xc3);
-					r.add(0xbc);
-				}else if (str[i+1]=='s'){
-					r.add(0xc3);
-					r.add(0x9f);
-				}else if (str[i+1]=='A'){
-					r.add(0xc3);
-					r.add(0x84);
-				}else if (str[i+1]=='O'){
-					r.add(0xc3);
-					r.add(0x96);
-				}else if (str[i+1]=='U'){
-					r.add(0xc3);
-					r.add(0x9c);
-				}else if (str[i+1]=='&'){
-					r.add('&');
-				}else{
-					r.add(str[i]);
-					i --;
-				}
-				i ++;
-			}else
-				r.add(str[i]);
-		}
-		return r;
-	}
-
-	// Umlaute zu Vokalen mit & davor zerlegen
-	string str_utf8_to_m(const string &str)
-	{
-		string r;
-		const unsigned char *us = (const unsigned char*)str.c_str();
-
-		for (int i=0;i<str.num;i++){
-			if ((us[i]==0xc3) and (us[i+1]==0xa4)){
-				r += "&a";
-				i ++;
-			}else if ((us[i]==0xc3) and (us[i+1]==0xb6)){
-				r += "&o";
-				i ++;
-			}else if ((us[i]==0xc3) and (us[i+1]==0xbc)){
-				r += "&u";
-				i ++;
-			}else if ((us[i]==0xc3) and (us[i+1]==0x9f)){
-				r += "&s";
-				i ++;
-			}else if ((us[i]==0xc3) and (us[i+1]==0x84)){
-				r += "&A";
-				i ++;
-			}else if ((us[i]==0xc3) and (us[i+1]==0x96)){
-				r += "&O";
-				i ++;
-			}else if ((us[i]==0xc3) and (us[i+1]==0x9c)){
-				r += "&U";
-				i ++;
-			}else if (us[i]=='&'){
-				r += "&&";
-			}else
-				r.add(str[i]);
-		}
-		return r;
-	}
 
 /*	// Umlaute zu Vokalen mit & davor zerlegen
 	const char *str_ascii2m(const char *str)
@@ -191,6 +119,10 @@
 		}
 		return ss;
 	}*/
+
+
+namespace hui
+{
 
 // language
 bool HuiLanguaged;
@@ -337,3 +269,4 @@ string HuiGetCurLanguage()
 	return "";
 }
 
+};

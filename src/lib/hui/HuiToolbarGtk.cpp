@@ -8,6 +8,9 @@
 #include "HuiToolbar.h"
 #include "Controls/HuiControl.h"
 
+namespace hui
+{
+
 #ifdef HUI_API_GTK
 
 HuiToolbar::HuiToolbar(HuiWindow *_win, bool vertical)
@@ -58,3 +61,4 @@ void HuiToolbar::add(HuiControl *c)
 
 #endif
 
+};

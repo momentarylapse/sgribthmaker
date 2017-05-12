@@ -10,6 +10,8 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
 
 class HuiControlRevealer : public HuiControl
 {
@@ -20,6 +22,8 @@ public:
 
 	virtual void reveal(bool reveal);
 	virtual bool isRevealed();
+};
+
 };
 
 #endif /* SRC_LIB_HUI_CONTROLS_HUICONTROLREVEALER_H_ */

@@ -7,6 +7,9 @@
 
 #include "HuiToolItemSeparator.h"
 
+namespace hui
+{
+
 #ifdef HUI_API_WIN
 
 HuiToolItemSeparator::HuiToolItemSeparator() :
@@ -20,3 +23,4 @@ HuiToolItemSeparator::~HuiToolItemSeparator()
 
 #endif
 
+}

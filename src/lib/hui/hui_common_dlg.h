@@ -9,7 +9,8 @@
 #ifndef _HUI_COMMON_DLG_EXISTS_
 #define _HUI_COMMON_DLG_EXISTS_
 
-
+namespace hui
+{
 
 // file dialogs
 bool _cdecl HuiFileDialogOpen(HuiWindow *win, const string &title, const string &dir, const string &show_filter, const string &filter);
@@ -31,6 +32,8 @@ extern Array<string> HuiPropAuthors;
 string _cdecl HuiQuestionBox(HuiWindow *win, const string &title, const string &text, bool allow_cancel = false);
 void _cdecl HuiInfoBox(HuiWindow *win, const string &title, const string &text);
 void _cdecl HuiErrorBox(HuiWindow *win, const string &title, const string &text);
+
+};
 
 
 #endif

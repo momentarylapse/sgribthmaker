@@ -11,6 +11,9 @@
 
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 void *get_gtk_image_pixbuf(const string &image); // -> hui_menu_gtk.cpp
 string tree_get_cell(GtkTreeModel *store, GtkTreeIter &iter, int column);
 
@@ -370,5 +373,7 @@ void HuiControlListView::__setOption(const string &op, const string &value)
 		gtk_tree_view_set_reorderable(GTK_TREE_VIEW(widget), true);
 	}
 }
+
+};
 
 #endif

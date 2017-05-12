@@ -10,7 +10,7 @@
 
 #include "lib/hui/hui.h"
 
-class Console : public HuiPanel
+class Console : public hui::HuiPanel
 {
 public:
 	Console();

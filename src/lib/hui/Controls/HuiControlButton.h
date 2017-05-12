@@ -10,6 +10,9 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
+
 
 class HuiControlButton : public HuiControl
 {
@@ -19,6 +22,8 @@ public:
 	virtual void __setString(const string &str);
 	virtual void setImage(const string &str);
 	virtual void __setOption(const string &op, const string &value);
+};
+
 };
 
 #endif /* HUICONTROLBUTTON_H_ */

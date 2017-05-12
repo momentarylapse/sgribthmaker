@@ -7,6 +7,8 @@
 
 #include "HuiToolItemButton.h"
 
+namespace hui
+{
 
 #ifdef HUI_API_WIN
 
@@ -20,3 +22,5 @@ HuiToolItemButton::~HuiToolItemButton()
 }
 
 #endif
+
+}

@@ -10,6 +10,9 @@
 
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 HuiControlGroup::HuiControlGroup(const string &title, const string &id) :
 	HuiControl(HUI_KIND_GROUP, id)
 {
@@ -35,5 +38,7 @@ void HuiControlGroup::add(HuiControl *child, int x, int y)
 	children.add(child);
 	child->parent = this;
 }
+
+};
 
 #endif

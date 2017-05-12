@@ -8,6 +8,9 @@
 #include "HuiApplication.h"
 #include "hui.h"
 
+namespace hui
+{
+
 HuiApplication::HuiApplication(const string &app_name, const string &def_lang, int flags)
 {
 	if (flags & HUI_FLAG_SILENT)
@@ -22,6 +25,10 @@ HuiApplication::HuiApplication(const string &app_name, const string &def_lang, i
 
 HuiApplication::~HuiApplication()
 {
+	if (HuiConfig.changed)
+		HuiConfig.save();
+	if ((msg_inited) /*&& (HuiMainLevel == 0)*/)
+		msg_end();
 }
 
 int HuiApplication::run()
@@ -29,17 +36,4 @@ int HuiApplication::run()
 	return HuiRun();
 }
 
-int HuiApplication::_Execute_(HuiApplication *app, const Array<string> &arg)
-{
-	int r = 0;
-	if (app->onStartup(arg))
-		r = app->run();
-	delete(app);
-	if (HuiConfig.changed)
-		HuiConfig.save();
-
-	if ((msg_inited) /*&& (HuiMainLevel == 0)*/)
-		msg_end();
-	return r;
-}
-
+};

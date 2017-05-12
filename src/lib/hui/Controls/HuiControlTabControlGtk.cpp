@@ -10,6 +10,9 @@
 
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 void OnGtkTabControlSwitch(GtkWidget *widget, GtkWidget *page, guint page_num, gpointer data)
 {
 	HuiControlTabControl *c = (HuiControlTabControl*)data;
@@ -107,5 +110,7 @@ void HuiControlTabControl::__setOption(const string &op, const string &value)
 	else if (op == "bar")
 		gtk_notebook_set_show_tabs(GTK_NOTEBOOK(widget), value._bool());
 }
+
+};
 
 #endif

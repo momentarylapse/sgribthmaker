@@ -9,6 +9,9 @@
 #include "hui_internal.h"
 #include "Controls/HuiControl.h"
 
+namespace hui
+{
+
 // for unique window identifiers
 static int current_uid = 0;
 
@@ -674,4 +677,6 @@ void HuiPanel::setOptions(const string &_id, const string &options)
 	test_controls(_id, c)
 		c->setOptions(options);
 }
+
+};
 

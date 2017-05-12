@@ -1,6 +1,7 @@
 #include "hui.h"
 
-
+namespace hui
+{
 
 Array<HuiCommand> _HuiCommand_;
 
@@ -538,3 +539,5 @@ void HuiLoadKeyCodes(const string &filename)
 void HuiSaveKeyCodes(const string &filename)
 {
 }
+
+};

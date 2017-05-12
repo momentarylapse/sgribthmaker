@@ -10,6 +10,8 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
 
 class HuiControlMultilineEdit : public HuiControl
 {
@@ -21,6 +23,8 @@ public:
 	virtual void setTabSize(int tab_size);
 
 	bool handle_keys;
+};
+
 };
 
 #endif /* HUICONTROLMULTILINEEDIT_H_ */

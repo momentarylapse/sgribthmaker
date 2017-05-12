@@ -10,6 +10,9 @@
 
 #include "HuiControl.h"
 
+namespace hui
+{
+
 class HuiMenuItemToggle : public HuiControl
 {
 public:
@@ -17,6 +20,8 @@ public:
 
 	virtual void __check(bool checked);
 	virtual bool isChecked();
+};
+
 };
 
 #endif /* HUIMENUITEMTOGGLE_H_ */

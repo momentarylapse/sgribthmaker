@@ -9,6 +9,9 @@
 
 #ifdef HUI_API_GTK
 
+namespace hui
+{
+
 HuiControlPaned::HuiControlPaned(const string &title, const string &id) :
 	HuiControl(HUI_KIND_PANED, id)
 {
@@ -17,5 +20,7 @@ HuiControlPaned::HuiControlPaned(const string &title, const string &id) :
 void HuiControlPaned::add(HuiControl *child, int x, int y)
 {
 }
+
+};
 
 #endif

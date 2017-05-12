@@ -12,6 +12,9 @@
 #include "../hui_language.h"
 #include "../../image/image.h"
 
+namespace hui
+{
+
 class HuiWindow;
 class HuiPanel;
 
@@ -105,5 +108,6 @@ public:
 };
 
 
+};
 
 #endif /* HUI_CONTROL_H_ */

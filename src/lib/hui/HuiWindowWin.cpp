@@ -3,6 +3,8 @@
 
 #include <windows.h>
 
+namespace hui
+{
 
 void HuiWindow::__delete__()
 {
@@ -1023,5 +1025,6 @@ bool HuiWindow::IsActive(bool include_sub_windows)
 
 
 
+};
 
 #endif

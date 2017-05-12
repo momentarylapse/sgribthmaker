@@ -8,6 +8,9 @@
 #include "HuiMenuItemSubmenu.h"
 #include "../HuiMenu.h"
 
+namespace hui
+{
+
 #ifdef HUI_API_WIN
 
 HuiMenuItemSubmenu::HuiMenuItemSubmenu(const string &title, HuiMenu *menu, const string &id) :
@@ -21,3 +24,4 @@ HuiMenuItemSubmenu::~HuiMenuItemSubmenu()
 
 #endif
 
+};
