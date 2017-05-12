@@ -1,7 +1,7 @@
 #include "hui.h"
 #include "hui_internal.h"
-#include "Controls/HuiControl.h"
 #include "../math/math.h"
+#include "Controls/Control.h"
 
 namespace hui
 {
@@ -130,7 +130,7 @@ HuiResource *HuiGetResource(const string &id)
 	return NULL;
 }
 
-HuiWindow *HuiCreateResourceDialog(const string &id, HuiWindow *root)
+Window *HuiCreateResourceDialog(const string &id, Window *root)
 {
 	//return HuiCreateDialog("-dialog not found in resource-",200,100,root,true,mf);
 	HuiResource *res = HuiGetResource(id);
@@ -153,7 +153,7 @@ HuiWindow *HuiCreateResourceDialog(const string &id, HuiWindow *root)
 	}
 
 	// dialog
-	HuiWindow *dlg;
+	Window *dlg;
 	if (res->type == "SizableDialog")
 		dlg = new HuiDialog(HuiGetLanguageR(res->id, *res), res->w, res->h, root, allow_parent);
 	else
@@ -179,9 +179,9 @@ HuiWindow *HuiCreateResourceDialog(const string &id, HuiWindow *root)
 	return d;*/
 }
 
-HuiMenu *_create_res_menu_(const string &ns, HuiResource *res)
+Menu *_create_res_menu_(const string &ns, HuiResource *res)
 {
-	HuiMenu *menu = new HuiMenu();
+	Menu *menu = new Menu();
 
 	//msg_db_out(2,i2s(n));
 	for (HuiResource &c: res->children){
@@ -200,7 +200,7 @@ HuiMenu *_create_res_menu_(const string &ns, HuiResource *res)
 		else if ((c.type == "ItemSeparator") or (c.type == "Separator"))
 			menu->addSeparator();
 		else if (c.type == "ItemPopup"){
-			HuiMenu *sub = _create_res_menu_(ns, &c);
+			Menu *sub = _create_res_menu_(ns, &c);
 			menu->addSubMenu(get_lang(ns, c.id, "", true), c.id, sub);
 		}
 		menu->item.back()->enable(c.enabled);
@@ -208,7 +208,7 @@ HuiMenu *_create_res_menu_(const string &ns, HuiResource *res)
 	return menu;
 }
 
-HuiMenu *HuiCreateResourceMenu(const string &id)
+Menu *HuiCreateResourceMenu(const string &id)
 {
 	HuiResource *res = HuiGetResource(id);
 	if (!res){
@@ -216,7 +216,7 @@ HuiMenu *HuiCreateResourceMenu(const string &id)
 		return NULL;
 	}
 
-	HuiMenu *m = _create_res_menu_(id, res);
+	Menu *m = _create_res_menu_(id, res);
 	return m;
 }
 

@@ -16,24 +16,24 @@ class rect;
 namespace hui
 {
 
-class HuiWindow;
+class Window;
 
-class HuiPainter : public ::Painter
+class Painter : public ::Painter
 {
 	public:
 #ifdef HUI_API_GTK
 	cairo_t *cr;
 #endif
-	HuiWindow *win;
+	Window *win;
 	string id;
 	int cur_font_size;
 	string cur_font;
 	bool cur_font_bold, cur_font_italic;
 	bool mode_fill;
 
-	HuiPainter();
-	HuiPainter(HuiPanel *panel, const string &id);
-	virtual ~HuiPainter();
+	Painter();
+	Painter(Panel *panel, const string &id);
+	virtual ~Painter();
 
 	color _cdecl getThemeColor(int i);
 

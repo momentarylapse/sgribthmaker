@@ -16,16 +16,16 @@ namespace hui
 
 enum
 {
-	HUI_FLAG_LOAD_RESOURCE = 1,
-	HUI_FLAG_SILENT = 2,
-	HUI_FLAG_UNIQUE = 16,
+	FLAG_LOAD_RESOURCE = 1,
+	FLAG_SILENT = 2,
+	FLAG_UNIQUE = 16,
 };
 
-class HuiApplication : public HuiEventHandler
+class Application : public EventHandler
 {
 public:
-	HuiApplication(const string &app_name, const string &def_lang, int flags);
-	virtual ~HuiApplication();
+	Application(const string &app_name, const string &def_lang, int flags);
+	virtual ~Application();
 
 	virtual bool onStartup(const Array<string> &arg) = 0;
 

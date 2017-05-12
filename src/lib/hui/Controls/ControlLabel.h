@@ -1,23 +1,23 @@
 /*
- * HuiControlLabel.h
+ * ControlLabel.h
  *
  *  Created on: 17.06.2013
  *      Author: michi
  */
 
-#ifndef HUI_CONTROL_LABEL_H_
-#define HUI_CONTROL_LABEL_H_
+#ifndef CONTROL_LABEL_H_
+#define CONTROL_LABEL_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
 
-class HuiControlLabel : public HuiControl
+class ControlLabel : public Control
 {
 public:
-	HuiControlLabel(const string &text, const string &id);
+	ControlLabel(const string &text, const string &id);
 	virtual string getString();
 	virtual void __setString(const string &str);
 	virtual void __setOption(const string &op, const string &value);
@@ -26,4 +26,4 @@ public:
 };
 
 
-#endif /* HUI_CONTROL_LABEL_H_ */
+#endif /* CONTROL_LABEL_H_ */

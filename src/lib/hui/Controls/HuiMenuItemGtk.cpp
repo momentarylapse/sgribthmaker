@@ -20,12 +20,12 @@ void try_add_accel(GtkWidget *item, const string &id);
 
 gboolean OnGtkMenuClick(GtkWidget *widget, gpointer data)
 {
-	((HuiControl*)data)->notify("hui:click");
+	((Control*)data)->notify("hui:click");
 	return FALSE;
 }
 
 HuiMenuItem::HuiMenuItem(const string &title, const string &id) :
-	HuiControl(HUI_KIND_MENU_ITEM, id)
+	Control(HUI_KIND_MENU_ITEM, id)
 {
 	widget = gtk_menu_item_new_with_label(get_lang_sys(id, get_lang_sys(id, title), false));
 	/*GtkWidget *im = (GtkWidget*)get_gtk_image(image, false);

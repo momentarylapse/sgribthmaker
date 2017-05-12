@@ -1,12 +1,12 @@
 /*
- * HuiControlExpanderGtk.cpp
+ * ControlExpanderGtk.cpp
  *
  *  Created on: 18.09.2013
  *      Author: michi
  */
 
-#include "HuiControlExpander.h"
-#include "../HuiWindow.h"
+#include "ControlExpander.h"
+#include "../Window.h"
 
 #ifdef HUI_API_GTK
 
@@ -22,8 +22,8 @@ void OnGtkExpanderExpand(GObject* object, GParamSpec *param_spec, gpointer user_
 	}
 }
 
-HuiControlExpander::HuiControlExpander(const string &title, const string &id) :
-	HuiControl(HUI_KIND_EXPANDER, id)
+ControlExpander::ControlExpander(const string &title, const string &id) :
+	Control(HUI_KIND_EXPANDER, id)
 {
 	GetPartStrings(title);
 	widget = gtk_expander_new(sys_str("<b>" + PartString[0] + "</b>"));
@@ -34,22 +34,22 @@ HuiControlExpander::HuiControlExpander(const string &title, const string &id) :
 	//SetOptions(OptionString);
 }
 
-void HuiControlExpander::expand(int row, bool expand)
+void ControlExpander::expand(int row, bool expand)
 {
 	gtk_expander_set_expanded(GTK_EXPANDER(widget), expand);
 }
 
-void HuiControlExpander::expandAll(bool expand)
+void ControlExpander::expandAll(bool expand)
 {
 	gtk_expander_set_expanded(GTK_EXPANDER(widget), expand);
 }
 
-bool HuiControlExpander::isExpanded(int row)
+bool ControlExpander::isExpanded(int row)
 {
 	return (bool)gtk_expander_get_expanded(GTK_EXPANDER(widget));
 }
 
-void HuiControlExpander::add(HuiControl *child, int x, int y)
+void ControlExpander::add(Control *child, int x, int y)
 {
 	GtkWidget *child_widget = child->get_frame();
 	//gtk_widget_set_vexpand(child_widget, true);

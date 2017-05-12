@@ -47,7 +47,7 @@ namespace hui
 {
 
 
-string HuiVersion = "0.5.21.0";
+string Version = "0.5.21.0";
 
 
 #ifdef OS_WINDOWS
@@ -58,7 +58,7 @@ string HuiVersion = "0.5.21.0";
 	HICON hui_win_main_icon;
 #endif
 #ifdef OS_LINUX
-	Display* hui_x_display;
+	Display* x_display;
 #endif
 
 
@@ -75,15 +75,15 @@ void _so(int i)
 
 
 
-HuiCallback HuiIdleFunction;
-HuiCallback HuiErrorFunction;
+Callback HuiIdleFunction;
+Callback HuiErrorFunction;
 bool HuiHaveToExit;
 bool HuiRunning = false;
 bool HuiEndKeepMsgAlive = false;
 int HuiMainLevel = -1;
 Array<bool> HuiMainLevelRunning;
 
-Array<HuiWindow*> HuiWindows;
+Array<Window*> HuiWindows;
 
 
 bool _HuiScreenOpened_ = false;
@@ -189,12 +189,12 @@ namespace hui
 	class HuiGtkRunner
 	{
 	public:
-		HuiGtkRunner(const HuiCallback &_func)
+		HuiGtkRunner(const Callback &_func)
 		{
 			func = _func;
 			id = -1;
 		}
-		HuiCallback func;
+		Callback func;
 		int id;
 	};
 	Array<HuiGtkRunner*> _hui_runners_;
@@ -212,7 +212,7 @@ namespace hui
 		if (HuiIdleFunction)
 			HuiIdleFunction();
 		else
-			HuiSleep(0.010f);
+			Sleep(0.010f);
 		return TRUE;
 	}
 
@@ -234,7 +234,7 @@ namespace hui
 	}
 #endif
 
-void HuiSetIdleFunction(const HuiCallback &c)
+void HuiSetIdleFunction(const Callback &c)
 {
 #ifdef HUI_API_GTK
 	bool old_idle = (bool)HuiIdleFunction;
@@ -259,7 +259,7 @@ void _HuiSetIdleFunctionM(HuiEventHandler *object, void (HuiEventHandler::*funct
 	_HuiSetIdleFunction(HuiCallback(object, function));
 }*/
 
-int HuiRunLater(float time, const HuiCallback &c)
+int HuiRunLater(float time, const Callback &c)
 {
 	#ifdef HUI_API_WIN
 		msg_todo("HuiRunLater");
@@ -283,7 +283,7 @@ int _HuiRunLaterM(float time, HuiEventHandler *object, void (HuiEventHandler::*f
 	return _HuiRunLater(time, new HuiCallback(object, function));
 }*/
 
-int HuiRunRepeated(float time, const HuiCallback &c)
+int HuiRunRepeated(float time, const Callback &c)
 {
 	#ifdef HUI_API_WIN
 		msg_todo("HuiRunRepeated");
@@ -332,7 +332,7 @@ void _HuiMakeUsable_()
 #ifdef HUI_API_GTK
 	gtk_init(NULL, NULL);
 	#ifdef OS_LINUX
-		hui_x_display = XOpenDisplay(0);
+		x_display = XOpenDisplay(0);
 	#endif
 
 #if GTK_CHECK_VERSION(3,16,0)
@@ -388,7 +388,7 @@ void HuiInit(const string &program, bool load_res, const string &def_lang)
 
 
 
-	HuiInitTimers();
+	InitTimers();
 
 	_HuiInitInput_();
 
@@ -398,7 +398,7 @@ void HuiInit(const string &program, bool load_res, const string &def_lang)
 	HuiSetDefaultErrorHandler(NULL);
 	//msg_write("");
 
-	HuiConfig.filename = HuiAppDirectory + "Data/config.txt";
+	Config.filename = HuiAppDirectory + "Data/config.txt";
 
 	
 	//msg_write("HuiAppDirectory " + HuiAppDirectory);
@@ -408,7 +408,7 @@ void HuiInit(const string &program, bool load_res, const string &def_lang)
 		HuiLoadResource(HuiAppDirectoryStatic + "Data/hui_resources.txt");
 
 	if (def_lang.num > 0)
-		HuiSetLanguage(HuiConfig.getStr("Language", def_lang));
+		HuiSetLanguage(Config.getStr("Language", def_lang));
 
 	// at this point:
 	//   HuiAppDirectory -> dir to run binary in (binary dir or ~/.my_app/)
@@ -500,7 +500,7 @@ void HuiDoSingleMainLoop()
 #ifdef HUI_API_GTK
 
 	// push idle function
-	HuiCallback _if_ = HuiIdleFunction;
+	Callback _if_ = HuiIdleFunction;
 
 	HuiSetIdleFunction(NULL);
 	while(gtk_events_pending())
@@ -519,7 +519,7 @@ void HuiPushMainLevel()
 
 void HuiCleanUpMainLevel()
 {
-	foreachb(HuiWindow *w, HuiWindows)
+	foreachb(Window *w, HuiWindows)
 		if (w->_get_main_level_() >= HuiMainLevel){
 			delete(w);
 		}
@@ -566,8 +566,8 @@ void HuiEnd()
 		g_object_unref(invisible_cursor);
 #endif
 #endif
-		if (HuiConfig.changed)
-			HuiConfig.save();
+		if (Config.changed)
+			Config.save();
 	}
 	if ((msg_inited) and (!HuiEndKeepMsgAlive) and (HuiMainLevel == 0))
 		msg_end();

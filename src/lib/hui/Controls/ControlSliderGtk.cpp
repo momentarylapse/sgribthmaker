@@ -1,11 +1,11 @@
 /*
- * HuiControlSlider.cpp
+ * ControlSlider.cpp
  *
  *  Created on: 17.06.2013
  *      Author: michi
  */
 
-#include "HuiControlSlider.h"
+#include "ControlSlider.h"
 
 #ifdef HUI_API_GTK
 
@@ -13,10 +13,10 @@ namespace hui
 {
 
 void OnGtkSliderChange(GtkWidget *widget, gpointer data)
-{	((HuiControl*)data)->notify("hui:change");	}
+{	((Control*)data)->notify("hui:change");	}
 
-HuiControlSlider::HuiControlSlider(const string &title, const string &id, bool _vertical) :
-	HuiControl(HUI_KIND_SLIDER, id)
+ControlSlider::ControlSlider(const string &title, const string &id, bool _vertical) :
+	Control(HUI_KIND_SLIDER, id)
 {
 	vertical = _vertical;
 	GetPartStrings(title);
@@ -41,17 +41,17 @@ HuiControlSlider::HuiControlSlider(const string &title, const string &id, bool _
 	setOptions(OptionString);
 }
 
-float HuiControlSlider::getFloat()
+float ControlSlider::getFloat()
 {
 	return (float)gtk_range_get_value(GTK_RANGE(widget));
 }
 
-void HuiControlSlider::__setFloat(float f)
+void ControlSlider::__setFloat(float f)
 {
 	gtk_range_set_value(GTK_RANGE(widget), f);
 }
 
-void HuiControlSlider::__addString(const string &s)
+void ControlSlider::__addString(const string &s)
 {
 	Array<string> p = s.explode("\\");//HuiComboBoxSeparator);
 	if (p.num != 2)
@@ -59,7 +59,7 @@ void HuiControlSlider::__addString(const string &s)
 	gtk_scale_add_mark(GTK_SCALE(widget), p[0]._float(), vertical ? GTK_POS_LEFT : GTK_POS_TOP, ("<small>" + p[1] + "</small>").c_str());
 }
 
-void HuiControlSlider::__setOption(const string &op, const string &value)
+void ControlSlider::__setOption(const string &op, const string &value)
 {
 	if (op == "range"){
 		float vmin = -100000000000.0f;

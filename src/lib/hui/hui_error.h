@@ -12,10 +12,10 @@ namespace hui
 {
 
 // error handling
-void HuiSetErrorFunction(const HuiCallback &function);
-void HuiSetDefaultErrorHandler(const HuiCallback &error_cleanup_function);
+void HuiSetErrorFunction(const Callback &function);
+void HuiSetDefaultErrorHandler(const Callback &error_cleanup_function);
 void HuiRaiseError(const string &message);
-void HuiSendBugReport(HuiWindow *parent);
+void HuiSendBugReport(Window *parent);
 
 };
 

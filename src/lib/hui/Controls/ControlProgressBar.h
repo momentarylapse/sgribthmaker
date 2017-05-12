@@ -1,22 +1,22 @@
 /*
- * HuiControlProgressBar.h
+ * ControlProgressBar.h
  *
  *  Created on: 17.06.2013
  *      Author: michi
  */
 
-#ifndef HUICONTROLPROGRESSBAR_H_
-#define HUICONTROLPROGRESSBAR_H_
+#ifndef CONTROLPROGRESSBAR_H_
+#define CONTROLPROGRESSBAR_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
-class HuiControlProgressBar : public HuiControl
+class ControlProgressBar : public Control
 {
 public:
-	HuiControlProgressBar(const string &text, const string &id);
+	ControlProgressBar(const string &text, const string &id);
 	virtual string getString();
 	virtual void __setString(const string &str);
 	virtual float getFloat();
@@ -25,4 +25,4 @@ public:
 
 };
 
-#endif /* HUICONTROLPROGRESSBAR_H_ */
+#endif /* CONTROLPROGRESSBAR_H_ */

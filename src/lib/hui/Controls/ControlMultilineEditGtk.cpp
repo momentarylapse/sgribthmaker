@@ -1,11 +1,11 @@
 /*
- * HuiControlMultilineEdit.cpp
+ * ControlMultilineEdit.cpp
  *
  *  Created on: 18.06.2013
  *      Author: michi
  */
 
-#include "HuiControlMultilineEdit.h"
+#include "ControlMultilineEdit.h"
 
 #ifdef HUI_API_GTK
 
@@ -16,10 +16,10 @@ gboolean OnGtkAreaKeyDown(GtkWidget *widget, GdkEventKey *event, gpointer user_d
 gboolean OnGtkAreaKeyUp(GtkWidget *widget, GdkEventKey *event, gpointer user_data);
 
 void OnGtkMultilineEditChange(GtkWidget *widget, gpointer data)
-{	((HuiControl*)data)->notify("hui:change");	}
+{	static_cast<Control*>(data)->notify("hui:change");	}
 
-HuiControlMultilineEdit::HuiControlMultilineEdit(const string &title, const string &id) :
-	HuiControl(HUI_KIND_MULTILINEEDIT, id)
+ControlMultilineEdit::ControlMultilineEdit(const string &title, const string &id) :
+	Control(HUI_KIND_MULTILINEEDIT, id)
 {
 	GetPartStrings(title);
 	GtkTextBuffer *tb = gtk_text_buffer_new(NULL);
@@ -59,14 +59,14 @@ HuiControlMultilineEdit::HuiControlMultilineEdit(const string &title, const stri
 	setOptions(OptionString);
 }
 
-void HuiControlMultilineEdit::__setString(const string &str)
+void ControlMultilineEdit::__setString(const string &str)
 {
 	GtkTextBuffer *tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(widget));
 	const char *str2 = sys_str(str);
 	gtk_text_buffer_set_text(tb, str2, strlen(str2));
 }
 
-string HuiControlMultilineEdit::getString()
+string ControlMultilineEdit::getString()
 {
 	GtkTextBuffer *tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(widget));
 	GtkTextIter is, ie;
@@ -75,11 +75,11 @@ string HuiControlMultilineEdit::getString()
 	return de_sys_str(gtk_text_buffer_get_text(tb, &is, &ie, false));
 }
 
-void HuiControlMultilineEdit::__addString(const string& str)
+void ControlMultilineEdit::__addString(const string& str)
 {
 }
 
-void HuiControlMultilineEdit::setTabSize(int tab_size)
+void ControlMultilineEdit::setTabSize(int tab_size)
 {
 	PangoLayout *layout = gtk_widget_create_pango_layout(widget, "W");
 	int width, height;

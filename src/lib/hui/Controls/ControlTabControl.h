@@ -1,22 +1,22 @@
 /*
- * HuiControlTabControl.h
+ * ControlTabControl.h
  *
  *  Created on: 17.06.2013
  *      Author: michi
  */
 
-#ifndef HUICONTROLTABCONTROL_H_
-#define HUICONTROLTABCONTROL_H_
+#ifndef CONTROLTABCONTROL_H_
+#define CONTROLTABCONTROL_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
-class HuiControlTabControl : public HuiControl
+class ControlTabControl : public Control
 {
 public:
-	HuiControlTabControl(const string &text, const string &id, HuiPanel *panel);
+	ControlTabControl(const string &text, const string &id, Panel *panel);
 	virtual string getString();
 	virtual void __setString(const string &str);
 	virtual void __setInt(int i);
@@ -25,7 +25,7 @@ public:
 	virtual void __removeString(int row);
 	virtual void __setOption(const string &op, const string &value);
 
-	virtual void add(HuiControl *child, int x, int y);
+	virtual void add(Control *child, int x, int y);
 	void addPage(const string &str);
 
 	int cur_page;
@@ -33,4 +33,4 @@ public:
 
 };
 
-#endif /* HUICONTROLTABCONTROL_H_ */
+#endif /* CONTROLTABCONTROL_H_ */

@@ -10,8 +10,8 @@
 extern string LastCommand;
 void ExecuteCommand(const string&);
 
-CommandDialog::CommandDialog(HuiWindow *parent) :
-	hui::HuiWindow("command_dialog", parent)
+CommandDialog::CommandDialog(Window *parent) :
+	hui::Window("command_dialog", parent)
 {
 	setString("command", LastCommand);
 	event("ok", std::bind(&CommandDialog::onOk, this));

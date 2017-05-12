@@ -1,22 +1,22 @@
 /*
- * HuiControlRadioButton.h
+ * ControlRadioButton.h
  *
  *  Created on: 17.06.2013
  *      Author: michi
  */
 
-#ifndef HUICONTROLRADIOBUTTON_H_
-#define HUICONTROLRADIOBUTTON_H_
+#ifndef CONTROLRADIOBUTTON_H_
+#define CONTROLRADIOBUTTON_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
-class HuiControlRadioButton : public HuiControl
+class ControlRadioButton : public Control
 {
 public:
-	HuiControlRadioButton(const string &text, const string &id, HuiPanel *panel);
+	ControlRadioButton(const string &text, const string &id, Panel *panel);
 	virtual string getString();
 	virtual void __setString(const string &str);
 	virtual void __check(bool checked);
@@ -25,4 +25,4 @@ public:
 
 };
 
-#endif /* HUICONTROLRADIOBUTTON_H_ */
+#endif /* CONTROLRADIOBUTTON_H_ */

@@ -10,10 +10,10 @@
 
 #include "lib/hui/hui.h"
 
-class SettingsDialog : public hui::HuiWindow
+class SettingsDialog : public hui::Window
 {
 public:
-	SettingsDialog(hui::HuiWindow *parent);
+	SettingsDialog(hui::Window *parent);
 	virtual ~SettingsDialog();
 
 	void fillSchemeList();

@@ -1,28 +1,28 @@
 /*
- * HuiControlScroller.h
+ * ControlScroller.h
  *
  *  Created on: 18.09.2013
  *      Author: michi
  */
 
-#ifndef HUICONTROLSCROLLER_H_
-#define HUICONTROLSCROLLER_H_
+#ifndef CONTROLSCROLLER_H_
+#define CONTROLSCROLLER_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
-class HuiControlScroller : public HuiControl
+class ControlScroller : public Control
 {
 public:
-	HuiControlScroller(const string &text, const string &id);
+	ControlScroller(const string &text, const string &id);
 
-	virtual void add(HuiControl *child, int x, int y);
+	virtual void add(Control *child, int x, int y);
 
 	GtkWidget *viewport;
 };
 
 };
 
-#endif /* HUICONTROLSCROLLER_H_ */
+#endif /* CONTROLSCROLLER_H_ */

@@ -13,12 +13,12 @@
 namespace hui
 {
 
-void HuiInitTimers();
+void InitTimers();
 
-class HuiTimer
+class Timer
 {
 public:
-	HuiTimer();
+	Timer();
 	float peek();
 	float get();
 	void reset();
@@ -35,7 +35,7 @@ private:
 };
 
 
-void _cdecl HuiSleep(float duration);
+void _cdecl Sleep(float duration);
 
 };
 

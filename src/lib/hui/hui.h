@@ -20,17 +20,17 @@
 	typedef int color;
 #endif
 
-	namespace hui
-	{
+namespace hui
+{
 
-extern string HuiVersion;
-
-
+extern string Version;
 
 
-class HuiWindow;
-class HuiMenu;
-class HuiEventHandler;
+
+
+class Window;
+class Menu;
+class EventHandler;
 
 
 
@@ -60,20 +60,20 @@ extern bool HuiRunning;
 };
 
 
-#include "HuiApplication.h"
+#include "Application.h"
 #include "hui_main.h"
 #include "hui_input.h"
-#include "HuiMenu.h"
-#include "HuiPanel.h"
-#include "HuiWindow.h"
+#include "Menu.h"
+#include "Panel.h"
+#include "Window.h"
 #include "hui_common_dlg.h"
 #include "hui_language.h"
-#include "HuiConfig.h"
+#include "Config.h"
 #include "hui_resource.h"
 #include "hui_utility.h"
-#include "HuiPainter.h"
-#include "HuiTimer.h"
-#include "HuiToolbar.h"
+#include "Painter.h"
+#include "Timer.h"
+#include "Toolbar.h"
 #include "hui_error.h"
 #include "hui_clipboard.h"
 

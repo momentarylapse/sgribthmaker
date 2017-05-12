@@ -5,8 +5,8 @@
  *      Author: michi
  */
 
+#include "../Menu.h"
 #include "HuiToolItemMenuButton.h"
-#include "../HuiMenu.h"
 
 #ifdef HUI_API_GTK
 
@@ -17,8 +17,8 @@ void *get_gtk_image(const string &image, bool large);
 
 void OnGtkToolbarItemPress(GtkWidget *widget, gpointer data);
 
-HuiToolItemMenuButton::HuiToolItemMenuButton(const string &title, HuiMenu *menu, const string &image, const string &id) :
-	HuiControl(HUI_KIND_TOOL_MENUBUTTON, id)
+HuiToolItemMenuButton::HuiToolItemMenuButton(const string &title, Menu *menu, const string &image, const string &id) :
+	Control(HUI_KIND_TOOL_MENUBUTTON, id)
 {
 	GtkWidget *im = (GtkWidget*)get_gtk_image(image, true);
 	gtk_widget_show(im);

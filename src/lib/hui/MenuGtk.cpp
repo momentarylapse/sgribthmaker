@@ -1,6 +1,6 @@
+#include "Controls/Control.h"
 #include "hui.h"
 #include "hui_internal.h"
-#include "Controls/HuiControl.h"
 #ifdef HUI_API_GTK
 
 
@@ -33,7 +33,7 @@ GtkAccelGroup *accel_group = NULL;
 
 void try_add_accel(GtkWidget *item, const string &id)
 {
-	for (HuiCommand &c: _HuiCommand_)
+	for (Command &c: _HuiCommand_)
 		if ((id == c.id) and (c.key_code >= 0)){
 			int k = c.key_code;
 			int mod = (((k&KEY_SHIFT)>0) ? GDK_SHIFT_MASK : 0) | (((k&KEY_CONTROL)>0) ? GDK_CONTROL_MASK : 0);
@@ -41,7 +41,7 @@ void try_add_accel(GtkWidget *item, const string &id)
 		}
 }
 
-HuiMenu::HuiMenu()
+Menu::Menu()
 {
 	msg_db_r("HuiMenu()", 1);
 	_HuiMakeUsable_();
@@ -53,25 +53,25 @@ HuiMenu::HuiMenu()
 	msg_db_l(1);
 }
 
-HuiMenu::~HuiMenu()
+Menu::~Menu()
 {
 	clear();
 }
 
-void HuiMenu::gtk_realize()
+void Menu::gtk_realize()
 {
 	widget = gtk_menu_new();
 }
 
 // window coordinate system!
-void HuiMenu::openPopup(HuiPanel *panel, int x, int y)
+void Menu::openPopup(Panel *panel, int x, int y)
 {
 	gtk_widget_show(widget);
 	gtk_menu_popup(GTK_MENU(widget), NULL, NULL, NULL, NULL, 0, gtk_get_current_event_time());
 	set_panel(panel);
 }
 
-void HuiMenu::add(HuiControl *c)
+void Menu::add(Control *c)
 {
 	item.add(c);
 	gtk_menu_shell_append(GTK_MENU_SHELL(widget), c->widget);

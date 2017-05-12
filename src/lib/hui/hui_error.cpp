@@ -18,8 +18,8 @@
 namespace hui
 {
 
-extern HuiCallback HuiIdleFunction, HuiErrorFunction;
-extern Array<HuiWindow*> HuiWindows;
+extern Callback HuiIdleFunction, HuiErrorFunction;
+extern Array<Window*> HuiWindows;
 
 void _HuiSignalHandler(int)
 {
@@ -27,7 +27,7 @@ void _HuiSignalHandler(int)
 }
 
 // apply a function to be executed when a critical error occures
-void HuiSetErrorFunction(const HuiCallback &function)
+void HuiSetErrorFunction(const Callback &function)
 {
 	HuiErrorFunction = function;
 	if (function){
@@ -42,7 +42,7 @@ void HuiSetErrorFunction(const HuiCallback &function)
 	}
 }
 
-static HuiCallback _eh_cleanup_function_;
+static Callback _eh_cleanup_function_;
 
 
 #ifdef _X_USE_NET_
@@ -50,7 +50,7 @@ static HuiCallback _eh_cleanup_function_;
 class ReportDialog : public HuiFixedDialog
 {
 public:
-	ReportDialog(HuiWindow *parent) :
+	ReportDialog(Window *parent) :
 		HuiFixedDialog(_("Bug Report"), 400, 295, parent, false)
 	{
 		addLabel("!bold$" + _("Name:"),5,5,360,25,"brd_t_name");
@@ -84,7 +84,7 @@ public:
 	}
 };
 
-void HuiSendBugReport(HuiWindow *parent)
+void HuiSendBugReport(Window *parent)
 {
 	ReportDialog *dlg = new ReportDialog(parent);
 	dlg->run();
@@ -158,7 +158,7 @@ void hui_default_error_handler()
 		msg_write(_("...done"));
 	}
 
-	foreachb(HuiWindow *w, HuiWindows)
+	foreachb(Window *w, HuiWindows)
 		delete(w);
 	msg_write(_("                  Close dialog box to exit program."));
 
@@ -175,7 +175,7 @@ void hui_default_error_handler()
 	exit(0);
 }
 
-void HuiSetDefaultErrorHandler(const HuiCallback &error_cleanup_function)
+void HuiSetDefaultErrorHandler(const Callback &error_cleanup_function)
 {
 	_eh_cleanup_function_ = error_cleanup_function;
 	HuiSetErrorFunction(&hui_default_error_handler);

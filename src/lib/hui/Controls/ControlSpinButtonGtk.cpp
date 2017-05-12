@@ -1,11 +1,11 @@
 /*
- * HuiControlSpinButton.cpp
+ * ControlSpinButton.cpp
  *
  *  Created on: 17.06.2013
  *      Author: michi
  */
 
-#include "HuiControlSpinButton.h"
+#include "ControlSpinButton.h"
 
 #ifdef HUI_API_GTK
 
@@ -14,8 +14,8 @@ namespace hui
 
 void OnGtkEditChange(GtkWidget *widget, gpointer data);
 
-HuiControlSpinButton::HuiControlSpinButton(const string &title, const string &id) :
-	HuiControl(HUI_KIND_SPINBUTTON, id)
+ControlSpinButton::ControlSpinButton(const string &title, const string &id) :
+	Control(HUI_KIND_SPINBUTTON, id)
 {
 	GetPartStrings(title);
 	float vmin = -100000000000.0f;
@@ -38,38 +38,38 @@ HuiControlSpinButton::HuiControlSpinButton(const string &title, const string &id
 	setOptions(OptionString);
 }
 
-string HuiControlSpinButton::getString()
+string ControlSpinButton::getString()
 {
 	return f2s((float)gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget)), gtk_spin_button_get_digits(GTK_SPIN_BUTTON(widget)));
 	//return de_sys_str(gtk_entry_get_text(GTK_ENTRY(widget)));
 }
 
-void HuiControlSpinButton::__setString(const string &str)
+void ControlSpinButton::__setString(const string &str)
 {
 	gtk_entry_set_text(GTK_ENTRY(widget), sys_str(str));
 }
 
-void HuiControlSpinButton::__setInt(int i)
+void ControlSpinButton::__setInt(int i)
 {
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), i);
 }
 
-int HuiControlSpinButton::getInt()
+int ControlSpinButton::getInt()
 {
 	return gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
 }
 
-float HuiControlSpinButton::getFloat()
+float ControlSpinButton::getFloat()
 {
 	return (float)gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 }
 
-void HuiControlSpinButton::__setFloat(float f)
+void ControlSpinButton::__setFloat(float f)
 {
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(widget), f);
 }
 
-void HuiControlSpinButton::__setOption(const string &op, const string &value)
+void ControlSpinButton::__setOption(const string &op, const string &value)
 {
 	if (op == "range"){
 		float vmin = -100000000000.0f;

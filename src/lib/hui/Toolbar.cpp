@@ -5,7 +5,8 @@
  *      Author: michi
  */
 
-#include "HuiToolbar.h"
+#include "Toolbar.h"
+
 #include "Controls/HuiToolItemButton.h"
 #include "Controls/HuiToolItemMenuButton.h"
 #include "Controls/HuiToolItemToggleButton.h"
@@ -14,22 +15,22 @@
 namespace hui
 {
 
-HuiMenu *_create_res_menu_(const string &ns, HuiResource *res);
+Menu *_create_res_menu_(const string &ns, HuiResource *res);
 
 
 // add a default button
-void HuiToolbar::addItem(const string &title, const string &image, const string &id)
+void Toolbar::addItem(const string &title, const string &image, const string &id)
 {
 	add(new HuiToolItemButton(title, image, id));
 }
 
 // add a checkable button
-void HuiToolbar::addItemCheckable(const string &title, const string &image, const string &id)
+void Toolbar::addItemCheckable(const string &title, const string &image, const string &id)
 {
 	add(new HuiToolItemToggleButton(title, image, id));
 }
 
-void HuiToolbar::addItemMenu(const string &title, const string &image, HuiMenu *menu, const string &id)
+void Toolbar::addItemMenu(const string &title, const string &image, Menu *menu, const string &id)
 {
 	if (!menu)
 		return;
@@ -37,19 +38,19 @@ void HuiToolbar::addItemMenu(const string &title, const string &image, HuiMenu *
 	menu->set_panel(win);
 }
 
-void HuiToolbar::addItemMenuByID(const string &title, const string &image, const string &menu_id, const string &id)
+void Toolbar::addItemMenuByID(const string &title, const string &image, const string &menu_id, const string &id)
 {
-	HuiMenu *menu = HuiCreateResourceMenu(menu_id);
+	Menu *menu = HuiCreateResourceMenu(menu_id);
 	addItemMenu(title, image, menu, id);
 }
 
-void HuiToolbar::addSeparator()
+void Toolbar::addSeparator()
 {
 	add(new HuiToolItemSeparator());
 }
 
 // remove all items from the toolbar
-void HuiToolbar::reset()
+void Toolbar::reset()
 {
 	for (int i=0;i<item.num;i++)
 		delete(item[i]);
@@ -57,7 +58,7 @@ void HuiToolbar::reset()
 }
 
 // create and apply a toolbar bar resource id
-void HuiToolbar::setByID(const string &id)
+void Toolbar::setByID(const string &id)
 {
 	msg_db_m(id.c_str(),1);
 	HuiResource *res = HuiGetResource(id);

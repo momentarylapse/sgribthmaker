@@ -1,12 +1,12 @@
 /*
- * HuiControlTabControl.cpp
+ * ControlTabControl.cpp
  *
  *  Created on: 17.06.2013
  *      Author: michi
  */
 
-#include "HuiControlTabControl.h"
 #include "../hui.h"
+#include "ControlTabControl.h"
 
 #ifdef HUI_API_GTK
 
@@ -15,14 +15,14 @@ namespace hui
 
 void OnGtkTabControlSwitch(GtkWidget *widget, GtkWidget *page, guint page_num, gpointer data)
 {
-	HuiControlTabControl *c = (HuiControlTabControl*)data;
+	ControlTabControl *c = reinterpret_cast<ControlTabControl*>(data);
 	c->cur_page = page_num;
 	c->notify("hui:change");
 }
 
 
-HuiControlTabControl::HuiControlTabControl(const string &title, const string &id, HuiPanel *panel) :
-	HuiControl(HUI_KIND_TABCONTROL, id)
+ControlTabControl::ControlTabControl(const string &title, const string &id, Panel *panel) :
+	Control(HUI_KIND_TABCONTROL, id)
 {
 	GetPartStrings(title);
 	widget = gtk_notebook_new();
@@ -39,37 +39,37 @@ HuiControlTabControl::HuiControlTabControl(const string &title, const string &id
 	setOptions(OptionString);
 }
 
-string HuiControlTabControl::getString()
+string ControlTabControl::getString()
 {
 	return "";
 }
 
-void HuiControlTabControl::__setString(const string& str)
+void ControlTabControl::__setString(const string& str)
 {
 }
 
-void HuiControlTabControl::__setInt(int i)
+void ControlTabControl::__setInt(int i)
 {
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(widget), i);
 	cur_page = i;
 }
 
-int HuiControlTabControl::getInt()
+int ControlTabControl::getInt()
 {
 	return cur_page;
 }
 
-void HuiControlTabControl::__addString(const string &str)
+void ControlTabControl::__addString(const string &str)
 {
 	addPage(str);
 }
 
-void HuiControlTabControl::__removeString(int row)
+void ControlTabControl::__removeString(int row)
 {
 	gtk_notebook_remove_page(GTK_NOTEBOOK(widget), row);
 }
 
-void HuiControlTabControl::addPage(const string &str)
+void ControlTabControl::addPage(const string &str)
 {
 	GtkWidget *inside;
 	bool resizable = true;
@@ -90,7 +90,7 @@ void HuiControlTabControl::addPage(const string &str)
 	gtk_notebook_append_page(GTK_NOTEBOOK(widget), inside, label);
 }
 
-void HuiControlTabControl::add(HuiControl *child, int x, int y)
+void ControlTabControl::add(Control *child, int x, int y)
 {
 	GtkWidget *child_widget = child->widget;
 	if (child->frame)
@@ -103,7 +103,7 @@ void HuiControlTabControl::add(HuiControl *child, int x, int y)
 	child->parent = this;
 }
 
-void HuiControlTabControl::__setOption(const string &op, const string &value)
+void ControlTabControl::__setOption(const string &op, const string &value)
 {
 	if (op == "nobar")
 		gtk_notebook_set_show_tabs(GTK_NOTEBOOK(widget), false);

@@ -1,22 +1,22 @@
 /*
- * HuiControlSpinButton.h
+ * ControlSpinButton.h
  *
  *  Created on: 17.06.2013
  *      Author: michi
  */
 
-#ifndef HUICONTROLSPINBUTTON_H_
-#define HUICONTROLSPINBUTTON_H_
+#ifndef CONTROLSPINBUTTON_H_
+#define CONTROLSPINBUTTON_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
-class HuiControlSpinButton : public HuiControl
+class ControlSpinButton : public Control
 {
 public:
-	HuiControlSpinButton(const string &text, const string &id);
+	ControlSpinButton(const string &text, const string &id);
 	virtual string getString();
 	virtual void __setString(const string &str);
 	virtual void __setInt(int i);
@@ -28,4 +28,4 @@ public:
 
 };
 
-#endif /* HUICONTROLSPINBUTTON_H_ */
+#endif /* CONTROLSPINBUTTON_H_ */

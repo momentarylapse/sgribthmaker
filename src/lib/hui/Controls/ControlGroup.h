@@ -1,27 +1,27 @@
 /*
- * HuiControlGroup.h
+ * ControlGroup.h
  *
  *  Created on: 17.06.2013
  *      Author: michi
  */
 
-#ifndef HUICONTROLGROUP_H_
-#define HUICONTROLGROUP_H_
+#ifndef CONTROLGROUP_H_
+#define CONTROLGROUP_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
 
-class HuiControlGroup : public HuiControl
+class ControlGroup : public Control
 {
 public:
-	HuiControlGroup(const string &text, const string &id);
+	ControlGroup(const string &text, const string &id);
 
-	virtual void add(HuiControl *child, int x, int y);
+	virtual void add(Control *child, int x, int y);
 };
 
 };
 
-#endif /* HUICONTROLGROUP_H_ */
+#endif /* CONTROLGROUP_H_ */

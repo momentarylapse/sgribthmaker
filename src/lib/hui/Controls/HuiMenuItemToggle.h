@@ -8,12 +8,12 @@
 #ifndef HUIMENUITEMTOGGLE_H_
 #define HUIMENUITEMTOGGLE_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
-class HuiMenuItemToggle : public HuiControl
+class HuiMenuItemToggle : public Control
 {
 public:
 	HuiMenuItemToggle(const string &title, const string &id);

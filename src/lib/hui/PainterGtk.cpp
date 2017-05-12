@@ -6,17 +6,17 @@
  */
 
 #include "hui.h"
-#include "HuiPainter.h"
-#include "Controls/HuiControl.h"
-#include "Controls/HuiControlDrawingArea.h"
 #include "../math/math.h"
+#include "Controls/Control.h"
+#include "Controls/ControlDrawingArea.h"
+#include "Painter.h"
 
 namespace hui
 {
 
 #ifdef HUI_API_GTK
 
-HuiPainter::HuiPainter()
+Painter::Painter()
 {
 	win = NULL;
 	cr = NULL;
@@ -29,7 +29,7 @@ HuiPainter::HuiPainter()
 	cur_font = "";
 }
 
-HuiPainter::HuiPainter(HuiPanel *panel, const string &_id)
+Painter::Painter(Panel *panel, const string &_id)
 {
 	win = panel->win;
 	id = _id;
@@ -37,9 +37,9 @@ HuiPainter::HuiPainter(HuiPanel *panel, const string &_id)
 	width = 0;
 	height = 0;
 	mode_fill = true;
-	HuiControl *c = panel->_get_control_(id);
+	Control *c = panel->_get_control_(id);
 	if (c){
-		cr = (cairo_t*)((HuiControlDrawingArea*)c)->cur_cairo;
+		cr = (cairo_t*)((ControlDrawingArea*)c)->cur_cairo;
 //		cr = gdk_cairo_create(gtk_widget_get_window(c->widget));
 
 		//gdk_drawable_get_size(gtk_widget_get_window(c->widget), &hui_drawing_context.width, &hui_drawing_context.height);
@@ -50,7 +50,7 @@ HuiPainter::HuiPainter(HuiPanel *panel, const string &_id)
 	}
 }
 
-HuiPainter::~HuiPainter()
+Painter::~Painter()
 {
 	if (!cr)
 		return;
@@ -59,21 +59,21 @@ HuiPainter::~HuiPainter()
 	cr = NULL;
 }
 
-void HuiPainter::setColor(const color &c)
+void Painter::setColor(const color &c)
 {
 	if (!cr)
 		return;
 	cairo_set_source_rgba(cr, c.r, c.g, c.b, c.a);
 }
 
-void HuiPainter::setLineWidth(float w)
+void Painter::setLineWidth(float w)
 {
 	if (!cr)
 		return;
 	cairo_set_line_width(cr, w);
 }
 
-void HuiPainter::setLineDash(const Array<float> &dash, float offset)
+void Painter::setLineDash(const Array<float> &dash, float offset)
 {
 	if (!cr)
 		return;
@@ -88,7 +88,7 @@ color gdk2color(GdkColor c)
 	return color(1, (float)c.red / 65535.0f, (float)c.green / 65535.0f, (float)c.blue / 65535.0f);
 }
 
-color HuiPainter::getThemeColor(int i)
+color Painter::getThemeColor(int i)
 {
 	GtkStyleContext *sc = gtk_widget_get_style_context(win->window);
 	int x = (i / 10);
@@ -104,7 +104,7 @@ color HuiPainter::getThemeColor(int i)
 	return color((float)c.alpha, (float)c.red, (float)c.green, (float)c.blue);
 }
 
-void HuiPainter::clip(const rect &r)
+void Painter::clip(const rect &r)
 {
 	cairo_reset_clip(cr);
 	cairo_rectangle(cr, r.x1, r.y1, r.width(), r.height());
@@ -112,13 +112,13 @@ void HuiPainter::clip(const rect &r)
 }
 
 
-void HuiPainter::drawPoint(float x, float y)
+void Painter::drawPoint(float x, float y)
 {
 	if (!cr)
 		return;
 }
 
-void HuiPainter::drawLine(float x1, float y1, float x2, float y2)
+void Painter::drawLine(float x1, float y1, float x2, float y2)
 {
 	if (!cr)
 		return;
@@ -127,7 +127,7 @@ void HuiPainter::drawLine(float x1, float y1, float x2, float y2)
 	cairo_stroke(cr);
 }
 
-void HuiPainter::drawLines(const Array<complex> &p)
+void Painter::drawLines(const Array<complex> &p)
 {
 	if (!cr)
 		return;
@@ -141,7 +141,7 @@ void HuiPainter::drawLines(const Array<complex> &p)
 	cairo_stroke(cr);
 }
 
-void HuiPainter::drawPolygon(const Array<complex> &p)
+void Painter::drawPolygon(const Array<complex> &p)
 {
 	if (!cr)
 		return;
@@ -158,7 +158,7 @@ void HuiPainter::drawPolygon(const Array<complex> &p)
 		cairo_stroke(cr);
 }
 
-void HuiPainter::drawStr(float x, float y, const string &str)
+void Painter::drawStr(float x, float y, const string &str)
 {
 	if (!cr)
 		return;
@@ -188,7 +188,7 @@ void HuiPainter::drawStr(float x, float y, const string &str)
 	//cairo_show_text(cr, str);
 }
 
-float HuiPainter::getStrWidth(const string &str)
+float Painter::getStrWidth(const string &str)
 {
 	if (!cr)
 		return 0;
@@ -213,7 +213,7 @@ float HuiPainter::getStrWidth(const string &str)
 	return (float)w / 1000.0f;
 }
 
-void HuiPainter::drawRect(float x, float y, float w, float h)
+void Painter::drawRect(float x, float y, float w, float h)
 {
 	if (!cr)
 		return;
@@ -225,7 +225,7 @@ void HuiPainter::drawRect(float x, float y, float w, float h)
 		cairo_stroke(cr);
 }
 
-void HuiPainter::drawRect(const rect &r)
+void Painter::drawRect(const rect &r)
 {
 	if (!cr)
 		return;
@@ -237,7 +237,7 @@ void HuiPainter::drawRect(const rect &r)
 		cairo_stroke(cr);
 }
 
-void HuiPainter::drawCircle(float x, float y, float radius)
+void Painter::drawCircle(float x, float y, float radius)
 {
 	if (!cr)
 		return;
@@ -249,7 +249,7 @@ void HuiPainter::drawCircle(float x, float y, float radius)
 		cairo_stroke(cr);
 }
 
-void HuiPainter::drawImage(float x, float y, const Image &image)
+void Painter::drawImage(float x, float y, const Image &image)
 {
 #ifdef _X_USE_IMAGE_
 	if (!cr)
@@ -271,7 +271,7 @@ void HuiPainter::drawImage(float x, float y, const Image &image)
 #endif
 }
 
-void HuiPainter::drawMaskImage(float x, float y, const Image &image)
+void Painter::drawMaskImage(float x, float y, const Image &image)
 {
 #ifdef _X_USE_IMAGE_
 	if (!cr)
@@ -288,7 +288,7 @@ void HuiPainter::drawMaskImage(float x, float y, const Image &image)
 #endif
 }
 
-void HuiPainter::setFont(const string &font, float size, bool bold, bool italic)
+void Painter::setFont(const string &font, float size, bool bold, bool italic)
 {
 	if (!cr)
 		return;
@@ -302,7 +302,7 @@ void HuiPainter::setFont(const string &font, float size, bool bold, bool italic)
 	cur_font_italic = italic;
 }
 
-void HuiPainter::setFontSize(float size)
+void Painter::setFontSize(float size)
 {
 	if (!cr)
 		return;
@@ -310,7 +310,7 @@ void HuiPainter::setFontSize(float size)
 	cur_font_size = (int)size;
 }
 
-void HuiPainter::setAntialiasing(bool enabled)
+void Painter::setAntialiasing(bool enabled)
 {
 	if (!cr)
 		return;
@@ -320,7 +320,7 @@ void HuiPainter::setAntialiasing(bool enabled)
 		cairo_set_antialias(cr, CAIRO_ANTIALIAS_NONE);
 }
 
-void HuiPainter::setFill(bool fill)
+void Painter::setFill(bool fill)
 {
 	mode_fill = fill;
 }

@@ -3,7 +3,7 @@
 namespace hui
 {
 
-Array<HuiCommand> _HuiCommand_;
+Array<Command> _HuiCommand_;
 
 #ifdef HUI_API_WIN
 	unsigned char HuiKeyID[256];
@@ -14,27 +14,27 @@ Array<HuiCommand> _HuiCommand_;
 
 
 
-HuiEventListener::HuiEventListener(const string &_id, const string &_message, const HuiCallback &_function)
+EventListener::EventListener(const string &_id, const string &_message, const Callback &_function)
 {
 	id = _id;
 	message = _message;
 	function = _function;
 }
 
-HuiEventListener::HuiEventListener(const string &_id, const string &_message, int __, const HuiCallbackP &_function)
+EventListener::EventListener(const string &_id, const string &_message, int __, const CallbackP &_function)
 {
 	id = _id;
 	message = _message;
 	function_p = _function;
 }
 
-HuiEvent _HuiEvent_;
-HuiEvent *HuiGetEvent()
+Event _HuiEvent_;
+Event *GetEvent()
 {
 	return &_HuiEvent_;
 }
 
-HuiEvent::HuiEvent(const string &_id, const string &_message)
+Event::Event(const string &_id, const string &_message)
 {
 	dx = 0;
 	dy = 0;
@@ -151,7 +151,7 @@ void _HuiInitInput_()
 	#endif
 	#ifdef HUI_API_GTK
 
-		for (int k=0;k<HUI_NUM_KEYS;k++)
+		for (int k=0;k<NUM_KEYS;k++)
 			HuiKeyID[k]=HuiKeyID2[k]=0;
 
 		HuiKeyID[KEY_LCONTROL]=GDK_KEY_Control_L;
@@ -258,7 +258,7 @@ void _HuiInitInput_()
 
 void HuiAddKeyCode(const string &id, int key_code)
 {
-	HuiCommand c;
+	Command c;
 	c.key_code = key_code;
 	c.id = id;
 	c.enabled = true;
@@ -474,9 +474,9 @@ string HuiGetKeyChar(int key_code)
 	return "";
 }
 
-extern Array<HuiWindow*> HuiWindows;
+extern Array<Window*> HuiWindows;
 
-bool _HuiEventMatch_(HuiEvent *e, const string &id, const string &message)
+bool _HuiEventMatch_(Event *e, const string &id, const string &message)
 {
 	// all events
 	if (id == "*")
@@ -502,17 +502,17 @@ bool _HuiEventMatch_(HuiEvent *e, const string &id, const string &message)
 	return false;
 }
 
-void _HuiSendGlobalCommand_(HuiEvent *e)
+void _HuiSendGlobalCommand_(Event *e)
 {
-	for (HuiCommand &c: _HuiCommand_)
+	for (Command &c: _HuiCommand_)
 		if (_HuiEventMatch_(e, c.id, ":def:"))
 			if (c.func)
 				c.func();
 }
 
-void HuiAddCommand(const string &id, const string &image, int default_key_code, const HuiCallback &func)
+void HuiAddCommand(const string &id, const string &image, int default_key_code, const Callback &func)
 {
-	HuiCommand c;
+	Command c;
 	c.type = 0;
 	c.id = id;
 	c.image = image;
@@ -521,9 +521,9 @@ void HuiAddCommand(const string &id, const string &image, int default_key_code, 
 	_HuiCommand_.add(c);
 }
 
-void HuiAddCommandToggle(const string &id, const string &image, int default_key_code, const HuiCallback &func)
+void HuiAddCommandToggle(const string &id, const string &image, int default_key_code, const Callback &func)
 {
-	HuiCommand c;
+	Command c;
 	c.type = 1;
 	c.id = id;
 	c.image = image;

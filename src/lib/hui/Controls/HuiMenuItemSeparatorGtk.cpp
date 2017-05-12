@@ -13,7 +13,7 @@ namespace hui
 {
 
 HuiMenuItemSeparator::HuiMenuItemSeparator() :
-	HuiControl(HUI_KIND_MENU_SEPARATOR, "")
+	Control(HUI_KIND_MENU_SEPARATOR, "")
 {
 	widget = gtk_separator_menu_item_new();
 }

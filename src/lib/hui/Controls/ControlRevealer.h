@@ -1,24 +1,24 @@
 /*
- * HuiControlRevealer.h
+ * ControlRevealer.h
  *
  *  Created on: 17.05.2015
  *      Author: michi
  */
 
-#ifndef SRC_LIB_HUI_CONTROLS_HUICONTROLREVEALER_H_
-#define SRC_LIB_HUI_CONTROLS_HUICONTROLREVEALER_H_
+#ifndef SRC_LIB_HUI_CONTROLS_CONTROLREVEALER_H_
+#define SRC_LIB_HUI_CONTROLS_CONTROLREVEALER_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
-class HuiControlRevealer : public HuiControl
+class ControlRevealer : public Control
 {
 public:
-	HuiControlRevealer(const string &text, const string &id);
+	ControlRevealer(const string &text, const string &id);
 
-	virtual void add(HuiControl *child, int x, int y);
+	virtual void add(Control *child, int x, int y);
 
 	virtual void reveal(bool reveal);
 	virtual bool isRevealed();
@@ -26,4 +26,4 @@ public:
 
 };
 
-#endif /* SRC_LIB_HUI_CONTROLS_HUICONTROLREVEALER_H_ */
+#endif /* SRC_LIB_HUI_CONTROLS_CONTROLREVEALER_H_ */

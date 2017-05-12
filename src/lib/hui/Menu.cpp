@@ -15,54 +15,54 @@
 namespace hui
 {
 
-void HuiMenu::__init__()
+void Menu::__init__()
 {
-	new(this) HuiMenu;
+	new(this) Menu;
 }
 
-void HuiMenu::__delete__()
+void Menu::__delete__()
 {
-	this->HuiMenu::~HuiMenu();
+	this->Menu::~Menu();
 }
 
-void HuiMenu::clear()
+void Menu::clear()
 {
-	for (HuiControl *c: item)
+	for (Control *c: item)
 		delete(c);
 	item.clear();
 }
 
-void HuiMenu::addItem(const string &name, const string &id)
+void Menu::addItem(const string &name, const string &id)
 {
 	add(new HuiMenuItem(name, id));
 }
 
-void HuiMenu::addItemImage(const string &name, const string &image, const string &id)
+void Menu::addItemImage(const string &name, const string &image, const string &id)
 {
 	add(new HuiMenuItem(name, id));
 	item.back()->setImage(image);
 }
 
-void HuiMenu::addItemCheckable(const string &name, const string &id)
+void Menu::addItemCheckable(const string &name, const string &id)
 {
 	add(new HuiMenuItemToggle(name, id));
 }
 
-void HuiMenu::addSeparator()
+void Menu::addSeparator()
 {
 	add(new HuiMenuItemSeparator());
 }
 
-void HuiMenu::addSubMenu(const string &name, const string &id, HuiMenu *menu)
+void Menu::addSubMenu(const string &name, const string &id, Menu *menu)
 {
 	if (menu)
 		add(new HuiMenuItemSubmenu(name, menu, id));
 }
 
-void HuiMenu::set_panel(HuiPanel *_panel)
+void Menu::set_panel(Panel *_panel)
 {
 	panel = _panel;
-	for (HuiControl *c: item){
+	for (Control *c: item){
 		c->panel = panel;
 		HuiMenuItemSubmenu *s = dynamic_cast<HuiMenuItemSubmenu*>(c);
 		if (s)
@@ -74,18 +74,18 @@ void HuiMenu::set_panel(HuiPanel *_panel)
 int allow_signal_level = 0;
 
 // stupid function for HuiBui....
-void HuiMenu::setID(const string &id)
+void Menu::setID(const string &id)
 {
 }
 
-HuiMenu *HuiMenu::getSubMenuByID(const string &id)
+Menu *Menu::getSubMenuByID(const string &id)
 {
-	for (HuiControl *c: item){
+	for (Control *c: item){
 		HuiMenuItemSubmenu *s = dynamic_cast<HuiMenuItemSubmenu*>(c);
 		if (s){
 			if (s->id == id)
 				return s->sub_menu;
-			HuiMenu *m = s->sub_menu->getSubMenuByID(id);
+			Menu *m = s->sub_menu->getSubMenuByID(id);
 			if (m)
 				return m;
 		}
@@ -94,7 +94,7 @@ HuiMenu *HuiMenu::getSubMenuByID(const string &id)
 }
 
 
-void HuiMenu::updateLanguage()
+void Menu::updateLanguage()
 {
 #if 0
 	foreach(HuiMenuItem &it, item){
@@ -121,10 +121,10 @@ void HuiMenu::updateLanguage()
 #endif
 }
 
-Array<HuiControl*> HuiMenu::get_all_controls()
+Array<Control*> Menu::get_all_controls()
 {
-	Array<HuiControl*> list = item;
-	for (HuiControl *c: item){
+	Array<Control*> list = item;
+	for (Control *c: item){
 		HuiMenuItemSubmenu *s = dynamic_cast<HuiMenuItemSubmenu*>(c);
 		if (s)
 			list.append(s->sub_menu->get_all_controls());
@@ -133,9 +133,9 @@ Array<HuiControl*> HuiMenu::get_all_controls()
 }
 
 
-void HuiMenu::enable(const string &id, bool enabled)
+void Menu::enable(const string &id, bool enabled)
 {
-	for (HuiControl *c: item){
+	for (Control *c: item){
 		if (c->id == id)
 			c->enable(enabled);
 		if (c->type == HUI_KIND_MENU_SUBMENU)

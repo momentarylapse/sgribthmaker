@@ -1,12 +1,12 @@
+#include "Controls/Control.h"
 #include "hui.h"
-#include "Controls/HuiControl.h"
 
 namespace hui
 {
 
 
 //    for all
-bool HuiPanel::isEnabled(const string &id)
+bool Panel::isEnabled(const string &id)
 {
 	for (int i=0;i<control.num;i++)
 		if (id == control[i]->id)

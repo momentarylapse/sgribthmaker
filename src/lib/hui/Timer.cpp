@@ -5,7 +5,7 @@
  *      Author: michi
  */
 
-#include "HuiTimer.h"
+#include "Timer.h"
 
 
 #ifdef OS_WINDOWS
@@ -28,7 +28,7 @@ namespace hui
 	static float HuitTimerScal = 0;
 #endif
 
-void HuiInitTimers()
+void InitTimers()
 {
 #ifdef OS_WINDOWS
 	LONGLONG perf_cnt;
@@ -40,17 +40,17 @@ void HuiInitTimers()
 #endif
 }
 
-HuiTimer::HuiTimer()
+Timer::Timer()
 {
 	reset();
 }
 
-void HuiTimer::reset()
+void Timer::reset()
 {
 	get();
 }
 
-float HuiTimer::peek()
+float Timer::peek()
 {
 	float elapsed = 0;
 	#ifdef OS_WINDOWS
@@ -67,7 +67,7 @@ float HuiTimer::peek()
 	return elapsed;
 }
 
-float HuiTimer::get()
+float Timer::get()
 {
 	float elapsed = peek();
 	last_time = cur_time;
@@ -77,7 +77,7 @@ float HuiTimer::get()
 
 
 
-void HuiSleep(float duration)
+void Sleep(float duration)
 {
 	if (duration <= 0)
 		return;

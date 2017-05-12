@@ -1,23 +1,23 @@
 /*
- * HuiControlCheckBox.h
+ * ControlCheckBox.h
  *
  *  Created on: 17.06.2013
  *      Author: michi
  */
 
-#ifndef HUICONTROLCHECKBOX_H_
-#define HUICONTROLCHECKBOX_H_
+#ifndef CONTROLCHECKBOX_H_
+#define CONTROLCHECKBOX_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
 
-class HuiControlCheckBox : public HuiControl
+class ControlCheckBox : public Control
 {
 public:
-	HuiControlCheckBox(const string &text, const string &id);
+	ControlCheckBox(const string &text, const string &id);
 	virtual string getString();
 	virtual void __setString(const string &str);
 	virtual void __check(bool checked);
@@ -26,4 +26,4 @@ public:
 
 };
 
-#endif /* HUICONTROLCHECKBOX_H_ */
+#endif /* CONTROLCHECKBOX_H_ */

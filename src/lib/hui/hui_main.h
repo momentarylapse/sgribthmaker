@@ -18,19 +18,19 @@ int HuiRun();
 void HuiPushMainLevel();
 void HuiPopMainLevel();
 
-void HuiSetIdleFunction(const HuiCallback &idle_function);
+void HuiSetIdleFunction(const Callback &idle_function);
 /*void _HuiSetIdleFunctionM(HuiEventHandler *object, void (HuiEventHandler::*function)());
 template<typename T>
 void HuiSetIdleFunctionM(void *object, T fun)
 {	_HuiSetIdleFunctionM((HuiEventHandler*)object, (void(HuiEventHandler::*)())fun);	}*/
 
-int HuiRunLater(float time, const HuiCallback &function);
+int HuiRunLater(float time, const Callback &function);
 /*int _HuiRunLaterM(float time, HuiEventHandler *object, void (HuiEventHandler::*function)());
 template<typename T>
 int HuiRunLaterM(float time, void *object, T fun)
 {	return _HuiRunLaterM(time, (HuiEventHandler*)object, (void(HuiEventHandler::*)())fun);	}*/
 
-int HuiRunRepeated(float time, const HuiCallback &function);
+int HuiRunRepeated(float time, const Callback &function);
 /*int _HuiRunRepeatedM(float time, HuiEventHandler *object, void (HuiEventHandler::*function)());
 template<typename T>
 int HuiRunRepeatedM(float time, void *object, T fun)

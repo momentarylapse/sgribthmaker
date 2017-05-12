@@ -5,8 +5,8 @@
  *      Author: michi
  */
 
+#include "../Menu.h"
 #include "HuiMenuItemSubmenu.h"
-#include "../HuiMenu.h"
 
 namespace hui
 {

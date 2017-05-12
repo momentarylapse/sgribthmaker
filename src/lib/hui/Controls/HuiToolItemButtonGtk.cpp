@@ -15,10 +15,10 @@ namespace hui
 void *get_gtk_image(const string &image, bool large);
 
 void OnGtkToolbarItemPress(GtkWidget *widget, gpointer data)
-{	((HuiControl*)data)->notify("hui:click");	}
+{	((Control*)data)->notify("hui:click");	}
 
 HuiToolItemButton::HuiToolItemButton(const string &title, const string &image, const string &id) :
-	HuiControl(HUI_KIND_TOOL_BUTTON, id)
+	Control(HUI_KIND_TOOL_BUTTON, id)
 {
 	GtkWidget *im = (GtkWidget*)get_gtk_image(image, true);
 	gtk_widget_show(im);

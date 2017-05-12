@@ -15,8 +15,8 @@ namespace hui
 //----------------------------------------------------------------------------------
 // resource handling
 
-HuiWindow *_cdecl HuiCreateResourceDialog(const string &id, HuiWindow *root);
-HuiMenu *_cdecl HuiCreateResourceMenu(const string &id);
+Window *_cdecl HuiCreateResourceDialog(const string &id, Window *root);
+Menu *_cdecl HuiCreateResourceMenu(const string &id);
 
 
 

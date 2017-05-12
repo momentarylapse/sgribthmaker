@@ -5,33 +5,34 @@
  *      Author: michi
  */
 
-#include "HuiApplication.h"
+#include "Application.h"
+
 #include "hui.h"
 
 namespace hui
 {
 
-HuiApplication::HuiApplication(const string &app_name, const string &def_lang, int flags)
+Application::Application(const string &app_name, const string &def_lang, int flags)
 {
-	if (flags & HUI_FLAG_SILENT)
+	if (flags & FLAG_SILENT)
 		msg_init(true);
-	HuiInit(app_name, (flags & HUI_FLAG_LOAD_RESOURCE), def_lang);
+	HuiInit(app_name, (flags & FLAG_LOAD_RESOURCE), def_lang);
 
-	if (flags & HUI_FLAG_SILENT)
+	if (flags & FLAG_SILENT)
 		msg_init(HuiAppDirectory + "message.txt", false);
 
 	HuiEndKeepMsgAlive = true;
 }
 
-HuiApplication::~HuiApplication()
+Application::~Application()
 {
-	if (HuiConfig.changed)
-		HuiConfig.save();
+	if (Config.changed)
+		Config.save();
 	if ((msg_inited) /*&& (HuiMainLevel == 0)*/)
 		msg_end();
 }
 
-int HuiApplication::run()
+int Application::run()
 {
 	return HuiRun();
 }

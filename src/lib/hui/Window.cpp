@@ -6,10 +6,10 @@
 | last update: 2010.07.14 (c) by MichiSoft TM                                  |
 \*----------------------------------------------------------------------------*/
 
+#include "Controls/Control.h"
 #include "hui.h"
 #include "hui_internal.h"
-#include "Controls/HuiControl.h"
-#include "HuiToolbar.h"
+#include "Toolbar.h"
 
 
 namespace hui
@@ -17,7 +17,7 @@ namespace hui
 
 extern int HuiMainLevel;
 
-HuiWindow *HuiCurWindow = NULL;
+Window *HuiCurWindow = NULL;
 
 // recursively find a menu item and execute message_function
 /*bool TestMenuID(CHuiMenu *menu, const string &id, message_function *mf)
@@ -46,28 +46,28 @@ void HuiInputData::reset()
 }
 
 
-HuiWindow::HuiWindow(const string &title, int x, int y, int width, int height, HuiWindow *root, bool allow_root, int mode)
+Window::Window(const string &title, int x, int y, int width, int height, Window *root, bool allow_root, int mode)
 {
 	_init_(title, x, y, width, height, root, allow_root, mode);
 }
 
-HuiWindow::HuiWindow()
+Window::Window()
 {
 	_init_("", -1, -1, 0, 0, NULL, true, HUI_WIN_MODE_DUMMY);
 }
 
-HuiWindow::HuiWindow(const string &title, int x, int y, int width, int height)
+Window::Window(const string &title, int x, int y, int width, int height)
 {
 	_init_(title, x, y, width, height, NULL, true, HUI_WIN_MODE_RESIZABLE | HUI_WIN_MODE_CONTROLS);
 }
 
-void HuiWindow::__init_ext__(const string& title, int x, int y, int width, int height)
+void Window::__init_ext__(const string& title, int x, int y, int width, int height)
 {
-	new(this) HuiWindow(title, x, y, width, height);
+	new(this) Window(title, x, y, width, height);
 }
 
 
-HuiWindow::HuiWindow(const string &id, HuiWindow *parent)
+Window::Window(const string &id, Window *parent)
 {
 	HuiResource *res = HuiGetResource(id);
 	if (!res){
@@ -98,7 +98,7 @@ HuiWindow::HuiWindow(const string &id, HuiWindow *parent)
 	msg_db_m("  \\(^_^)/",1);
 }
 
-void HuiWindow::_init_generic_(HuiWindow *_root, bool _allow_root, int _mode)
+void Window::_init_generic_(Window *_root, bool _allow_root, int _mode)
 {
 	_HuiMakeUsable_();
 	HuiWindows.add(this);
@@ -113,17 +113,17 @@ void HuiWindow::_init_generic_(HuiWindow *_root, bool _allow_root, int _mode)
 	}
 	menu = popup = NULL;
 	statusbar_enabled = false;
-	toolbar[HUI_TOOLBAR_TOP] = new HuiToolbar(this);
-	toolbar[HUI_TOOLBAR_LEFT] = new HuiToolbar(this, true);
-	toolbar[HUI_TOOLBAR_RIGHT] = new HuiToolbar(this, true);
-	toolbar[HUI_TOOLBAR_BOTTOM] = new HuiToolbar(this);
+	toolbar[HUI_TOOLBAR_TOP] = new Toolbar(this);
+	toolbar[HUI_TOOLBAR_LEFT] = new Toolbar(this, true);
+	toolbar[HUI_TOOLBAR_RIGHT] = new Toolbar(this, true);
+	toolbar[HUI_TOOLBAR_BOTTOM] = new Toolbar(this);
 	input.reset();
 
 	allow_input = false; // allow only if ->Show() was called
 	main_level = HuiMainLevel;
 }
 
-void HuiWindow::_clean_up_()
+void Window::_clean_up_()
 {
 	for (int i=0; i<4; i++)
 		delete(toolbar[i]);
@@ -140,14 +140,14 @@ void HuiWindow::_clean_up_()
 }
 
 // default handler when trying to close the windows
-void HuiWindow::onCloseRequest()
+void Window::onCloseRequest()
 {
 	int level = _get_main_level_();
 	destroy();
 	
 	// no message function (and last window in this main level): end program
 	// ...or at least end nested main level
-	for (HuiWindow *w: HuiWindows)
+	for (Window *w: HuiWindows)
 		if (w->_get_main_level_() >= level)
 			return;
 	HuiEnd();
@@ -155,7 +155,7 @@ void HuiWindow::onCloseRequest()
 
 
 // identify window (for automatic title assignment with language strings)
-void HuiWindow::setID(const string &_id)
+void Window::setID(const string &_id)
 {
 	id = _id;
 	if (HuiLanguaged and (id.num > 0))
@@ -163,7 +163,7 @@ void HuiWindow::setID(const string &_id)
 }
 
 // align window relative to another window (like..."top right corner")
-void HuiWindow::setPositionSpecial(HuiWindow *win,int mode)
+void Window::setPositionSpecial(Window *win,int mode)
 {
 	int pw, ph, cw, ch, px, py, cx, cy;
 	win->getSize(pw, ph);
@@ -181,22 +181,22 @@ void HuiWindow::setPositionSpecial(HuiWindow *win,int mode)
 	setPosition(cx, cy);
 }
 
-int HuiWindow::_get_main_level_()
+int Window::_get_main_level_()
 {
 	return main_level;
 }
 
-HuiMenu *HuiWindow::getMenu()
+Menu *Window::getMenu()
 {
 	return menu;
 }
 
-HuiWindow *HuiWindow::getParent()
+Window *Window::getParent()
 {
 	return parent;
 }
 
-bool HuiWindow::getKey(int k)
+bool Window::getKey(int k)
 {
 	if (k == KEY_CONTROL)
 		return (input.key[KEY_RCONTROL] or input.key[KEY_LCONTROL]);
@@ -206,7 +206,7 @@ bool HuiWindow::getKey(int k)
 		return input.key[k];
 }
 
-bool HuiWindow::getMouse(int &x, int &y, int button)
+bool Window::getMouse(int &x, int &y, int button)
 {
 	x = (int)input.x;
 	y = (int)input.y;
@@ -223,12 +223,12 @@ bool HuiWindow::getMouse(int &x, int &y, int button)
 
 
 
-HuiWindow *HuiCreateDialog(const string &title,int width,int height,HuiWindow *root,bool allow_root)
+Window *HuiCreateDialog(const string &title,int width,int height,Window *root,bool allow_root)
 {
 	return new HuiFixedDialog(title, width, height, root, allow_root);
 }
 
-HuiWindow *HuiCreateSizableDialog(const string &title,int width,int height,HuiWindow *root,bool allow_root)
+Window *HuiCreateSizableDialog(const string &title,int width,int height,Window *root,bool allow_root)
 {
 	return new HuiDialog(title, width, height, root, allow_root);
 }
@@ -239,11 +239,11 @@ void HuiFuncIgnore()
 
 void HuiFuncClose()
 {
-	HuiGetEvent()->win->destroy();
+	GetEvent()->win->destroy();
 }
 
 HuiNixWindow::HuiNixWindow(const string& title, int x, int y, int width, int height) :
-	HuiWindow(title, x, y, width, height, NULL, true, HUI_WIN_MODE_RESIZABLE)
+	Window(title, x, y, width, height, NULL, true, HUI_WIN_MODE_RESIZABLE)
 {
 	addDrawingArea("", 0, 0, 0, 0, "nix-area");
 }
@@ -253,30 +253,30 @@ void HuiNixWindow::__init_ext__(const string& title, int x, int y, int width, in
 	new(this) HuiNixWindow(title, x, y, width, height);
 }
 
-HuiDialog::HuiDialog(const string& title, int width, int height, HuiWindow* root, bool allow_root) :
-	HuiWindow(title, -1, -1, width, height, root, allow_root, HUI_WIN_MODE_CONTROLS | HUI_WIN_MODE_RESIZABLE)
+HuiDialog::HuiDialog(const string& title, int width, int height, Window* root, bool allow_root) :
+	Window(title, -1, -1, width, height, root, allow_root, HUI_WIN_MODE_CONTROLS | HUI_WIN_MODE_RESIZABLE)
 {
 }
 
-void HuiDialog::__init_ext__(const string& title, int width, int height, HuiWindow* root, bool allow_root)
+void HuiDialog::__init_ext__(const string& title, int width, int height, Window* root, bool allow_root)
 {
 	new(this) HuiDialog(title, width, height, root, allow_root);
 }
 
-HuiFixedDialog::HuiFixedDialog(const string& title, int width, int height, HuiWindow* root, bool allow_root) :
-	HuiWindow(title, -1, -1, width, height, root, allow_root, HUI_WIN_MODE_CONTROLS)
+HuiFixedDialog::HuiFixedDialog(const string& title, int width, int height, Window* root, bool allow_root) :
+	Window(title, -1, -1, width, height, root, allow_root, HUI_WIN_MODE_CONTROLS)
 {
 }
 
-void HuiFixedDialog::__init_ext__(const string& title, int width, int height, HuiWindow* root, bool allow_root)
+void HuiFixedDialog::__init_ext__(const string& title, int width, int height, Window* root, bool allow_root)
 {
 	new(this) HuiFixedDialog(title, width, height, root, allow_root);
 }
 
 
 
-HuiSourceDialog::HuiSourceDialog(const string &buffer, HuiWindow *root) :
-	HuiWindow("", -1, -1, 300, 200, root, buffer.find("allow-parent") > 0, HUI_WIN_MODE_CONTROLS | HUI_WIN_MODE_RESIZABLE)
+HuiSourceDialog::HuiSourceDialog(const string &buffer, Window *root) :
+	Window("", -1, -1, 300, 200, root, buffer.find("allow-parent") > 0, HUI_WIN_MODE_CONTROLS | HUI_WIN_MODE_RESIZABLE)
 {
 	fromSource(buffer);
 }

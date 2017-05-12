@@ -1,22 +1,22 @@
 /*
- * HuiControlTreeView.h
+ * ControlTreeView.h
  *
  *  Created on: 18.06.2013
  *      Author: michi
  */
 
-#ifndef HUICONTROLTREEVIEW_H_
-#define HUICONTROLTREEVIEW_H_
+#ifndef CONTROLTREEVIEW_H_
+#define CONTROLTREEVIEW_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
-class HuiControlTreeView : public HuiControl
+class ControlTreeView : public Control
 {
 public:
-	HuiControlTreeView(const string &title, const string &id, HuiPanel *panel);
+	ControlTreeView(const string &title, const string &id, Panel *panel);
 	virtual string getString();
 	virtual void __setString(const string &str);
 	virtual void __addString(const string &str);
@@ -42,4 +42,4 @@ public:
 
 };
 
-#endif /* HUICONTROLTREEVIEW_H_ */
+#endif /* CONTROLTREEVIEW_H_ */

@@ -1,23 +1,23 @@
 /*
- * HuiControlButton.h
+ * ControlButton.h
  *
  *  Created on: 17.06.2013
  *      Author: michi
  */
 
-#ifndef HUICONTROLBUTTON_H_
-#define HUICONTROLBUTTON_H_
+#ifndef CONTROLBUTTON_H_
+#define CONTROLBUTTON_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
 
-class HuiControlButton : public HuiControl
+class ControlButton : public Control
 {
 public:
-	HuiControlButton(const string &text, const string &id);
+	ControlButton(const string &text, const string &id);
 	virtual string getString();
 	virtual void __setString(const string &str);
 	virtual void setImage(const string &str);
@@ -26,4 +26,4 @@ public:
 
 };
 
-#endif /* HUICONTROLBUTTON_H_ */
+#endif /* CONTROLBUTTON_H_ */

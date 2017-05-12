@@ -1,11 +1,11 @@
 /*
- * HuiControlRevealerGtk.cpp
+ * ControlRevealerGtk.cpp
  *
  *  Created on: 17.05.2015
  *      Author: michi
  */
 
-#include "HuiControlRevealer.h"
+#include "ControlRevealer.h"
 
 #ifdef HUI_API_GTK
 
@@ -14,8 +14,8 @@ namespace hui
 
 void OnGtkExpanderExpand(GObject* object, GParamSpec *param_spec, gpointer user_data);
 
-HuiControlRevealer::HuiControlRevealer(const string &title, const string &id) :
-	HuiControl(HUI_KIND_REVEALER, id)
+ControlRevealer::ControlRevealer(const string &title, const string &id) :
+	Control(HUI_KIND_REVEALER, id)
 {
 	GetPartStrings(title);
 
@@ -46,7 +46,7 @@ HuiControlRevealer::HuiControlRevealer(const string &title, const string &id) :
 }
 
 
-void HuiControlRevealer::add(HuiControl *child, int x, int y)
+void ControlRevealer::add(Control *child, int x, int y)
 {
 	GtkWidget *child_widget = child->get_frame();
 	gtk_container_add(GTK_CONTAINER(widget), child_widget);
@@ -54,7 +54,7 @@ void HuiControlRevealer::add(HuiControl *child, int x, int y)
 	child->parent = this;
 }
 
-void HuiControlRevealer::reveal(bool reveal)
+void ControlRevealer::reveal(bool reveal)
 {
 #if GTK_CHECK_VERSION(3,10,0)
 	gtk_revealer_set_reveal_child(GTK_REVEALER(widget), reveal);
@@ -63,7 +63,7 @@ void HuiControlRevealer::reveal(bool reveal)
 #endif
 }
 
-bool HuiControlRevealer::isRevealed()
+bool ControlRevealer::isRevealed()
 {
 #if GTK_CHECK_VERSION(3,10,0)
 	return gtk_revealer_get_reveal_child(GTK_REVEALER(widget));

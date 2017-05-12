@@ -5,14 +5,14 @@ namespace hui
 {
 
 
-static GtkWindow *get_window_save(HuiWindow *win)
+static GtkWindow *get_window_save(Window *win)
 {
 	_HuiMakeUsable_();
 	return win ? GTK_WINDOW(win->window) : NULL;
 }
 
 // choose a directory (<dir> will be selected initially)
-bool HuiFileDialogDir(HuiWindow *win, const string &title, const string &dir/*, const string &root_dir*/)
+bool HuiFileDialogDir(Window *win, const string &title, const string &dir/*, const string &root_dir*/)
 {
 	GtkWindow *w = get_window_save(win);
 	GtkWidget* dlg=gtk_file_chooser_dialog_new(	sys_str(title),
@@ -46,7 +46,7 @@ void add_filters(GtkWidget *dlg, const string &show_filter, const string &filter
 }
 
 // file selection for opening (filter should look like "*.txt")
-bool HuiFileDialogOpen(HuiWindow *win,const string &title,const string &dir,const string &show_filter,const string &filter)
+bool HuiFileDialogOpen(Window *win,const string &title,const string &dir,const string &show_filter,const string &filter)
 {
 	msg_db_r("HuiFileDialogOpen",1);
 	GtkWindow *w = get_window_save(win);
@@ -88,7 +88,7 @@ static void try_to_ensure_extension(string &filename, const string &filter)
 }
 
 // file selection for saving
-bool HuiFileDialogSave(HuiWindow *win,const string &title,const string &dir,const string &show_filter,const string &filter)
+bool HuiFileDialogSave(Window *win,const string &title,const string &dir,const string &show_filter,const string &filter)
 {
 	GtkWindow *w = win ? GTK_WINDOW(win->window) : NULL;
 	GtkWidget* dlg=gtk_file_chooser_dialog_new(	sys_str(title),
@@ -112,14 +112,14 @@ bool HuiFileDialogSave(HuiWindow *win,const string &title,const string &dir,cons
 	return (r==GTK_RESPONSE_ACCEPT);
 }
 
-bool HuiSelectColor(HuiWindow *win,int r,int g,int b)
+bool HuiSelectColor(Window *win,int r,int g,int b)
 {
 	msg_todo("HuiSelectColor (GTK)");
 	return false;
 }
 
 
-bool HuiSelectFont(HuiWindow *win, const string &title)
+bool HuiSelectFont(Window *win, const string &title)
 {
 #if GTK_CHECK_VERSION(3,0,0)
 	msg_db_r("HuiSelectFont",1);
@@ -143,7 +143,7 @@ bool HuiSelectFont(HuiWindow *win, const string &title)
 	return false;
 }
 
-string HuiQuestionBox(HuiWindow *win,const string &title,const string &text,bool allow_cancel)
+string HuiQuestionBox(Window *win,const string &title,const string &text,bool allow_cancel)
 {
 	GtkWindow *w = get_window_save(win);
 	GtkWidget *dlg = gtk_message_dialog_new(w, GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO, "%s", sys_str(text));
@@ -162,7 +162,7 @@ string HuiQuestionBox(HuiWindow *win,const string &title,const string &text,bool
 	return "hui:cancel";
 }
 
-void HuiInfoBox(HuiWindow *win,const string &title,const string &text)
+void HuiInfoBox(Window *win,const string &title,const string &text)
 {
 	GtkWindow *w = get_window_save(win);
 	GtkWidget *dlg = gtk_message_dialog_new(w, GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK, "%s", sys_str(text));
@@ -174,7 +174,7 @@ void HuiInfoBox(HuiWindow *win,const string &title,const string &text)
 	gtk_widget_destroy(dlg);
 }
 
-void HuiErrorBox(HuiWindow *win,const string &title,const string &text)
+void HuiErrorBox(Window *win,const string &title,const string &text)
 {
 	GtkWindow *w = get_window_save(win);
 	GtkWidget *dlg=gtk_message_dialog_new(w, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, "%s", sys_str(text));
@@ -186,7 +186,7 @@ void HuiErrorBox(HuiWindow *win,const string &title,const string &text)
 	gtk_widget_destroy(dlg);
 }
 
-void HuiAboutBox(HuiWindow *win)
+void HuiAboutBox(Window *win)
 {
 	// load license
 	if (HuiGetProperty("license") == "")

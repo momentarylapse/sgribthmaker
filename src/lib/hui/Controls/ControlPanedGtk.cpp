@@ -1,23 +1,23 @@
 /*
- * HuiControlPanedGtk.cpp
+ * ControlPanedGtk.cpp
  *
  *  Created on: 18.09.2013
  *      Author: michi
  */
 
-#include "HuiControlPaned.h"
+#include "ControlPaned.h"
 
 #ifdef HUI_API_GTK
 
 namespace hui
 {
 
-HuiControlPaned::HuiControlPaned(const string &title, const string &id) :
-	HuiControl(HUI_KIND_PANED, id)
+ControlPaned::ControlPaned(const string &title, const string &id) :
+	Control(HUI_KIND_PANED, id)
 {
 }
 
-void HuiControlPaned::add(HuiControl *child, int x, int y)
+void ControlPaned::add(Control *child, int x, int y)
 {
 }
 

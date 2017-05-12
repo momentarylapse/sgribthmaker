@@ -32,7 +32,7 @@ extern Array<sHuiImage> HuiImage;
 
 
 // window lists...
-extern Array<HuiWindow*> HuiWindows;
+extern Array<Window*> HuiWindows;
 
 };
 

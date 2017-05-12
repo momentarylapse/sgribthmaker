@@ -8,12 +8,12 @@
 #ifndef HUITOOLITEMTOGGLEBUTTON_H_
 #define HUITOOLITEMTOGGLEBUTTON_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
-class HuiToolItemToggleButton : public HuiControl
+class HuiToolItemToggleButton : public Control
 {
 public:
 	HuiToolItemToggleButton(const string &title, const string &image, const string &id);

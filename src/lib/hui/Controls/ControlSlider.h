@@ -1,22 +1,22 @@
 /*
- * HuiControlSlider.h
+ * ControlSlider.h
  *
  *  Created on: 17.06.2013
  *      Author: michi
  */
 
-#ifndef HUICONTROLSLIDER_H_
-#define HUICONTROLSLIDER_H_
+#ifndef CONTROLSLIDER_H_
+#define CONTROLSLIDER_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
-class HuiControlSlider : public HuiControl
+class ControlSlider : public Control
 {
 public:
-	HuiControlSlider(const string &text, const string &id, bool vertical);
+	ControlSlider(const string &text, const string &id, bool vertical);
 	virtual float getFloat();
 	virtual void __setFloat(float f);
 	virtual void __addString(const string &s);
@@ -26,4 +26,4 @@ public:
 
 };
 
-#endif /* HUICONTROLSLIDER_H_ */
+#endif /* CONTROLSLIDER_H_ */

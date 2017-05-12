@@ -1,30 +1,30 @@
 /*
- * HuiControlExpander.h
+ * ControlExpander.h
  *
  *  Created on: 18.09.2013
  *      Author: michi
  */
 
-#ifndef HUICONTROLEXPANDER_H_
-#define HUICONTROLEXPANDER_H_
+#ifndef CONTROLEXPANDER_H_
+#define CONTROLEXPANDER_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
-class HuiControlExpander : public HuiControl
+class ControlExpander : public Control
 {
 public:
-	HuiControlExpander(const string &text, const string &id);
+	ControlExpander(const string &text, const string &id);
 
 	virtual void expand(int row, bool expand);
 	virtual void expandAll(bool expand);
 	virtual bool isExpanded(int row);
 
-	virtual void add(HuiControl *child, int x, int y);
+	virtual void add(Control *child, int x, int y);
 };
 
 };
 
-#endif /* HUICONTROLEXPANDER_H_ */
+#endif /* CONTROLEXPANDER_H_ */

@@ -5,7 +5,7 @@
  *      Author: michi
  */
 
-#include "HuiControlEdit.h"
+#include "ControlEdit.h"
 
 #ifdef HUI_API_GTK
 
@@ -15,10 +15,10 @@ namespace hui
 void set_list_cell(GtkListStore *store, GtkTreeIter &iter, int column, const string &str);
 
 void OnGtkEditChange(GtkWidget *widget, gpointer data)
-{	((HuiControl*)data)->notify("hui:change");	}
+{	static_cast<Control*>(data)->notify("hui:change");	}
 
-HuiControlEdit::HuiControlEdit(const string &title, const string &id) :
-	HuiControl(HUI_KIND_EDIT, id)
+ControlEdit::ControlEdit(const string &title, const string &id) :
+	Control(HUI_KIND_EDIT, id)
 {
 	GetPartStrings(title);
 	widget = gtk_entry_new();
@@ -29,17 +29,17 @@ HuiControlEdit::HuiControlEdit(const string &title, const string &id) :
 	setOptions(OptionString);
 }
 
-void HuiControlEdit::__setString(const string &str)
+void ControlEdit::__setString(const string &str)
 {
 	gtk_entry_set_text(GTK_ENTRY(widget), sys_str(str));
 }
 
-string HuiControlEdit::getString()
+string ControlEdit::getString()
 {
 	return de_sys_str(gtk_entry_get_text(GTK_ENTRY(widget)));
 }
 
-void HuiControlEdit::completionAdd(const string &text)
+void ControlEdit::completionAdd(const string &text)
 {
 	GtkEntryCompletion *comp = gtk_entry_get_completion(GTK_ENTRY(widget));
 	if (!comp){
@@ -58,12 +58,12 @@ void HuiControlEdit::completionAdd(const string &text)
 	set_list_cell(GTK_LIST_STORE(m), iter, 0, text);
 }
 
-void HuiControlEdit::completionClear()
+void ControlEdit::completionClear()
 {
 	gtk_entry_set_completion(GTK_ENTRY(widget), NULL);
 }
 
-void HuiControlEdit::__setOption(const string &op, const string &value)
+void ControlEdit::__setOption(const string &op, const string &value)
 {
 	if (op == "clear-placeholder")
 		gtk_entry_set_placeholder_text(GTK_ENTRY(widget), "");

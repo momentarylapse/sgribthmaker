@@ -5,7 +5,7 @@
  *      Author: michi
  */
 
-#include "HuiControlButton.h"
+#include "ControlButton.h"
 
 namespace hui
 {
@@ -15,10 +15,10 @@ namespace hui
 void *get_gtk_image(const string &image, bool large); // -> hui_menu_gtk.cpp
 
 void OnGtkButtonPress(GtkWidget *widget, gpointer data)
-{	((HuiControl*)data)->notify("hui:click");	}
+{	((Control*)data)->notify("hui:click");	}
 
-HuiControlButton::HuiControlButton(const string &title, const string &id) :
-	HuiControl(HUI_KIND_BUTTON, id)
+ControlButton::ControlButton(const string &title, const string &id) :
+	Control(HUI_KIND_BUTTON, id)
 {
 	GetPartStrings(title);
 	widget = gtk_button_new_with_label(sys_str(PartString[0]));
@@ -28,17 +28,17 @@ HuiControlButton::HuiControlButton(const string &title, const string &id) :
 	setOptions(OptionString);
 }
 
-string HuiControlButton::getString()
+string ControlButton::getString()
 {
 	return gtk_button_get_label(GTK_BUTTON(widget));
 }
 
-void HuiControlButton::__setString(const string &str)
+void ControlButton::__setString(const string &str)
 {
 	gtk_button_set_label(GTK_BUTTON(widget), sys_str(str));
 }
 
-void HuiControlButton::setImage(const string& str)
+void ControlButton::setImage(const string& str)
 {
 	GtkWidget *im = (GtkWidget*)get_gtk_image(str, false);
 	gtk_button_set_image(GTK_BUTTON(widget), im);
@@ -48,7 +48,7 @@ void HuiControlButton::setImage(const string& str)
 #endif
 }
 
-void HuiControlButton::__setOption(const string &op, const string &value)
+void ControlButton::__setOption(const string &op, const string &value)
 {
 	if (op == "flat")
 		gtk_button_set_relief(GTK_BUTTON(widget), GTK_RELIEF_NONE);

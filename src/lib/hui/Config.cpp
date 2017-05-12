@@ -5,7 +5,7 @@
  *      Author: michi
  */
 
-#include "HuiConfig.h"
+#include "Config.h"
 #include "hui.h"
 
 #ifdef OS_WINDOWS
@@ -20,78 +20,78 @@ namespace hui
 	int _tchar_str_size_(TCHAR *str);
 #endif
 
-HuiConfiguration HuiConfig;
+Configuration Config;
 
-HuiConfiguration::HuiConfiguration()
+Configuration::Configuration()
 {
 	filename = "";
 	loaded = false;
 	changed = false;
 }
 
-HuiConfiguration::HuiConfiguration(const string &_filename)
+Configuration::Configuration(const string &_filename)
 {
 	filename = _filename;
 	loaded = false;
 	changed = false;
 }
 
-HuiConfiguration::~HuiConfiguration()
+Configuration::~Configuration()
 {
 }
 
-void HuiConfiguration::__init__()
+void Configuration::__init__()
 {
-	new(this) HuiConfiguration;
+	new(this) Configuration;
 }
 
-void HuiConfiguration::__init_ext__(const string &_filename)
+void Configuration::__init_ext__(const string &_filename)
 {
-	new(this) HuiConfiguration(_filename);
+	new(this) Configuration(_filename);
 }
 
-void HuiConfiguration::__del__()
+void Configuration::__del__()
 {
-	this->~HuiConfiguration();
+	this->~Configuration();
 }
 
-void HuiConfiguration::setInt(const string& name, int val)
+void Configuration::setInt(const string& name, int val)
 {
 	setStr(name, i2s(val));
 }
 
-void HuiConfiguration::setFloat(const string& name, float val)
+void Configuration::setFloat(const string& name, float val)
 {
 	setStr(name, f2s(val, 6));
 }
 
-void HuiConfiguration::setBool(const string& name, bool val)
+void Configuration::setBool(const string& name, bool val)
 {
 	setStr(name, b2s(val));
 }
 
-void HuiConfiguration::setStr(const string& name, const string& str)
+void Configuration::setStr(const string& name, const string& str)
 {
 	map[name] = str;
 	changed = true;
 }
 
-int HuiConfiguration::getInt(const string& name, int default_val)
+int Configuration::getInt(const string& name, int default_val)
 {
 	return s2i(getStr(name, i2s(default_val)));
 }
 
-float HuiConfiguration::getFloat(const string& name, float default_val)
+float Configuration::getFloat(const string& name, float default_val)
 {
 	return s2f(getStr(name, f2s(default_val, 6)));
 }
 
-bool HuiConfiguration::getBool(const string& name, bool default_val)
+bool Configuration::getBool(const string& name, bool default_val)
 {
 	return (getStr(name, b2s(default_val)) == "true");
 }
 
-string HuiConfiguration::getStr(const string& name, const string& default_str)
+string Configuration::getStr(const string& name, const string& default_str)
 {
 	if (!loaded)
 		load();
@@ -100,7 +100,7 @@ string HuiConfiguration::getStr(const string& name, const string& default_str)
 	return default_str;
 }
 
-void HuiConfiguration::load()
+void Configuration::load()
 {
 	File *f = FileOpenSilent(filename);
 	map.clear();
@@ -119,13 +119,13 @@ void HuiConfiguration::load()
 	changed = false;
 }
 
-void HuiConfiguration::save()
+void Configuration::save()
 {
 	dir_create(filename.dirname());
 	File *f = FileCreateSilent(filename);
 	f->WriteStr("// NumConfigs");
 	f->WriteInt(map.num);
-	for (HuiConfigEntry &e : map){
+	for (ConfigEntry &e : map){
 		f->WriteStr("// " + e.key);
 		f->WriteStr(e.value);
 	}
@@ -144,7 +144,7 @@ void HuiConfiguration::save()
 	TCHAR t_dot_end[256],t_desc[256],t_dot_end_desc[256],t_desc_shell[256],t_cmd[256],t_desc_shell_cmd[256],t_desc_shell_cmd_cmd[256],t_cmd_line[256],t_desc_icon[256],t_icon_0[256];
 #endif
 
-void HuiRegisterFileType(const string &ending, const string &description, const string &icon_path, const string &open_with, const string &command_name, bool set_default)
+void RegisterFileType(const string &ending, const string &description, const string &icon_path, const string &open_with, const string &command_name, bool set_default)
 {
 #if 0
 #ifdef OS_WINDOWS

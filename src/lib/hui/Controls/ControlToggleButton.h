@@ -1,22 +1,22 @@
 /*
- * HuiControlToggleButton.h
+ * ControlToggleButton.h
  *
  *  Created on: 18.06.2013
  *      Author: michi
  */
 
-#ifndef HUICONTROLTOGGLEBUTTON_H_
-#define HUICONTROLTOGGLEBUTTON_H_
+#ifndef CONTROLTOGGLEBUTTON_H_
+#define CONTROLTOGGLEBUTTON_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
-class HuiControlToggleButton : public HuiControl
+class ControlToggleButton : public Control
 {
 public:
-	HuiControlToggleButton(const string &text, const string &id);
+	ControlToggleButton(const string &text, const string &id);
 	virtual string getString();
 	virtual void __setString(const string &str);
 	virtual void setImage(const string &str);
@@ -26,4 +26,4 @@ public:
 
 };
 
-#endif /* HUICONTROLTOGGLEBUTTON_H_ */
+#endif /* CONTROLTOGGLEBUTTON_H_ */

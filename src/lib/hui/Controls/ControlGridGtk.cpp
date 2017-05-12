@@ -1,11 +1,11 @@
 /*
- * HuiControlGrid.cpp
+ * ControlGrid.cpp
  *
  *  Created on: 17.06.2013
  *      Author: michi
  */
 
-#include "HuiControlGrid.h"
+#include "ControlGrid.h"
 #include "../hui.h"
 
 #ifdef HUI_API_GTK
@@ -13,8 +13,8 @@
 namespace hui
 {
 
-HuiControlGrid::HuiControlGrid(const string &title, const string &id, int num_x, int num_y, HuiPanel *panel) :
-	HuiControl(HUI_KIND_GRID, id)
+ControlGrid::ControlGrid(const string &title, const string &id, int num_x, int num_y, Panel *panel) :
+	Control(HUI_KIND_GRID, id)
 {
 	GetPartStrings(title);
 	widget = gtk_grid_new();
@@ -29,7 +29,7 @@ HuiControlGrid::HuiControlGrid(const string &title, const string &id, int num_x,
 	}
 }
 
-void HuiControlGrid::add(HuiControl *child, int x, int y)
+void ControlGrid::add(Control *child, int x, int y)
 {
 	GtkWidget *child_widget = child->get_frame();
 	gtk_grid_attach(GTK_GRID(widget), child_widget, x, y, 1, 1);

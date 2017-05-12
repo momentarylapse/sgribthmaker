@@ -16,22 +16,22 @@ class Painter;
 namespace hui
 {
 
-class HuiMenu;
+class Menu;
 class HuiResource;
-class HuiPainter;
-class HuiEvent;
-class HuiEventListener;
-class HuiControl;
-class HuiControlRadioButton;
+class Painter;
+class Event;
+class EventListener;
+class Control;
+class ControlRadioButton;
 
-class HuiPanel : public HuiEventHandler
+class Panel : public EventHandler
 {
-	friend class HuiControl;
-	friend class HuiControlRadioButton;
-	friend class HuiMenu;
+	friend class Control;
+	friend class ControlRadioButton;
+	friend class Menu;
 public:
-	HuiPanel();
-	virtual ~HuiPanel();
+	Panel();
+	virtual ~Panel();
 	void _cdecl __init__();
 	virtual void _cdecl __delete__();
 	void _ClearPanel_();
@@ -47,19 +47,19 @@ public:
 	virtual void _cdecl onShow(){}
 	virtual void _cdecl onHide(){}
 
-	void set_win(HuiWindow *win);
+	void set_win(Window *win);
 
 	// events
-	void _cdecl event(const string &id, const HuiCallback &function);
-	void _cdecl eventX(const string &id, const string &msg, const HuiCallback &function);
-	void _cdecl eventXP(const string &id, const string &msg, const HuiCallbackP &function);
-	bool _send_event_(HuiEvent *e);
+	void _cdecl event(const string &id, const Callback &function);
+	void _cdecl eventX(const string &id, const string &msg, const Callback &function);
+	void _cdecl eventXP(const string &id, const string &msg, const CallbackP &function);
+	bool _send_event_(Event *e);
 
 	// kaba wrappers
-	void _cdecl _kaba_event(const string &id, hui_kaba_member_callback *function);
-	void _cdecl _kaba_eventO(const string &id, HuiEventHandler* handler, hui_kaba_member_callback *function);
-	void _cdecl _kaba_eventX(const string &id, const string &msg, hui_kaba_member_callback *function);
-	void _cdecl _kaba_eventOX(const string &id, const string &msg, HuiEventHandler* handler, hui_kaba_member_callback *function);
+	void _cdecl _kaba_event(const string &id, kaba_member_callback *function);
+	void _cdecl _kaba_eventO(const string &id, EventHandler* handler, kaba_member_callback *function);
+	void _cdecl _kaba_eventX(const string &id, const string &msg, kaba_member_callback *function);
+	void _cdecl _kaba_eventOX(const string &id, const string &msg, EventHandler* handler, kaba_member_callback *function);
 
 	// creating controls
 
@@ -98,7 +98,7 @@ public:
 	void _cdecl embedSource(const string &source, const string &parent_id, int x, int y);
 	void embedResource(HuiResource &c, const string &parent_id, int x, int y);
 	void _embedResource(const string &ns, HuiResource &c, const string &parent_id, int x, int y);
-	void _cdecl embed(HuiPanel *panel, const string &parent_id, int x, int y);
+	void _cdecl embed(Panel *panel, const string &parent_id, int x, int y);
 
 // using controls
 	// string
@@ -145,9 +145,9 @@ public:
 	// drawing
 	void _cdecl redraw(const string &id);
 	void _cdecl redrawRect(const string &_id, int x, int y, int w, int h);
-	HuiControl *_get_control_(const string &id);
+	Control *_get_control_(const string &id);
 #ifdef HUI_API_GTK
-	HuiControl *_get_control_by_widget_(GtkWidget *widget);
+	Control *_get_control_by_widget_(GtkWidget *widget);
 	string _get_id_by_widget_(GtkWidget *widget);
 #endif
 	string _get_cur_id_();
@@ -167,14 +167,14 @@ protected:
 public:
 	GtkWidget *plugable;
 protected:
-	void _insert_control_(HuiControl *c, int x, int y, int width, int height);
+	void _insert_control_(Control *c, int x, int y, int width, int height);
 	int desired_width, desired_height;
 #endif
 
-	Array<HuiControl*> control;
-	HuiControl *cur_control;
-	HuiControl *root_control;
-	Array<HuiEventListener> events;
+	Array<Control*> control;
+	Control *cur_control;
+	Control *root_control;
+	Array<EventListener> events;
 
 	string id;
 	int unique_id;
@@ -184,9 +184,9 @@ public:
 	int num_float_decimals;
 	int border_width;
 	int expander_indent;
-	HuiWindow *win;
-	HuiPanel *parent;
-	Array<HuiPanel*> children;
+	Window *win;
+	Panel *parent;
+	Array<Panel*> children;
 };
 
 };

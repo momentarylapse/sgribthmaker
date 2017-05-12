@@ -1,22 +1,22 @@
 /*
- * HuiControlListView.h
+ * ControlListView.h
  *
  *  Created on: 17.06.2013
  *      Author: michi
  */
 
-#ifndef HUICONTROLLISTVIEW_H_
-#define HUICONTROLLISTVIEW_H_
+#ifndef CONTROLLISTVIEW_H_
+#define CONTROLLISTVIEW_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
-class HuiControlListView : public HuiControl
+class ControlListView : public Control
 {
 public:
-	HuiControlListView(const string &text, const string &id, HuiPanel *panel);
+	ControlListView(const string &text, const string &id, Panel *panel);
 	virtual string getString();
 	virtual void __setString(const string &str);
 	virtual void __addString(const string &str);
@@ -37,4 +37,4 @@ public:
 
 };
 
-#endif /* HUICONTROLLISTVIEW_H_ */
+#endif /* CONTROLLISTVIEW_H_ */

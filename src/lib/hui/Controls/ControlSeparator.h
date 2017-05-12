@@ -1,24 +1,24 @@
 /*
- * HuiControlSeparator.h
+ * ControlSeparator.h
  *
  *  Created on: 19.09.2013
  *      Author: michi
  */
 
-#ifndef HUICONTROLSEPARATOR_H_
-#define HUICONTROLSEPARATOR_H_
+#ifndef CONTROLSEPARATOR_H_
+#define CONTROLSEPARATOR_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
-class HuiControlSeparator : public HuiControl
+class ControlSeparator : public Control
 {
 public:
-	HuiControlSeparator(const string &text, const string &id);
+	ControlSeparator(const string &text, const string &id);
 };
 
 };
 
-#endif /* HUICONTROLSEPARATOR_H_ */
+#endif /* CONTROLSEPARATOR_H_ */

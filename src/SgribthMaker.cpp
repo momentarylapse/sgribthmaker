@@ -20,7 +20,7 @@ string AppVersion = "0.4.5.2";
 //#define ALLOW_LOGGING			true
 #define ALLOW_LOGGING			false
 
-hui::HuiWindow *MainWin;
+hui::Window *MainWin;
 string LastCommand;
 
 Array<SourceView*> source_view;
@@ -298,7 +298,7 @@ void CompileKaba()
 	//HuiSetDirectory(SgribthDir);
 	msg_set_verbose(true);
 
-	hui::HuiTimer CompileTimer;
+	hui::Timer CompileTimer;
 
 	Kaba::config.compile_silently = true;
 	Kaba::config.verbose = true;
@@ -329,7 +329,7 @@ void CompileShader()
 {
 	msg_db_f("CompileShader",1);
 
-	hui::HuiWindow *w = new hui::HuiWindow("nix", -1, -1, 640, 480);
+	hui::Window *w = new hui::Window("nix", -1, -1, 640, 480);
 	w->addDrawingArea("", 0, 0, 0, 0, "nix-area");
 	w->show();
 	NixInit("OpenGL", w, "nix-area");
@@ -379,7 +379,7 @@ void CompileAndRun(bool verbose)
 		msg_set_verbose(true);
 
 	// compile
-	hui::HuiTimer CompileTimer;
+	hui::Timer CompileTimer;
 	Kaba::config.compile_silently = true;
 	Kaba::config.verbose = true;
 
@@ -471,9 +471,9 @@ void OnExit()
 	if (AllowTermination()){
 		int w, h;
 		MainWin->getSizeDesired(w, h);
-		hui::HuiConfig.setInt("Window.Width", w);
-		hui::HuiConfig.setInt("Window.Height", h);
-		hui::HuiConfig.setBool("Window.Maximized", MainWin->isMaximized());
+		hui::Config.setInt("Window.Width", w);
+		hui::Config.setInt("Window.Height", h);
+		hui::Config.setBool("Window.Maximized", MainWin->isMaximized());
 		hui::HuiEnd();
 	}
 }
@@ -519,11 +519,11 @@ void OnPreviousDocument()
 		}
 }
 
-class SgribthMaker : public hui::HuiApplication
+class SgribthMaker : public hui::Application
 {
 public:
 	SgribthMaker() :
-		hui::HuiApplication("sgribthmaker", "Deutsch", hui::HUI_FLAG_LOAD_RESOURCE | hui::HUI_FLAG_SILENT)
+		hui::Application("sgribthmaker", "Deutsch", hui::FLAG_LOAD_RESOURCE | hui::FLAG_SILENT)
 	{
 		hui::HuiSetProperty("name", AppTitle);
 		hui::HuiSetProperty("version", AppVersion);
@@ -532,7 +532,7 @@ public:
 		hui::HuiSetProperty("copyright", "© 2006-2017 by MichiSoft TM");
 		hui::HuiSetProperty("author", "Michael Ankele <michi@lupina.de>");
 
-		hui::HuiRegisterFileType("kaba","MichiSoft Script Datei",hui::HuiAppDirectory + "Data/kaba.ico",hui::HuiAppFilename,"open",true);
+		hui::RegisterFileType("kaba","MichiSoft Script Datei",hui::HuiAppDirectory + "Data/kaba.ico",hui::HuiAppFilename,"open",true);
 
 		Kaba::Init();
 	}
@@ -568,11 +568,11 @@ public:
 		hui::HuiAddCommand("show_cur_line", "", hui::KEY_F2, &ShowCurLine);
 
 
-		int width = hui::HuiConfig.getInt("Window.Width", 800);
-		int height = hui::HuiConfig.getInt("Window.Height", 600);
-		bool maximized = hui::HuiConfig.getBool("Window.Maximized", false);
+		int width = hui::Config.getInt("Window.Width", 800);
+		int height = hui::Config.getInt("Window.Height", 600);
+		bool maximized = hui::Config.getBool("Window.Maximized", false);
 
-		MainWin = new hui::HuiWindow(AppTitle, -1, -1, width, height);
+		MainWin = new hui::Window(AppTitle, -1, -1, width, height);
 
 		MainWin->event("about", &OnAbout);
 		MainWin->event("exit", &OnExit);
@@ -608,7 +608,7 @@ public:
 		MainWin->setTooltip("save", _("Datei speichern"));
 
 		InitParser();
-		HighlightScheme::default_scheme = HighlightScheme::get(hui::HuiConfig.getStr("HighlightScheme", "default"));
+		HighlightScheme::default_scheme = HighlightScheme::get(hui::Config.getStr("HighlightScheme", "default"));
 
 		MainWin->setMenu(hui::HuiCreateResourceMenu("menu"));
 		MainWin->setMaximized(maximized);

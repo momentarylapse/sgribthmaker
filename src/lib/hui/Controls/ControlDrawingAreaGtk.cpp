@@ -5,7 +5,7 @@
  *      Author: michi
  */
 
-#include "HuiControlDrawingArea.h"
+#include "ControlDrawingArea.h"
 #include "../hui.h"
 #include "../hui_internal.h"
 #include <math.h>
@@ -20,8 +20,8 @@ int GtkAreaMouseSetX, GtkAreaMouseSetY;
 
 gboolean OnGtkAreaDraw(GtkWidget *widget, cairo_t *cr, gpointer user_data)
 {
-	((HuiControlDrawingArea*)user_data)->cur_cairo = cr;
-	((HuiControl*)user_data)->notify("hui:draw");
+	((ControlDrawingArea*)user_data)->cur_cairo = cr;
+	((Control*)user_data)->notify("hui:draw");
 	return false;
 }
 
@@ -29,7 +29,7 @@ gboolean OnGtkAreaDraw(GtkWidget *widget, cairo_t *cr, gpointer user_data)
 {	NotifyWindowByWidget((CHuiWindow*)user_data, widget, "hui:resize", false);	}*/
 
 template<class T>
-void win_set_input(HuiWindow *win, T *event)
+void win_set_input(Window *win, T *event)
 {
 	if (event->type == GDK_ENTER_NOTIFY){
 		win->input.inside = true;
@@ -67,7 +67,7 @@ gboolean OnGtkAreaMouseMove(GtkWidget *widget, GdkEventMotion *event, gpointer u
 		GtkAreaMouseSet = -1;
 	}
 
-	HuiControl *c = (HuiControl*)user_data;
+	Control *c = (Control*)user_data;
 	win_set_input(c->panel->win, event);
 
 	// gtk hinting system doesn't work?
@@ -88,7 +88,7 @@ gboolean OnGtkAreaMouseMove(GtkWidget *widget, GdkEventMotion *event, gpointer u
 
 gboolean OnGtkAreaMouseEnter(GtkWidget *widget, GdkEventCrossing *event, gpointer user_data)
 {
-	HuiControl *c = (HuiControl*)user_data;
+	Control *c = (Control*)user_data;
 	win_set_input(c->panel->win, event);
 
 	c->notify("hui:mouse-enter", false);
@@ -97,7 +97,7 @@ gboolean OnGtkAreaMouseEnter(GtkWidget *widget, GdkEventCrossing *event, gpointe
 
 gboolean OnGtkAreaMouseLeave(GtkWidget *widget, GdkEventCrossing *event, gpointer user_data)
 {
-	HuiControl *c = (HuiControl*)user_data;
+	Control *c = (Control*)user_data;
 	win_set_input(c->panel->win, event);
 
 	c->notify("hui:mouse-leave", false);
@@ -106,7 +106,7 @@ gboolean OnGtkAreaMouseLeave(GtkWidget *widget, GdkEventCrossing *event, gpointe
 
 gboolean OnGtkAreaButton(GtkWidget *widget, GdkEventButton *event, gpointer user_data)
 {
-	HuiControl *c = (HuiControl*)user_data;
+	Control *c = (Control*)user_data;
 	win_set_input(c->panel->win, event);
 
 	// build message
@@ -131,7 +131,7 @@ gboolean OnGtkAreaButton(GtkWidget *widget, GdkEventButton *event, gpointer user
 
 gboolean OnGtkAreaMouseWheel(GtkWidget *widget, GdkEventScroll *event, gpointer user_data)
 {
-	HuiControl *c = (HuiControl*)user_data;
+	Control *c = (Control*)user_data;
 	if (c->panel->win){
 		if (event->direction == GDK_SCROLL_UP)
 			c->panel->win->input.scroll_y = 1;
@@ -164,7 +164,7 @@ void _get_hui_key_id_(GdkEventKey *event, int &key, int &key_code)
 
 	// convert GDK keyvalue into HUI key id
 	key = -1;
-	for (int i=0;i<HUI_NUM_KEYS;i++)
+	for (int i=0;i<NUM_KEYS;i++)
 		//if ((HuiKeyID[i] == keyvalue)||(HuiKeyID2[i] == keyvalue))
 		if (HuiKeyID[i] == keyvalue)
 			key = i;
@@ -182,7 +182,7 @@ void _get_hui_key_id_(GdkEventKey *event, int &key, int &key_code)
 		key_code += KEY_ALT;
 }
 
-bool area_process_key(GdkEventKey *event, HuiControl *c, bool down)
+bool area_process_key(GdkEventKey *event, Control *c, bool down)
 {
 	int key, key_code;
 	_get_hui_key_id_(event, key, key_code);
@@ -206,16 +206,16 @@ bool area_process_key(GdkEventKey *event, HuiControl *c, bool down)
 
 gboolean OnGtkAreaKeyDown(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
-	return area_process_key(event, (HuiControl*)user_data, true);
+	return area_process_key(event, (Control*)user_data, true);
 }
 
 gboolean OnGtkAreaKeyUp(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
-	return area_process_key(event, (HuiControl*)user_data, false);
+	return area_process_key(event, (Control*)user_data, false);
 }
 
-HuiControlDrawingArea::HuiControlDrawingArea(const string &title, const string &id) :
-	HuiControl(HUI_KIND_DRAWINGAREA, id)
+ControlDrawingArea::ControlDrawingArea(const string &title, const string &id) :
+	Control(HUI_KIND_DRAWINGAREA, id)
 {
 	GetPartStrings(title);
 	GtkWidget *da = gtk_drawing_area_new();
@@ -254,7 +254,7 @@ HuiControlDrawingArea::HuiControlDrawingArea(const string &title, const string &
 	cur_cairo = NULL;
 }
 
-void HuiControlDrawingArea::hardReset()
+void ControlDrawingArea::hardReset()
 {
 	msg_db_f("hard reset", 0);
 	GtkWidget *parent = gtk_widget_get_parent(widget);

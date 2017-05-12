@@ -1,11 +1,11 @@
 /*
- * HuiControlRadioButton.cpp
+ * ControlRadioButton.cpp
  *
  *  Created on: 17.06.2013
  *      Author: michi
  */
 
-#include "HuiControlRadioButton.h"
+#include "ControlRadioButton.h"
 #include "../hui.h"
 
 
@@ -15,15 +15,15 @@ namespace hui
 {
 
 void OnGtkRadioButtonToggle(GtkWidget *widget, gpointer data)
-{	((HuiControl*)data)->notify("hui:change");	}
+{	reinterpret_cast<Control*>(data)->notify("hui:change");	}
 
-HuiControlRadioButton::HuiControlRadioButton(const string &title, const string &id, HuiPanel *panel) :
-	HuiControl(HUI_KIND_RADIOBUTTON, id)
+ControlRadioButton::ControlRadioButton(const string &title, const string &id, Panel *panel) :
+	Control(HUI_KIND_RADIOBUTTON, id)
 {
 	GetPartStrings(title);
 	string group_id = id.head(id.find(":"));
 	GSList *group = NULL;
-	for (HuiControl *c : panel->control)
+	for (Control *c : panel->control)
 		if (c->type == HUI_KIND_RADIOBUTTON)
 			if (c->id.find(":"))
 				if (c->id.head(c->id.find(":")) == group_id)
@@ -34,22 +34,22 @@ HuiControlRadioButton::HuiControlRadioButton(const string &title, const string &
 	setOptions(OptionString);
 }
 
-void HuiControlRadioButton::__setString(const string &str)
+void ControlRadioButton::__setString(const string &str)
 {
 	gtk_button_set_label(GTK_BUTTON(widget), sys_str(str));
 }
 
-void HuiControlRadioButton::__check(bool checked)
+void ControlRadioButton::__check(bool checked)
 {
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), checked);
 }
 
-string HuiControlRadioButton::getString()
+string ControlRadioButton::getString()
 {
 	return gtk_button_get_label(GTK_BUTTON(widget));
 }
 
-bool HuiControlRadioButton::isChecked()
+bool ControlRadioButton::isChecked()
 {
 	return (bool)gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }

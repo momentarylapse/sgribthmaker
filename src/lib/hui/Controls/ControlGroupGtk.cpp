@@ -5,16 +5,16 @@
  *      Author: michi
  */
 
-#include "HuiControlGroup.h"
-#include "../HuiWindow.h"
+#include "ControlGroup.h"
+#include "../Window.h"
 
 #ifdef HUI_API_GTK
 
 namespace hui
 {
 
-HuiControlGroup::HuiControlGroup(const string &title, const string &id) :
-	HuiControl(HUI_KIND_GROUP, id)
+ControlGroup::ControlGroup(const string &title, const string &id) :
+	Control(HUI_KIND_GROUP, id)
 {
 	GetPartStrings(title);
 	widget = gtk_frame_new(sys_str(PartString[0]));
@@ -25,7 +25,7 @@ HuiControlGroup::HuiControlGroup(const string &title, const string &id) :
 }
 
 
-void HuiControlGroup::add(HuiControl *child, int x, int y)
+void ControlGroup::add(Control *child, int x, int y)
 {
 	GtkWidget *child_widget = child->get_frame();
 #if GTK_CHECK_VERSION(3,12,0)

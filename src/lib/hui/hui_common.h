@@ -63,26 +63,26 @@ namespace hui
 
 #ifdef HUI_API_WIN
 #else
-	extern Display *hui_x_display;
+	extern Display *x_display;
 #endif
 
 
-class HuiEventHandler : public VirtualBase
+class EventHandler : public VirtualBase
 {
 public:
 };
 
 
-typedef void hui_kaba_callback();
-typedef void hui_kaba_member_callback(HuiEventHandler *h);
-typedef void hui_kaba_member_callback_p(HuiEventHandler *h, void *p);
+typedef void kaba_callback();
+typedef void kaba_member_callback(EventHandler *h);
+typedef void kaba_member_callback_p(EventHandler *h, void *p);
 
-typedef std::function<void()> HuiCallback;
-typedef std::function<void(Painter*)> HuiCallbackP;
+typedef std::function<void()> Callback;
+typedef std::function<void(Painter*)> CallbackP;
 
 
 
-#define HUI_MAX_KEYBUFFER_DEPTH			128
+#define MAX_KEYBUFFER_DEPTH			128
 
 
 
@@ -227,7 +227,7 @@ enum{
 	KEY_LWINDOWS,
 	KEY_RWINDOWS,
 
-	HUI_NUM_KEYS,
+	NUM_KEYS,
 
 	KEY_ANY,
 	KEY_CONTROL = 256,

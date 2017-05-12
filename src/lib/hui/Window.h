@@ -10,7 +10,7 @@
 #define _HUI_WINDOW_EXISTS_
 
 #include "hui_input.h"
-#include "HuiPanel.h"
+#include "Panel.h"
 
 
 class rect;
@@ -19,11 +19,11 @@ class Painter;
 namespace hui
 {
 
-class HuiMenu;
-class HuiEvent;
-class HuiControl;
-class HuiWindow;
-class HuiToolbar;
+class Menu;
+class Event;
+class Control;
+class Window;
+class Toolbar;
 class HuiResourceNew;
 
 
@@ -50,39 +50,39 @@ struct HuiInputData
 	void reset();
 };
 
-class HuiToolbar;
-class HuiControl;
-class HuiControlTabControl;
-class HuiControlListView;
-class HuiControlTreeView;
-class HuiControlGrid;
-class HuiControlRadioButton;
-class HuiControlGroup;
-class HuiControlExpander;
+class Toolbar;
+class Control;
+class ControlTabControl;
+class ControlListView;
+class ControlTreeView;
+class ControlGrid;
+class ControlRadioButton;
+class ControlGroup;
+class ControlExpander;
 
-class HuiWindow : public HuiPanel
+class Window : public Panel
 {
-	friend class HuiToolbar;
-	friend class HuiControl;
-	friend class HuiControlTabControl;
-	friend class HuiControlListView;
-	friend class HuiControlTreeView;
-	friend class HuiControlGrid;
-	friend class HuiControlRadioButton;
-	friend class HuiControlGroup;
-	friend class HuiControlExpander;
-	friend class HuiMenu;
+	friend class Toolbar;
+	friend class Control;
+	friend class ControlTabControl;
+	friend class ControlListView;
+	friend class ControlTreeView;
+	friend class ControlGrid;
+	friend class ControlRadioButton;
+	friend class ControlGroup;
+	friend class ControlExpander;
+	friend class Menu;
 public:
-	HuiWindow();
-	HuiWindow(const string &title, int x, int y, int width, int height, HuiWindow *parent, bool allow_parent, int mode);
-	HuiWindow(const string &title, int x, int y, int width, int height);
-	HuiWindow(const string &id, HuiWindow *parent);
+	Window();
+	Window(const string &title, int x, int y, int width, int height, Window *parent, bool allow_parent, int mode);
+	Window(const string &title, int x, int y, int width, int height);
+	Window(const string &id, Window *parent);
 	void _cdecl __init_ext__(const string &title, int x, int y, int width, int height);
-	virtual ~HuiWindow();
+	virtual ~Window();
 	virtual void _cdecl __delete__();
 
-	void _init_(const string &title, int x, int y, int width, int height, HuiWindow *parent, bool allow_parent, int mode);
-	void _init_generic_(HuiWindow *parent, bool allow_parent, int mode);
+	void _init_(const string &title, int x, int y, int width, int height, Window *parent, bool allow_parent, int mode);
+	void _init_generic_(Window *parent, bool allow_parent, int mode);
 	void _clean_up_();
 
 	void _cdecl destroy();
@@ -100,15 +100,15 @@ public:
 	void _cdecl setFullscreen(bool fullscreen);
 	void _cdecl setTitle(const string &title);
 	void _cdecl setPosition(int x, int y);
-	void _cdecl setPositionSpecial(HuiWindow *win, int mode);
+	void _cdecl setPositionSpecial(Window *win, int mode);
 	void _cdecl getPosition(int &x, int &y);
 	void _cdecl setSize(int width, int height);
 	void _cdecl getSize(int &width, int &height);
 	void _cdecl setSizeDesired(int width, int height);
 	void _cdecl getSizeDesired(int &width, int &height);
-	void _cdecl setMenu(HuiMenu *menu);
-	HuiMenu* _cdecl getMenu();
-	HuiWindow* _cdecl getParent();
+	void _cdecl setMenu(Menu *menu);
+	Menu* _cdecl getMenu();
+	Window* _cdecl getParent();
 
 
 	void _cdecl setCursorPos(int x,int y);
@@ -146,9 +146,9 @@ public:
 	bool allow_input;
 	HuiInputData input;
 	int mouse_offset_x, mouse_offset_y;
-	HuiControl *main_input_control;
+	Control *main_input_control;
 
-	HuiToolbar *toolbar[4];
+	Toolbar *toolbar[4];
 
 private:
 
@@ -176,44 +176,44 @@ private:
 	int desired_width, desired_height;
 #endif
 	
-	HuiMenu *menu, *popup;
+	Menu *menu, *popup;
 	bool statusbar_enabled;
 	bool allowed, allow_keys;
-	HuiWindow *parent;
+	Window *parent;
 
 	int main_level;
 };
 
 
-class HuiNixWindow : public HuiWindow
+class HuiNixWindow : public Window
 {
 public:
 	HuiNixWindow(const string &title, int x, int y, int width, int height);
 	void _cdecl __init_ext__(const string &title, int x, int y, int width, int height);
 };
 
-class HuiDialog : public HuiWindow
+class HuiDialog : public Window
 {
 public:
-	HuiDialog(const string &title, int width, int height, HuiWindow *root, bool allow_root);
-	void _cdecl __init_ext__(const string &title, int width, int height, HuiWindow *root, bool allow_root);
+	HuiDialog(const string &title, int width, int height, Window *root, bool allow_root);
+	void _cdecl __init_ext__(const string &title, int width, int height, Window *root, bool allow_root);
 };
 
-class HuiFixedDialog : public HuiWindow
+class HuiFixedDialog : public Window
 {
 public:
-	HuiFixedDialog(const string &title, int width, int height, HuiWindow *root, bool allow_root);
-	void _cdecl __init_ext__(const string &title, int width, int height, HuiWindow *root, bool allow_root);
+	HuiFixedDialog(const string &title, int width, int height, Window *root, bool allow_root);
+	void _cdecl __init_ext__(const string &title, int width, int height, Window *root, bool allow_root);
 };
 
-extern HuiWindow *HuiCurWindow;
+extern Window *HuiCurWindow;
 
 
-class HuiSourceDialog : public HuiWindow
+class HuiSourceDialog : public Window
 {
 public:
-	HuiSourceDialog(const string &source, HuiWindow *root);
-	void _cdecl __init_ext__(const string &source, HuiWindow *root);
+	HuiSourceDialog(const string &source, Window *root);
+	void _cdecl __init_ext__(const string &source, Window *root);
 };
 
 

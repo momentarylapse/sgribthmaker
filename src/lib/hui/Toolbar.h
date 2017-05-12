@@ -13,15 +13,15 @@
 namespace hui
 {
 
-class HuiWindow;
+class Window;
 
-class HuiToolbar
+class Toolbar
 {
 public:
-	HuiToolbar(HuiWindow *win, bool vertical = false);
-	virtual ~HuiToolbar();
-	HuiWindow *win;
-	Array<HuiControl*> item;
+	Toolbar(Window *win, bool vertical = false);
+	virtual ~Toolbar();
+	Window *win;
+	Array<Control*> item;
 	bool enabled;
 	bool text_enabled;
 	bool large_icons;
@@ -36,13 +36,13 @@ public:
 	void _cdecl configure(bool text_enabled, bool large_icons);
 	void _cdecl addItem(const string &title, const string &image, const string &id);
 	void _cdecl addItemCheckable(const string &title, const string &image, const string &id);
-	void _cdecl addItemMenu(const string &title, const string &image, HuiMenu *menu, const string &id);
+	void _cdecl addItemMenu(const string &title, const string &image, Menu *menu, const string &id);
 	void _cdecl addItemMenuByID(const string &title, const string &image, const string &menu_id, const string &id);
 	void _cdecl addSeparator();
 	void _cdecl reset();
 	void _cdecl setByID(const string &id);
 
-	void add(HuiControl *c);
+	void add(Control *c);
 };
 
 };

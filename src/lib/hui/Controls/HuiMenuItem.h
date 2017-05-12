@@ -8,12 +8,12 @@
 #ifndef HUIMENUITEM_H_
 #define HUIMENUITEM_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
-class HuiMenuItem : public HuiControl
+class HuiMenuItem : public Control
 {
 public:
 	HuiMenuItem(const string &title, const string &id);

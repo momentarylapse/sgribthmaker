@@ -14,14 +14,14 @@
 namespace hui
 {
 
-typedef MapEntry<string, string> HuiConfigEntry;
+typedef MapEntry<string, string> ConfigEntry;
 
-class HuiConfiguration
+class Configuration
 {
 public:
-	HuiConfiguration();
-	HuiConfiguration(const string &filename);
-	~HuiConfiguration();
+	Configuration();
+	Configuration(const string &filename);
+	~Configuration();
 	void _cdecl __init__();
 	void _cdecl __init_ext__(const string &filename);
 	void _cdecl __del__();
@@ -42,11 +42,11 @@ public:
 	Map<string, string> map;
 };
 
-extern HuiConfiguration HuiConfig;
+extern Configuration Config;
 
 
 
-void _cdecl HuiRegisterFileType(const string &ending, const string &description, const string &icon_path, const string &open_with, const string &command_name, bool set_default);
+void _cdecl RegisterFileType(const string &ending, const string &description, const string &icon_path, const string &open_with, const string &command_name, bool set_default);
 
 };
 

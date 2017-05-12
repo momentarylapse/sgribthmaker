@@ -15,8 +15,8 @@
 namespace hui
 {
 
-class HuiWindow;
-class HuiPanel;
+class Window;
+class Panel;
 
 extern int allow_signal_level; // -> hui_window_control.cpp
 
@@ -26,11 +26,11 @@ void GetPartStrings(const string &title);
 extern Array<string> PartString;
 extern string OptionString, HuiFormatString;
 
-class HuiControl
+class Control
 {
 public:
-	HuiControl(int _type, const string &_id);
-	virtual ~HuiControl();
+	Control(int _type, const string &_id);
+	virtual ~Control();
 	int type;
 	string id;
 	int x, y;
@@ -47,9 +47,9 @@ public:
 	bool enabled;
 	bool is_button_bar;
 	bool grab_focus;
-	HuiPanel *panel;
-	HuiControl *parent;
-	Array<HuiControl*> children;
+	Panel *panel;
+	Control *parent;
+	Array<Control*> children;
 
 	virtual void __reset(){}
 	void reset();
@@ -99,7 +99,7 @@ public:
 	virtual void completionAdd(const string &text){}
 	virtual void completionClear(){}
 
-	virtual void add(HuiControl *child, int x, int y){}
+	virtual void add(Control *child, int x, int y){}
 	void setOptions(const string &options);
 	virtual void __setOption(const string &op, const string &value){}
 	void getSize(int &w, int &h);

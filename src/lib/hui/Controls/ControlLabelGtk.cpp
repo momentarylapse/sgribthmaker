@@ -6,15 +6,15 @@
  */
 
 
-#include "HuiControlLabel.h"
+#include "ControlLabel.h"
 
 #ifdef HUI_API_GTK
 
 namespace hui
 {
 
-HuiControlLabel::HuiControlLabel(const string &title, const string &id) :
-	HuiControl(HUI_KIND_LABEL, id)
+ControlLabel::ControlLabel(const string &title, const string &id) :
+	Control(HUI_KIND_LABEL, id)
 {
 	GetPartStrings(title);
 	widget = gtk_label_new("");
@@ -23,16 +23,16 @@ HuiControlLabel::HuiControlLabel(const string &title, const string &id) :
 #else
 	gtk_misc_set_alignment(GTK_MISC(widget), 0, 0.5f);
 #endif
-	HuiControlLabel::__setString(title);
+	ControlLabel::__setString(title);
 	setOptions(OptionString);
 }
 
-string HuiControlLabel::getString()
+string ControlLabel::getString()
 {
 	return "";
 }
 
-void HuiControlLabel::__setString(const string &str)
+void ControlLabel::__setString(const string &str)
 {
 	GetPartStrings(str);
 	string s = sys_str(PartString[0]);
@@ -45,7 +45,7 @@ void HuiControlLabel::__setString(const string &str)
 	gtk_label_set_markup(GTK_LABEL(widget), s.c_str());
 }
 
-void HuiControlLabel::__setOption(const string &op, const string &value)
+void ControlLabel::__setOption(const string &op, const string &value)
 {
 	if (op == "wrap"){
 		gtk_label_set_line_wrap(GTK_LABEL(widget), true);

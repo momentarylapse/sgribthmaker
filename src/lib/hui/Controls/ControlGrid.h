@@ -1,27 +1,27 @@
 /*
- * HuiControlGrid.h
+ * ControlGrid.h
  *
  *  Created on: 17.06.2013
  *      Author: michi
  */
 
-#ifndef HUICONTROLGRID_H_
-#define HUICONTROLGRID_H_
+#ifndef CONTROLGRID_H_
+#define CONTROLGRID_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
-class HuiControlGrid : public HuiControl
+class ControlGrid : public Control
 {
 public:
-	HuiControlGrid(const string &text, const string &id, int num_x, int num_y, HuiPanel *panel);
-	virtual void add(HuiControl *child, int x, int y);
+	ControlGrid(const string &text, const string &id, int num_x, int num_y, Panel *panel);
+	virtual void add(Control *child, int x, int y);
 
 	bool button_bar;
 };
 
 };
 
-#endif /* HUICONTROLGRIDGTK_H_ */
+#endif /* CONTROLGRIDGTK_H_ */

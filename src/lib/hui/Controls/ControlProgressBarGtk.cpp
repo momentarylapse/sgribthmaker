@@ -1,11 +1,11 @@
 /*
- * HuiControlProgressBar.cpp
+ * ControlProgressBar.cpp
  *
  *  Created on: 17.06.2013
  *      Author: michi
  */
 
-#include "HuiControlProgressBar.h"
+#include "ControlProgressBar.h"
 
 
 #ifdef HUI_API_GTK
@@ -13,8 +13,8 @@
 namespace hui
 {
 
-HuiControlProgressBar::HuiControlProgressBar(const string &title, const string &id) :
-	HuiControl(HUI_KIND_PROGRESSBAR, id)
+ControlProgressBar::ControlProgressBar(const string &title, const string &id) :
+	Control(HUI_KIND_PROGRESSBAR, id)
 {
 	GetPartStrings(title);
 	widget = gtk_progress_bar_new();
@@ -23,12 +23,12 @@ HuiControlProgressBar::HuiControlProgressBar(const string &title, const string &
 	setOptions(OptionString);
 }
 
-string HuiControlProgressBar::getString()
+string ControlProgressBar::getString()
 {
 	return "";
 }
 
-void HuiControlProgressBar::__setString(const string &str)
+void ControlProgressBar::__setString(const string &str)
 {
 #if GTK_CHECK_VERSION(3,0,0)
 	gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(widget), true);
@@ -36,12 +36,12 @@ void HuiControlProgressBar::__setString(const string &str)
 	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(widget), sys_str(str));
 }
 
-float HuiControlProgressBar::getFloat()
+float ControlProgressBar::getFloat()
 {
 	return 0;
 }
 
-void HuiControlProgressBar::__setFloat(float f)
+void ControlProgressBar::__setFloat(float f)
 {
 	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(widget), min(max(f, 0.0f), 1.0f));
 }

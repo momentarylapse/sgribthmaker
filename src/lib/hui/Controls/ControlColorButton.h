@@ -1,23 +1,23 @@
 /*
- * HuiControlColorButton.h
+ * ControlColorButton.h
  *
  *  Created on: 17.06.2013
  *      Author: michi
  */
 
-#ifndef HUICONTROLCOLORBUTTON_H_
-#define HUICONTROLCOLORBUTTON_H_
+#ifndef CONTROLCOLORBUTTON_H_
+#define CONTROLCOLORBUTTON_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
 
-class HuiControlColorButton : public HuiControl
+class ControlColorButton : public Control
 {
 public:
-	HuiControlColorButton(const string &text, const string &id);
+	ControlColorButton(const string &text, const string &id);
 
 	virtual void __setColor(const color &c);
 	virtual color getColor();
@@ -25,4 +25,4 @@ public:
 
 };
 
-#endif /* HUICONTROLCOLORBUTTON_H_ */
+#endif /* CONTROLCOLORBUTTON_H_ */

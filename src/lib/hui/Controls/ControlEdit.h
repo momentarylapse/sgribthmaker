@@ -1,22 +1,22 @@
 /*
- * HuiControlEdit.h
+ * ControlEdit.h
  *
  *  Created on: 17.06.2013
  *      Author: michi
  */
 
-#ifndef HUICONTROLEDIT_H_
-#define HUICONTROLEDIT_H_
+#ifndef CONTROLEDIT_H_
+#define CONTROLEDIT_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
-class HuiControlEdit : public HuiControl
+class ControlEdit : public Control
 {
 public:
-	HuiControlEdit(const string &text, const string &id);
+	ControlEdit(const string &text, const string &id);
 	virtual string getString();
 	virtual void __setString(const string &str);
 	virtual void completionAdd(const string &text);
@@ -26,4 +26,4 @@ public:
 
 };
 
-#endif /* HUICONTROLEDIT_H_ */
+#endif /* CONTROLEDIT_H_ */

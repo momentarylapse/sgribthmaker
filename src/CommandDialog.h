@@ -10,10 +10,10 @@
 
 #include "lib/hui/hui.h"
 
-class CommandDialog : public hui::HuiWindow
+class CommandDialog : public hui::Window
 {
 public:
-	CommandDialog(hui::HuiWindow *parent);
+	CommandDialog(hui::Window *parent);
 	virtual ~CommandDialog();
 
 	void onOk();

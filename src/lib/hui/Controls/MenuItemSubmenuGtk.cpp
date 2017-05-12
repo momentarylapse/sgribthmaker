@@ -5,16 +5,16 @@
  *      Author: michi
  */
 
+#include "../Menu.h"
 #include "HuiMenuItemSubmenu.h"
-#include "../HuiMenu.h"
 
 #ifdef HUI_API_GTK
 
 namespace hui
 {
 
-HuiMenuItemSubmenu::HuiMenuItemSubmenu(const string &title, HuiMenu *menu, const string &id) :
-	HuiControl(HUI_KIND_MENU_SUBMENU, id)
+HuiMenuItemSubmenu::HuiMenuItemSubmenu(const string &title, Menu *menu, const string &id) :
+	Control(HUI_KIND_MENU_SUBMENU, id)
 {
 	widget = gtk_menu_item_new_with_label(get_lang_sys(id, title));
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(widget), menu->widget);

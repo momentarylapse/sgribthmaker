@@ -8,12 +8,12 @@
 #ifndef HUITOOLITEMSEPARATOR_H_
 #define HUITOOLITEMSEPARATOR_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
-class HuiToolItemSeparator : public HuiControl
+class HuiToolItemSeparator : public Control
 {
 public:
 	HuiToolItemSeparator();

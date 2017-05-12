@@ -5,23 +5,24 @@
  *      Author: michi
  */
 
-#include "HuiControl.h"
+#include "Control.h"
+
 #include "../hui.h"
-#include "HuiControlMultilineEdit.h"
+#include "ControlMultilineEdit.h"
 
 namespace hui
 {
 
-void WinTrySendByKeyCode(HuiWindow *win, int key_code);
+void WinTrySendByKeyCode(Window *win, int key_code);
 
 // safety feature... in case we delete the control while it notifies us
 struct _HuiNotifyStackElement
 {
-	HuiControl *c;
+	Control *c;
 	bool deleted;
 };
 static Array<_HuiNotifyStackElement> _notify_stack_;
-inline void notify_push(HuiControl *c)
+inline void notify_push(Control *c)
 {
 	_HuiNotifyStackElement e;
 	e.c = c;
@@ -32,13 +33,13 @@ inline void notify_pop()
 {
 	_notify_stack_.pop();
 }
-inline void notify_set_del(HuiControl *c)
+inline void notify_set_del(Control *c)
 {
 	for (_HuiNotifyStackElement &e : _notify_stack_)
 		if (e.c == c)
 			e.deleted = true;
 }
-inline bool notify_is_deleted(HuiControl *c)
+inline bool notify_is_deleted(Control *c)
 {
 	for (_HuiNotifyStackElement &e : _notify_stack_)
 		if (e.c == c)
@@ -46,7 +47,7 @@ inline bool notify_is_deleted(HuiControl *c)
 	return false;
 }
 
-HuiControl::HuiControl(int _type, const string &_id)
+Control::Control(int _type, const string &_id)
 {
 	type = _type;
 	id = _id;
@@ -63,7 +64,7 @@ HuiControl::HuiControl(int _type, const string &_id)
 	grab_focus = false;
 }
 
-HuiControl::~HuiControl()
+Control::~Control()
 {
 	notify_set_del(this);
 	if (parent){
@@ -72,7 +73,7 @@ HuiControl::~HuiControl()
 				parent->children.erase(i);
 	}
 	while (children.num > 0){
-		HuiControl *c = children.pop();
+		Control *c = children.pop();
 		delete(c);
 	}
 	if (panel){
@@ -88,19 +89,19 @@ HuiControl::~HuiControl()
 
 #ifdef HUI_API_WIN
 
-void HuiControl::enable(bool _enabled)
+void Control::enable(bool _enabled)
 {
 }
 
-void HuiControl::hide(bool hidden)
+void Control::hide(bool hidden)
 {
 }
 
-void HuiControl::setTooltip(const string& str)
+void Control::setTooltip(const string& str)
 {
 }
 
-void HuiControl::focus()
+void Control::focus()
 {
 }
 
@@ -109,20 +110,20 @@ void HuiControl::focus()
 #ifdef HUI_API_GTK
 
 
-GtkWidget *HuiControl::get_frame()
+GtkWidget *Control::get_frame()
 {
 	if (frame)
 		return frame;
 	return widget;
 }
 
-void HuiControl::enable(bool _enabled)
+void Control::enable(bool _enabled)
 {
     enabled = _enabled;
 	gtk_widget_set_sensitive(widget, enabled);
 }
 
-void HuiControl::hide(bool hidden)
+void Control::hide(bool hidden)
 {
 	if (hidden)
 		gtk_widget_hide(widget);
@@ -130,22 +131,22 @@ void HuiControl::hide(bool hidden)
 		gtk_widget_show(widget);
 }
 
-void HuiControl::setTooltip(const string& str)
+void Control::setTooltip(const string& str)
 {
 	gtk_widget_set_tooltip_text(widget, sys_str(str));
 }
 
-void HuiControl::focus()
+void Control::focus()
 {
 	gtk_widget_grab_focus(widget);
 }
 
-bool HuiControl::hasFocus()
+bool Control::hasFocus()
 {
 	return gtk_widget_has_focus(widget);
 }
 
-void HuiControl::setOptions(const string &options)
+void Control::setOptions(const string &options)
 {
 	Array<string> a = options.explode(",");
 	int width = -1;
@@ -199,7 +200,7 @@ void HuiControl::setOptions(const string &options)
 		gtk_widget_set_size_request(get_frame(), width, height);
 }
 
-void HuiControl::getSize(int &w, int &h)
+void Control::getSize(int &w, int &h)
 {
 	w = gdk_window_get_width(gtk_widget_get_window(widget));
 	h = gdk_window_get_height(gtk_widget_get_window(widget));
@@ -207,96 +208,96 @@ void HuiControl::getSize(int &w, int &h)
 
 #endif
 
-bool HuiControl::isEnabled()
+bool Control::isEnabled()
 {
 	return enabled;
 }
 
-void HuiControl::reset()
+void Control::reset()
 {
 	allow_signal_level ++;
 	__reset();
 	allow_signal_level --;
 }
 
-void HuiControl::setString(const string& str)
+void Control::setString(const string& str)
 {
 	allow_signal_level ++;
 	__setString(str);
 	allow_signal_level --;
 }
 
-void HuiControl::addString(const string& str)
+void Control::addString(const string& str)
 {
 	allow_signal_level ++;
 	__addString(str);
 	allow_signal_level --;
 }
 
-void HuiControl::setInt(int i)
+void Control::setInt(int i)
 {
 	allow_signal_level ++;
 	__setInt(i);
 	allow_signal_level --;
 }
 
-void HuiControl::setFloat(float f)
+void Control::setFloat(float f)
 {
 	allow_signal_level ++;
 	__setFloat(f);
 	allow_signal_level --;
 }
 
-void HuiControl::setColor(const color& c)
+void Control::setColor(const color& c)
 {
 	allow_signal_level ++;
 	__setColor(c);
 	allow_signal_level --;
 }
 
-void HuiControl::addChildString(int parent_row, const string& str)
+void Control::addChildString(int parent_row, const string& str)
 {
 	allow_signal_level ++;
 	__addChildString(parent_row, str);
 	allow_signal_level --;
 }
 
-void HuiControl::changeString(int row, const string& str)
+void Control::changeString(int row, const string& str)
 {
 	allow_signal_level ++;
 	__changeString(row, str);
 	allow_signal_level --;
 }
 
-void HuiControl::removeString(int row)
+void Control::removeString(int row)
 {
 	allow_signal_level ++;
 	__removeString(row);
 	allow_signal_level --;
 }
 
-void HuiControl::setCell(int row, int column, const string& str)
+void Control::setCell(int row, int column, const string& str)
 {
 	allow_signal_level ++;
 	__setCell(row, column, str);
 	allow_signal_level --;
 }
 
-void HuiControl::setSelection(const Array<int>& sel)
+void Control::setSelection(const Array<int>& sel)
 {
 	allow_signal_level ++;
 	__setSelection(sel);
 	allow_signal_level --;
 }
 
-void HuiControl::check(bool checked)
+void Control::check(bool checked)
 {
 	allow_signal_level ++;
 	__check(checked);
 	allow_signal_level --;
 }
 
-void HuiControl::notify(const string &message, bool is_default)
+void Control::notify(const string &message, bool is_default)
 {
 	if (allow_signal_level > 0)
 		return;
@@ -309,7 +310,7 @@ void HuiControl::notify(const string &message, bool is_default)
 	if (id.num == 0)
 		return;
 	notify_push(this);
-	HuiEvent e = HuiEvent(id, message);
+	Event e = Event(id, message);
 	_HuiSendGlobalCommand_(&e);
 	e.is_default = is_default;
 	panel->_send_event_(&e);
@@ -319,7 +320,7 @@ void HuiControl::notify(const string &message, bool is_default)
 		return;
 	}
 
-	HuiWindow *win = panel->win;
+	Window *win = panel->win;
 	if (this == win->main_input_control){
 		if (message == "hui:mouse-move")
 			win->onMouseMove();
@@ -343,17 +344,17 @@ void HuiControl::notify(const string &message, bool is_default)
 			win->onRightButtonUp();
 		else if (message == "hui:key-down"){
 			win->onKeyDown();
-			WinTrySendByKeyCode(win, HuiGetEvent()->key_code);
+			WinTrySendByKeyCode(win, GetEvent()->key_code);
 		}else if (message == "hui:key-up")
 			win->onKeyUp();
 		else if (message == "hui:draw"){
-			HuiPainter p(win, id);
+			Painter p(win, id);
 			win->onDraw(&p);
 		}
 	}else if (type == HUI_KIND_MULTILINEEDIT){
 		if (message == "hui:key-down"){
-			if (((HuiControlMultilineEdit*)this)->handle_keys)
-				WinTrySendByKeyCode(win, HuiGetEvent()->key_code);
+			if (((ControlMultilineEdit*)this)->handle_keys)
+				WinTrySendByKeyCode(win, GetEvent()->key_code);
 		}
 	}
 	notify_pop();

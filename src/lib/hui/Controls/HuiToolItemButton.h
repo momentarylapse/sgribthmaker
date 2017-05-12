@@ -8,12 +8,12 @@
 #ifndef HUITOOLITEMBUTTON_H_
 #define HUITOOLITEMBUTTON_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
-class HuiToolItemButton : public HuiControl
+class HuiToolItemButton : public Control
 {
 public:
 	HuiToolItemButton(const string &title, const string &image, const string &id);

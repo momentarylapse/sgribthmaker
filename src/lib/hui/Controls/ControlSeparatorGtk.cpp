@@ -1,17 +1,17 @@
 /*
- * HuiControlSeparator.cpp
+ * ControlSeparator.cpp
  *
  *  Created on: 19.09.2013
  *      Author: michi
  */
 
-#include "HuiControlSeparator.h"
+#include "ControlSeparator.h"
 
 namespace hui
 {
 
-HuiControlSeparator::HuiControlSeparator(const string &text, const string &_id) :
-	HuiControl(HUI_KIND_SEPARATOR, _id)
+ControlSeparator::ControlSeparator(const string &text, const string &_id) :
+	Control(HUI_KIND_SEPARATOR, _id)
 {
 	GetPartStrings(text);
 	if (OptionString.find("vertical") >= 0)

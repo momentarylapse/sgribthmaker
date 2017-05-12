@@ -1,22 +1,22 @@
 /*
- * HuiControlMultilineEdit.h
+ * ControlMultilineEdit.h
  *
  *  Created on: 18.06.2013
  *      Author: michi
  */
 
-#ifndef HUICONTROLMULTILINEEDIT_H_
-#define HUICONTROLMULTILINEEDIT_H_
+#ifndef CONTROLMULTILINEEDIT_H_
+#define CONTROLMULTILINEEDIT_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
-class HuiControlMultilineEdit : public HuiControl
+class ControlMultilineEdit : public Control
 {
 public:
-	HuiControlMultilineEdit(const string &text, const string &id);
+	ControlMultilineEdit(const string &text, const string &id);
 	virtual string getString();
 	virtual void __setString(const string &str);
 	virtual void __addString(const string &str);
@@ -27,4 +27,4 @@ public:
 
 };
 
-#endif /* HUICONTROLMULTILINEEDIT_H_ */
+#endif /* CONTROLMULTILINEEDIT_H_ */

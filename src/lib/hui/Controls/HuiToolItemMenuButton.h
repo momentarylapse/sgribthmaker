@@ -8,17 +8,17 @@
 #ifndef HUITOOLITEMMENUBUTTON_H_
 #define HUITOOLITEMMENUBUTTON_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
-class HuiMenu;
+class Menu;
 
-class HuiToolItemMenuButton : public HuiControl
+class HuiToolItemMenuButton : public Control
 {
 public:
-	HuiToolItemMenuButton(const string &title, HuiMenu *menu, const string &image, const string &id);
+	HuiToolItemMenuButton(const string &title, Menu *menu, const string &image, const string &id);
 };
 
 }

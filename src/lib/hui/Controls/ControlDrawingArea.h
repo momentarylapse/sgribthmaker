@@ -1,23 +1,23 @@
 /*
- * HuiControlDrawingArea.h
+ * ControlDrawingArea.h
  *
  *  Created on: 17.06.2013
  *      Author: michi
  */
 
-#ifndef HUICONTROLDRAWINGAREA_H_
-#define HUICONTROLDRAWINGAREA_H_
+#ifndef CONTROLDRAWINGAREA_H_
+#define CONTROLDRAWINGAREA_H_
 
-#include "HuiControl.h"
+#include "Control.h"
 
 namespace hui
 {
 
 
-class HuiControlDrawingArea : public HuiControl
+class ControlDrawingArea : public Control
 {
 public:
-	HuiControlDrawingArea(const string &text, const string &id);
+	ControlDrawingArea(const string &text, const string &id);
 
 	void hardReset();
 
@@ -26,4 +26,4 @@ public:
 
 };
 
-#endif /* HUICONTROLDRAWINGAREA_H_ */
+#endif /* CONTROLDRAWINGAREA_H_ */

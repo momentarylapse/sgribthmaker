@@ -1,19 +1,19 @@
 /*
- * HuiControlScrollerGtk.cpp
+ * ControlScrollerGtk.cpp
  *
  *  Created on: 18.09.2013
  *      Author: michi
  */
 
-#include "HuiControlScroller.h"
+#include "ControlScroller.h"
 
 #ifdef HUI_API_GTK
 
 namespace hui
 {
 
-HuiControlScroller::HuiControlScroller(const string &title, const string &id) :
-	HuiControl(HUI_KIND_SCROLLER, id)
+ControlScroller::ControlScroller(const string &title, const string &id) :
+	Control(HUI_KIND_SCROLLER, id)
 {
 	widget = gtk_scrolled_window_new(NULL, NULL);
 	viewport = NULL;
@@ -23,7 +23,7 @@ HuiControlScroller::HuiControlScroller(const string &title, const string &id) :
 	setOptions(OptionString);
 }
 
-void HuiControlScroller::add(HuiControl *child, int x, int y)
+void ControlScroller::add(Control *child, int x, int y)
 {
 	GtkWidget *child_widget = child->get_frame();
 	//gtk_container_add(GTK_CONTAINER(viewport), child_widget);

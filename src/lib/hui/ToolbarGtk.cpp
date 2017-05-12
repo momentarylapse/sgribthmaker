@@ -5,15 +5,15 @@
  *      Author: michi
  */
 
-#include "HuiToolbar.h"
-#include "Controls/HuiControl.h"
+#include "Controls/Control.h"
+#include "Toolbar.h"
 
 namespace hui
 {
 
 #ifdef HUI_API_GTK
 
-HuiToolbar::HuiToolbar(HuiWindow *_win, bool vertical)
+Toolbar::Toolbar(Window *_win, bool vertical)
 {
 	win = _win;
 	enabled = false;
@@ -26,13 +26,13 @@ HuiToolbar::HuiToolbar(HuiWindow *_win, bool vertical)
 		gtk_orientable_set_orientation(GTK_ORIENTABLE(widget), GTK_ORIENTATION_VERTICAL);
 }
 
-HuiToolbar::~HuiToolbar()
+Toolbar::~Toolbar()
 {
 	reset();
 }
 
 
-void HuiToolbar::enable(bool _enabled)
+void Toolbar::enable(bool _enabled)
 {
 	if (_enabled)
 		gtk_widget_show(widget);
@@ -41,7 +41,7 @@ void HuiToolbar::enable(bool _enabled)
 	enabled = _enabled;
 }
 
-void HuiToolbar::configure(bool _text_enabled, bool _large_icons)
+void Toolbar::configure(bool _text_enabled, bool _large_icons)
 {
 	gtk_toolbar_set_style(GTK_TOOLBAR(widget), _text_enabled ? GTK_TOOLBAR_BOTH : GTK_TOOLBAR_ICONS);
 	gtk_toolbar_set_icon_size(GTK_TOOLBAR(widget), _large_icons ? GTK_ICON_SIZE_LARGE_TOOLBAR : GTK_ICON_SIZE_SMALL_TOOLBAR);
@@ -49,7 +49,7 @@ void HuiToolbar::configure(bool _text_enabled, bool _large_icons)
 	large_icons = _large_icons;
 }
 
-void HuiToolbar::add(HuiControl *c)
+void Toolbar::add(Control *c)
 {
 	c->panel = win;
 	item.add(c);

@@ -12,23 +12,23 @@
 namespace hui
 {
 
-class HuiEventHandler;
+class EventHandler;
 
-struct HuiCommand
+struct Command
 {
 	string id, image;
 	int type, key_code;
 	bool enabled;
-	HuiCallback func;
+	Callback func;
 };
 
-extern Array<HuiCommand> _HuiCommand_;
+extern Array<Command> _HuiCommand_;
 
 
-class HuiEvent
+class Event
 {
 	public:
-	HuiWindow *win;
+	Window *win;
 	string message, id;
 	bool is_default;
 	float mx, my;
@@ -39,35 +39,35 @@ class HuiEvent
 	int width, height;
 	bool lbut, mbut, rbut;
 	int row, column, row_target;
-	HuiEvent(){}
-	HuiEvent(const string &id, const string &message);
+	Event(){}
+	Event(const string &id, const string &message);
 };
 
-extern HuiEvent _HuiEvent_;
-HuiEvent *HuiGetEvent();
+extern Event _HuiEvent_;
+Event *GetEvent();
 
 
-class HuiEventListener
+class EventListener
 {
 public:
 	string id, message;
-	HuiCallback function;
-	HuiCallbackP function_p;
-	HuiEventListener(){}
-	HuiEventListener(const string &id, const string &message, const HuiCallback &function);
-	HuiEventListener(const string &id, const string &message, int __, const HuiCallbackP &function);
+	Callback function;
+	CallbackP function_p;
+	EventListener(){}
+	EventListener(const string &id, const string &message, const Callback &function);
+	EventListener(const string &id, const string &message, int __, const CallbackP &function);
 };
 
 
 // internal
 void _HuiInitInput_();
-bool _HuiEventMatch_(HuiEvent *e, const string &id, const string &message);
-void _HuiSendGlobalCommand_(HuiEvent *e);
+bool _HuiEventMatch_(Event *e, const string &id, const string &message);
+void _HuiSendGlobalCommand_(Event *e);
 
 // key codes and id table ("shortcuts")
 void HuiAddKeyCode(const string &id, int key_code);
-void HuiAddCommand(const string &id, const string &image, int default_key_code, const HuiCallback &func);
-void HuiAddCommandToggle(const string &id, const string &image, int default_key_code, const HuiCallback &func);
+void HuiAddCommand(const string &id, const string &image, int default_key_code, const Callback &func);
+void HuiAddCommandToggle(const string &id, const string &image, int default_key_code, const Callback &func);
 /*void _HuiAddCommandM(const string &id, const string &image, int default_key_code, HuiEventHandler *object, void (HuiEventHandler::*function)());
 void _HuiAddCommandMToggle(const string &id, const string &image, int default_key_code, HuiEventHandler *object, void (HuiEventHandler::*function)());
 template<typename T>
