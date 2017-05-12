@@ -14,8 +14,8 @@ CommandDialog::CommandDialog(HuiWindow *parent) :
 	HuiWindow("command_dialog", parent)
 {
 	setString("command", LastCommand);
-	event("ok", this, &CommandDialog::onOk);
-	event("cancel", this, &CommandDialog::onCancel);
+	event("ok", std::bind(&CommandDialog::onOk, this));
+	event("cancel", std::bind(&CommandDialog::onCancel, this));
 }
 
 CommandDialog::~CommandDialog()

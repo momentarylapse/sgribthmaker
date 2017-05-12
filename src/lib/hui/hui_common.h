@@ -56,14 +56,24 @@
 
 #include "../file/file.h"
 
+#include <functional>
+
+class Painter;
+
+
 
 class HuiEventHandler : public VirtualBase
 {
 public:
 };
 
-typedef void hui_callback();
-typedef void hui_callback_p(void *p);
+
+typedef void hui_kaba_callback();
+typedef void hui_kaba_member_callback(HuiEventHandler *h);
+typedef void hui_kaba_member_callback_p(HuiEventHandler *h, void *p);
+
+typedef std::function<void()> HuiCallback;
+typedef std::function<void(Painter*)> HuiCallbackP;
 
 
 

@@ -137,7 +137,7 @@ void changed(GtkTextBuffer *textbuffer, gpointer user_data)
 	msg_db_f("changed", 1);
 	//printf("change\n");
 	sv->CreateTextColors(sv->NeedsUpdateStart, sv->NeedsUpdateEnd);
-	HuiRunLaterM(1, sv, &SourceView::CreateColorsIfNotBusy);
+	HuiRunLater(1, std::bind(&SourceView::CreateColorsIfNotBusy, sv));
 	sv->color_busy_level ++;
 }
 
@@ -185,7 +185,7 @@ SourceView::SourceView(HuiWindow *win, const string &_id, Document *d)
 	UpdateFont();
 	//g_object_set(tv, "wrap-mode", GTK_WRAP_WORD_CHAR, NULL);
 
-	HuiRunLaterM(0.05f, this, &SourceView::UpdateTabSize);
+	HuiRunLater(0.05f, std::bind(&SourceView::UpdateTabSize, this));
 }
 
 SourceView::~SourceView()
@@ -555,7 +555,7 @@ void SourceView::UpdateFont()
 	gtk_widget_override_font(tv, font_desc);
 	pango_font_description_free(font_desc);
 
-	HuiRunLaterM(0.010f, this, &SourceView::UpdateTabSize);
+	HuiRunLater(0.010f, std::bind(&SourceView::UpdateTabSize, this));
 }
 
 

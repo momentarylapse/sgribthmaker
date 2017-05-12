@@ -24,7 +24,7 @@ Console::Console()
 	show(false);
 
 
-	event("console_close", this, &Console::onClose);
+	event("console_close", std::bind(&Console::onClose, this));
 }
 
 Console::~Console()

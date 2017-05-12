@@ -574,9 +574,9 @@ public:
 
 		MainWin = new HuiWindow(AppTitle, -1, -1, width, height);
 
-		MainWin->eventS("about", &OnAbout);
-		MainWin->eventS("exit", &OnExit);
-		MainWin->eventS("hui:close", &OnExit);
+		MainWin->event("about", &OnAbout);
+		MainWin->event("exit", &OnExit);
+		MainWin->event("hui:close", &OnExit);
 
 
 		MainWin->setBorderWidth(0);
@@ -614,8 +614,8 @@ public:
 		MainWin->setMaximized(maximized);
 		MainWin->show();
 
-		MainWin->eventSX("file_list", "hui:select", &OnFileList);
-		MainWin->eventSX("function_list", "hui:select", &OnFunctionList);
+		MainWin->eventX("file_list", "hui:select", &OnFileList);
+		MainWin->eventX("function_list", "hui:select", &OnFunctionList);
 
 
 

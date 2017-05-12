@@ -34,18 +34,18 @@ SettingsDialog::SettingsDialog(HuiWindow *parent) :
 	setInt("context_list", 0);
 	onContextListSelect();
 
-	event("close", this, &SettingsDialog::onClose);
-	event("font", this, &SettingsDialog::onFont);
-	event("tab_width", this, &SettingsDialog::onTabWidth);
-	eventX("context_list", "hui:select", this, &SettingsDialog::onContextListSelect);
-	event("schemes", this, &SettingsDialog::onSchemes);
-	event("copy_scheme", this, &SettingsDialog::onCopyScheme);
-	event("scheme_background", this, &SettingsDialog::onSchemeChange);
-	event("color_text", this, &SettingsDialog::onSchemeChange);
-	event("color_background", this, &SettingsDialog::onSchemeChange);
-	event("overwrite_background", this, &SettingsDialog::onSchemeChange);
-	event("bold", this, &SettingsDialog::onSchemeChange);
-	event("italic", this, &SettingsDialog::onSchemeChange);
+	event("close", std::bind(&SettingsDialog::onClose, this));
+	event("font", std::bind(&SettingsDialog::onFont, this));
+	event("tab_width", std::bind(&SettingsDialog::onTabWidth, this));
+	eventX("context_list", "hui:select", std::bind(&SettingsDialog::onContextListSelect, this));
+	event("schemes", std::bind(&SettingsDialog::onSchemes, this));
+	event("copy_scheme", std::bind(&SettingsDialog::onCopyScheme, this));
+	event("scheme_background", std::bind(&SettingsDialog::onSchemeChange, this));
+	event("color_text", std::bind(&SettingsDialog::onSchemeChange, this));
+	event("color_background", std::bind(&SettingsDialog::onSchemeChange, this));
+	event("overwrite_background", std::bind(&SettingsDialog::onSchemeChange, this));
+	event("bold", std::bind(&SettingsDialog::onSchemeChange, this));
+	event("italic", std::bind(&SettingsDialog::onSchemeChange, this));
 }
 
 SettingsDialog::~SettingsDialog()

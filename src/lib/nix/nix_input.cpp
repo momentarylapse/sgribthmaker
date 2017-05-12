@@ -67,16 +67,16 @@ void NixInputInit()
 	NixInputDataCurrent.reset();
 	NixInputDataLast.reset();
 
-	NixWindow->eventSX(NixControlID, "hui:mouse-move", &NixOnEvent);
-	NixWindow->eventSX(NixControlID, "hui:mouse-wheel", &NixOnEvent);
-	NixWindow->eventSX(NixControlID, "hui:key-down", &NixOnEvent);
-	NixWindow->eventSX(NixControlID, "hui:key-up", &NixOnEvent);
-	NixWindow->eventSX(NixControlID, "hui:left-button-down", &NixOnEvent);
-	NixWindow->eventSX(NixControlID, "hui:left-button-up", &NixOnEvent);
-	NixWindow->eventSX(NixControlID, "hui:middle-button-down", &NixOnEvent);
-	NixWindow->eventSX(NixControlID, "hui:middle-button-up", &NixOnEvent);
-	NixWindow->eventSX(NixControlID, "hui:right-button-down", &NixOnEvent);
-	NixWindow->eventSX(NixControlID, "hui:right-button-up", &NixOnEvent);
+	NixWindow->eventX(NixControlID, "hui:mouse-move", &NixOnEvent);
+	NixWindow->eventX(NixControlID, "hui:mouse-wheel", &NixOnEvent);
+	NixWindow->eventX(NixControlID, "hui:key-down", &NixOnEvent);
+	NixWindow->eventX(NixControlID, "hui:key-up", &NixOnEvent);
+	NixWindow->eventX(NixControlID, "hui:left-button-down", &NixOnEvent);
+	NixWindow->eventX(NixControlID, "hui:left-button-up", &NixOnEvent);
+	NixWindow->eventX(NixControlID, "hui:middle-button-down", &NixOnEvent);
+	NixWindow->eventX(NixControlID, "hui:middle-button-up", &NixOnEvent);
+	NixWindow->eventX(NixControlID, "hui:right-button-down", &NixOnEvent);
+	NixWindow->eventX(NixControlID, "hui:right-button-up", &NixOnEvent);
 }
 
 void NixStealMouse(bool steal)

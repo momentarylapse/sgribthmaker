@@ -98,57 +98,40 @@ void HuiPanel::_set_cur_id_(const string &id)
 	cur_id = id;
 }
 
-void HuiPanel::eventS(const string &id, hui_callback *function)
+void HuiPanel::event(const string &id, const HuiCallback &function)
 {
-	events.add(HuiEventListener(id, ":def:", function));
-
+	eventX(id, ":def:", function);
 }
 
-void HuiPanel::eventSX(const string &id, const string &msg, hui_callback *function)
+void HuiPanel::eventX(const string &id, const string &msg, const HuiCallback &function)
 {
 	events.add(HuiEventListener(id, msg, function));
 }
 
-void HuiPanel::_event(const string &id, HuiEventHandler *handler, void (HuiEventHandler::*function)())
+// hopefully deprecated soon?
+void HuiPanel::eventXP(const string &id, const string &msg, const HuiCallbackP &function)
 {
-	events.add(HuiEventListener(id, ":def:", HuiCallback(handler, function)));
+	events.add(HuiEventListener(id, msg, -1, function));
 }
 
-void HuiPanel::_eventX(const string &id, const string &msg, HuiEventHandler *handler, void (HuiEventHandler::*function)())
+void HuiPanel::_kaba_event(const string &id, hui_kaba_member_callback *function)
 {
-	events.add(HuiEventListener(id, msg, HuiCallback(handler, function)));
+	event(id, std::bind(function, this));
 }
 
-void HuiPanel::_eventXP(const string &id, const string &msg, HuiEventHandler *handler, void (HuiEventHandler::*function)(Painter*))
+void HuiPanel::_kaba_eventO(const string &id, HuiEventHandler* handler, hui_kaba_member_callback *function)
 {
-	events.add(HuiEventListener(id, msg, HuiCallback(handler, (void(HuiEventHandler::*)())function)));
+	event(id, std::bind(function, handler));
 }
 
-void HuiPanel::_eventK(const string &id, hui_kaba_callback *function)
+void HuiPanel::_kaba_eventX(const string &id, const string &msg, hui_kaba_member_callback *function)
 {
-	events.add(HuiEventListener(id, ":def:", HuiCallback(this, function)));
+	eventX(id, msg, std::bind(function, this));
 }
 
-void HuiPanel::_eventKO(const string &id, HuiEventHandler* handler, hui_kaba_callback *function)
+void HuiPanel::_kaba_eventOX(const string &id, const string &msg, HuiEventHandler* handler, hui_kaba_member_callback *function)
 {
-	events.add(HuiEventListener(id, ":def:", HuiCallback(handler, function)));
-}
-
-void HuiPanel::_eventKX(const string &id, const string &msg, hui_kaba_callback *function)
-{
-	events.add(HuiEventListener(id, msg, HuiCallback(this, function)));
-}
-
-void HuiPanel::_eventKOX(const string &id, const string &msg, HuiEventHandler* handler, hui_kaba_callback *function)
-{
-	events.add(HuiEventListener(id, msg, HuiCallback(handler, function)));
-}
-
-void HuiPanel::removeEventHandlers(HuiEventHandler *handler)
-{
-	for (int i=events.num-1;i>=0;i--)
-		if (events[i].function.has_handler(handler))
-			events.erase(i);
+	eventX(id, msg, std::bind(function, handler));
 }
 
 bool HuiPanel::_send_event_(HuiEvent *e)
@@ -175,6 +158,7 @@ bool HuiPanel::_send_event_(HuiEvent *e)
 	e->key = (e->key_code % 256);
 	e->text = HuiGetKeyChar(e->key_code);
 	e->row = win->input.row;
+	e->row_target = win->input.row_target;
 	e->column = win->input.column;
 	_HuiEvent_ = *e;
 	if (e->id.num > 0)
@@ -189,15 +173,18 @@ bool HuiPanel::_send_event_(HuiEvent *e)
 			continue;
 
 		// send the event
-		if (ee.function.is_set()){
 
-			if (e->message == "hui:draw"){
+		if (e->message == "hui:draw"){
+			if (ee.function_p){
 				HuiPainter p(this, e->id);
-				ee.function.call_p(&p);
-			}else{
-				ee.function.call();
+				ee.function_p(&p);
+				sent = true;
 			}
-			sent = true;
+		}else{
+			if (ee.function){
+				ee.function();
+				sent = true;
+			}
 		}
 
 		// window closed by callback?
@@ -616,12 +603,12 @@ bool HuiPanel::isChecked(const string &_id)
 Array<int> HuiPanel::getSelection(const string &_id)
 {
 	test_controls(_id, c)
-		return c->getMultiSelection();
+		return c->getSelection();
 	Array<int> sel;
 	return sel;
 }
 
-void HuiPanel::setSelection(const string &_id, Array<int> &sel)
+void HuiPanel::setSelection(const string &_id, const Array<int> &sel)
 {
 	test_controls(_id, c)
 		c->setSelection(sel);
