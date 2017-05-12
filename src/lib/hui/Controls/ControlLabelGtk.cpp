@@ -14,7 +14,7 @@ namespace hui
 {
 
 ControlLabel::ControlLabel(const string &title, const string &id) :
-	Control(HUI_KIND_LABEL, id)
+	Control(CONTROL_LABEL, id)
 {
 	GetPartStrings(title);
 	widget = gtk_label_new("");

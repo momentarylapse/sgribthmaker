@@ -15,7 +15,7 @@ namespace hui
 void OnGtkEditChange(GtkWidget *widget, gpointer data);
 
 ControlSpinButton::ControlSpinButton(const string &title, const string &id) :
-	Control(HUI_KIND_SPINBUTTON, id)
+	Control(CONTROL_SPINBUTTON, id)
 {
 	GetPartStrings(title);
 	float vmin = -100000000000.0f;

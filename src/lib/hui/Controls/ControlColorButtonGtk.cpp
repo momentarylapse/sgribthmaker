@@ -16,10 +16,10 @@ void OnGtkButtonPress(GtkWidget *widget, gpointer data);
 
 
 void OnGtkColorButtonChange(GtkWidget *widget, gpointer data)
-{	static_cast<Control*>(data)->notify("hui:change");	}
+{	reinterpret_cast<Control*>(data)->notify("hui:change");	}
 
 ControlColorButton::ControlColorButton(const string &title, const string &id) :
-	Control(HUI_KIND_COLORBUTTON, id)
+	Control(CONTROL_COLORBUTTON, id)
 {
 	GetPartStrings(title);
 	widget = gtk_color_button_new();

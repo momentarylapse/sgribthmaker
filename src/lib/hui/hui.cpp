@@ -11,12 +11,13 @@
 
 
 #include "hui.h"
-#include "hui_internal.h"
 #include "../file/file.h"
 
 
 #include <stdio.h>
 #include <signal.h>
+
+#include "internal.h"
 #ifdef OS_WINDOWS
 	#include <shlobj.h>
 	#include <winuser.h>
@@ -47,7 +48,7 @@ namespace hui
 {
 
 
-string Version = "0.5.21.0";
+string Version = "0.6.0.0";
 
 
 #ifdef OS_WINDOWS
@@ -75,27 +76,27 @@ void _so(int i)
 
 
 
-Callback HuiIdleFunction;
-Callback HuiErrorFunction;
+Callback _idle_function_;
+Callback _error_function_;
 bool HuiHaveToExit;
-bool HuiRunning = false;
-bool HuiEndKeepMsgAlive = false;
-int HuiMainLevel = -1;
+bool Running = false;
+bool EndKeepMsgAlive = false;
+int _main_level_ = -1;
 Array<bool> HuiMainLevelRunning;
 
-Array<Window*> HuiWindows;
+Array<Window*> _hui_windows_;
 
 
-bool _HuiScreenOpened_ = false;
+bool _screen_opened_ = false;
 
 // HUI configuration
-string HuiComboBoxSeparator;
+string ComboBoxSeparator;
 
-string HuiAppFilename;
-string HuiAppDirectory;			// dir of changeable files (ie. ~/.app/)
-string HuiAppDirectoryStatic;	// dir of static files (ie. /usr/shar/app)
-string HuiInitialWorkingDirectory;
-Array<string> HuiArgument;
+string AppFilename;
+string AppDirectory;			// dir of changeable files (ie. ~/.app/)
+string AppDirectoryStatic;	// dir of static files (ie. /usr/shar/app)
+string InitialWorkingDirectory;
+Array<string> Argument;
 
 
 
@@ -103,16 +104,16 @@ Array<string> HuiArgument;
 	void *invisible_cursor = NULL;
 #endif
 
-Array<string> HuiMakeArgs(int num_args, char *args[])
+Array<string> MakeArgs(int num_args, char *args[])
 {
 	Array<string> a;
 	for (int i=0;i<num_args;i++)
 		a.add(args[i]);
-	HuiArgument = a;
+	Argument = a;
 	return a;
 }
 
-Array<sHuiImage> HuiImage;
+Array<HuiImage> _hui_images_;
 
 
 
@@ -121,7 +122,7 @@ Array<sHuiImage> HuiImage;
 //----------------------------------------------------------------------------------
 // system independence of main() function
 
-extern Array<string> HuiMakeArgs(int num_args, char *args[]);
+extern Array<string> MakeArgs(int num_args, char *args[]);
 
 
 }
@@ -136,7 +137,7 @@ int hui_main(const Array<string> &);
 
 int _tmain(int NumArgs, _TCHAR *Args[])
 {
-	return hui_main(HuiMakeArgs(NumArgs, Args));
+	return hui_main(MakeArgs(NumArgs, Args));
 }
 
 #else
@@ -164,7 +165,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
 int main(int NumArgs, char *Args[])
 {
-	return hui_main(hui::HuiMakeArgs(NumArgs, Args));
+	return hui_main(hui::MakeArgs(NumArgs, Args));
 }
 
 #endif
@@ -209,8 +210,8 @@ namespace hui
 
 	gboolean GtkIdleFunction(void*)
 	{
-		if (HuiIdleFunction)
-			HuiIdleFunction();
+		if (_idle_function_)
+			_idle_function_();
 		else
 			Sleep(0.010f);
 		return TRUE;
@@ -234,10 +235,10 @@ namespace hui
 	}
 #endif
 
-void HuiSetIdleFunction(const Callback &c)
+void SetIdleFunction(const Callback &c)
 {
 #ifdef HUI_API_GTK
-	bool old_idle = (bool)HuiIdleFunction;
+	bool old_idle = (bool)_idle_function_;
 	bool new_idle = (bool)c;
 	if (new_idle and !old_idle)
 		idle_id = g_idle_add_full(300, GtkIdleFunction, NULL, NULL);
@@ -246,7 +247,7 @@ void HuiSetIdleFunction(const Callback &c)
 		idle_id = -1;
 	}
 #endif
-	HuiIdleFunction = c;
+	_idle_function_ = c;
 }
 
 /*void HuiSetIdleFunction(hui_callback *idle_function)
@@ -259,7 +260,7 @@ void _HuiSetIdleFunctionM(HuiEventHandler *object, void (HuiEventHandler::*funct
 	_HuiSetIdleFunction(HuiCallback(object, function));
 }*/
 
-int HuiRunLater(float time, const Callback &c)
+int RunLater(float time, const Callback &c)
 {
 	#ifdef HUI_API_WIN
 		msg_todo("HuiRunLater");
@@ -283,7 +284,7 @@ int _HuiRunLaterM(float time, HuiEventHandler *object, void (HuiEventHandler::*f
 	return _HuiRunLater(time, new HuiCallback(object, function));
 }*/
 
-int HuiRunRepeated(float time, const Callback &c)
+int RunRepeated(float time, const Callback &c)
 {
 	#ifdef HUI_API_WIN
 		msg_todo("HuiRunRepeated");
@@ -307,7 +308,7 @@ int _HuiRunRepeatedM(float time, HuiEventHandler *object, void (HuiEventHandler:
 	return _HuiRunRepeated(time, new HuiCallback(object, function));
 }*/
 
-void HuiCancelRunner(int id)
+void CancelRunner(int id)
 {
 #ifdef HUI_API_GTK
 	g_source_remove(id);
@@ -315,9 +316,9 @@ void HuiCancelRunner(int id)
 #endif
 }
 
-void _HuiMakeUsable_()
+void _MakeUsable_()
 {
-	if (_HuiScreenOpened_)
+	if (_screen_opened_)
 		return;
 #ifdef HUI_API_WIN
 
@@ -326,7 +327,7 @@ void _HuiMakeUsable_()
 	//WinStandartFont=CreateFont(8,0,0,0,FW_NORMAL,FALSE,FALSE,0,ANSI_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,DEFAULT_PITCH|FF_SWISS,"MS Sans Serif");
 	hui_win_default_font=(HFONT)GetStockObject(DEFAULT_GUI_FONT);
 
-	hui_win_main_icon=ExtractIcon(hui_win_instance,sys_str(HuiAppFilename),0);
+	hui_win_main_icon=ExtractIcon(hui_win_instance,sys_str(AppFilename),0);
 
 #endif
 #ifdef HUI_API_GTK
@@ -342,46 +343,46 @@ void _HuiMakeUsable_()
 #endif
 
 #endif
-	_HuiScreenOpened_ = true;
+	_screen_opened_ = true;
 }
 
-void HuiInit(const string &program, bool load_res, const string &def_lang)
+void Init(const string &program, bool load_res, const string &def_lang)
 {
-	HuiInitialWorkingDirectory = get_current_dir();
+	InitialWorkingDirectory = get_current_dir();
 
 	#ifdef HUI_API_GTK
 		g_set_prgname(program.c_str());
 	#endif
 
 	#ifdef OS_LINUX
-		HuiAppDirectory = HuiInitialWorkingDirectory;
-		HuiAppDirectoryStatic = HuiAppDirectory;
-		if (HuiArgument.num > 0){
-			HuiAppFilename = HuiArgument[0];
-			if ((HuiArgument[0].head(5) == "/usr/") or (HuiArgument[0].find("/") < 0)){
+		AppDirectory = InitialWorkingDirectory;
+		AppDirectoryStatic = AppDirectory;
+		if (Argument.num > 0){
+			AppFilename = Argument[0];
+			if ((Argument[0].head(5) == "/usr/") or (Argument[0].find("/") < 0)){
 				// installed version?
-				HuiAppFilename = HuiArgument[0];
-				HuiAppDirectory = format("%s/.%s/", getenv("HOME"), program.c_str());
-				HuiAppDirectoryStatic = "/usr/share/" + program + "/";
+				AppFilename = Argument[0];
+				AppDirectory = format("%s/.%s/", getenv("HOME"), program.c_str());
+				AppDirectoryStatic = "/usr/share/" + program + "/";
 			}
 		}
-		dir_create(HuiAppDirectory);
+		dir_create(AppDirectory);
 	#endif
 	#ifdef OS_WINDOWS
 		char *ttt = NULL;
 		int r = _get_pgmptr(&ttt);
-		HuiAppFilename = ttt;
-		HuiAppDirectory = HuiAppFilename.dirname();
-		HuiAppDirectory = HuiAppDirectory.replace("\\Release\\", "\\");
-		HuiAppDirectory = HuiAppDirectory.replace("\\Debug\\", "\\");
-		HuiAppDirectory = HuiAppDirectory.replace("\\Unoptimized\\", "\\");
+		AppFilename = ttt;
+		AppDirectory = AppFilename.dirname();
+		AppDirectory = AppDirectory.replace("\\Release\\", "\\");
+		AppDirectory = AppDirectory.replace("\\Debug\\", "\\");
+		AppDirectory = AppDirectory.replace("\\Unoptimized\\", "\\");
 		hui_win_instance = (HINSTANCE)GetModuleHandle(NULL);
-		HuiAppDirectoryStatic = HuiAppDirectory;
+		AppDirectoryStatic = AppDirectory;
 	#endif
 
 	if (!msg_inited){
-		dir_create(HuiAppDirectory);
-		msg_init(HuiAppDirectory + "message.txt", true);
+		dir_create(AppDirectory);
+		msg_init(AppDirectory + "message.txt", true);
 	}
 
 	//msg_write("HuiAppDirectory " + HuiAppDirectory);
@@ -390,25 +391,25 @@ void HuiInit(const string &program, bool load_res, const string &def_lang)
 
 	InitTimers();
 
-	_HuiInitInput_();
+	_InitInput_();
 
-	HuiComboBoxSeparator = "\\";
-	HuiLanguaged = false;
-	HuiPushMainLevel();
-	HuiSetDefaultErrorHandler(NULL);
+	ComboBoxSeparator = "\\";
+	_using_language_ = false;
+	PushMainLevel();
+	SetDefaultErrorHandler(NULL);
 	//msg_write("");
 
-	Config.filename = HuiAppDirectory + "Data/config.txt";
+	Config.filename = AppDirectory + "Data/config.txt";
 
 	
 	//msg_write("HuiAppDirectory " + HuiAppDirectory);
 	//msg_write("HuiInitialWorkingDirectory " + HuiInitialWorkingDirectory);
 
 	if (load_res)
-		HuiLoadResource(HuiAppDirectoryStatic + "Data/hui_resources.txt");
+		LoadResource(AppDirectoryStatic + "Data/hui_resources.txt");
 
 	if (def_lang.num > 0)
-		HuiSetLanguage(Config.getStr("Language", def_lang));
+		SetLanguage(Config.getStr("Language", def_lang));
 
 	// at this point:
 	//   HuiAppDirectory -> dir to run binary in (binary dir or ~/.my_app/)
@@ -418,10 +419,10 @@ void HuiInit(const string &program, bool load_res, const string &def_lang)
 
 	
 
-	if (file_test_existence(HuiAppDirectoryStatic + "Data/icon.svg"))
-		HuiSetProperty("logo", HuiAppDirectoryStatic + "Data/icon.svg");
-	else if (file_test_existence(HuiAppDirectoryStatic + "Data/icon.ico"))
-		HuiSetProperty("logo", HuiAppDirectoryStatic + "Data/icon.ico");
+	if (file_test_existence(AppDirectoryStatic + "Data/icon.svg"))
+		SetProperty("logo", AppDirectoryStatic + "Data/icon.svg");
+	else if (file_test_existence(AppDirectoryStatic + "Data/icon.ico"))
+		SetProperty("logo", AppDirectoryStatic + "Data/icon.ico");
 }
 
 
@@ -435,10 +436,10 @@ void HuiInit(const string &program, bool load_res, const string &def_lang)
 //     return HuiRun();
 // }
 
-int HuiRun()
+int Run()
 {
-	HuiRunning = true;
-	HuiMainLevelRunning[HuiMainLevel] = true;
+	Running = true;
+	HuiMainLevelRunning[_main_level_] = true;
 	//HuiPushMainLevel();
 #ifdef HUI_API_WIN
 	MSG messages;
@@ -447,7 +448,7 @@ int HuiRun()
 	bool got_message;
 	while ((!HuiHaveToExit) and (WM_QUIT!=messages.message)){
 		bool allow=true;
-		if (HuiIdleFunction.is_set())
+		if (_idle_function_.is_set())
 			got_message=(PeekMessage(&messages,NULL,0U,0U,PM_REMOVE)!=0);
 		else
 			got_message=(GetMessage(&messages,NULL,0,0)!=0);
@@ -455,14 +456,14 @@ int HuiRun()
 			allow=false;
 			TranslateMessage(&messages);
 			DispatchMessage(&messages);
-			for (int i=0;i<HuiWindows.num;i++)
-				if (HuiWindows[i]->hWnd == messages.hwnd){
+			for (int i=0;i<_hui_windows_.num;i++)
+				if (_hui_windows_[i]->hWnd == messages.hwnd){
 					allow=true;
 					break;
 				}
 		}
-		if (HuiIdleFunction.is_set() and allow)
-			HuiIdleFunction.call();
+		if (_idle_function_.is_set() and allow)
+			_idle_function_.call();
 	}
 #endif
 #ifdef HUI_API_GTK
@@ -471,7 +472,7 @@ int HuiRun()
 	return 0;
 }
 
-void HuiDoSingleMainLoop()
+void DoSingleMainLoop()
 {
 #ifdef HUI_API_WIN
 	MSG messages;
@@ -480,7 +481,7 @@ void HuiDoSingleMainLoop()
 	bool got_message;
 
 	bool allow=true;
-	if (HuiIdleFunction)
+	if (_idle_function_)
 		got_message=(PeekMessage(&messages,NULL,0U,0U,PM_REMOVE)!=0);
 	else
 		got_message=(GetMessage(&messages,NULL,0,0)!=0);
@@ -488,8 +489,8 @@ void HuiDoSingleMainLoop()
 		allow=false;
 		TranslateMessage(&messages);
 		DispatchMessage(&messages);
-		for (int i=0;i<HuiWindows.num;i++)
-			if (HuiWindows[i]->hWnd == messages.hwnd){
+		for (int i=0;i<_hui_windows_.num;i++)
+			if (_hui_windows_[i]->hWnd == messages.hwnd){
 				allow = true;
 				return;
 			}
@@ -500,49 +501,49 @@ void HuiDoSingleMainLoop()
 #ifdef HUI_API_GTK
 
 	// push idle function
-	Callback _if_ = HuiIdleFunction;
+	Callback _if_ = _idle_function_;
 
-	HuiSetIdleFunction(NULL);
+	SetIdleFunction(NULL);
 	while(gtk_events_pending())
 		gtk_main_iteration();
 
 	// pop idle function
-	HuiSetIdleFunction(_if_);
+	SetIdleFunction(_if_);
 #endif
 }
 
-void HuiPushMainLevel()
+void PushMainLevel()
 {
-	HuiMainLevel ++;
+	_main_level_ ++;
 	HuiMainLevelRunning.add(false);
 }
 
-void HuiCleanUpMainLevel()
+void CleanUpMainLevel()
 {
-	foreachb(Window *w, HuiWindows)
-		if (w->_get_main_level_() >= HuiMainLevel){
+	foreachb(Window *w, _hui_windows_)
+		if (w->_get_main_level_() >= _main_level_){
 			delete(w);
 		}
-	HuiSetIdleFunction(NULL);
+	SetIdleFunction(NULL);
 }
 
-void HuiPopMainLevel()
+void PopMainLevel()
 {
-	HuiCleanUpMainLevel();
-	HuiMainLevel --;
+	CleanUpMainLevel();
+	_main_level_ --;
 	
-	if (HuiMainLevel < 0)
-		HuiSetErrorFunction(NULL);
+	if (_main_level_ < 0)
+		SetErrorFunction(NULL);
 	else
 		HuiMainLevelRunning.pop();
-	HuiDoSingleMainLoop();
+	DoSingleMainLoop();
 }
 
 // ends the system loop of the HuiRun() command
-void HuiEnd()
+void End()
 {
-	if (HuiMainLevel > 0)
-		HuiCleanUpMainLevel();
+	if (_main_level_ > 0)
+		CleanUpMainLevel();
 
 	// send "quit" message
 #ifdef HUI_API_WIN
@@ -554,7 +555,7 @@ void HuiEnd()
 #endif
 
 	// really end hui?
-	if (HuiMainLevel == 0){
+	if (_main_level_ == 0){
 #ifdef HUI_API_GTK
 #ifdef OS_LINUX
 		// sometimes freezes...
@@ -569,28 +570,28 @@ void HuiEnd()
 		if (Config.changed)
 			Config.save();
 	}
-	if ((msg_inited) and (!HuiEndKeepMsgAlive) and (HuiMainLevel == 0))
+	if ((msg_inited) and (!EndKeepMsgAlive) and (_main_level_ == 0))
 		msg_end();
 }
 
 
-static int _HuiCurrentImageNo_ = 0;
+static int _current_image_no_ = 0;
 
-string HuiSetImage(const Image &image)
+string SetImage(const Image &image)
 {
-	sHuiImage img;
+	HuiImage img;
 	img.type = 1;
 	img.image = image;
-	img.filename = format("image:%d", _HuiCurrentImageNo_ ++);
-	HuiImage.add(img);
+	img.filename = format("image:%d", _current_image_no_ ++);
+	_hui_images_.add(img);
 	return img.filename;
 }
 
-void HuiDeleteImage(const string &name)
+void DeleteImage(const string &name)
 {
-	for (int i=0;i<HuiImage.num;i++)
-		if (HuiImage[i].filename == name)
-			HuiImage.erase(i);
+	for (int i=0;i<_hui_images_.num;i++)
+		if (_hui_images_[i].filename == name)
+			_hui_images_.erase(i);
 }
 
 

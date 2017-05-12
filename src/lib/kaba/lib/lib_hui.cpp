@@ -69,7 +69,7 @@ void SIAddPackageHui()
 	TypeHuiConfiguration = add_type  ("Configuration", sizeof(hui::Configuration));
 
 	
-	add_func("GetKeyName",									TypeString,	hui_p(&hui::HuiGetKeyName));
+	add_func("GetKeyName",									TypeString,	hui_p(&hui::GetKeyName));
 		func_add_param("id",		TypeInt);
 
 	add_class(TypeHuiMenu);
@@ -403,7 +403,7 @@ void SIAddPackageHui()
 	add_class(TypeHuiNixWindow);
 		TypeHuiNixWindow->DeriveFrom(TypeHuiWindow, false);
 		TypeHuiNixWindow->vtable = TypeHuiWindow->vtable;
-		class_add_func(IDENTIFIER_FUNC_INIT,		TypeVoid,		mf(&hui::HuiNixWindow::__init_ext__), FLAG_OVERRIDE);
+		class_add_func(IDENTIFIER_FUNC_INIT,		TypeVoid,		mf(&hui::NixWindow::__init_ext__), FLAG_OVERRIDE);
 			func_add_param("title",		TypeString);
 			func_add_param("x",		TypeInt);
 			func_add_param("y",		TypeInt);
@@ -427,7 +427,7 @@ void SIAddPackageHui()
 	add_class(TypeHuiFixedDialog);
 		TypeHuiFixedDialog->DeriveFrom(TypeHuiWindow, false);
 		TypeHuiFixedDialog->vtable = TypeHuiWindow->vtable;
-		class_add_func(IDENTIFIER_FUNC_INIT,		TypeVoid,		mf(&hui::HuiFixedDialog::__init_ext__), FLAG_OVERRIDE);
+		class_add_func(IDENTIFIER_FUNC_INIT,		TypeVoid,		mf(&hui::FixedDialog::__init_ext__), FLAG_OVERRIDE);
 			func_add_param("title",		TypeString);
 			func_add_param("width",		TypeInt);
 			func_add_param("height",		TypeInt);
@@ -518,59 +518,59 @@ void SIAddPackageHui()
 			func_add_param("default",	TypeString);
 	
 	// user interface
-	add_func("HuiSetIdleFunction",	TypeVoid,		(void*)&hui::HuiSetIdleFunction);
+	add_func("HuiSetIdleFunction",	TypeVoid,		(void*)&hui::SetIdleFunction);
 		func_add_param("idle_func",	TypePointer);
-	add_func("HuiAddKeyCode",	TypeVoid,		(void*)&hui::HuiAddKeyCode);
+	add_func("HuiAddKeyCode",	TypeVoid,		(void*)&hui::AddKeyCode);
 		func_add_param("id",	TypeString);
 		func_add_param("key_code",	TypeInt);
-	add_func("HuiAddCommand",	TypeVoid,		(void*)&hui::HuiAddCommand);
+	add_func("HuiAddCommand",	TypeVoid,		(void*)&hui::AddCommand);
 		func_add_param("id",	TypeString);
 		func_add_param("image",	TypeString);
 		func_add_param("key_code",	TypeInt);
 		func_add_param("func",	TypePointer);
 	add_func("HuiGetEvent",	TypeHuiEventP,		(void*)&hui::GetEvent);
-	add_func("HuiRun",				TypeVoid,		(void*)&hui::HuiRun);
-	add_func("HuiEnd",				TypeVoid,		(void*)&hui::HuiEnd);
-	add_func("HuiDoSingleMainLoop",	TypeVoid,	(void*)&hui::HuiDoSingleMainLoop);
+	add_func("HuiRun",				TypeVoid,		(void*)&hui::Run);
+	add_func("HuiEnd",				TypeVoid,		(void*)&hui::End);
+	add_func("HuiDoSingleMainLoop",	TypeVoid,	(void*)&hui::DoSingleMainLoop);
 	add_func("HuiSleep",			TypeVoid,	(void*)&hui::Sleep);
 		func_add_param("duration",		TypeFloat32);
-	add_func("HuiFileDialogOpen",	TypeBool,	(void*)&hui::HuiFileDialogOpen);
+	add_func("HuiFileDialogOpen",	TypeBool,	(void*)&hui::FileDialogOpen);
 		func_add_param("root",		TypeHuiWindowP);
 		func_add_param("title",		TypeString);
 		func_add_param("dir",		TypeString);
 		func_add_param("show_filter",	TypeString);
 		func_add_param("filter",	TypeString);
-	add_func("HuiFileDialogSave",	TypeBool,	(void*)&hui::HuiFileDialogSave);
+	add_func("HuiFileDialogSave",	TypeBool,	(void*)&hui::FileDialogSave);
 		func_add_param("root",		TypeHuiWindowP);
 		func_add_param("title",		TypeString);
 		func_add_param("dir",		TypeString);
 		func_add_param("show_filter",	TypeString);
 		func_add_param("filter",	TypeString);
-	add_func("HuiFileDialogDir",	TypeBool,	(void*)&hui::HuiFileDialogDir);
+	add_func("HuiFileDialogDir",	TypeBool,	(void*)&hui::FileDialogDir);
 		func_add_param("root",		TypeHuiWindowP);
 		func_add_param("title",		TypeString);
 		func_add_param("dir",		TypeString);
-	add_func("HuiQuestionBox",		TypeString,	(void*)&hui::HuiQuestionBox);
+	add_func("HuiQuestionBox",		TypeString,	(void*)&hui::QuestionBox);
 		func_add_param("root",		TypeHuiWindowP);
 		func_add_param("title",		TypeString);
 		func_add_param("text",		TypeString);
 		func_add_param("allow_cancel",	TypeBool);
-	add_func("HuiInfoBox",			TypeVoid,			(void*)&hui::HuiInfoBox);
+	add_func("HuiInfoBox",			TypeVoid,			(void*)&hui::InfoBox);
 		func_add_param("root",		TypeHuiWindowP);
 		func_add_param("title",		TypeString);
 		func_add_param("text",		TypeString);
-	add_func("HuiErrorBox",			TypeVoid,		(void*)&hui::HuiErrorBox);
+	add_func("HuiErrorBox",			TypeVoid,		(void*)&hui::ErrorBox);
 		func_add_param("root",		TypeHuiWindowP);
 		func_add_param("title",		TypeString);
 		func_add_param("text",		TypeString);
 
 	// clipboard
-	add_func("HuiCopyToClipboard",	TypeVoid,			(void*)&hui::HuiCopyToClipBoard);
+	add_func("HuiCopyToClipboard",	TypeVoid,			(void*)&hui::CopyToClipBoard);
 		func_add_param("buffer",	TypeString);
-	add_func("HuiPasteFromClipboard",	TypeString,		(void*)&hui::HuiPasteFromClipBoard);
-	add_func("HuiOpenDocument",		TypeVoid,			(void*)&hui::HuiOpenDocument);
+	add_func("HuiPasteFromClipboard",	TypeString,		(void*)&hui::PasteFromClipBoard);
+	add_func("HuiOpenDocument",		TypeVoid,			(void*)&hui::OpenDocument);
 		func_add_param("filename",	TypeString);
-	add_func("HuiSetImage",			TypeString,			(void*)&hui::HuiSetImage);
+	add_func("HuiSetImage",			TypeString,			(void*)&hui::SetImage);
 		func_add_param("image",		TypeImage);
 
 	add_class(TypeHuiEvent);
@@ -693,10 +693,10 @@ void SIAddPackageHui()
 	add_const("NumKeys",TypeInt,(void*)hui::NUM_KEYS);
 	add_const("KeyAny",TypeInt,(void*)hui::KEY_ANY);
 
-	add_ext_var("AppFilename",		TypeString,		hui_p(&hui::HuiAppFilename));
-	add_ext_var("AppDirectory",		TypeString,		hui_p(&hui::HuiAppDirectory));
-	add_ext_var("AppDirectoryStatic",TypeString,		hui_p(&hui::HuiAppDirectoryStatic));
-	add_ext_var("HuiFilename",		TypeString,		hui_p(&hui::HuiFilename));
+	add_ext_var("AppFilename",		TypeString,		hui_p(&hui::AppFilename));
+	add_ext_var("AppDirectory",		TypeString,		hui_p(&hui::AppDirectory));
+	add_ext_var("AppDirectoryStatic",TypeString,		hui_p(&hui::AppDirectoryStatic));
+	add_ext_var("HuiFilename",		TypeString,		hui_p(&hui::Filename));
 	//add_ext_var("HuiRunning",		TypeBool,		hui_p(&hui::HuiRunning));
 	add_ext_var("HuiConfig",		TypeHuiConfiguration,	hui_p(&hui::Config));
 }

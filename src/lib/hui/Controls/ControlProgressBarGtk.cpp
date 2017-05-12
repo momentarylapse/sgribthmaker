@@ -14,7 +14,7 @@ namespace hui
 {
 
 ControlProgressBar::ControlProgressBar(const string &title, const string &id) :
-	Control(HUI_KIND_PROGRESSBAR, id)
+	Control(CONTROL_PROGRESSBAR, id)
 {
 	GetPartStrings(title);
 	widget = gtk_progress_bar_new();

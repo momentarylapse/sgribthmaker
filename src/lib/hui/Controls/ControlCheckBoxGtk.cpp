@@ -13,10 +13,10 @@ namespace hui
 {
 
 void OnGtkCheckboxChange(GtkWidget *widget, gpointer data)
-{	((Control*)data)->notify("hui:change");	}
+{	reinterpret_cast<Control*>(data)->notify("hui:change");	}
 
 ControlCheckBox::ControlCheckBox(const string &title, const string &id) :
-	Control(HUI_KIND_CHECKBOX, id)
+	Control(CONTROL_CHECKBOX, id)
 {
 	GetPartStrings(title);
 	widget = gtk_check_button_new_with_label(sys_str(PartString[0]));

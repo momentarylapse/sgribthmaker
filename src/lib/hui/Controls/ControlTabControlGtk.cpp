@@ -22,7 +22,7 @@ void OnGtkTabControlSwitch(GtkWidget *widget, GtkWidget *page, guint page_num, g
 
 
 ControlTabControl::ControlTabControl(const string &title, const string &id, Panel *panel) :
-	Control(HUI_KIND_TABCONTROL, id)
+	Control(CONTROL_TABCONTROL, id)
 {
 	GetPartStrings(title);
 	widget = gtk_notebook_new();

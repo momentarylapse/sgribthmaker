@@ -13,7 +13,7 @@ namespace hui
 {
 
 ControlScroller::ControlScroller(const string &title, const string &id) :
-	Control(HUI_KIND_SCROLLER, id)
+	Control(CONTROL_SCROLLER, id)
 {
 	widget = gtk_scrolled_window_new(NULL, NULL);
 	viewport = NULL;

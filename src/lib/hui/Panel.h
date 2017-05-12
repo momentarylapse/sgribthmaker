@@ -17,7 +17,7 @@ namespace hui
 {
 
 class Menu;
-class HuiResource;
+class Resource;
 class Painter;
 class Event;
 class EventListener;
@@ -64,7 +64,7 @@ public:
 	// creating controls
 
 	void _cdecl addControl(const string &type, const string &title, int x, int y, int width, int height, const string &id);
-	void _cdecl _addControl(const string &ns, HuiResource &cmd, const string &parent_id);
+	void _cdecl _addControl(const string &ns, Resource &cmd, const string &parent_id);
 	void _cdecl addButton(const string &title,int x,int y,int width,int height,const string &id);
 	void _cdecl addDefButton(const string &title,int x,int y,int width,int height,const string &id);
 	void _cdecl addColorButton(const string &title,int x,int y,int width,int height,const string &id);
@@ -96,8 +96,8 @@ public:
 
 	void _cdecl embedDialog(const string &id, int x, int y);
 	void _cdecl embedSource(const string &source, const string &parent_id, int x, int y);
-	void embedResource(HuiResource &c, const string &parent_id, int x, int y);
-	void _embedResource(const string &ns, HuiResource &c, const string &parent_id, int x, int y);
+	void embedResource(Resource &c, const string &parent_id, int x, int y);
+	void _embedResource(const string &ns, Resource &c, const string &parent_id, int x, int y);
 	void _cdecl embed(Panel *panel, const string &parent_id, int x, int y);
 
 // using controls
@@ -171,7 +171,7 @@ protected:
 	int desired_width, desired_height;
 #endif
 
-	Array<Control*> control;
+	Array<Control*> controls;
 	Control *cur_control;
 	Control *root_control;
 	Array<EventListener> events;

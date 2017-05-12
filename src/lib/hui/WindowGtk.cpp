@@ -1,6 +1,6 @@
 #include "Controls/Control.h"
 #include "hui.h"
-#include "hui_internal.h"
+#include "internal.h"
 #include "Toolbar.h"
 #ifdef HUI_API_GTK
 
@@ -29,9 +29,9 @@ unsigned int ignore_time = 0;
 
 inline Window *win_from_widget(void *widget)
 {
-	for (int i=0;i<HuiWindows.num;i++)
-		if (HuiWindows[i]->window == widget)
-			return HuiWindows[i];
+	for (Window *win: _hui_windows_)
+		if (win->window == widget)
+			return win;
 	return NULL;
 }
 
@@ -80,12 +80,12 @@ void WinTrySendByKeyCode(Window *win, int key_code)
 {
 	if (key_code <= 0)
 		return;
-	for (Command &c : _HuiCommand_)
+	for (Command &c: _hui_commands_)
 		if (key_code == c.key_code){
 			//msg_write("---------------------------------");
 			//msg_write(c.id);
 			Event e = Event(c.id, "");
-			_HuiSendGlobalCommand_(&e);
+			_SendGlobalCommand_(&e);
 			win->_send_event_(&e);
 		}
 }
@@ -126,12 +126,12 @@ void Window::_init_(const string &title, int x, int y, int width, int height, Wi
 {
 	window = NULL;
 	win = this;
-	if ((mode & HUI_WIN_MODE_DUMMY) > 0)
+	if ((mode & WIN_MODE_DUMMY) > 0)
 		return;
 
 	_init_generic_(root, allow_root, mode);
 	
-	bool ControlMode = ((mode & HUI_WIN_MODE_CONTROLS) > 0);
+	bool ControlMode = ((mode & WIN_MODE_CONTROLS) > 0);
 
 	// creation
 	if (parent){
@@ -183,7 +183,7 @@ void Window::_init_(const string &title, int x, int y, int width, int height, Wi
 	desired_height = height;
 
 	// icon
-	string logo = HuiGetProperty("logo");
+	string logo = GetProperty("logo");
 	if (logo.num > 0)
 		gtk_window_set_icon_from_file(GTK_WINDOW(window), sys_str_f(logo), NULL);
 
@@ -208,9 +208,9 @@ void Window::_init_(const string &title, int x, int y, int width, int height, Wi
 
 	// tool bars
 #if GTK_CHECK_VERSION(3,0,0)
-	gtk_style_context_add_class(gtk_widget_get_style_context(toolbar[HUI_TOOLBAR_TOP]->widget), "primary-toolbar");
+	gtk_style_context_add_class(gtk_widget_get_style_context(toolbar[TOOLBAR_TOP]->widget), "primary-toolbar");
 #endif
-	gtk_box_pack_start(GTK_BOX(vbox), toolbar[HUI_TOOLBAR_TOP]->widget, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), toolbar[TOOLBAR_TOP]->widget, FALSE, FALSE, 0);
 
 
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
@@ -218,7 +218,7 @@ void Window::_init_(const string &title, int x, int y, int width, int height, Wi
 	//gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 	gtk_widget_show(hbox);
 
-	gtk_box_pack_start(GTK_BOX(hbox), toolbar[HUI_TOOLBAR_LEFT]->widget, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), toolbar[TOOLBAR_LEFT]->widget, FALSE, FALSE, 0);
 
 	plugable = NULL;
 	cur_control = NULL;
@@ -239,8 +239,8 @@ void Window::_init_(const string &title, int x, int y, int width, int height, Wi
 		}
 	}
 
-	gtk_box_pack_start(GTK_BOX(hbox), toolbar[HUI_TOOLBAR_RIGHT]->widget, FALSE, FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(vbox), toolbar[HUI_TOOLBAR_BOTTOM]->widget, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), toolbar[TOOLBAR_RIGHT]->widget, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), toolbar[TOOLBAR_BOTTOM]->widget, FALSE, FALSE, 0);
 
 	// status bar
 	statusbar = gtk_statusbar_new();
@@ -269,7 +269,7 @@ void Window::destroy()
 	onDestroy();
 
 	// quick'n'dirty fix (gtk destroys its widgets recursively)
-	for (Control *c: control)
+	for (Control *c: controls)
 		c->widget = NULL;
 
 	_clean_up_();
@@ -337,7 +337,7 @@ void Window::run()
 		gtk_dialog_run(GTK_DIALOG(window));
 	}else{
 		while(!gotDestroyed()){
-			HuiDoSingleMainLoop();
+			DoSingleMainLoop();
 		}
 	}
 #endif
@@ -371,10 +371,10 @@ void Window::setMenu(Menu *_menu)
 	if (menu){
 		menu->set_panel(this);
 		gtk_widget_show(menubar);
-		gtk_num_menus = menu->item.num;
-		for (int i=0;i<menu->item.num;i++){
+		gtk_num_menus = menu->items.num;
+		for (int i=0;i<menu->items.num;i++){
 			// move items from <Menu> to <menu_bar>
-			Control *it = menu->item[i];
+			Control *it = menu->items[i];
 			gtk_menu.add(it->widget);
 			gtk_widget_show(gtk_menu[i]);
 			g_object_ref(it->widget);
@@ -383,7 +383,7 @@ void Window::setMenu(Menu *_menu)
 			g_object_unref(it->widget);
 		}
 		Array<Control*> list = menu->get_all_controls();
-		control.append(list);
+		controls.append(list);
 	}else
 		gtk_widget_hide(menubar);
 }
@@ -551,17 +551,17 @@ void Panel::activate(const string &control_id)
 	gtk_widget_grab_focus(win->window);
 	gtk_window_present(GTK_WINDOW(win->window));
 	if (control_id.num > 0)
-		for (int i=0;i<control.num;i++)
-			if (control_id == control[i]->id)
-				control[i]->focus();
+		for (int i=0;i<controls.num;i++)
+			if (control_id == controls[i]->id)
+				controls[i]->focus();
 }
 
 bool Panel::isActive(const string &control_id)
 {
 	if (control_id.num > 0){
-		for (int i=0;i<control.num;i++)
-			if (control_id == control[i]->id)
-				return control[i]->hasFocus();
+		for (int i=0;i<controls.num;i++)
+			if (control_id == controls[i]->id)
+				return controls[i]->hasFocus();
 		return false;
 	}
 	return (bool)gtk_widget_has_focus(win->window);

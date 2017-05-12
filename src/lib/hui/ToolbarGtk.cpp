@@ -53,7 +53,7 @@ void Toolbar::add(Control *c)
 {
 	c->panel = win;
 	item.add(c);
-	win->control.add(c);
+	win->controls.add(c);
 	//gtk_tool_item_set_homogeneous(GTK_TOOL_ITEM(c->widget), true);
 	gtk_widget_show(c->widget);
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), GTK_TOOL_ITEM(c->widget), -1);

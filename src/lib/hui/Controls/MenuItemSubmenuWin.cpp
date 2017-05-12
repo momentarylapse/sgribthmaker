@@ -6,7 +6,7 @@
  */
 
 #include "../Menu.h"
-#include "HuiMenuItemSubmenu.h"
+#include "MenuItemSubmenu.h"
 
 namespace hui
 {

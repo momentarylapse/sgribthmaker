@@ -1,20 +1,20 @@
 /*
- * HuiMenuItemSubmenuGtk.cpp
+ * MenuItemSubmenuGtk.cpp
  *
  *  Created on: 26.06.2013
  *      Author: michi
  */
 
 #include "../Menu.h"
-#include "HuiMenuItemSubmenu.h"
+#include "MenuItemSubmenu.h"
 
 #ifdef HUI_API_GTK
 
 namespace hui
 {
 
-HuiMenuItemSubmenu::HuiMenuItemSubmenu(const string &title, Menu *menu, const string &id) :
-	Control(HUI_KIND_MENU_SUBMENU, id)
+MenuItemSubmenu::MenuItemSubmenu(const string &title, Menu *menu, const string &id) :
+	Control(MENU_ITEM_SUBMENU, id)
 {
 	widget = gtk_menu_item_new_with_label(get_lang_sys(id, title));
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(widget), menu->widget);
@@ -22,7 +22,7 @@ HuiMenuItemSubmenu::HuiMenuItemSubmenu(const string &title, Menu *menu, const st
 	sub_menu = menu;
 }
 
-HuiMenuItemSubmenu::~HuiMenuItemSubmenu()
+MenuItemSubmenu::~MenuItemSubmenu()
 {
 	delete(sub_menu);
 }

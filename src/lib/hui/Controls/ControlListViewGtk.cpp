@@ -19,7 +19,7 @@ string tree_get_cell(GtkTreeModel *store, GtkTreeIter &iter, int column);
 
 void list_toggle_callback(GtkCellRendererToggle *cell, gchar *path_string, gpointer data)
 {
-	ControlListView *c = (ControlListView*)data;
+	ControlListView *c = reinterpret_cast<ControlListView*>(data);
 	GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(c->widget));
 	GtkTreePath *path = gtk_tree_path_new_from_string(path_string);
 	GtkTreeIter iter;
@@ -27,9 +27,9 @@ void list_toggle_callback(GtkCellRendererToggle *cell, gchar *path_string, gpoin
 	gtk_tree_model_get_iter(model, &iter, path);
 	bool state = (bool)gtk_cell_renderer_toggle_get_active(cell);
 	state = !state;
-	if (c->type == HUI_KIND_LISTVIEW)
+	if (c->type == CONTROL_LISTVIEW)
 		gtk_list_store_set(GTK_LIST_STORE(model), &iter, column, state, -1);
-	else if (c->type == HUI_KIND_TREEVIEW)
+	else if (c->type == CONTROL_TREEVIEW)
 		gtk_tree_store_set(GTK_TREE_STORE(model), &iter, column, state, -1);
 
 	c->panel->win->input.column = column;
@@ -41,15 +41,15 @@ void list_toggle_callback(GtkCellRendererToggle *cell, gchar *path_string, gpoin
 
 void list_edited_callback(GtkCellRendererText *cell, const gchar *path_string, const gchar *new_text, gpointer data)
 {
-	ControlListView *c = (ControlListView*)data;
+	ControlListView *c = reinterpret_cast<ControlListView*>(data);
 	GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(c->widget));
 	GtkTreePath *path = gtk_tree_path_new_from_string(path_string);
 	GtkTreeIter iter;
 	gint column = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(cell), "column"));
 	gtk_tree_model_get_iter(model, &iter, path);
-	if (c->type == HUI_KIND_LISTVIEW)
+	if (c->type == CONTROL_LISTVIEW)
 		gtk_list_store_set(GTK_LIST_STORE(model), &iter, column, new_text, -1);
-	else if (c->type == HUI_KIND_TREEVIEW)
+	else if (c->type == CONTROL_TREEVIEW)
 		gtk_tree_store_set(GTK_TREE_STORE(model), &iter, column, new_text, -1);
 
 
@@ -128,15 +128,15 @@ void configure_tree_view_columns(Control *c, GtkWidget *view, const string &_for
 }
 
 void OnGtkListActivate(GtkWidget *widget, void* a, void* b, gpointer data)
-{	static_cast<Control*>(data)->notify("hui:activate");	}
+{	reinterpret_cast<Control*>(data)->notify("hui:activate");	}
 
 void OnGtkListSelect(GtkTreeSelection *selection, gpointer data)
-{	static_cast<Control*>(data)->notify("hui:select", false);	}
+{	reinterpret_cast<Control*>(data)->notify("hui:select", false);	}
 
 
 void OnGtkListRowDeleted(GtkTreeModel *tree_model, GtkTreePath *path, gpointer user_data)
 {
-	ControlListView *lv = (ControlListView*)user_data;
+	ControlListView *lv = reinterpret_cast<ControlListView*>(user_data);
 	if (!lv->allow_change_messages)
 		return;
 
@@ -155,7 +155,7 @@ void OnGtkListRowDeleted(GtkTreeModel *tree_model, GtkTreePath *path, gpointer u
 
 void OnGtkListRowInserted(GtkTreeModel *tree_model, GtkTreePath *path, GtkTreeIter *iter, gpointer user_data)
 {
-	ControlListView *lv = (ControlListView*)user_data;
+	ControlListView *lv = reinterpret_cast<ControlListView*>(user_data);
 	if (!lv->allow_change_messages)
 		return;
 	//msg_write("row insert");
@@ -165,7 +165,7 @@ void OnGtkListRowInserted(GtkTreeModel *tree_model, GtkTreePath *path, GtkTreeIt
 
 
 ControlListView::ControlListView(const string &title, const string &id, Panel *panel) :
-	Control(HUI_KIND_LISTVIEW, id)
+	Control(CONTROL_LISTVIEW, id)
 {
 	GetPartStrings(title);
 

@@ -11,7 +11,7 @@ namespace hui
 {
 
 ControlSeparator::ControlSeparator(const string &text, const string &_id) :
-	Control(HUI_KIND_SEPARATOR, _id)
+	Control(CONTROL_SEPARATOR, _id)
 {
 	GetPartStrings(text);
 	if (OptionString.find("vertical") >= 0)

@@ -95,7 +95,7 @@ int xerrorhandler(Display *dsp, XErrorEvent *error)
 	XGetErrorText(dsp, error->error_code, errorstring, 128);
 
 	msg_error(string("X error: ") + errorstring);
-	hui::HuiRaiseError(string("X error: ") + errorstring);
+	hui::RaiseError(string("X error: ") + errorstring);
 	exit(-1);
 }
 #endif
@@ -668,19 +668,19 @@ void set_video_mode_gl(int xres, int yres)
 	#endif
 #endif
 		if (!hDC){
-			HuiErrorBox(NixWindow, "Fehler", "GetDC..." + i2s(GetLastError()));
+			ErrorBox(NixWindow, "Fehler", "GetDC..." + i2s(GetLastError()));
 			exit(0);
 		}
 		OGLPixelFormat = ChoosePixelFormat(hDC, &pfd);
 		SetPixelFormat(hDC, OGLPixelFormat, &pfd);
 		hRC=wglCreateContext(hDC);
 		if (!hRC){
-			HuiErrorBox(NixWindow, "Fehler", "wglCreateContext...");
+			ErrorBox(NixWindow, "Fehler", "wglCreateContext...");
 			exit(0);
 		}
 		int rr=wglMakeCurrent(hDC, hRC);
 		if (rr != 1){
-			HuiErrorBox(NixWindow, "Fehler", "wglMakeCurrent...");
+			ErrorBox(NixWindow, "Fehler", "wglMakeCurrent...");
 			exit(0);
 		}
 
@@ -1075,9 +1075,9 @@ void NixSetVideoMode(const string &api, int xres, int yres, bool fullscreen)
 void NixTellUsWhatsWrong()
 {
 	if (NixFatalError == FatalErrorNoDirectX9)
-		hui::HuiErrorBox(NixWindow, "DirectX 9 nicht gefunden!","Es tut mir au&serordentlich leid, aber ich hatte Probleme, auf Ihrem\nSystem DirectX 9 zu starten und mich damit zu verbinden!");
+		hui::ErrorBox(NixWindow, "DirectX 9 nicht gefunden!","Es tut mir au&serordentlich leid, aber ich hatte Probleme, auf Ihrem\nSystem DirectX 9 zu starten und mich damit zu verbinden!");
 	if (NixFatalError == FatalErrorNoDevice)
-		hui::HuiErrorBox(NixWindow,"DirectX 9: weder Hardware- noch Softwaremodus!!","Es tut mir au&serordentlich leid, aber ich hatte Probleme, auf Ihrem\nSystem DirectX 9 weder einen Hardware- noch einen Softwaremodus abzuringen!\n...Unerlaubte Afl&osung?");
+		hui::ErrorBox(NixWindow,"DirectX 9: weder Hardware- noch Softwaremodus!!","Es tut mir au&serordentlich leid, aber ich hatte Probleme, auf Ihrem\nSystem DirectX 9 weder einen Hardware- noch einen Softwaremodus abzuringen!\n...Unerlaubte Afl&osung?");
 }
 
 // shoot down windows

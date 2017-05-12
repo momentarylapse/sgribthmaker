@@ -16,12 +16,12 @@ Application::Application(const string &app_name, const string &def_lang, int fla
 {
 	if (flags & FLAG_SILENT)
 		msg_init(true);
-	HuiInit(app_name, (flags & FLAG_LOAD_RESOURCE), def_lang);
+	Init(app_name, (flags & FLAG_LOAD_RESOURCE), def_lang);
 
 	if (flags & FLAG_SILENT)
-		msg_init(HuiAppDirectory + "message.txt", false);
+		msg_init(AppDirectory + "message.txt", false);
 
-	HuiEndKeepMsgAlive = true;
+	EndKeepMsgAlive = true;
 }
 
 Application::~Application()
@@ -34,7 +34,7 @@ Application::~Application()
 
 int Application::run()
 {
-	return HuiRun();
+	return Run();
 }
 
 };

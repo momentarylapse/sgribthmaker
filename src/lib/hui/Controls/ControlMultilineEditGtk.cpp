@@ -16,10 +16,10 @@ gboolean OnGtkAreaKeyDown(GtkWidget *widget, GdkEventKey *event, gpointer user_d
 gboolean OnGtkAreaKeyUp(GtkWidget *widget, GdkEventKey *event, gpointer user_data);
 
 void OnGtkMultilineEditChange(GtkWidget *widget, gpointer data)
-{	static_cast<Control*>(data)->notify("hui:change");	}
+{	reinterpret_cast<Control*>(data)->notify("hui:change");	}
 
 ControlMultilineEdit::ControlMultilineEdit(const string &title, const string &id) :
-	Control(HUI_KIND_MULTILINEEDIT, id)
+	Control(CONTROL_MULTILINEEDIT, id)
 {
 	GetPartStrings(title);
 	GtkTextBuffer *tb = gtk_text_buffer_new(NULL);

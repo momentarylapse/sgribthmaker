@@ -9,7 +9,7 @@
 #ifndef _HUI_MENU_EXISTS_
 #define _HUI_MENU_EXISTS_
 
-#include "hui_common.h"
+#include "common.h"
 
 namespace hui
 {
@@ -52,7 +52,7 @@ public:
 #ifdef HUI_API_WIN
 	HMENU hMenu;
 #endif
-	Array<Control*> item;
+	Array<Control*> items;
 	Panel *panel;
 };
 

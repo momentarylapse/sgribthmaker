@@ -9,7 +9,7 @@
 #define HUIAPPLICATION_H_
 
 #include "../base/base.h"
-#include "hui_common.h"
+#include "common.h"
 
 namespace hui
 {

@@ -14,7 +14,7 @@ namespace hui
 {
 
 ControlGroup::ControlGroup(const string &title, const string &id) :
-	Control(HUI_KIND_GROUP, id)
+	Control(CONTROL_GROUP, id)
 {
 	GetPartStrings(title);
 	widget = gtk_frame_new(sys_str(PartString[0]));

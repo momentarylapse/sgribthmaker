@@ -77,9 +77,9 @@ Control::~Control()
 		delete(c);
 	}
 	if (panel){
-		for (int i=0;i<panel->control.num;i++)
-			if (panel->control[i] == this)
-				panel->control.erase(i);
+		for (int i=0;i<panel->controls.num;i++)
+			if (panel->controls[i] == this)
+				panel->controls.erase(i);
 	}
 #ifdef HUI_API_GTK
 	if (widget)
@@ -311,7 +311,7 @@ void Control::notify(const string &message, bool is_default)
 		return;
 	notify_push(this);
 	Event e = Event(id, message);
-	_HuiSendGlobalCommand_(&e);
+	_SendGlobalCommand_(&e);
 	e.is_default = is_default;
 	panel->_send_event_(&e);
 
@@ -351,9 +351,9 @@ void Control::notify(const string &message, bool is_default)
 			Painter p(win, id);
 			win->onDraw(&p);
 		}
-	}else if (type == HUI_KIND_MULTILINEEDIT){
+	}else if (type == CONTROL_MULTILINEEDIT){
 		if (message == "hui:key-down"){
-			if (((ControlMultilineEdit*)this)->handle_keys)
+			if (reinterpret_cast<ControlMultilineEdit*>(this)->handle_keys)
 				WinTrySendByKeyCode(win, GetEvent()->key_code);
 		}
 	}

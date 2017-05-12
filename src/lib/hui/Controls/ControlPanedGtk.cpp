@@ -13,7 +13,7 @@ namespace hui
 {
 
 ControlPaned::ControlPaned(const string &title, const string &id) :
-	Control(HUI_KIND_PANED, id)
+	Control(CONTROL_PANED, id)
 {
 }
 

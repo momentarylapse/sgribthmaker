@@ -7,8 +7,8 @@
 
 #include "ControlDrawingArea.h"
 #include "../hui.h"
-#include "../hui_internal.h"
 #include <math.h>
+#include "../internal.h"
 
 #ifdef HUI_API_GTK
 
@@ -20,8 +20,8 @@ int GtkAreaMouseSetX, GtkAreaMouseSetY;
 
 gboolean OnGtkAreaDraw(GtkWidget *widget, cairo_t *cr, gpointer user_data)
 {
-	((ControlDrawingArea*)user_data)->cur_cairo = cr;
-	((Control*)user_data)->notify("hui:draw");
+	reinterpret_cast<ControlDrawingArea*>(user_data)->cur_cairo = cr;
+	reinterpret_cast<Control*>(user_data)->notify("hui:draw");
 	return false;
 }
 
@@ -67,7 +67,7 @@ gboolean OnGtkAreaMouseMove(GtkWidget *widget, GdkEventMotion *event, gpointer u
 		GtkAreaMouseSet = -1;
 	}
 
-	Control *c = (Control*)user_data;
+	Control *c = reinterpret_cast<Control*>(user_data);
 	win_set_input(c->panel->win, event);
 
 	// gtk hinting system doesn't work?
@@ -88,7 +88,7 @@ gboolean OnGtkAreaMouseMove(GtkWidget *widget, GdkEventMotion *event, gpointer u
 
 gboolean OnGtkAreaMouseEnter(GtkWidget *widget, GdkEventCrossing *event, gpointer user_data)
 {
-	Control *c = (Control*)user_data;
+	Control *c = reinterpret_cast<Control*>(user_data);
 	win_set_input(c->panel->win, event);
 
 	c->notify("hui:mouse-enter", false);
@@ -97,7 +97,7 @@ gboolean OnGtkAreaMouseEnter(GtkWidget *widget, GdkEventCrossing *event, gpointe
 
 gboolean OnGtkAreaMouseLeave(GtkWidget *widget, GdkEventCrossing *event, gpointer user_data)
 {
-	Control *c = (Control*)user_data;
+	Control *c = reinterpret_cast<Control*>(user_data);
 	win_set_input(c->panel->win, event);
 
 	c->notify("hui:mouse-leave", false);
@@ -106,7 +106,7 @@ gboolean OnGtkAreaMouseLeave(GtkWidget *widget, GdkEventCrossing *event, gpointe
 
 gboolean OnGtkAreaButton(GtkWidget *widget, GdkEventButton *event, gpointer user_data)
 {
-	Control *c = (Control*)user_data;
+	Control *c = reinterpret_cast<Control*>(user_data);
 	win_set_input(c->panel->win, event);
 
 	// build message
@@ -131,7 +131,7 @@ gboolean OnGtkAreaButton(GtkWidget *widget, GdkEventButton *event, gpointer user
 
 gboolean OnGtkAreaMouseWheel(GtkWidget *widget, GdkEventScroll *event, gpointer user_data)
 {
-	Control *c = (Control*)user_data;
+	Control *c = reinterpret_cast<Control*>(user_data);
 	if (c->panel->win){
 		if (event->direction == GDK_SCROLL_UP)
 			c->panel->win->input.scroll_y = 1;
@@ -215,7 +215,7 @@ gboolean OnGtkAreaKeyUp(GtkWidget *widget, GdkEventKey *event, gpointer user_dat
 }
 
 ControlDrawingArea::ControlDrawingArea(const string &title, const string &id) :
-	Control(HUI_KIND_DRAWINGAREA, id)
+	Control(CONTROL_DRAWINGAREA, id)
 {
 	GetPartStrings(title);
 	GtkWidget *da = gtk_drawing_area_new();

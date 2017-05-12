@@ -14,7 +14,7 @@ namespace hui
 {
 
 ControlGrid::ControlGrid(const string &title, const string &id, int num_x, int num_y, Panel *panel) :
-	Control(HUI_KIND_GRID, id)
+	Control(CONTROL_GRID, id)
 {
 	GetPartStrings(title);
 	widget = gtk_grid_new();

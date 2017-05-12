@@ -13,10 +13,10 @@ namespace hui
 {
 
 void OnGtkComboboxChange(GtkWidget *widget, gpointer data)
-{	static_cast<Control*>(data)->notify("hui:change");	}
+{	reinterpret_cast<Control*>(data)->notify("hui:change");	}
 
 ControlComboBox::ControlComboBox(const string &title, const string &id) :
-	Control(HUI_KIND_COMBOBOX, id)
+	Control(CONTROL_COMBOBOX, id)
 {
 	GetPartStrings(title);
 	editable = (OptionString.find("editable") >= 0);
@@ -27,7 +27,7 @@ ControlComboBox::ControlComboBox(const string &title, const string &id) :
 		widget = gtk_combo_box_text_new();
 	}
 	g_signal_connect(G_OBJECT(widget), "changed", G_CALLBACK(&OnGtkComboboxChange), this);
-	if ((PartString.num > 1) || (PartString[0] != ""))
+	if ((PartString.num > 1) or (PartString[0] != ""))
 		for (int i=0;i<PartString.num;i++)
 			__addString(PartString[i]);
 	setInt(0);

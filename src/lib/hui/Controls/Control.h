@@ -8,9 +8,9 @@
 #ifndef HUI_CONTROL_H_
 #define HUI_CONTROL_H_
 
-#include "../hui_common.h"
-#include "../hui_language.h"
 #include "../../image/image.h"
+#include "../common.h"
+#include "../language.h"
 
 namespace hui
 {

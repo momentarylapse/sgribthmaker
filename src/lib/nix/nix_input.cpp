@@ -27,7 +27,7 @@ static vector _NixMouseDSum;
 int NixKeyRep;
 
 extern string NixControlID;
-hui::HuiInputData NixInputAccum;
+hui::InputData NixInputAccum;
 
 void NixOnEvent()
 {
@@ -58,7 +58,7 @@ void NixOnEvent()
 	NixInputEvent.add(*e);
 }
 
-hui::HuiInputData NixInputDataCurrent, NixInputDataLast;
+hui::InputData NixInputDataCurrent, NixInputDataLast;
 
 void NixInputInit()
 {
@@ -358,7 +358,7 @@ bool NixGetKeyUp(int key)
 
 string NixGetKeyChar(int key)
 {
-	return hui::HuiGetKeyChar(key);
+	return hui::GetKeyChar(key);
 }
 
 

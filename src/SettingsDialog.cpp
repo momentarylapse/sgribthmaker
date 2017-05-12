@@ -81,9 +81,9 @@ void SettingsDialog::fillSchemeList()
 
 void SettingsDialog::onFont()
 {
-	if (hui::HuiSelectFont(this, _("Font w&ahlen"))){
-		setString("font", hui::HuiFontname);
-		hui::Config.setStr("Font", hui::HuiFontname);
+	if (hui::SelectFont(this, _("Font w&ahlen"))){
+		setString("font", hui::Fontname);
+		hui::Config.setStr("Font", hui::Fontname);
 		for (SourceView *sv: source_view)
 			sv->UpdateFont();
 	}

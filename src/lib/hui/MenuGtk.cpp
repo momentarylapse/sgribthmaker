@@ -1,6 +1,6 @@
 #include "Controls/Control.h"
 #include "hui.h"
-#include "hui_internal.h"
+#include "internal.h"
 #ifdef HUI_API_GTK
 
 
@@ -33,7 +33,7 @@ GtkAccelGroup *accel_group = NULL;
 
 void try_add_accel(GtkWidget *item, const string &id)
 {
-	for (Command &c: _HuiCommand_)
+	for (Command &c: _hui_commands_)
 		if ((id == c.id) and (c.key_code >= 0)){
 			int k = c.key_code;
 			int mod = (((k&KEY_SHIFT)>0) ? GDK_SHIFT_MASK : 0) | (((k&KEY_CONTROL)>0) ? GDK_CONTROL_MASK : 0);
@@ -44,7 +44,7 @@ void try_add_accel(GtkWidget *item, const string &id)
 Menu::Menu()
 {
 	msg_db_r("HuiMenu()", 1);
-	_HuiMakeUsable_();
+	_MakeUsable_();
 	panel = NULL;
 	
 	widget = gtk_menu_new();
@@ -73,12 +73,12 @@ void Menu::openPopup(Panel *panel, int x, int y)
 
 void Menu::add(Control *c)
 {
-	item.add(c);
+	items.add(c);
 	gtk_menu_shell_append(GTK_MENU_SHELL(widget), c->widget);
 	gtk_widget_show(c->widget);
 	c->panel = panel;
 	if (panel)
-		panel->control.add(c);
+		panel->controls.add(c);
 }
 
 
@@ -171,14 +171,14 @@ const char *get_gtk_icon_name(const string image)
 	return "";
 }
 
-sHuiImage *get_image(const string &image)
+HuiImage *get_image(const string &image)
 {
-	for (sHuiImage &m: HuiImage)
+	for (HuiImage &m: _hui_images_)
 		if (m.filename == image)
 			return &m;
-	sHuiImage img = {0, image};
-	HuiImage.add(img);
-	return &HuiImage.back();
+	HuiImage img = {0, image};
+	_hui_images_.add(img);
+	return &_hui_images_.back();
 }
 
 void *get_gtk_image(const string &image, bool large)
@@ -190,14 +190,14 @@ void *get_gtk_image(const string &image, bool large)
 		return gtk_image_new_from_icon_name(get_gtk_icon_name(image), large ? GTK_ICON_SIZE_LARGE_TOOLBAR : GTK_ICON_SIZE_MENU);
 	}else{
 		// file
-		sHuiImage *img = get_image(image);
+		HuiImage *img = get_image(image);
 		if (!img)
 			return NULL;
 		// absolute path?
 		if ((img->filename[0] == '/') or (img->filename[1] == ':'))
 			return gtk_image_new_from_file(sys_str_f(img->filename));
 		// relative
-		return gtk_image_new_from_file(sys_str_f(HuiAppDirectory + img->filename));
+		return gtk_image_new_from_file(sys_str_f(AppDirectory + img->filename));
 	}
 }
 
@@ -213,7 +213,7 @@ void *get_gtk_image_pixbuf(const string &image)
 		}
 	}else{
 		// file
-		sHuiImage *img = get_image(image);
+		HuiImage *img = get_image(image);
 		if (img->type == 0){
 		}else if (img->type == 1){
 #ifdef _X_USE_IMAGE_

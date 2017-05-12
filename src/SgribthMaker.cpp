@@ -54,7 +54,7 @@ void SetMessage(const string &str)
 	MainWin->setStatusText(str);
 	MainWin->enableStatusbar(true);
 	status_count ++;
-	hui::HuiRunLater(5, &UpdateStatusBar);
+	hui::RunLater(5, &UpdateStatusBar);
 }
 
 void SetWindowTitle()
@@ -118,10 +118,10 @@ bool Save(Document *doc);
 
 bool AllowTermination()
 {
-	for (Document *d : documents)
+	for (Document *d: documents)
 	if (d->history->changed){
 		SetActiveDocument(d);
-		string answer = HuiQuestionBox(MainWin, _("dem&utige aber h&ofliche Frage"), _("Sie haben die Entropie erh&oht. Wollen Sie Ihr Werk speichern?"), true);
+		string answer = QuestionBox(MainWin, _("dem&utige aber h&ofliche Frage"), _("Sie haben die Entropie erh&oht. Wollen Sie Ihr Werk speichern?"), true);
 		if (answer == "hui:cancel")
 			return false;
 		if (answer == "hui:yes")
@@ -135,7 +135,7 @@ bool AllowDocTermination(Document *d)
 {
 	if (d->history->changed){
 		SetActiveDocument(d);
-		string answer = HuiQuestionBox(MainWin, _("dem&utige aber h&ofliche Frage"), _("Sie haben die Entropie erh&oht. Wollen Sie Ihr Werk speichern?"), true);
+		string answer = QuestionBox(MainWin, _("dem&utige aber h&ofliche Frage"), _("Sie haben die Entropie erh&oht. Wollen Sie Ihr Werk speichern?"), true);
 		if (answer == "hui:cancel")
 			return false;
 		if (answer == "hui:yes")
@@ -209,15 +209,15 @@ bool WriteToFile(Document *doc, const string &filename)
 
 bool Open()
 {
-	if (hui::HuiFileDialogOpen(MainWin, _("Datei &offnen"), cur_doc->filename.dirname(), _("Alles (*.*)"), "*"))
-		return LoadFromFile(hui::HuiFilename);
+	if (hui::FileDialogOpen(MainWin, _("Datei &offnen"), cur_doc->filename.dirname(), _("Alles (*.*)"), "*"))
+		return LoadFromFile(hui::Filename);
 	return false;
 }
 
 bool SaveAs(Document *doc)
 {
-	if (hui::HuiFileDialogSave(MainWin, _("Datei speichern"), doc->filename.dirname(), _("Alles (*.*)"), "*"))
-		return WriteToFile(doc, hui::HuiFilename);
+	if (hui::FileDialogSave(MainWin, _("Datei speichern"), doc->filename.dirname(), _("Alles (*.*)"), "*"))
+		return WriteToFile(doc, hui::Filename);
 	return false;
 }
 
@@ -262,13 +262,13 @@ void OnRedo()
 
 void OnCopy()
 {
-	hui::HuiCopyToClipBoard(cur_doc->source_view->GetSelection());
+	hui::CopyToClipBoard(cur_doc->source_view->GetSelection());
 	SetMessage(_("kopiert"));
 }
 
 void OnPaste()
 {
-	cur_doc->source_view->InsertAtCursor(hui::HuiPasteFromClipBoard());
+	cur_doc->source_view->InsertAtCursor(hui::PasteFromClipBoard());
 	SetMessage(_("eingef&ugt"));
 }
 
@@ -314,7 +314,7 @@ void CompileKaba()
 
 	}catch(const Kaba::Exception &e){
 		e.print();
-		HuiErrorBox(MainWin, _("Fehler"), e.message);
+		ErrorBox(MainWin, _("Fehler"), e.message);
 		cur_doc->source_view->MoveCursorTo(e.line, e.column);
 	}
 
@@ -336,7 +336,7 @@ void CompileShader()
 
 	NixShader *shader = NixLoadShader(cur_doc->filename);
 	if (!shader){
-		HuiErrorBox(MainWin, _("Fehler"), NixShaderError);
+		ErrorBox(MainWin, _("Fehler"), NixShaderError);
 	}else{
 		SetMessage(_("Shader ist fehler-frei &ubersetzbar!"));
 		shader->unref();
@@ -374,7 +374,7 @@ void CompileAndRun(bool verbose)
 
 	msg_db_f("CompileAndRun",1);
 
-	hui::HuiSetDirectory(cur_doc->filename.dirname());
+	hui::SetDirectory(cur_doc->filename.dirname());
 	//if (verbose)
 		msg_set_verbose(true);
 
@@ -394,7 +394,7 @@ void CompileAndRun(bool verbose)
 
 
 		float dt_execute = 0;
-		hui::HuiPushMainLevel();
+		hui::PushMainLevel();
 		CompileTimer.reset();
 		typedef void void_func();
 		void_func *f = (void_func*)compile_script->MatchFunction("main", "void", 0);
@@ -402,7 +402,7 @@ void CompileAndRun(bool verbose)
 			f();
 		//compile_script->ShowVars(false);
 		dt_execute = CompileTimer.get();
-		hui::HuiPopMainLevel();
+		hui::PopMainLevel();
 		
 		SetMessage(format(_("Compilieren: %s         Opcode: %db         Ausf&uhren: %s"), get_time_str(dt_compile).c_str(), compile_script->opcode_size, get_time_str(dt_execute).c_str()));
 		//if (verbose)
@@ -415,7 +415,7 @@ void CompileAndRun(bool verbose)
 
 	}catch(const Kaba::Exception &e){
 		e.print();
-		HuiErrorBox(MainWin, _("Fehler"), e.message);
+		ErrorBox(MainWin, _("Fehler"), e.message);
 		cur_doc->source_view->MoveCursorTo(e.line, e.column);
 	}
 	
@@ -464,7 +464,7 @@ void ExecuteSettingsDialog()
 
 
 void OnAbout()
-{	HuiAboutBox(MainWin);	}
+{	AboutBox(MainWin);	}
 
 void OnExit()
 {
@@ -474,7 +474,7 @@ void OnExit()
 		hui::Config.setInt("Window.Width", w);
 		hui::Config.setInt("Window.Height", h);
 		hui::Config.setBool("Window.Maximized", MainWin->isMaximized());
-		hui::HuiEnd();
+		hui::End();
 	}
 }
 
@@ -525,47 +525,47 @@ public:
 	SgribthMaker() :
 		hui::Application("sgribthmaker", "Deutsch", hui::FLAG_LOAD_RESOURCE | hui::FLAG_SILENT)
 	{
-		hui::HuiSetProperty("name", AppTitle);
-		hui::HuiSetProperty("version", AppVersion);
-		hui::HuiSetProperty("comment", _("Texteditor und Kaba-Compiler"));
-		hui::HuiSetProperty("website", "http://michi.is-a-geek.org/michisoft");
-		hui::HuiSetProperty("copyright", "© 2006-2017 by MichiSoft TM");
-		hui::HuiSetProperty("author", "Michael Ankele <michi@lupina.de>");
+		hui::SetProperty("name", AppTitle);
+		hui::SetProperty("version", AppVersion);
+		hui::SetProperty("comment", _("Texteditor und Kaba-Compiler"));
+		hui::SetProperty("website", "http://michi.is-a-geek.org/michisoft");
+		hui::SetProperty("copyright", "© 2006-2017 by MichiSoft TM");
+		hui::SetProperty("author", "Michael Ankele <michi@lupina.de>");
 
-		hui::RegisterFileType("kaba","MichiSoft Script Datei",hui::HuiAppDirectory + "Data/kaba.ico",hui::HuiAppFilename,"open",true);
+		hui::RegisterFileType("kaba","MichiSoft Script Datei",hui::AppDirectory + "Data/kaba.ico",hui::AppFilename,"open",true);
 
 		Kaba::Init();
 	}
 
 	virtual bool onStartup(const Array<string> &arg)
 	{
-		hui::HuiAddCommand("new", "hui:new", hui::KEY_N + hui::KEY_CONTROL, &New);
+		hui::AddCommand("new", "hui:new", hui::KEY_N + hui::KEY_CONTROL, &New);
 		//hui::HuiAddKeyCode(HMM_NEW_HEX, hui::KEY_F1 + 256);
-		hui::HuiAddCommand("open", "hui:open", hui::KEY_O + hui::KEY_CONTROL, &OnOpen);
+		hui::AddCommand("open", "hui:open", hui::KEY_O + hui::KEY_CONTROL, &OnOpen);
 		//hui::HuiAddKeyCode(HMM_OPEN_HEX, hui::KEY_F9 + 256);
-		hui::HuiAddCommand("save", "hui:save", hui::KEY_S + hui::KEY_CONTROL, &OnSave);
-		hui::HuiAddCommand("save_as", "hui:save_as", hui::KEY_S + hui::KEY_SHIFT + hui::KEY_CONTROL, &OnSaveAs);
-		hui::HuiAddCommand("close", "hui:close", hui::KEY_W + hui::KEY_CONTROL, &OnCloseDocument);
-		hui::HuiAddCommand("exit", "hui:quit", hui::KEY_Q + hui::KEY_CONTROL, &OnExit);
+		hui::AddCommand("save", "hui:save", hui::KEY_S + hui::KEY_CONTROL, &OnSave);
+		hui::AddCommand("save_as", "hui:save_as", hui::KEY_S + hui::KEY_SHIFT + hui::KEY_CONTROL, &OnSaveAs);
+		hui::AddCommand("close", "hui:close", hui::KEY_W + hui::KEY_CONTROL, &OnCloseDocument);
+		hui::AddCommand("exit", "hui:quit", hui::KEY_Q + hui::KEY_CONTROL, &OnExit);
 		//hui::HuiAddCommand("show_data", "", hui::KEY_D + hui::KEY_CONTROL, &ShowData);
-		hui::HuiAddCommand("execute_command", "", hui::KEY_E + hui::KEY_CONTROL, &ExecuteCommandDialog);
-		hui::HuiAddCommand("find", "", hui::KEY_F + hui::KEY_CONTROL, &ExecuteCommandDialog);
-		hui::HuiAddCommand("cut", "hui:cut", hui::KEY_X + hui::KEY_CONTROL, &OnCut);
-		hui::HuiAddCommand("copy", "hui:copy", hui::KEY_C + hui::KEY_CONTROL, &OnCopy);
-		hui::HuiAddCommand("paste", "hui:paste", hui::KEY_V + hui::KEY_CONTROL, &OnPaste);
-		hui::HuiAddCommand("reload", "hui:reload", hui::KEY_R + hui::KEY_CONTROL, &OnReload);
-		hui::HuiAddCommand("undo", "hui:undo", hui::KEY_Z + hui::KEY_CONTROL, &OnUndo);
-		hui::HuiAddCommand("redo", "hui:redo", hui::KEY_Y + hui::KEY_CONTROL, &OnRedo);
-		hui::HuiAddKeyCode("redo", hui::KEY_Z + hui::KEY_SHIFT + hui::KEY_CONTROL);
-		hui::HuiAddCommand("compile", "", hui::KEY_F7, &Compile);
-		hui::HuiAddCommand("compile_and_run_verbose", "", hui::KEY_F6 + hui::KEY_CONTROL, &OnCompileAndRunVerbose);
-		hui::HuiAddCommand("compile_and_run", "", hui::KEY_F6, &OnCompileAndRunSilent);
-		hui::HuiAddCommand("settings", "", -1, &ExecuteSettingsDialog);
+		hui::AddCommand("execute_command", "", hui::KEY_E + hui::KEY_CONTROL, &ExecuteCommandDialog);
+		hui::AddCommand("find", "", hui::KEY_F + hui::KEY_CONTROL, &ExecuteCommandDialog);
+		hui::AddCommand("cut", "hui:cut", hui::KEY_X + hui::KEY_CONTROL, &OnCut);
+		hui::AddCommand("copy", "hui:copy", hui::KEY_C + hui::KEY_CONTROL, &OnCopy);
+		hui::AddCommand("paste", "hui:paste", hui::KEY_V + hui::KEY_CONTROL, &OnPaste);
+		hui::AddCommand("reload", "hui:reload", hui::KEY_R + hui::KEY_CONTROL, &OnReload);
+		hui::AddCommand("undo", "hui:undo", hui::KEY_Z + hui::KEY_CONTROL, &OnUndo);
+		hui::AddCommand("redo", "hui:redo", hui::KEY_Y + hui::KEY_CONTROL, &OnRedo);
+		hui::AddKeyCode("redo", hui::KEY_Z + hui::KEY_SHIFT + hui::KEY_CONTROL);
+		hui::AddCommand("compile", "", hui::KEY_F7, &Compile);
+		hui::AddCommand("compile_and_run_verbose", "", hui::KEY_F6 + hui::KEY_CONTROL, &OnCompileAndRunVerbose);
+		hui::AddCommand("compile_and_run", "", hui::KEY_F6, &OnCompileAndRunSilent);
+		hui::AddCommand("settings", "", -1, &ExecuteSettingsDialog);
 		//hui::HuiAddCommand("script_help", "hui:help", hui::KEY_F1 + hui::KEY_SHIFT);
-		hui::HuiAddCommand("next_document", "hui:down", hui::KEY_PRIOR + hui::KEY_CONTROL, &OnNextDocument);
-		hui::HuiAddCommand("prev_document", "hui:up", hui::KEY_NEXT + hui::KEY_CONTROL, &OnPreviousDocument);
+		hui::AddCommand("next_document", "hui:down", hui::KEY_PRIOR + hui::KEY_CONTROL, &OnNextDocument);
+		hui::AddCommand("prev_document", "hui:up", hui::KEY_NEXT + hui::KEY_CONTROL, &OnPreviousDocument);
 
-		hui::HuiAddCommand("show_cur_line", "", hui::KEY_F2, &ShowCurLine);
+		hui::AddCommand("show_cur_line", "", hui::KEY_F2, &ShowCurLine);
 
 
 		int width = hui::Config.getInt("Window.Width", 800);
@@ -610,7 +610,7 @@ public:
 		InitParser();
 		HighlightScheme::default_scheme = HighlightScheme::get(hui::Config.getStr("HighlightScheme", "default"));
 
-		MainWin->setMenu(hui::HuiCreateResourceMenu("menu"));
+		MainWin->setMenu(hui::CreateResourceMenu("menu"));
 		MainWin->setMaximized(maximized);
 		MainWin->show();
 

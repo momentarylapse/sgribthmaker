@@ -15,10 +15,10 @@ namespace hui
 void set_list_cell(GtkListStore *store, GtkTreeIter &iter, int column, const string &str);
 
 void OnGtkEditChange(GtkWidget *widget, gpointer data)
-{	static_cast<Control*>(data)->notify("hui:change");	}
+{	reinterpret_cast<Control*>(data)->notify("hui:change");	}
 
 ControlEdit::ControlEdit(const string &title, const string &id) :
-	Control(HUI_KIND_EDIT, id)
+	Control(CONTROL_EDIT, id)
 {
 	GetPartStrings(title);
 	widget = gtk_entry_new();

@@ -15,7 +15,7 @@ namespace hui
 void OnGtkExpanderExpand(GObject* object, GParamSpec *param_spec, gpointer user_data);
 
 ControlRevealer::ControlRevealer(const string &title, const string &id) :
-	Control(HUI_KIND_REVEALER, id)
+	Control(CONTROL_REVEALER, id)
 {
 	GetPartStrings(title);
 

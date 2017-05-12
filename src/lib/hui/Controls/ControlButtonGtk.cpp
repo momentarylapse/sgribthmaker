@@ -15,10 +15,10 @@ namespace hui
 void *get_gtk_image(const string &image, bool large); // -> hui_menu_gtk.cpp
 
 void OnGtkButtonPress(GtkWidget *widget, gpointer data)
-{	((Control*)data)->notify("hui:click");	}
+{	reinterpret_cast<Control*>(data)->notify("hui:click");	}
 
 ControlButton::ControlButton(const string &title, const string &id) :
-	Control(HUI_KIND_BUTTON, id)
+	Control(CONTROL_BUTTON, id)
 {
 	GetPartStrings(title);
 	widget = gtk_button_new_with_label(sys_str(PartString[0]));

@@ -9,7 +9,7 @@
 #ifndef _HUI_WINDOW_EXISTS_
 #define _HUI_WINDOW_EXISTS_
 
-#include "hui_input.h"
+#include "input.h"
 #include "Panel.h"
 
 
@@ -24,10 +24,10 @@ class Event;
 class Control;
 class Window;
 class Toolbar;
-class HuiResourceNew;
+class ResourceNew;
 
 
-struct HuiCompleteWindowMessage
+struct CompleteWindowMessage
 {
 	#ifdef HUI_API_WIN
 		unsigned int msg,wparam,lparam;
@@ -36,7 +36,7 @@ struct HuiCompleteWindowMessage
 
 
 // user input
-struct HuiInputData
+struct InputData
 {
 	// mouse
 	float x, y, dx, dy, scroll_x, scroll_y;	// position, change
@@ -144,7 +144,7 @@ public:
 	// hui internal
 	int _get_main_level_();
 	bool allow_input;
-	HuiInputData input;
+	InputData input;
 	int mouse_offset_x, mouse_offset_y;
 	Control *main_input_control;
 
@@ -185,10 +185,10 @@ private:
 };
 
 
-class HuiNixWindow : public Window
+class NixWindow : public Window
 {
 public:
-	HuiNixWindow(const string &title, int x, int y, int width, int height);
+	NixWindow(const string &title, int x, int y, int width, int height);
 	void _cdecl __init_ext__(const string &title, int x, int y, int width, int height);
 };
 
@@ -199,33 +199,33 @@ public:
 	void _cdecl __init_ext__(const string &title, int width, int height, Window *root, bool allow_root);
 };
 
-class HuiFixedDialog : public Window
+class FixedDialog : public Window
 {
 public:
-	HuiFixedDialog(const string &title, int width, int height, Window *root, bool allow_root);
+	FixedDialog(const string &title, int width, int height, Window *root, bool allow_root);
 	void _cdecl __init_ext__(const string &title, int width, int height, Window *root, bool allow_root);
 };
 
-extern Window *HuiCurWindow;
+extern Window *CurWindow;
 
 
-class HuiSourceDialog : public Window
+class SourceDialog : public Window
 {
 public:
-	HuiSourceDialog(const string &source, Window *root);
+	SourceDialog(const string &source, Window *root);
 	void _cdecl __init_ext__(const string &source, Window *root);
 };
 
 
-void HuiFuncIgnore();
-void HuiFuncClose();
+void FuncIgnore();
+void FuncClose();
 
 enum{
-	HUI_WIN_MODE_RESIZABLE = 1,
-	HUI_WIN_MODE_NO_FRAME = 2,
-	HUI_WIN_MODE_NO_TITLE = 4,
-	HUI_WIN_MODE_CONTROLS = 8,
-	HUI_WIN_MODE_DUMMY = 16,
+	WIN_MODE_RESIZABLE = 1,
+	WIN_MODE_NO_FRAME = 2,
+	WIN_MODE_NO_TITLE = 4,
+	WIN_MODE_CONTROLS = 8,
+	WIN_MODE_DUMMY = 16,
 };
 
 enum{
@@ -239,10 +239,10 @@ enum{
 
 // which one of the toolbars?
 enum{
-	HUI_TOOLBAR_TOP,
-	HUI_TOOLBAR_BOTTOM,
-	HUI_TOOLBAR_LEFT,
-	HUI_TOOLBAR_RIGHT
+	TOOLBAR_TOP,
+	TOOLBAR_BOTTOM,
+	TOOLBAR_LEFT,
+	TOOLBAR_RIGHT
 };
 
 };

@@ -7,7 +7,7 @@
 
 #include "Controls/Control.h"
 #include "hui.h"
-#include "hui_internal.h"
+#include "internal.h"
 
 namespace hui
 {
@@ -64,9 +64,9 @@ void Panel::_ClearPanel_()
 		delete(p);
 	}
 
-	while (control.num > 0){
-		Control *c = control[0];
-		control.erase(0);
+	while (controls.num > 0){
+		Control *c = controls[0];
+		controls.erase(0);
 		delete(c);
 	}
 	id.clear();
@@ -146,7 +146,7 @@ bool Panel::_send_event_(Event *e)
 
 	//msg_write(e->id);
 	//msg_write(e->message);
-	HuiCurWindow = win;
+	CurWindow = win;
 	e->win = win;
 	e->mx = win->input.x;
 	e->my = win->input.y;
@@ -159,11 +159,11 @@ bool Panel::_send_event_(Event *e)
 	e->rbut = win->input.rb;
 	e->key_code = win->input.key_code;
 	e->key = (e->key_code % 256);
-	e->text = HuiGetKeyChar(e->key_code);
+	e->text = GetKeyChar(e->key_code);
 	e->row = win->input.row;
 	e->row_target = win->input.row_target;
 	e->column = win->input.column;
-	_HuiEvent_ = *e;
+	_hui_event_ = *e;
 	if (e->id.num > 0)
 		_set_cur_id_(e->id);
 	else
@@ -172,7 +172,7 @@ bool Panel::_send_event_(Event *e)
 	bool sent = false;
 	for (int i=0; i<events.num; i++){
 		EventListener &ee = events[i];
-		if (!_HuiEventMatch_(e, ee.id, ee.message))
+		if (!_EventMatch_(e, ee.id, ee.message))
 			continue;
 
 		// send the event
@@ -290,11 +290,11 @@ void Panel::addControl(const string &type, const string &title, int x, int y, in
 		msg_error("unknown hui control: " + type);
 }
 
-void Panel::_addControl(const string &ns, HuiResource &cmd, const string &parent_id)
+void Panel::_addControl(const string &ns, Resource &cmd, const string &parent_id)
 {
 	//msg_db_m(format("%d:  %d / %d",j,(cmd->type & 1023),(cmd->type >> 10)).c_str(),4);
 	setTarget(parent_id, cmd.page);
-	addControl(cmd.type, HuiGetLanguageR(ns, cmd),
+	addControl(cmd.type, GetLanguageR(ns, cmd),
 				cmd.x, cmd.y,
 				cmd.w, cmd.h,
 				cmd.id);
@@ -304,23 +304,23 @@ void Panel::_addControl(const string &ns, HuiResource &cmd, const string &parent
 	if (cmd.image.num > 0)
 		setImage(cmd.id, cmd.image);
 
-	string tooltip = HuiGetLanguageT(ns, cmd.id);
+	string tooltip = GetLanguageT(ns, cmd.id);
 	if (tooltip.num > 0)
 		setTooltip(cmd.id, tooltip);
 
-	for (HuiResource &c: cmd.children)
+	for (Resource &c: cmd.children)
 		_addControl(ns, c, cmd.id);
 }
 
 void Panel::fromResource(const string &id)
 {
-	HuiResource *res = HuiGetResource(id);
+	Resource *res = GetResource(id);
 	if (!res)
 		return;
 
 	// title
 	if (win)
-		win->setTitle(HuiGetLanguage(id, res->id));
+		win->setTitle(GetLanguage(id, res->id));
 
 	// size
 	if (win)
@@ -341,14 +341,14 @@ void Panel::fromResource(const string &id)
 	if (win){
 		for (string &o: res->options){
 			if (o.find("menu=") == 0)
-				win->setMenu(HuiCreateResourceMenu(o.substr(5, -1)));
+				win->setMenu(CreateResourceMenu(o.substr(5, -1)));
 			if (o.find("toolbar=") == 0)
-				win->toolbar[HUI_TOOLBAR_TOP]->setByID(o.substr(8, -1));
+				win->toolbar[TOOLBAR_TOP]->setByID(o.substr(8, -1));
 		}
 	}
 
 	// controls
-	for (HuiResource &cmd: res->children)
+	for (Resource &cmd: res->children)
 		_addControl(id, cmd, "");
 
 	msg_db_m("  \\(^_^)/",1);
@@ -356,7 +356,7 @@ void Panel::fromResource(const string &id)
 
 void Panel::fromSource(const string &buffer)
 {
-	HuiResource res;
+	Resource res;
 	res.load(buffer);
 	if (res.type == "Dialog"){
 		if (win)
@@ -371,17 +371,17 @@ void Panel::fromSource(const string &buffer)
 }
 
 
-void Panel::embedResource(HuiResource &c, const string &parent_id, int x, int y)
+void Panel::embedResource(Resource &c, const string &parent_id, int x, int y)
 {
 	_embedResource(c.id, c, parent_id, x, y);
 }
 
-void Panel::_embedResource(const string &ns, HuiResource &c, const string &parent_id, int x, int y)
+void Panel::_embedResource(const string &ns, Resource &c, const string &parent_id, int x, int y)
 {
 	//_addControl(main_id, c, parent_id);
 
 	setTarget(parent_id, x);
-	string title = HuiGetLanguageR(ns, c);
+	string title = GetLanguageR(ns, c);
 	/*if (c.options.num > 0)
 		title = "!" + implode(c.options, ",") + "\\" + title;*/
 	addControl(c.type, title, x, y, c.w, c.h, c.id);
@@ -390,17 +390,17 @@ void Panel::_embedResource(const string &ns, HuiResource &c, const string &paren
 	if (c.image.num > 0)
 		setImage(c.id, c.image);
 
-	string tooltip = HuiGetLanguageT(ns, c.id);
+	string tooltip = GetLanguageT(ns, c.id);
 	if (tooltip.num > 0)
 		setTooltip(c.id, tooltip);
 
-	for (HuiResource &child : c.children)
+	for (Resource &child : c.children)
 		_embedResource(ns, child, c.id, child.x, child.y);
 }
 
 void Panel::embedSource(const string &buffer, const string &parent_id, int x, int y)
 {
-	HuiResource res;
+	Resource res;
 	res.load(buffer);
 	embedResource(res, parent_id, x, y);
 }
@@ -417,7 +417,7 @@ void Panel::embed(Panel *panel, const string &parent_id, int x, int y)
 
 	setTarget(parent_id, x);
 	_insert_control_(panel->root_control, x, y, 0, 0);
-	control.pop(); // dont' really add to us
+	controls.pop(); // dont' really add to us
 	panel->root_control->panel = panel;
 }
 
@@ -435,7 +435,7 @@ void Panel::set_win(Window *_win)
 
 #define test_controls(_id, c)	\
 	string tid = (_id.num == 0) ? cur_id : _id; \
-	for (Control *c: control) \
+	for (Control *c: controls) \
 		if (c->id == tid)
 
 // replace all the text
@@ -667,9 +667,9 @@ bool Panel::isRevealed(const string &_id)
 
 void Panel::deleteControl(const string &_id)
 {
-	for(int i=control.num-1;i>=0;i--)
-		if (control[i]->id == _id)
-			delete(control[i]);
+	for(int i=controls.num-1;i>=0;i--)
+		if (controls[i]->id == _id)
+			delete(controls[i]);
 }
 
 void Panel::setOptions(const string &_id, const string &options)
