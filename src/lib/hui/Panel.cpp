@@ -27,6 +27,7 @@ Panel::Panel()
 	root_control = NULL;
 	is_resizable = true;
 	plugable = NULL;
+	current_event_listener_uid = 0;
 
 	unique_id = current_uid ++;
 
@@ -71,7 +72,7 @@ void Panel::_ClearPanel_()
 	}
 	id.clear();
 	cur_id.clear();
-	events.clear();
+	event_listeners.clear();
 }
 
 void Panel::setBorderWidth(int width)
@@ -101,40 +102,65 @@ void Panel::_set_cur_id_(const string &id)
 	cur_id = id;
 }
 
-void Panel::event(const string &id, const Callback &function)
+int Panel::event(const string &id, const Callback &function)
 {
-	eventX(id, ":def:", function);
+	return eventX(id, ":def:", function);
 }
 
-void Panel::eventX(const string &id, const string &msg, const Callback &function)
+int Panel::eventX(const string &id, const string &msg, const Callback &function)
 {
-	events.add(EventListener(id, msg, function));
+	int uid = current_event_listener_uid ++;
+	event_listeners.add(EventListener(uid, id, msg, function));
+	return uid;
 }
 
 // hopefully deprecated soon?
-void Panel::eventXP(const string &id, const string &msg, const CallbackP &function)
+int Panel::eventXP(const string &id, const string &msg, const CallbackP &function)
 {
-	events.add(EventListener(id, msg, -1, function));
+	int uid = current_event_listener_uid ++;
+	event_listeners.add(EventListener(uid, id, msg, -1, function));
+	return uid;
 }
 
-void Panel::_kaba_event(const string &id, kaba_member_callback *function)
+void Panel::removeEventHandler(int event_handler_id)
 {
-	event(id, std::bind(function, this));
+	for (int i=event_listeners.num-1; i>=0; i--)
+		if (event_listeners[i].uid == event_handler_id)
+			event_listeners.erase(i);
 }
 
-void Panel::_kaba_eventO(const string &id, EventHandler* handler, kaba_member_callback *function)
+void Panel::setKeyCode(const string &id, int key_code, const string &image)
 {
-	event(id, std::bind(function, handler));
+	for (EventListener &e: event_listeners)
+		if (e.id == id){
+			e.key_code = key_code;
+			e.image = image;
+		}
 }
 
-void Panel::_kaba_eventX(const string &id, const string &msg, kaba_member_callback *function)
+int Panel::_kaba_event(const string &id, kaba_member_callback *function)
 {
-	eventX(id, msg, std::bind(function, this));
+	return event(id, std::bind(function, this));
 }
 
-void Panel::_kaba_eventOX(const string &id, const string &msg, EventHandler* handler, kaba_member_callback *function)
+int Panel::_kaba_eventO(const string &id, EventHandler* handler, kaba_member_callback *function)
 {
-	eventX(id, msg, std::bind(function, handler));
+	return event(id, std::bind(function, handler));
+}
+
+int Panel::_kaba_eventX(const string &id, const string &msg, kaba_member_callback *function)
+{
+	return eventX(id, msg, std::bind(function, this));
+}
+
+int Panel::_kaba_eventOX(const string &id, const string &msg, EventHandler* handler, kaba_member_callback *function)
+{
+	if (msg == "hui:draw"){
+		kaba_member_callback_p *f = (kaba_member_callback_p*)function;
+		return eventXP(id, msg, std::bind(f, handler, std::placeholders::_1));
+	}else{
+		return eventX(id, msg, std::bind(function, handler));
+	}
 }
 
 bool Panel::_send_event_(Event *e)
@@ -170,9 +196,9 @@ bool Panel::_send_event_(Event *e)
 		_set_cur_id_(e->message);
 
 	bool sent = false;
-	for (int i=0; i<events.num; i++){
-		EventListener &ee = events[i];
-		if (!_EventMatch_(e, ee.id, ee.message))
+	for (int i=0; i<event_listeners.num; i++){
+		EventListener &ee = event_listeners[i];
+		if (!e->match(ee.id, ee.message))
 			continue;
 
 		// send the event

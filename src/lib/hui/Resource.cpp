@@ -155,7 +155,7 @@ Window *CreateResourceDialog(const string &id, Window *root)
 	// dialog
 	Window *dlg;
 	if (res->type == "SizableDialog")
-		dlg = new HuiDialog(GetLanguageR(res->id, *res), res->w, res->h, root, allow_parent);
+		dlg = new Dialog(GetLanguageR(res->id, *res), res->w, res->h, root, allow_parent);
 	else
 		dlg = new FixedDialog(GetLanguageR(res->id, *res), res->w, res->h, root, allow_parent);
 

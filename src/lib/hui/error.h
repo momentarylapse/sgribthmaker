@@ -8,8 +8,12 @@
 #ifndef HUI_ERROR_H_
 #define HUI_ERROR_H_
 
+#include "Callback.h"
+
 namespace hui
 {
+
+class Window;
 
 // error handling
 void SetErrorFunction(const Callback &function);

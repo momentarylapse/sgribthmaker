@@ -29,7 +29,7 @@ unsigned int ignore_time = 0;
 
 inline Window *win_from_widget(void *widget)
 {
-	for (Window *win: _hui_windows_)
+	for (Window *win: _all_windows_)
 		if (win->window == widget)
 			return win;
 	return NULL;
@@ -80,12 +80,11 @@ void WinTrySendByKeyCode(Window *win, int key_code)
 {
 	if (key_code <= 0)
 		return;
-	for (Command &c: _hui_commands_)
+	for (auto &c: win->event_listeners)
 		if (key_code == c.key_code){
 			//msg_write("---------------------------------");
 			//msg_write(c.id);
 			Event e = Event(c.id, "");
-			_SendGlobalCommand_(&e);
 			win->_send_event_(&e);
 		}
 }
@@ -183,7 +182,7 @@ void Window::_init_(const string &title, int x, int y, int width, int height, Wi
 	desired_height = height;
 
 	// icon
-	string logo = GetProperty("logo");
+	string logo = Application::getProperty("logo");
 	if (logo.num > 0)
 		gtk_window_set_icon_from_file(GTK_WINDOW(window), sys_str_f(logo), NULL);
 
@@ -337,7 +336,7 @@ void Window::run()
 		gtk_dialog_run(GTK_DIALOG(window));
 	}else{
 		while(!gotDestroyed()){
-			DoSingleMainLoop();
+			Application::doSingleMainLoop();
 		}
 	}
 #endif

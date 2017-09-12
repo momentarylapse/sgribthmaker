@@ -9,7 +9,7 @@
 #ifndef _HUI_WINDOW_EXISTS_
 #define _HUI_WINDOW_EXISTS_
 
-#include "input.h"
+#include "Event.h"
 #include "Panel.h"
 
 
@@ -142,7 +142,6 @@ public:
 
 
 	// hui internal
-	int _get_main_level_();
 	bool allow_input;
 	InputData input;
 	int mouse_offset_x, mouse_offset_y;
@@ -180,8 +179,6 @@ private:
 	bool statusbar_enabled;
 	bool allowed, allow_keys;
 	Window *parent;
-
-	int main_level;
 };
 
 
@@ -192,10 +189,10 @@ public:
 	void _cdecl __init_ext__(const string &title, int x, int y, int width, int height);
 };
 
-class HuiDialog : public Window
+class Dialog : public Window
 {
 public:
-	HuiDialog(const string &title, int width, int height, Window *root, bool allow_root);
+	Dialog(const string &title, int width, int height, Window *root, bool allow_root);
 	void _cdecl __init_ext__(const string &title, int width, int height, Window *root, bool allow_root);
 };
 
