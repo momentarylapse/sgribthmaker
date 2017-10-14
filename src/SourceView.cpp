@@ -523,6 +523,7 @@ void SourceView::ApplyScheme(HighlightScheme *s)
 		else
 			SetTag(i, color_to_hex(s->context[i].fg).c_str(), NULL, s->context[i].bold, s->context[i].italic);
 	}
+	if (false){
 	GdkRGBA _color;
 	color2gdkrgba(s->bg, _color);
 	gtk_widget_override_background_color(tv, GTK_STATE_FLAG_NORMAL, &_color);
@@ -533,6 +534,7 @@ void SourceView::ApplyScheme(HighlightScheme *s)
 	color2gdkrgba(s->context[IN_WORD].fg, _color);
 	gtk_widget_override_color(tv, GTK_STATE_FLAG_NORMAL, &_color);
 	gtk_widget_override_cursor(tv, &_color, &_color);
+	}
 	scheme = s;
 	hui::Config.setStr("HighlightScheme", s->name);
 }

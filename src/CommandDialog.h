@@ -10,14 +10,19 @@
 
 #include "lib/hui/hui.h"
 
+class SgribthMaker;
+
 class CommandDialog : public hui::Window
 {
 public:
-	CommandDialog(hui::Window *parent);
+	CommandDialog(SgribthMaker *sgribthmaker);
 	virtual ~CommandDialog();
 
 	void onOk();
 	void onCancel();
+
+	SgribthMaker *sgribthmaker;
+	string last_command;
 };
 
 #endif /* COMMANDDIALOG_H_ */

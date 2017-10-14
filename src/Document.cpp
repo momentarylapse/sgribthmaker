@@ -8,18 +8,19 @@
 #include "Document.h"
 #include "History.h"
 #include "SourceView.h"
+#include "SgribthMaker.h"
 #include "lib/file/file.h"
 #include "lib/hui/hui.h"
 
-void SetMessage(const string &);
-void UpdateMenu();
-
-Document::Document()
+Document::Document(SgribthMaker *_sgribthmaker)
 {
+	sgribthmaker = _sgribthmaker;
 	parser = NULL;
 	source_view = NULL;
 	history = NULL;
 	//history = new History;
+	scheme = NULL;
+	buffer_dirty = false;
 }
 
 Document::~Document()
@@ -42,10 +43,9 @@ string Document::name(bool long_name) const
 
 bool Document::load(const string &_filename)
 {
-	msg_db_f("LoadFromFile", 1);
 	File *f = FileOpen(_filename);
 	if (!f){
-		SetMessage(_("Datei l&asst sich nicht &offnen"));
+		sgribthmaker->SetMessage(_("Datei l&asst sich nicht &offnen"));
 		return false;
 	}
 
@@ -53,19 +53,18 @@ bool Document::load(const string &_filename)
 	FileClose(f);
 
 	if (!source_view->Fill(temp))
-		SetMessage(_("Datei nicht UTF-8 kompatibel"));
+		sgribthmaker->SetMessage(_("Datei nicht UTF-8 kompatibel"));
 
 	filename = _filename;
 
 	source_view->SetParser(filename);
 
-	UpdateMenu();
+	sgribthmaker->UpdateMenu();
 	return true;
 }
 
 bool Document::save(const string &_filename)
 {
-	msg_db_f("Document.save", 1);
 	File *f = FileCreate(_filename);
 	string temp = source_view->GetAll();
 	f->WriteBuffer(temp.data, temp.num);

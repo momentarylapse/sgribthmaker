@@ -6,14 +6,13 @@
  */
 
 #include "CommandDialog.h"
+#include "SgribthMaker.h"
 
-extern string LastCommand;
-void ExecuteCommand(const string&);
-
-CommandDialog::CommandDialog(Window *parent) :
-	hui::Window("command_dialog", parent)
+CommandDialog::CommandDialog(SgribthMaker *_sgribthmaker) :
+	hui::Window("command_dialog", _sgribthmaker->MainWin)
 {
-	setString("command", LastCommand);
+	sgribthmaker = _sgribthmaker;
+	setString("command", last_command);
 	event("ok", std::bind(&CommandDialog::onOk, this));
 	event("cancel", std::bind(&CommandDialog::onCancel, this));
 }
@@ -25,11 +24,11 @@ CommandDialog::~CommandDialog()
 
 void CommandDialog::onOk()
 {
-	LastCommand = getString("command");
-	ExecuteCommand(LastCommand);
+	last_command = getString("command");
+	sgribthmaker->ExecuteCommand(last_command);
 }
 
 void CommandDialog::onCancel()
 {
-	delete(this);
+	destroy();
 }

@@ -7,12 +7,12 @@
 
 #include "SettingsDialog.h"
 #include "SourceView.h"
+#include "SgribthMaker.h"
 
-extern Array<SourceView*> source_view;
-
-SettingsDialog::SettingsDialog(hui::Window *parent) :
-	hui::Window("settings_dialog", parent)
+SettingsDialog::SettingsDialog(SgribthMaker *_sgribthmaker) :
+	hui::Window("settings_dialog", _sgribthmaker->MainWin)
 {
+	sgribthmaker = _sgribthmaker;
 	setInt("tab_width", hui::Config.getInt("TabWidth", 8));
 	setString("font", hui::Config.getStr("Font", "Monospace 10"));
 	addString("context_list", _("Text"));
@@ -55,7 +55,7 @@ SettingsDialog::~SettingsDialog()
 
 void SettingsDialog::onClose()
 {
-	delete(this);
+	destroy();
 }
 
 string get_scheme_name(HighlightScheme *s)
@@ -84,7 +84,7 @@ void SettingsDialog::onFont()
 	if (hui::SelectFont(this, _("Font w&ahlen"))){
 		setString("font", hui::Fontname);
 		hui::Config.setStr("Font", hui::Fontname);
-		for (SourceView *sv: source_view)
+		for (SourceView *sv: sgribthmaker->source_view)
 			sv->UpdateFont();
 	}
 }
@@ -92,7 +92,7 @@ void SettingsDialog::onFont()
 void SettingsDialog::onTabWidth()
 {
 	hui::Config.setInt("TabWidth", getInt("tab_width"));
-	for (SourceView *sv: source_view)
+	for (SourceView *sv: sgribthmaker->source_view)
 		sv->UpdateTabSize();
 }
 
@@ -129,7 +129,7 @@ void SettingsDialog::onSchemeChange()
 	c.bold = isChecked("bold");
 	c.italic = isChecked("italic");
 	s->changed = true;
-	for (SourceView *sv: source_view)
+	for (SourceView *sv: sgribthmaker->source_view)
 		sv->ApplyScheme(s);
 	fillSchemeList();
 }
@@ -139,7 +139,7 @@ void SettingsDialog::onSchemes()
 	int n = getInt("");
 	HighlightScheme *s = HighlightScheme::get_all()[n];
 	HighlightScheme::default_scheme = s;
-	for (SourceView *sv: source_view)
+	for (SourceView *sv: sgribthmaker->source_view)
 		sv->ApplyScheme(s);
 	onContextListSelect();
 }
@@ -147,7 +147,7 @@ void SettingsDialog::onSchemes()
 void SettingsDialog::onCopyScheme()
 {
 	HighlightScheme *s = HighlightScheme::default_scheme->copy(_("neues Schema"));
-	for (SourceView *sv: source_view)
+	for (SourceView *sv: sgribthmaker->source_view)
 		sv->ApplyScheme(s);
 	fillSchemeList();
 	onContextListSelect();

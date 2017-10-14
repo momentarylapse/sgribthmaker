@@ -10,10 +10,12 @@
 
 #include "lib/hui/hui.h"
 
+class SgribthMaker;
+
 class SettingsDialog : public hui::Window
 {
 public:
-	SettingsDialog(hui::Window *parent);
+	SettingsDialog(SgribthMaker *sgribthmaker);
 	virtual ~SettingsDialog();
 
 	void fillSchemeList();
@@ -26,6 +28,8 @@ public:
 	void onSaveScheme();
 	void onContextListSelect();
 	void onSchemeChange();
+
+	SgribthMaker *sgribthmaker;
 };
 
 #endif /* SETTINGSDIALOG_H_ */

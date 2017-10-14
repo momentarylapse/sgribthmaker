@@ -14,11 +14,12 @@ class History;
 class Parser;
 class HighlightScheme;
 class SourceView;
+class SgribthMaker;
 
 class Document
 {
 public:
-	Document();
+	Document(SgribthMaker *sgribthmaker);
 	virtual ~Document();
 
 	string name(bool long_name) const;
@@ -33,6 +34,7 @@ public:
 	Parser *parser;
 	HighlightScheme *scheme;
 	SourceView *source_view;
+	SgribthMaker *sgribthmaker;
 };
 
 #endif /* DOCUMENT_H_ */
