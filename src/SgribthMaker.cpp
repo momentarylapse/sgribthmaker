@@ -17,13 +17,14 @@
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.5.3";
+string AppVersion = "0.4.6.0";
 
 //#define ALLOW_LOGGING			true
 #define ALLOW_LOGGING			false
 
-
-extern string NixShaderError;
+namespace nix{
+	extern string shader_error;
+}
 
 //------------------------------------------------------------------------------
 // Highlighting
@@ -310,16 +311,17 @@ void SgribthMaker::CompileKaba()
 
 void SgribthMaker::CompileShader()
 {
+	return;
 	msg_db_f("CompileShader",1);
 
 	hui::Window *w = new hui::Window("nix", -1, -1, 640, 480);
 	w->addDrawingArea("", 0, 0, 0, 0, "nix-area");
 	w->show();
-	NixInit("OpenGL", w, "nix-area");
+//	nix::init("OpenGL", w, "nix-area");
 
-	NixShader *shader = NixLoadShader(cur_doc->filename);
+	nix::Shader *shader = nix::LoadShader(cur_doc->filename);
 	if (!shader){
-		ErrorBox(MainWin, _("Fehler"), NixShaderError);
+		ErrorBox(MainWin, _("Fehler"), nix::shader_error);
 	}else{
 		SetMessage(_("Shader ist fehler-frei &ubersetzbar!"));
 		shader->unref();
@@ -339,10 +341,10 @@ void SgribthMaker::Compile()
 
 	if (ext == "kaba")
 		CompileKaba();
-	else if (ext == "glsl")
+	else if (ext == "shader")
 		CompileShader();
 	else
-		SetMessage(_("nur *.kaba und *.glsl-Dateien k&onnen &ubersetzt werden!"));
+		SetMessage(_("nur *.kaba und *.shader-Dateien k&onnen &ubersetzt werden!"));
 }
 
 void SgribthMaker::CompileAndRun(bool verbose)

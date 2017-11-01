@@ -15,6 +15,11 @@ ParserShader::ParserShader()
 	special_words.add("varying");
 	special_words.add("uniform");
 	special_words.add("invariant");
+	special_words.add("in");
+	special_words.add("out");
+	special_words.add("layout");
+	special_words.add("location");
+	special_words.add("struct");
 	special_words.add("if");
 	special_words.add("else");
 	special_words.add("while");
@@ -50,13 +55,19 @@ ParserShader::ParserShader()
 	compiler_functions.add("max");
 	compiler_functions.add("dot");
 	compiler_functions.add("pow");
+	compiler_functions.add("abs");
+	compiler_functions.add("exp");
+	compiler_functions.add("sin");
+	compiler_functions.add("cos");
+	compiler_functions.add("tan");
+	compiler_functions.add("texture");
 	compiler_functions.add("texture2D");
 	compiler_functions.add("textureCube");
 	compiler_functions.add("reflect");
 	compiler_functions.add("refract");
 	compiler_functions.add("normalize");
 	globals.add("gl_Position");
-	globals.add("gl_TexCoord");
+	/*globals.add("gl_TexCoord");
 	globals.add("gl_Vertex");
 	globals.add("gl_MultiTexCoord0");
 	globals.add("gl_MultiTexCoord1");
@@ -75,7 +86,7 @@ ParserShader::ParserShader()
 	globals.add("gl_FogFragCoord");
 	globals.add("gl_FragCoord");
 	globals.add("gl_Color");
-	globals.add("gl_FragColor");
+	globals.add("gl_FragColor");*/
 }
 
 ParserShader::~ParserShader()

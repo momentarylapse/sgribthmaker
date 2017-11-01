@@ -51,6 +51,7 @@
 
 
 typedef void callback_function();
+typedef void render_str_function(const string &text, Image &image);
 
 
 
@@ -66,8 +67,8 @@ enum{
 
 //#define ResX	NixScreenWidth
 //#define ResY	NixScreenHeight
-#define MaxX	NixTargetWidth
-#define MaxY	NixTargetHeight
+//#define MaxX	target_width
+//#define MaxY	target_height
 
 
 
@@ -92,11 +93,11 @@ enum{
 #define AlphaMaterial		13
 
 enum{
-	CullNone,
-	CullCCW,
-	CullCW
+	CULL_NONE,
+	CULL_CCW,
+	CULL_CW
 };
-#define CullDefault		CullCCW
+#define CULL_DEFAULT		CULL_CCW
 
 enum{
 	StencilNone,
@@ -123,30 +124,26 @@ enum{
 #define ShadingRound			1
 
 
+namespace nix{
 
-extern int NixFontHeight;
-extern string NixFontName;
+extern int Api;
+extern string ApiName;
+extern int device_width, device_height;						// render target size (window, won't change)
+extern int target_width, target_height;						// current render target size (window/texture)
+extern bool Fullscreen;
+extern callback_function *RefillAllVertexBuffers;			// animate the application to refill lost VertexBuffers
+extern render_str_function *render_str;
+extern bool LightingEnabled;
+extern bool CullingInverted;
 
-extern hui::Window *NixWindow;
+extern int FatalError;
+extern int NumTrias;
 
-extern int NixApi;
-extern string NixApiName;
-extern int NixScreenWidth, NixScreenHeight, NixScreenDepth;		// current screen resolution
-extern int NixDesktopWidth, NixDesktopHeight, NixDesktopDepth;	// pre-NIX-resolution
-extern int NixTargetWidth, NixTargetHeight;						// render target size (window/texture)
-extern bool NixFullscreen;
-extern callback_function *NixRefillAllVertexBuffers;			// animate the application to refill lost VertexBuffers
-extern bool NixLightingEnabled;
-extern bool NixCullingInverted;
+extern string texture_dir;
+extern int TextureMaxFramesToLive, MaxVideoTextureSize;
 
-extern float NixMouseMappingWidth, NixMouseMappingHeight;		// fullscreen mouse territory
-extern int NixFatalError;
-extern int NixNumTrias;
-
-extern string NixTextureDir;
-extern int NixTextureMaxFramesToLive, NixMaxVideoTextureSize;
-
-class NixVertexBuffer;
-extern NixVertexBuffer *VBTemp; // vertex buffer for 1-frame geometries
+class VertexBuffer;
+extern VertexBuffer *vb_temp; // vertex buffer for 1-frame geometries
+};
 
 #endif
