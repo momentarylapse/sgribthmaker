@@ -18,14 +18,13 @@ string texture_dir = "";
 Array<Texture*> textures;
 Texture *default_texture = NULL;
 Texture *tex_text = NULL;
+int tex_cube_level = -1;
 
 int texture_icon_size = 0;
-bool OGLDynamicTextureSupport = true;
 bool GLDoubleBuffered = true;
 
 
 //void SetDefaultShaderData(int num_textures, const vector &cam_pos);
-extern vector _CamPos_;
 
 
 
@@ -197,15 +196,15 @@ void init_textures()
 void ReleaseTextures()
 {
 	for (Texture *t: textures){
-		glBindTexture(GL_TEXTURE_2D, t->glTexture);
-		glDeleteTextures(1, &t->glTexture);
+		glBindTexture(GL_TEXTURE_2D, t->texture);
+		glDeleteTextures(1, &t->texture);
 	}
 }
 
 void ReincarnateTextures()
 {
 	for (Texture *t: textures){
-		glGenTextures(1, &t->glTexture);
+		glGenTextures(1, &t->texture);
 		t->reload();
 	}
 }
@@ -230,9 +229,9 @@ Texture::Texture()
 #ifdef NIX_ALLOW_VIDEO_TEXTURE
 	avi_info = NULL;
 #endif
-	glGenTextures(1, &glTexture);
-	glFrameBuffer = 0;
-	glDepthRenderBuffer = 0;
+	glGenTextures(1, &texture);
+	frame_buffer = 0;
+	depth_render_buffer = 0;
 	width = height = 0;
 
 	textures.add(this);
@@ -275,7 +274,6 @@ Texture *LoadTexture(const string &filename)
 
 void Texture::reload()
 {
-	msg_db_r("NixReloadTexture", 1);
 	msg_write("loading texture: " + filename);
 
 	string _filename = texture_dir + filename;
@@ -301,7 +299,7 @@ void Texture::reload()
 		#ifdef NIX_ALLOW_VIDEO_TEXTURE
 			avi_info[texture]=new s_avi_info;
 
-			glBindTexture(GL_TEXTURE_2D, glTexture);
+			glBindTexture(GL_TEXTURE_2D, texture);
 			glEnable(GL_TEXTURE_2D);
 			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
@@ -315,7 +313,6 @@ void Texture::reload()
 		#else
 			msg_error("Support for video textures is not activated!!!");
 			msg_write("-> un-comment the NIX_ALLOW_VIDEO_TEXTURE definition in the source file \"00_config.h\" and recompile the program");
-			msg_db_l(1);
 			return;
 		#endif
 	}else{
@@ -324,14 +321,12 @@ void Texture::reload()
 		overwrite(image);
 	}
 	life_time = 0;
-	msg_db_l(1);
 }
 
 void OverwriteTexture__(Texture *t, int target, int subtarget, const Image &image)
 {
 	if (!t)
 		return;
-	msg_db_r("NixOverwriteTexture", 1);
 
 	#ifdef NIX_ALLOW_VIDEO_TEXTURE
 		avi_info[texture]=NULL;
@@ -339,14 +334,23 @@ void OverwriteTexture__(Texture *t, int target, int subtarget, const Image &imag
 
 	image.setMode(Image::ModeRGBA);
 
+	if (t->is_cube_map)
+		target = GL_TEXTURE_CUBE_MAP;
+
 	if (!image.error){
 		//glEnable(target);
-		glBindTexture(target, t->glTexture);
+		glBindTexture(target, t->texture);
 		TestGLError("OverwriteTexture a");
 		glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		TestGLError("OverwriteTexture b");
-		if (t->is_dynamic){
+		if (t->is_cube_map){
+		    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+		}else if (t->is_dynamic){
 			glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		}else{
@@ -356,12 +360,12 @@ void OverwriteTexture__(Texture *t, int target, int subtarget, const Image &imag
 		}
 		TestGLError("OverwriteTexture c");
 #ifdef GL_GENERATE_MIPMAP
-		if (image.alpha_used) 
+		if (image.alpha_used)
 			glTexImage2D(subtarget, 0, GL_RGBA8, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.data.data);
 		else
 			glTexImage2D(subtarget, 0, GL_RGB8, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.data.data);
 		TestGLError("OverwriteTexture d");
-		if (!t->is_dynamic)
+		if (!t->is_dynamic and !t->is_cube_map)
 			glGenerateMipmap(GL_TEXTURE_2D);
 		TestGLError("OverwriteTexture e");
 #else
@@ -383,7 +387,6 @@ void OverwriteTexture__(Texture *t, int target, int subtarget, const Image &imag
 		}
 	}
 	t->life_time = 0;
-	msg_db_l(1);
 }
 
 void Texture::overwrite(const Image &image)
@@ -393,12 +396,10 @@ void Texture::overwrite(const Image &image)
 
 void Texture::unload()
 {
-	msg_db_r("NixUnloadTexture", 1);
 	msg_write("unloading Texture: " + filename);
-	glBindTexture(GL_TEXTURE_2D, glTexture);
-	glDeleteTextures(1, (unsigned int*)&glTexture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glDeleteTextures(1, (unsigned int*)&texture);
 	life_time = -1;
-	msg_db_l(1);
 }
 
 inline void refresh_texture(Texture *t)
@@ -416,17 +417,15 @@ void SetTexture(Texture *t)
 	if (!t)
 		t = default_texture;
 
+	tex_cube_level = -1;
 	glActiveTexture(GL_TEXTURE0);
 	if (t->is_cube_map){
 		glEnable(GL_TEXTURE_CUBE_MAP);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, t->glTexture);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, t->texture);
+		tex_cube_level = 0;
 	}else{
-		glBindTexture(GL_TEXTURE_2D, t->glTexture);
+		glBindTexture(GL_TEXTURE_2D, t->texture);
 		TestGLError("SetTex b");
-		/*if (TextureIsDynamic[texture]){
-			#ifdef OS_WONDOWS
-			#endif
-		}*/
 	}
 }
 
@@ -436,15 +435,17 @@ void SetTextures(Array<Texture*> &textures)
 		if (texture[i] >= 0)
 			refresh_texture(texture[i]);*/
 
-	for (int i=0;i<textures.num;i++){
+	tex_cube_level = -1;
+	for (int i=0; i<textures.num; i++){
 		Texture *t = textures[i];
 		if (!t)
 			t = default_texture;
 		glActiveTexture(GL_TEXTURE0+i);
 		if (t->is_cube_map){
-			glBindTexture(GL_TEXTURE_CUBE_MAP, t->glTexture);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, t->texture);
+			tex_cube_level = i;
 		}else{
-			glBindTexture(GL_TEXTURE_2D, t->glTexture);
+			glBindTexture(GL_TEXTURE_2D, t->texture);
 		}
 		//TestGLError("SetTex"+i2s(i));
 	}
@@ -484,27 +485,48 @@ void TextureVideoMove(int texture,float elapsed)
 
 DynamicTexture::DynamicTexture(int _width, int _height)
 {
-	msg_db_r("NixDynamicTexture", 1);
 	msg_write(format("creating dynamic texture [%d x %d] ", _width, _height));
-	if (!OGLDynamicTextureSupport)
-		return;
 	filename = "-dynamic-";
 	width = _width;
 	height = _height;
 	is_dynamic = true;
 	
-	// create the render target stuff
-	glGenFramebuffersEXT(1, &glFrameBuffer);
-	glGenRenderbuffersEXT(1, &glDepthRenderBuffer);
-	glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, glDepthRenderBuffer);
-	glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, width, height);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, width, height, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+	TestGLError("aaaa");
+
+	glGenFramebuffers(1, &frame_buffer);
+	TestGLError("aaaa1");
+	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
+	TestGLError("aaaa2");
+	glGenRenderbuffers(1, &depth_render_buffer);
+	TestGLError("aaaa3");
+	glBindRenderbuffer(GL_RENDERBUFFER, depth_render_buffer);
+	TestGLError("aaaa3b");
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+	TestGLError("aaaa4");
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_render_buffer);
+
+	TestGLError("aaaa5");
+
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture, 0);
+	GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+	glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+	TestGLError("aaaa7");
+
+
+	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		msg_error("framebuffer != complete");
 
 	// create the actual (dynamic) texture
-	Image image;
+	/*Image image;
 	image.create(width, height, Black);
-	overwrite(image);
+	overwrite(image);*/
 
-	msg_db_l(1);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 }
 
@@ -512,12 +534,6 @@ void DynamicTexture::__init__(int width, int height)
 {
 	new(this) DynamicTexture(width, height);
 }
-
-bool Texture::start_render()
-{
-	return StartIntoTexture(this);
-}
-
 
 static int NixCubeMapTarget[] = {
 	GL_TEXTURE_CUBE_MAP_POSITIVE_X,
@@ -530,13 +546,11 @@ static int NixCubeMapTarget[] = {
 
 CubeMap::CubeMap(int size)
 {
-	msg_db_r("NixCubeMap", 1);
 	msg_write(format("creating cube map [ %d x %d x 6 ]", size, size));
 	width = size;
 	height = size;
 	is_cube_map = true;
 	filename = "-cubemap-";
-	msg_db_l(1);
 }
 
 void CubeMap::__init__(int size)
@@ -544,23 +558,26 @@ void CubeMap::__init__(int size)
 	new(this) CubeMap(size);
 }
 
-void Texture::fill_cube_map(int side, Texture *source)
+void CubeMap::fill_side(int side, Texture *source)
 {
-	if (!is_cube_map)
-		return;
 	if (!source)
 		return;
 	if (source->is_cube_map)
 		return;
 	Image image;
 	image.load(texture_dir + source->filename);
+	overwrite_side(side, image);
+}
+
+void CubeMap::overwrite_side(int side, const Image &image)
+{
 	OverwriteTexture__(this, GL_TEXTURE_CUBE_MAP, NixCubeMapTarget[side], image);
 }
 
+#ifdef NIX_API_DIRECTX9
 void SetCubeMatrix(vector pos,vector ang)
 {
 	// TODO
-#ifdef NIX_API_DIRECTX9
 	if (NixApi==NIX_API_DIRECTX9){
 		matrix t,r;
 		MatrixTranslation(t,-pos);
@@ -569,14 +586,11 @@ void SetCubeMatrix(vector pos,vector ang)
 		lpDevice->SetTransform(D3DTS_VIEW,(D3DXMATRIX*)&NixViewMatrix);
 		lpDevice->Clear(0,NULL,D3DCLEAR_ZBUFFER,0,1.0f,0);
 	}
-#endif
 }
-
 void Texture::render_to_cube_map(vector &pos,callback_function *render_func,int mask)
 {
 	if (mask<1)	return;
 	// TODO
-#ifdef NIX_API_DIRECTX9
 	if (NixApi==NIX_API_DIRECTX9){
 		HRESULT hr;
 		matrix vm=NixViewMatrix;
@@ -635,12 +649,12 @@ void Texture::render_to_cube_map(vector &pos,callback_function *render_func,int 
 		NixViewMatrix=vm;
 		NixSetView(true,NixViewMatrix);
 	}
-#endif
 #ifdef NIX_API_OPENGL
 	if (Api==NIX_API_OPENGL){
 		msg_todo("RenderToCubeMap for OpenGL");
 	}
 #endif
 }
+#endif
 
 };

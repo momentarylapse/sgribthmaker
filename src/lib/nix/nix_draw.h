@@ -23,14 +23,14 @@ int _cdecl GetStrWidth(const string &str);
 void _cdecl DrawLine(float x1, float y1, float x2, float y2, float depth);
 void _cdecl DrawLineV(float x, float y1, float y2, float depth);
 void _cdecl DrawLineH(float x1, float x2, float y, float depth);
-void _cdecl DrawLines(Array<vector> &p, bool contiguous);
 void _cdecl DrawLine3D(const vector &l1, const vector &l2);
+void _cdecl DrawLines(Array<vector> &p, bool contiguous);
+void _cdecl DrawLinesColored(Array<vector> &p, Array<color> &c, bool contiguous);
 void _cdecl DrawRect(float x1, float x2, float y1, float y2, float depth);
 void _cdecl Draw2D(const rect &src, const rect &dest, float depth);
 void _cdecl DrawSpriteR(const rect &src, const vector &pos, const rect &dest);
 void _cdecl DrawSprite(const rect &src, const vector &pos, float radius);
 void _cdecl Draw3D(VertexBuffer *vb);
-void _cdecl Draw3DCubeMapped(Texture *cube_map, VertexBuffer *vb);
 
 extern float line_width;
 extern bool smooth_lines;

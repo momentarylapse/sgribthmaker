@@ -15,6 +15,7 @@ bool smooth_lines = false;
 //static color current_color = White;
 
 unsigned int line_buffer = 0;
+unsigned int color_buffer = 0;
 
 
 render_str_function *render_str = NULL;
@@ -59,9 +60,11 @@ void DrawStr(float x, float y, const string &str)
 	if (render_str){
 		Image im;
 		(*render_str)(str, im);
-		tex_text->overwrite(im);
-		SetTexture(tex_text);
-		Draw2D(r_id, rect(x, x + im.width, y, y + im.height), 0);
+		if (im.width > 0){
+			tex_text->overwrite(im);
+			SetTexture(tex_text);
+			Draw2D(r_id, rect(x, x + im.width, y, y + im.height), 0);
+		}
 	}else{
 		/*string str2 = str_utf8_to_ubyte(str);
 
@@ -81,12 +84,15 @@ int GetStrWidth(const string &str)
 		(*render_str)(str, im);
 		return im.width;
 	}else{
+#if 0
 		string str2 = str_utf8_to_ubyte(str);
 		int w = 0;
 		for (int i=0;i<str2.num;i++)
 			w += FontGlyphWidth[(unsigned char)str2[i]];
 		return w;
+#endif
 	}
+	return 0;
 }
 
 void DrawLine(float x1, float y1, float x2, float y2, float depth)
@@ -160,27 +166,70 @@ void DrawLines(Array<vector> &p, bool contiguous)
 	if (line_buffer == 0)
 		glGenBuffers(1, &line_buffer);
 
-	TestGLError("opt0");
+	TestGLError("dls-opt0");
 	glBindBuffer(GL_ARRAY_BUFFER, line_buffer);
 	glBufferData(GL_ARRAY_BUFFER, p.num * sizeof(p[0]), &p[0], GL_STATIC_DRAW);
-	TestGLError("opt1");
+	TestGLError("dls-opt1");
 
-	TestGLError("a");
+	TestGLError("dls-a");
 	glEnableVertexAttribArray(0);
-	TestGLError("b1");
+	TestGLError("dls-b1");
 	glBindBuffer(GL_ARRAY_BUFFER, line_buffer);
-	TestGLError("c1");
+	TestGLError("dls-c1");
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-	TestGLError("d1");
+	TestGLError("dls-d1");
 
 	if (contiguous)
 		glDrawArrays(GL_LINE_STRIP, 0, p.num);
 	else
 		glDrawArrays(GL_LINES, 0, p.num);
-	TestGLError("e");
+	TestGLError("dls-e");
 
 	glDisableVertexAttribArray(0);
-	TestGLError("f");
+	TestGLError("dls-f");
+}
+
+void DrawLinesColored(Array<vector> &p, Array<color> &c, bool contiguous)
+{
+	current_shader->set_default_data();
+
+	if (line_buffer == 0)
+		glGenBuffers(1, &line_buffer);
+	if (color_buffer == 0)
+		glGenBuffers(1, &color_buffer);
+
+	TestGLError("dlc-opt0");
+	glBindBuffer(GL_ARRAY_BUFFER, line_buffer);
+	glBufferData(GL_ARRAY_BUFFER, p.num * sizeof(p[0]), &p[0], GL_STATIC_DRAW);
+	TestGLError("dlc-opt1");
+	glBindBuffer(GL_ARRAY_BUFFER, color_buffer);
+	glBufferData(GL_ARRAY_BUFFER, c.num * sizeof(c[0]), &c[0], GL_STATIC_DRAW);
+
+	TestGLError("dlc-a1");
+	glEnableVertexAttribArray(0);
+	TestGLError("dlc-b1");
+	glBindBuffer(GL_ARRAY_BUFFER, line_buffer);
+	TestGLError("dlc-c1");
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	TestGLError("dlc-d1");
+
+	TestGLError("dlc-2a");
+	glEnableVertexAttribArray(1);
+	TestGLError("dlc-b2");
+	glBindBuffer(GL_ARRAY_BUFFER, color_buffer);
+	TestGLError("dlc-c2");
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	TestGLError("dlc-d2");
+
+	if (contiguous)
+		glDrawArrays(GL_LINE_STRIP, 0, p.num);
+	else
+		glDrawArrays(GL_LINES, 0, p.num);
+	TestGLError("dlc-e");
+
+	glDisableVertexAttribArray(1);
+	glDisableVertexAttribArray(0);
+	TestGLError("dlc-f");
 }
 
 void DrawLineV(float x, float y1, float y2, float depth)
@@ -212,24 +261,24 @@ void DrawLine3D(const vector &l1, const vector &l2)
 	if (line_buffer == 0)
 		glGenBuffers(1, &line_buffer);
 
-	TestGLError("opt0");
+	TestGLError("dl-opt0");
 	glBindBuffer(GL_ARRAY_BUFFER, line_buffer);
 	glBufferData(GL_ARRAY_BUFFER, 2 * sizeof(v[0]), &v[0], GL_STATIC_DRAW);
-	TestGLError("opt1");
+	TestGLError("dl-opt1");
 
-	TestGLError("a");
+	TestGLError("dl-a");
 	glEnableVertexAttribArray(0);
-	TestGLError("b1");
+	TestGLError("dl-b1");
 	glBindBuffer(GL_ARRAY_BUFFER, line_buffer);
-	TestGLError("c1");
+	TestGLError("dl-c1");
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-	TestGLError("d1");
+	TestGLError("dl-d1");
 
 	glDrawArrays(GL_LINES, 0, 2);
-	TestGLError("e");
+	TestGLError("dl-e");
 
 	glDisableVertexAttribArray(0);
-	TestGLError("f");
+	TestGLError("dl-f");
 }
 
 void DrawRect(float x1, float x2, float y1, float y2, float depth)
@@ -319,34 +368,6 @@ void Draw3D(VertexBuffer *vb)
 
 	NumTrias += vb->num_triangles;
 	TestGLError("Draw3D");
-}
-
-void Draw3DCubeMapped(Texture *cube_map, VertexBuffer *vb)
-{
-	if (!vb)
-		return;
-	if (!cube_map->is_cube_map)
-		return;
-	//_SetMode3d();
-
-	SetTexture(cube_map);
-	TestGLError("Draw3dCube 0");
-	glTexGenf(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP);
-	glTexGenf(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP);
-	glTexGenf(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP);
-	TestGLError("Draw3dCube a");
-	glEnable(GL_TEXTURE_GEN_S);
-	glEnable(GL_TEXTURE_GEN_T);
-	glEnable(GL_TEXTURE_GEN_R);
-	TestGLError("Draw3dCube c");
-	//glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-	Draw3D(vb);
-	glDisable(GL_TEXTURE_GEN_S);
-	glDisable(GL_TEXTURE_GEN_T);
-	glDisable(GL_TEXTURE_GEN_R);
-
-	//Draw3D(-1,buffer,mat);
-	TestGLError("Draw3dCube");
 }
 
 void DrawSpriteR(const rect &src, const vector &pos, const rect &dest)

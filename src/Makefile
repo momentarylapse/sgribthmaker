@@ -73,14 +73,13 @@ Parser/ParserPython.o : Parser/ParserPython.cpp
 
 install : all
 	mkdir -p /usr/share/sgribthmaker
-	mkdir -p /usr/share/sgribthmaker/Data
-	cp -f ../Data/hui_resources.txt /usr/share/sgribthmaker/Data
-	cp -f ../Data/icon.ico             /usr/share/sgribthmaker/Data
-	cp -f ../Data/license.txt          /usr/share/sgribthmaker/Data
-	cp -f ../Data/license_small.txt    /usr/share/sgribthmaker/Data
-	cp -f ../Data/SgribthMaker.png     /usr/share/sgribthmaker/Data
-	xdg-mime install ../Data/michisoft-sgribthmaker.xml
-	xdg-desktop-menu install ../Data/michisoft-sgribthmaker.desktop
+	cp -f ../static/hui_resources.txt /usr/share/sgribthmaker
+	cp -f ../static/icon.ico             /usr/share/sgribthmaker
+	cp -f ../static/license.txt          /usr/share/sgribthmaker
+	cp -f ../static/license_small.txt    /usr/share/sgribthmaker
+	cp -f ../static/SgribthMaker.png     /usr/share/sgribthmaker
+	xdg-mime install ../static/michisoft-sgribthmaker.xml
+	xdg-desktop-menu install ../static/michisoft-sgribthmaker.desktop
 	cp $(BIN) /usr/bin
 
 
