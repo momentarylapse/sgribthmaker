@@ -28,10 +28,16 @@ ParserShader::ParserShader()
 	special_words.add("break");
 	special_words.add("continue");
 	special_words.add("const");
-	special_words.add("<VertexShader>");
+	/*special_words.add("<VertexShader>");
 	special_words.add("</VertexShader>");
 	special_words.add("<FragmentShader>");
-	special_words.add("</FragmentShader>");
+	special_words.add("</FragmentShader>");*/
+	special_words.add("VertexShader");
+	special_words.add("FragmentShader");
+	special_words.add("GeometryShader");
+	special_words.add("ComputeShader");
+	special_words.add("TessComputeShader");
+	special_words.add("TessEvaluationShader");
 	types.add("void");
 	types.add("int");
 	types.add("float");
@@ -66,6 +72,8 @@ ParserShader::ParserShader()
 	compiler_functions.add("reflect");
 	compiler_functions.add("refract");
 	compiler_functions.add("normalize");
+	compiler_functions.add("inverse");
+	compiler_functions.add("transpose");
 	globals.add("gl_Position");
 	/*globals.add("gl_TexCoord");
 	globals.add("gl_Vertex");
