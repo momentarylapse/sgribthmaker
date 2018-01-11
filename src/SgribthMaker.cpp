@@ -17,7 +17,7 @@
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.6.1";
+string AppVersion = "0.4.6.2";
 
 //#define ALLOW_LOGGING			true
 #define ALLOW_LOGGING			false
@@ -495,7 +495,7 @@ SgribthMaker::SgribthMaker() :
 	setProperty("version", AppVersion);
 	setProperty("comment", _("Texteditor und Kaba-Compiler"));
 	setProperty("website", "http://michi.is-a-geek.org/michisoft");
-	setProperty("copyright", "© 2006-2017 by MichiSoft TM");
+	setProperty("copyright", "© 2006-2018 by MichiSoft TM");
 	setProperty("author", "Michael Ankele <michi@lupina.de>");
 
 	hui::RegisterFileType("kaba","MichiSoft Script Datei", directory + "Data/kaba.ico", filename,"open",true);
