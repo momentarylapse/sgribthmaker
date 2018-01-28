@@ -43,38 +43,35 @@ string Document::name(bool long_name) const
 
 bool Document::load(const string &_filename)
 {
-	File *f = FileOpen(_filename);
-	if (!f){
+	try{
+		string temp = FileReadText(_filename);
+		if (!source_view->Fill(temp))
+			sgribthmaker->SetMessage(_("Datei nicht UTF-8 kompatibel"));
+
+		filename = _filename;
+
+		source_view->SetParser(filename);
+
+		sgribthmaker->UpdateMenu();
+	}catch(...){
 		sgribthmaker->SetMessage(_("Datei l&asst sich nicht &offnen"));
 		return false;
 	}
-
-	string temp = f->ReadComplete();
-	FileClose(f);
-
-	if (!source_view->Fill(temp))
-		sgribthmaker->SetMessage(_("Datei nicht UTF-8 kompatibel"));
-
-	filename = _filename;
-
-	source_view->SetParser(filename);
-
-	sgribthmaker->UpdateMenu();
 	return true;
 }
 
 bool Document::save(const string &_filename)
 {
-	File *f = FileCreate(_filename);
-	string temp = source_view->GetAll();
-	f->WriteBuffer(temp.data, temp.num);
-	FileClose(f);
+	try{
+		FileWriteText(_filename, source_view->GetAll());
+		filename = _filename;
+		history->DefineAsSaved();
+		//SetMessage(_("gespeichert"));
+		//UpdateMenu();
+	}catch(...){
+	}
 
-	filename = _filename;
-	history->DefineAsSaved();
 	source_view->SetParser(filename);
 
-	//SetMessage(_("gespeichert"));
-	//UpdateMenu();
 	return true;
 }
