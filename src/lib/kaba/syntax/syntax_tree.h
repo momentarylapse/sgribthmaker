@@ -112,6 +112,7 @@ struct Block
 	Array<int> vars;
 	Function *function;
 	Block *parent;
+	void *_start, *_end; // opcode range
 	int level;
 	void add(Node *c);
 	void set(int index, Node *c);
@@ -288,6 +289,8 @@ public:
 	void ParseStatementBreak(Block *block);
 	void ParseStatementContinue(Block *block);
 	void ParseStatementReturn(Block *block);
+	void ParseStatementRaise(Block *block);
+	void ParseStatementTry(Block *block);
 	void ParseStatementIf(Block *block);
 
 	void CreateAsmMetaInfo();
