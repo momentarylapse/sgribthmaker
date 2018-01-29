@@ -67,7 +67,6 @@ public:
 
 typedef bool t_file_try_again_func(const string &filename);
 
-extern bool SilentFiles;
 extern t_file_try_again_func *FileTryAgainFunc;
 
 class File
@@ -127,6 +126,8 @@ public:
 
 	virtual void read_comment();
 	virtual void write_comment(const string &str);
+
+	int float_decimals;
 
 //private:
 	string filename;

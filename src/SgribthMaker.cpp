@@ -17,7 +17,7 @@
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.6.2";
+string AppVersion = "0.4.6.3";
 
 //#define ALLOW_LOGGING			true
 #define ALLOW_LOGGING			false
@@ -285,7 +285,7 @@ void SgribthMaker::CompileKaba()
 	hui::Timer CompileTimer;
 
 	Kaba::config.compile_silently = true;
-	Kaba::config.verbose = true;
+	//Kaba::config.verbose = true;
 
 	try{
 		Kaba::Script *compile_script = Kaba::Load(cur_doc->filename, true);
@@ -366,7 +366,7 @@ void SgribthMaker::CompileAndRun(bool verbose)
 	// compile
 	hui::Timer CompileTimer;
 	Kaba::config.compile_silently = true;
-	Kaba::config.verbose = true;
+	//Kaba::config.verbose = true;
 
 	try{
 		Kaba::Script *compile_script = Kaba::Load(cur_doc->filename);
