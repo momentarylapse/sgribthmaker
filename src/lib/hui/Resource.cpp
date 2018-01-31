@@ -137,11 +137,15 @@ Window *CreateResourceDialog(const string &id, Window *root)
 	//return HuiCreateDialog("-dialog not found in resource-",200,100,root,true,mf);
 	Resource *res = GetResource(id);
 	if (!res){
-		msg_error(format("HuiCreateResourceDialog  (id=%s)  m(-_-)m",id.c_str()));
+		msg_error(format("CreateResourceDialog  (id=%s)  m(-_-)m",id.c_str()));
 		return NULL;
 	}
 	
-	msg_db_m("HuiResDialog",2);
+
+	if (res->type != "Dialog"){
+		msg_error("resource type should be Dialog, but is " + res->type);
+		return NULL;
+	}
 
 	string menu_id, toolbar_id;
 	bool allow_parent = false;
@@ -155,11 +159,7 @@ Window *CreateResourceDialog(const string &id, Window *root)
 	}
 
 	// dialog
-	Window *dlg;
-	if (res->type == "SizableDialog")
-		dlg = new Dialog(GetLanguageR(res->id, *res), res->w, res->h, root, allow_parent);
-	else
-		dlg = new FixedDialog(GetLanguageR(res->id, *res), res->w, res->h, root, allow_parent);
+	Window *dlg = new Dialog(GetLanguageR(res->id, *res), res->w, res->h, root, allow_parent);
 
 	// menu?
 	if (menu_id.num > 0)
@@ -173,7 +173,6 @@ Window *CreateResourceDialog(const string &id, Window *root)
 	for (Resource &cmd: res->children)
 		dlg->_addControl(id, cmd, "");
 
-	msg_db_m("  \\(^_^)/",1);
 	return dlg;
 	
 	/*msg_error(format("HuiCreateResourceDialog  (id=%d)  m(-_-)m",id));

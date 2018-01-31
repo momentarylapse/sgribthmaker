@@ -1,7 +1,7 @@
 // Language
 English
 // Num IDs
-43
+40
 // Data (ID,Text,Tooltip)
 /about
 Info...
@@ -123,15 +123,6 @@ Settings
 settings_dialog/tab_width
 1\1\32
 
-ltip:/new
-
-new file
-ltip:/open
-
-open a new file
-ltip:/save
-
-save file
 // Num Language Strings
 58
 // Data (ID,Text)

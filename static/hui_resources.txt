@@ -963,7 +963,7 @@ settings_dialog/tab_width
 // Language
 English
 // Number Of IDs
-43
+40
 // Text
 /about
 Info...
@@ -1085,15 +1085,6 @@ Settings
 settings_dialog/tab_width
 1\\1\\32
 
-ltip:/new
-
-new file
-ltip:/open
-
-open a new file
-ltip:/save
-
-save file
 // Num Language Strings
 58
 // Text
@@ -1103,6 +1094,8 @@ save file
  (write protected)
  has crashed.\t\tThe last lines of the file message.txt:
  has crashed.\t\tThe last lines of the file message.txt:
+\"%s\" nicht gefunden
+\"%s\" not found
 (anonymous)
 (anonymous)
 - Keine Labels -
@@ -1163,6 +1156,26 @@ Script ist fehler-frei übersetzbar!        (in %s)
 Script compilable without errors!         (in %s)
 Send bug report to Michi
 Send bug report to Michi
+Shader ist fehler-frei übersetzbar!
+Shader compiles without error!
+Sie haben die Entropie erhöht. Wollen Sie Ihr Werk speichern?
+You increased entropy. Do you wish to save your work?
+String
+String
+Text
+Text
+Texteditor und Kaba-Compiler
+Text editor and kaba compiler
+Trennzeichen
+Separator
+Typ
+Type
+Your comments and the contents of the file message.txt will be sent.
+Your comments and the contents of the file message.txt will be sent.
+Zahl
+Number
+Zeile  %d : %d
+Line  %d : %d
 demütige aber höfliche Frage
 respectful question
 eine Datei öffnen
@@ -1191,25 +1204,3 @@ program has crashed, error handler has been called... maybe SegFault... m(-_-)m
 program has crashed, error handler has been called... maybe SegFault... m(-_-)m
 reserviertes Wort
 reserved word
-Shader ist fehler-frei übersetzbar!
-Shader compiles without error!
-Sie haben die Entropie erhöht. Wollen Sie Ihr Werk speichern?
-You increased entropy. Do you wish to save your work?
-String
-String
-Text
-Text
-Texteditor und Kaba-Compiler
-Text editor and kaba compiler
-Trennzeichen
-Separator
-Typ
-Type
-Your comments and the contents of the file message.txt will be sent.
-Your comments and the contents of the file message.txt will be sent.
-Zahl
-Number
-Zeile  %d : %d
-Line  %d : %d
-\"%s\" nicht gefunden
-\"%s\" not found

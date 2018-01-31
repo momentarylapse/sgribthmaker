@@ -349,14 +349,6 @@ void Panel::fromResource(const string &id)
 	this->id = id;
 
 
-	// dialog
-	/*CHuiPanel *dlg
-	if (res->type == "SizableDialog")
-		dlg = HuiCreateSizableDialog(HuiGetLanguage(res->id), res->i_param[0], res->i_param[1], root, res->b_param[0]);
-	else
-		dlg = HuiCreateDialog(HuiGetLanguage(res->id), res->i_param[0], res->i_param[1], root, res->b_param[0]);*/
-
-
 	// menu/toolbar?
 	if (win){
 		for (string &o: res->options){
