@@ -1,0 +1,253 @@
+// Language
+English
+// Num IDs
+43
+// Data (ID,Text,Tooltip)
+/about
+Info...
+
+/cancel
+Cancel
+
+/close
+Close
+
+/compile
+Compile
+
+/compile_and_run
+Execute (fast)
+
+/compile_and_run_verbose
+Execute (debug)
+
+/copy
+Copy
+
+/cut
+Cut
+
+/execute_command
+Execute command...
+
+/exit
+Exit
+
+/find
+Find...
+
+/follow
+Follow
+
+/new
+New
+new file
+/ok
+OK
+
+/open
+Open
+open a new file
+/paste
+Paste
+
+/redo
+Redo
+
+/reload
+Reload
+
+/save
+Save
+save file
+/save_as
+Save as...
+
+/settings
+Settings
+
+/undo
+Undo
+
+command_dialog/command_dialog
+Command
+
+menu/menu_edit
+Edit
+
+menu/menu_file
+File
+
+menu/menu_help
+Help
+
+menu/menu_script
+Script
+
+menu/show_data_type
+Show data type
+
+menu/show_script_docu
+Script reference
+
+settings_dialog/bold
+Bold
+
+settings_dialog/cdt_col_text
+Text
+
+settings_dialog/cdt_font
+Font
+
+settings_dialog/cdt_highlighting
+Syntax highlighting
+
+settings_dialog/cdt_scheme_bg
+Background
+
+settings_dialog/cdt_tab
+Tab size
+
+settings_dialog/context_list
+context
+
+settings_dialog/italic
+italic
+
+settings_dialog/overwrite_background
+Background
+
+settings_dialog/settings_dialog
+Settings
+
+settings_dialog/tab_width
+1\1\32
+
+ltip:/new
+
+new file
+ltip:/open
+
+open a new file
+ltip:/save
+
+save file
+// Num Language Strings
+58
+// Data (ID,Text)
+                  Close dialog box to exit program.
+                  Close dialog box to exit program.
+ (schreibgeschützt)
+ (write protected)
+ has crashed.\t\tThe last lines of the file message.txt:
+ has crashed.\t\tThe last lines of the file message.txt:
+(anonymous)
+(anonymous)
+- Keine Labels -
+- no labels -
+...done
+...done
+Alles (*.*)
+All (*.*)
+Api Funktion
+Api function
+Api Variable
+Api variable
+Bug Report
+Bug Report
+Cancel
+Cancel
+Comment/what happened:
+Comment/what happened:
+Compilieren: %s         Opcode: %db         Ausführen: %s
+Compiling: %s         opcode: %db         execution: %s
+Datei lässt sich nicht öffnen
+File does not want to be opened
+Datei nicht UTF-8 kompatibel
+File is not UTF-8 compatible
+Datei speichern
+Save file
+Datei öffnen
+Open file
+Description
+Description
+Error
+Error
+Fehler
+Error
+Font wählen
+Select font
+Just happened somehow...
+Just happened somehow...
+Kommentar Ebene 1
+Comment level 1
+Kommentar Ebene 2
+Comment level 2
+Kommentar Zeile
+Comment line
+Macro
+Macro
+Messages
+Messages
+Name:
+Name:
+Ok
+Ok
+Operator
+Operator
+Program was compiled without network support...
+Program was compiled without network support...
+Script ist fehler-frei übersetzbar!        (in %s)
+Script compilable without errors!         (in %s)
+Send bug report to Michi
+Send bug report to Michi
+demütige aber höfliche Frage
+respectful question
+eine Datei öffnen
+open a file
+eingefügt
+pasted
+gespeichert
+saved
+i'm now going to clean up...
+i'm now going to clean up...
+kopiert
+copied
+neu geladen
+reloaded
+neue Datei
+new file
+neues Schema
+new scheme
+nur *.kaba und *.shader-Dateien können übersetzt werden!
+only *.kaba and *.shader files can be compiled!
+nur *.kaba-Dateien können ausgeführt werden!
+only *.kaba files can be executed!
+open message.txt
+open message.txt
+program has crashed, error handler has been called... maybe SegFault... m(-_-)m
+program has crashed, error handler has been called... maybe SegFault... m(-_-)m
+reserviertes Wort
+reserved word
+Shader ist fehler-frei übersetzbar!
+Shader compiles without error!
+Sie haben die Entropie erhöht. Wollen Sie Ihr Werk speichern?
+You increased entropy. Do you wish to save your work?
+String
+String
+Text
+Text
+Texteditor und Kaba-Compiler
+Text editor and kaba compiler
+Trennzeichen
+Separator
+Typ
+Type
+Your comments and the contents of the file message.txt will be sent.
+Your comments and the contents of the file message.txt will be sent.
+Zahl
+Number
+Zeile  %d : %d
+Line  %d : %d
+\"%s\" nicht gefunden
+\"%s\" not found

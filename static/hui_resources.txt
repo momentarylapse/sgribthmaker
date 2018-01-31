@@ -2,19 +2,19 @@ t5
 // Number Of Resources
 4
 // Resource
-SizableDialog
+Dialog
 command_dialog
 
 
 1
-32722
+0
 0
 550
 65
-0
+-1
 1
-ControlTable
-rand_id_131285
+Grid
+?
 
 
 1
@@ -35,8 +35,8 @@ expandx
 1
 -1
 0
-ControlTable
-rand_id_908907
+Grid
+?
 buttonbar
 
 1
@@ -74,22 +74,22 @@ menu
 
 
 1
-32722
 0
-550
-65
 0
+1
+1
+-1
 4
-ItemPopup
+Menu
 menu_file
 
 
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 9
 Item
 new
@@ -98,9 +98,9 @@ hui:new
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Item
 open
@@ -109,9 +109,9 @@ hui:open
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Item
 save
@@ -120,9 +120,9 @@ hui:save
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Item
 save_as
@@ -131,9 +131,9 @@ hui:save-as
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Separator
 
@@ -142,9 +142,9 @@ Separator
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Item
 reload
@@ -153,9 +153,9 @@ hui:refresh
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Item
 follow
@@ -164,9 +164,9 @@ follow
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Separator
 
@@ -175,9 +175,9 @@ Separator
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Item
 exit
@@ -186,20 +186,20 @@ hui:quit
 1
 0
 0
+1
+1
+-1
 0
-0
-0
-0
-ItemPopup
+Menu
 menu_edit
 
 
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 11
 Item
 undo
@@ -208,9 +208,9 @@ hui:undo
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Item
 redo
@@ -219,9 +219,9 @@ hui:redo
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Separator
 
@@ -230,9 +230,9 @@ Separator
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Item
 cut
@@ -241,9 +241,9 @@ hui:cut
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Item
 copy
@@ -252,9 +252,9 @@ hui:copy
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Item
 paste
@@ -263,9 +263,9 @@ hui:paste
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Separator
 
@@ -274,9 +274,9 @@ Separator
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Item
 find
@@ -285,9 +285,9 @@ hui:find
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Item
 execute_command
@@ -296,9 +296,9 @@ hui:execute
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Separator
 
@@ -307,9 +307,9 @@ Separator
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Item
 settings
@@ -318,20 +318,20 @@ hui:preferences
 1
 0
 0
+1
+1
+-1
 0
-0
-0
-0
-ItemPopup
+Menu
 menu_script
 
 
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 5
 Item
 show_data_type
@@ -340,9 +340,9 @@ hui:find
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Separator
 
@@ -351,9 +351,9 @@ Separator
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Item
 compile
@@ -362,9 +362,9 @@ hui:media-record
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Item
 compile_and_run
@@ -373,9 +373,9 @@ hui:media-play
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Item
 compile_and_run_verbose
@@ -384,20 +384,20 @@ hui:media-play
 1
 0
 0
+1
+1
+-1
 0
-0
-0
-0
-ItemPopup
+Menu
 menu_help
 
 
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 2
 Item
 show_script_docu
@@ -406,9 +406,9 @@ hui:help
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Item
 about
@@ -417,24 +417,24 @@ hui:about
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 // Resource
-SizableDialog
+Dialog
 settings_dialog
 
 
 1
-32722
+0
 0
 340
 550
-0
+-1
 1
-ControlTable
-rand_id_594009
+Grid
+?
 
 
 1
@@ -455,8 +455,8 @@ cdt_font
 1
 -1
 1
-ControlTable
-rand_id_855637
+Grid
+?
 
 
 1
@@ -477,8 +477,8 @@ expandx
 1
 -1
 0
-ControlTable
-rand_id_108357
+Grid
+?
 
 
 1
@@ -521,19 +521,19 @@ cdt_highlighting
 1
 -1
 1
-ControlTable
-rand_id_321579
+Grid
+?
 
 
 1
 0
 0
 1
-3
+4
 -1
 4
-ControlTable
-rand_id_810659
+Grid
+?
 
 
 1
@@ -576,8 +576,8 @@ hui:save
 1
 -1
 0
-ControlTable
-rand_id_323622
+Grid
+?
 
 
 1
@@ -620,8 +620,8 @@ nobar,select-single
 1
 -1
 0
-ControlTable
-rand_id_860384
+Grid
+?
 
 
 1
@@ -697,8 +697,8 @@ italic
 1
 -1
 0
-ControlTable
-rand_id_39881
+Grid
+?
 buttonbar
 
 1
@@ -725,11 +725,11 @@ toolbar
 
 
 1
-32722
 0
-340
-550
 0
+1
+1
+-1
 9
 Item
 new
@@ -738,9 +738,9 @@ hui:new
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Item
 open
@@ -749,9 +749,9 @@ hui:open
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Item
 save
@@ -760,9 +760,9 @@ hui:save
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Separator
 
@@ -771,9 +771,9 @@ Separator
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Item
 undo
@@ -782,9 +782,9 @@ hui:undo
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Item
 redo
@@ -793,9 +793,9 @@ hui:redo
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Separator
 
@@ -804,9 +804,9 @@ Separator
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Item
 compile
@@ -815,9 +815,9 @@ hui:media-record
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 Item
 compile_and_run
@@ -826,12 +826,12 @@ hui:media-play
 1
 0
 0
-0
-0
-0
+1
+1
+-1
 0
 // Number Of Languages
-1
+2
 // Language
 Deutsch
 // Number Of IDs
@@ -875,13 +875,13 @@ Verfolgen
 
 /new
 Neu
-
+neue Datei
 /ok
 OK
 
 /open
 Öffnen...
-
+eine Datei öffnen
 /paste
 Einfügen
 
@@ -893,7 +893,7 @@ Aktualisieren
 
 /save
 Speichern
-
+Datei speichern
 /save_as
 Speichern unter...
 
@@ -952,7 +952,7 @@ settings_dialog/overwrite_background
 Hintergrund
 
 settings_dialog/settings_dialog
-dialog
+Einstellungen
 
 settings_dialog/tab_width
 1\\1\\32
@@ -960,4 +960,256 @@ settings_dialog/tab_width
 // Num Language Strings
 0
 // Text
-#
+// Language
+English
+// Number Of IDs
+43
+// Text
+/about
+Info...
+
+/cancel
+Cancel
+
+/close
+Close
+
+/compile
+Compile
+
+/compile_and_run
+Execute (fast)
+
+/compile_and_run_verbose
+Execute (debug)
+
+/copy
+Copy
+
+/cut
+Cut
+
+/execute_command
+Execute command...
+
+/exit
+Exit
+
+/find
+Find...
+
+/follow
+Follow
+
+/new
+New
+new file
+/ok
+OK
+
+/open
+Open
+open a new file
+/paste
+Paste
+
+/redo
+Redo
+
+/reload
+Reload
+
+/save
+Save
+save file
+/save_as
+Save as...
+
+/settings
+Settings
+
+/undo
+Undo
+
+command_dialog/command_dialog
+Command
+
+menu/menu_edit
+Edit
+
+menu/menu_file
+File
+
+menu/menu_help
+Help
+
+menu/menu_script
+Script
+
+menu/show_data_type
+Show data type
+
+menu/show_script_docu
+Script reference
+
+settings_dialog/bold
+Bold
+
+settings_dialog/cdt_col_text
+Text
+
+settings_dialog/cdt_font
+Font
+
+settings_dialog/cdt_highlighting
+Syntax highlighting
+
+settings_dialog/cdt_scheme_bg
+Background
+
+settings_dialog/cdt_tab
+Tab size
+
+settings_dialog/context_list
+context
+
+settings_dialog/italic
+italic
+
+settings_dialog/overwrite_background
+Background
+
+settings_dialog/settings_dialog
+Settings
+
+settings_dialog/tab_width
+1\\1\\32
+
+ltip:/new
+
+new file
+ltip:/open
+
+open a new file
+ltip:/save
+
+save file
+// Num Language Strings
+58
+// Text
+                  Close dialog box to exit program.
+                  Close dialog box to exit program.
+ (schreibgeschützt)
+ (write protected)
+ has crashed.\t\tThe last lines of the file message.txt:
+ has crashed.\t\tThe last lines of the file message.txt:
+(anonymous)
+(anonymous)
+- Keine Labels -
+- no labels -
+...done
+...done
+Alles (*.*)
+All (*.*)
+Api Funktion
+Api function
+Api Variable
+Api variable
+Bug Report
+Bug Report
+Cancel
+Cancel
+Comment/what happened:
+Comment/what happened:
+Compilieren: %s         Opcode: %db         Ausführen: %s
+Compiling: %s         opcode: %db         execution: %s
+Datei lässt sich nicht öffnen
+File does not want to be opened
+Datei nicht UTF-8 kompatibel
+File is not UTF-8 compatible
+Datei speichern
+Save file
+Datei öffnen
+Open file
+Description
+Description
+Error
+Error
+Fehler
+Error
+Font wählen
+Select font
+Just happened somehow...
+Just happened somehow...
+Kommentar Ebene 1
+Comment level 1
+Kommentar Ebene 2
+Comment level 2
+Kommentar Zeile
+Comment line
+Macro
+Macro
+Messages
+Messages
+Name:
+Name:
+Ok
+Ok
+Operator
+Operator
+Program was compiled without network support...
+Program was compiled without network support...
+Script ist fehler-frei übersetzbar!        (in %s)
+Script compilable without errors!         (in %s)
+Send bug report to Michi
+Send bug report to Michi
+demütige aber höfliche Frage
+respectful question
+eine Datei öffnen
+open a file
+eingefügt
+pasted
+gespeichert
+saved
+i'm now going to clean up...
+i'm now going to clean up...
+kopiert
+copied
+neu geladen
+reloaded
+neue Datei
+new file
+neues Schema
+new scheme
+nur *.kaba und *.shader-Dateien können übersetzt werden!
+only *.kaba and *.shader files can be compiled!
+nur *.kaba-Dateien können ausgeführt werden!
+only *.kaba files can be executed!
+open message.txt
+open message.txt
+program has crashed, error handler has been called... maybe SegFault... m(-_-)m
+program has crashed, error handler has been called... maybe SegFault... m(-_-)m
+reserviertes Wort
+reserved word
+Shader ist fehler-frei übersetzbar!
+Shader compiles without error!
+Sie haben die Entropie erhöht. Wollen Sie Ihr Werk speichern?
+You increased entropy. Do you wish to save your work?
+String
+String
+Text
+Text
+Texteditor und Kaba-Compiler
+Text editor and kaba compiler
+Trennzeichen
+Separator
+Typ
+Type
+Your comments and the contents of the file message.txt will be sent.
+Your comments and the contents of the file message.txt will be sent.
+Zahl
+Number
+Zeile  %d : %d
+Line  %d : %d
+\"%s\" nicht gefunden
+\"%s\" not found

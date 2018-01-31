@@ -37,6 +37,8 @@ void LoadResourceCommand5(File *f, Resource *c)
 {
 	c->type = f->read_str();
 	c->id = f->read_str();
+	if (c->id == "?")
+		c->id = "rand_id:" + i2s(randi(1000000));
 	c->options = f->read_str().explode(",");
 	c->image = f->read_str();
 	c->enabled = f->read_bool();
@@ -193,17 +195,18 @@ Menu *_create_res_menu_(const string &ns, Resource *res)
 				menu->addItemImage(get_lang(ns, c.id, "", true), c.image, c.id);
 			else
 				menu->addItem(get_lang(ns, c.id, "", true), c.id);
-		}else if (c.type == "ItemImage")
+		}else if (c.type == "ItemImage"){
 			menu->addItemImage(get_lang(ns, c.id, "", true), c.image, c.id);
-		else if (c.type == "ItemCheckable")
+		}else if (c.type == "ItemCheckable"){
 			menu->addItemCheckable(get_lang(ns, c.id, "", true), c.id);
-		else if ((c.type == "ItemSeparator") or (c.type == "Separator"))
+		}else if ((c.type == "ItemSeparator") or (c.type == "Separator")){
 			menu->addSeparator();
-		else if (c.type == "ItemPopup"){
+		}else if ((c.type == "ItemPopup") or (c.type == "Menu")){
 			Menu *sub = _create_res_menu_(ns, &c);
 			menu->addSubMenu(get_lang(ns, c.id, "", true), c.id, sub);
 		}
-		menu->items.back()->enable(c.enabled);
+		if (menu->items.num > 0)
+			menu->items.back()->enable(c.enabled);
 	}
 	return menu;
 }
@@ -312,17 +315,18 @@ void res_parse_new(const string &line, Array<string> &tokens)
 			temp = "";
 		}else if ((temp.num == 0) and ((line[i] == '\"') or (line[i] == '\''))){
 			// string
+			string ss;
 			for (int j=i+1;j<line.num;j++){
 				if (line[j] == '\\'){
-					temp.add(line[j ++]);
-					temp.add(line[j]);
+					ss.add(line[j ++]);
+					ss.add(line[j]);
 				}else if ((line[j] == '\"') or (line[j] == '\'')){
 					i = j;
-					tokens.add(str_unescape(temp));
-					temp = "";
+					tokens.add(str_unescape(ss));
+					//temp += str_unescape(ss);
 					break;
 				}else
-					temp.add(line[j]);
+					ss.add(line[j]);
 			}
 		}else
 			temp.add(line[i]);
@@ -337,6 +341,10 @@ void res_add_option(Resource &c, const string &option)
 		c.image = option.substr(6, -1);
 		return;
 	}
+	if (option.head(8) == "tooltip="){
+		c.tooltip = option.substr(8, -1);
+		return;
+	}
 	if (option == "disabled"){
 		c.enabled = false;
 		return;
@@ -344,7 +352,7 @@ void res_add_option(Resource &c, const string &option)
 	c.options.add(option);
 }
 
-bool res_load_line(string &l, Resource &c)
+bool res_load_line(string &l, Resource &c, bool literally)
 {
 	// parse line
 	Array<string> tokens;
@@ -356,14 +364,17 @@ bool res_load_line(string &l, Resource &c)
 	c.y = 0;
 	c.w = 1;
 	c.h = 1;
+	c.page = -1;
 	c.enabled = true;
 
 	// id
 	string id;
 	if (tokens.num > 1)
 		id = tokens[1];
-	if (id == "?")
-		id = "rand_id_" + i2s(randi(1000000));
+	if ((id == "?") and !literally)
+		id = "rand_id:" + i2s(randi(1000000));
+	if (id.head(1) == "/" and !literally)
+		id = id.substr(1, -1);
 
 	// dummy
 	if (tokens[0] == ".")
@@ -383,6 +394,11 @@ bool res_load_line(string &l, Resource &c)
 	c.title = tokens[2];
 	int n_used = 3;
 	if ((c.type == "Grid") or (c.type == "Dialog")){
+		if (tokens.num < 5){
+			msg_error("missing width/height for " + c.type);
+			tokens.add("1");
+			tokens.add("1");
+		}
 		c.w = tokens[3]._int();
 		c.h = tokens[4]._int();
 		n_used = 5;
@@ -392,10 +408,10 @@ bool res_load_line(string &l, Resource &c)
 	return true;
 }
 
-bool res_load_rec(Array<string> &lines, int &cur_line, Resource &c)
+bool res_load_rec(Array<string> &lines, int &cur_line, Resource &c, bool literally)
 {
 	int cur_indent = res_get_indent(lines[cur_line]);
-	bool r = res_load_line(lines[cur_line], c);
+	bool r = res_load_line(lines[cur_line], c, literally);
 	cur_line ++;
 
 	for (int n=0; n<100; n++){
@@ -405,7 +421,7 @@ bool res_load_rec(Array<string> &lines, int &cur_line, Resource &c)
 		if (indent <= cur_indent)
 			break;
 		Resource child;
-		if (res_load_rec(lines, cur_line, child)){
+		if (res_load_rec(lines, cur_line, child, literally)){
 			if (c.type == "Grid"){
 				if (c.w > 0){
 					child.x = n % c.w;
@@ -432,8 +448,46 @@ void Resource::show(int indent)
 		child.show(indent + 1);
 }
 
-void Resource::load(const string &buffer)
+string Resource::to_string(int indent)
 {
+	string ind;
+	for (int i=0;i<indent;i++)
+		ind += "\t";
+	string nn = ind + type;
+	if (type != "Separator")
+		nn += " " + id + " \"" + str_escape(title) + "\"";
+	if (type == "Dialog" or type == "Grid")
+		nn += format(" %d %d", w, h);
+	for (string &o: options)
+		nn += " " + o;
+	if (image.num > 0)
+		nn += " image=" + image;
+	if (tooltip.num > 0)
+		nn += " \"tooltip=" + str_escape(tooltip) + "\"";
+	if (type == "Grid"){
+		for (int j=0; j<h; j++)
+			for (int i=0; i<w; i++){
+				bool found = false;
+				for (Resource &child: children)
+					if (child.x == i and child.y == j){
+						nn += "\n" + child.to_string(indent + 1);
+						found = true;
+						break;
+					}
+				if (!found)
+					nn += "\n" + ind + "\t.";
+			}
+
+	}else{
+		for (Resource &child: children)
+			nn += "\n" + child.to_string(indent + 1);
+	}
+	return nn;
+}
+
+Resource ParseResource(const string &buffer, bool literally)
+{
+	Resource r;
 	Array<string> lines = buffer.explode("\n");
 	for (int i=lines.num-1; i>=0; i--)
 		if (lines[i].num == 0)
@@ -441,7 +495,8 @@ void Resource::load(const string &buffer)
 	int cur_line = 0;
 
 	//HuiResourceNew c;
-	res_load_rec(lines, cur_line, *this);
+	res_load_rec(lines, cur_line, r, literally);
+	return r;
 }
 
 };

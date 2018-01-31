@@ -1,8 +1,8 @@
 Menu menu ""
 	Menu menu_file "Datei"
-		Item /new "Neu" image=hui:new tooltip="neue Datei"
-		Item /open "Öffnen..." image=hui:open tooltip="eine Datei öffnen"
-		Item /save "Speichern" image=hui:save tooltip="Datei speichern"
+		Item /new "Neu" image=hui:new "tooltip=neue Datei"
+		Item /open "Öffnen..." image=hui:open "tooltip=eine Datei öffnen"
+		Item /save "Speichern" image=hui:save "tooltip=Datei speichern"
 		Item /save_as "Speichern unter..." image=hui:save-as
 		Separator "" ""
 		Item /reload "Aktualisieren" image=hui:refresh

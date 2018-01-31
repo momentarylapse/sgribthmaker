@@ -1,7 +1,7 @@
 Toolbar toolbar ""
-	Item /new "Neu" image=hui:new tooltip="neue Datei"
-	Item /open "Öffnen..." image=hui:open tooltip="eine Datei öffnen"
-	Item /save "Speichern" image=hui:save tooltip="Datei speichern"
+	Item /new "Neu" image=hui:new "tooltip=neue Datei"
+	Item /open "Öffnen..." image=hui:open "tooltip=eine Datei öffnen"
+	Item /save "Speichern" image=hui:save "tooltip=Datei speichern"
 	Separator
 	Item /undo "Rückgängig" image=hui:undo
 	Item /redo "Wiederherstellen" image=hui:redo

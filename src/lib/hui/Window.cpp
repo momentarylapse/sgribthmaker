@@ -77,7 +77,7 @@ Window::Window(const string &id, Window *parent)
 	}
 
 	int mode = WIN_MODE_CONTROLS;
-	if (res->type == "SizableDialog")
+	if ((res->type == "SizableDialog") or (res->type == "Dialog"))
 		mode = WIN_MODE_CONTROLS | WIN_MODE_RESIZABLE;
 	bool allow_parent = false;
 	for (string &o: res->options)
