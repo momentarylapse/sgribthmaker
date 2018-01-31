@@ -459,6 +459,8 @@ string Resource::to_string(int indent)
 		nn += format(" %d %d", w, h);
 	for (string &o: options)
 		nn += " " + o;
+	if (!enabled)
+		nn += " disabled";
 	if (image.num > 0)
 		nn += " image=" + image;
 	if (tooltip.num > 0)

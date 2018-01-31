@@ -43,6 +43,7 @@ ParserKaba::ParserKaba()
 	special_words.add(Kaba::IDENTIFIER_RAISE);
 	special_words.add(Kaba::IDENTIFIER_TRY);
 	special_words.add(Kaba::IDENTIFIER_EXCEPT);
+	special_words.add(Kaba::IDENTIFIER_PASS);
 	special_words.add("as");
 	for (auto &p: Kaba::Packages){
 		for (auto *c: p.script->syntax->classes)
