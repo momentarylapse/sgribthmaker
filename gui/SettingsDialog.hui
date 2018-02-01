@@ -1,29 +1,38 @@
-Dialog settings_dialog "Einstellungen" 340 550
-	Grid ? "" 1 3
+Dialog settings_dialog "Einstellungen" width=340 height=550
+	Grid ? ""
 		Group cdt_font "Font"
-			Grid ? "" 1 2
+			Grid ? ""
 				Button font "" expandx
-				Grid ? "" 2 1
+				---|
+				Grid ? ""
 					Text cdt_tab "Tabbreite"
 					SpinButton tab_width "1\\1\\32" expandx
+		---|
 		Group cdt_highlighting "Syntax Highlighting"
-			Grid ? "" 1 4
-				Grid ? "" 3 1
+			Grid ? ""
+				Grid ? ""
 					ComboBox schemes "" expandx
 					Button copy_scheme "" image=hui:copy
 					Button save_scheme "" image=hui:save
-				Grid ? "" 2 1
+				---|
+				Grid ? ""
 					Text cdt_scheme_bg "Hintergrund"
 					ColorButton scheme_background "" expandx
+				---|
 				ListView context_list "context" nobar select-single
-				Grid ? "" 2 4
+				---|
+				Grid ? ""
 					Text cdt_col_text "Text"
 					ColorButton color_text "" expandx
+					---|
 					CheckBox overwrite_background "Hintergrund"
 					ColorButton color_background ""
+					---|
 					.
 					CheckBox bold "Fett"
+					---|
 					.
 					CheckBox italic "Kursiv"
-		Grid ? "" 1 1 buttonbar
+		---|
+		Grid ? "" buttonbar
 			DefButton /close "Schließen" image=hui:close

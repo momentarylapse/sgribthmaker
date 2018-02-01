@@ -1,6 +1,7 @@
-Dialog command_dialog "Befehl" 550 65
-	Grid ? "" 1 2
+Dialog command_dialog "Befehl" width=550 height=65
+	Grid ? ""
 		Edit command "" expandx
-		Grid ? "" 2 1 buttonbar
+		---|
+		Grid ? "" buttonbar
 			Button /cancel "Abbrechen" image=hui:cancel
 			DefButton /ok "OK" image=hui:ok
