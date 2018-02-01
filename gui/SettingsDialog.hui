@@ -6,7 +6,7 @@ Dialog settings_dialog "Einstellungen" width=340 height=550
 				---|
 				Grid ? ""
 					Text cdt_tab "Tabbreite"
-					SpinButton tab_width "1\\1\\32" expandx
+					SpinButton tab_width "1" range=1:32 expandx
 		---|
 		Group cdt_highlighting "Syntax Highlighting"
 			Grid ? ""

@@ -276,7 +276,7 @@ cdt_tab
 0
 SpinButton
 tab_width
-expandx
+range=1:32,expandx
 1
 0
 0
@@ -580,7 +580,7 @@ settings_dialog/settings_dialog
 Einstellungen
 
 settings_dialog/tab_width
-1\\1\\32
+1
 
 // Num Language Strings
 0
@@ -708,7 +708,7 @@ settings_dialog/settings_dialog
 Settings
 
 settings_dialog/tab_width
-1\\1\\32
+1
 
 // Num Language Strings
 58
