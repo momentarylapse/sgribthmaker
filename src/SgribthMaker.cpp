@@ -17,7 +17,7 @@
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.6.3";
+string AppVersion = "0.4.6.4";
 
 //#define ALLOW_LOGGING			true
 #define ALLOW_LOGGING			false
@@ -143,8 +143,8 @@ void SgribthMaker::New()
 	MainWin->setBorderWidth(0);
 	if (documents.num > 0)
 		MainWin->addString("tab", i2s(documents.num));
-	MainWin->setTarget("tab", documents.num);
-	MainWin->addMultilineEdit("!handlekeys,noframe", 0, 0, 0, 0, id);
+	MainWin->setTarget("tab");
+	MainWin->addMultilineEdit("!handlekeys,noframe", documents.num, 0, id);
 
 	documents.add(new Document(this));
 	SourceView *sv = new SourceView(MainWin, id, documents.back());
@@ -277,7 +277,6 @@ string get_time_str(float t)
 
 void SgribthMaker::CompileKaba()
 {
-	msg_db_f("CompileKaba",1);
 
 	//HuiSetDirectory(SgribthDir);
 	msg_set_verbose(true);
@@ -305,17 +304,15 @@ void SgribthMaker::CompileKaba()
 	//RemoveScript(compile_script);
 	Kaba::DeleteAllScripts(true, true);
 
-	msg_db_m("set verbose...",1);
 	msg_set_verbose(ALLOW_LOGGING);
 }
 
 void SgribthMaker::CompileShader()
 {
 	return;
-	msg_db_f("CompileShader",1);
 
 	hui::Window *w = new hui::Window("nix", -1, -1, 640, 480);
-	w->addDrawingArea("", 0, 0, 0, 0, "nix-area");
+	w->addDrawingArea("!opengl", 0, 0, "nix-area");
 	w->show();
 //	nix::init("OpenGL", w, "nix-area");
 
@@ -328,7 +325,6 @@ void SgribthMaker::CompileShader()
 	}
 	delete(w);
 
-	msg_db_m("set verbose...",1);
 	msg_set_verbose(ALLOW_LOGGING);
 }
 
@@ -356,8 +352,6 @@ void SgribthMaker::CompileAndRun(bool verbose)
 
 	if (!Save(cur_doc))
 		return;
-
-	msg_db_f("CompileAndRun",1);
 
 	hui::SetDirectory(cur_doc->filename.dirname());
 	//if (verbose)
@@ -425,7 +419,6 @@ void SgribthMaker::ShowCurLine()
 
 void SgribthMaker::ExecuteCommand(const string &cmd)
 {
-	msg_db_f("ExecCmd", 1);
 	bool found = cur_doc->source_view->Find(cmd);
 	if (!found)
 		SetMessage(format(_("\"%s\" nicht gefunden"), cmd.c_str()));
@@ -567,19 +560,19 @@ bool SgribthMaker::onStartup(const Array<string> &arg)
 
 	MainWin->setBorderWidth(0);
 	MainWin->setIndent(0);
-	MainWin->addGrid("", 0, 0, 1, 2, "table_main");
-	MainWin->setTarget("table_main", 0);
-	MainWin->addGrid("", 0, 0, 2, 1, "table_doc");
-	MainWin->setTarget("table_doc", 0);
-	MainWin->addTabControl("!nobar", 0, 0, 0, 0, "tab");
-	MainWin->addGrid("!noexpandx,width=180", 1, 0, 1, 2, "table_side");
-	MainWin->setTarget("table_side", 0);
-	MainWin->addGroup("Dokumente", 0, 0, 0, 0, "group_files");
-	MainWin->addExpander("Funktionen", 0, 1, 0, 0, "function_expander");
-	MainWin->setTarget("group_files", 0);
-	MainWin->addListView("!nobar,select-single\\file", 0, 0, 0, 0, "file_list");
-	MainWin->setTarget("function_expander", 0);
-	MainWin->addTreeView("!nobar\\function", 0, 0, 0, 0, "function_list");
+	MainWin->addGrid("", 0, 0, "table_main");
+	MainWin->setTarget("table_main");
+	MainWin->addGrid("", 0, 0, "table_doc");
+	MainWin->setTarget("table_doc");
+	MainWin->addTabControl("!nobar", 0, 0, "tab");
+	MainWin->addGrid("!noexpandx,width=180", 1, 0, "table_side");
+	MainWin->setTarget("table_side");
+	MainWin->addGroup("Dokumente", 0, 0, "group_files");
+	MainWin->addExpander("Funktionen", 0, 1, "function_expander");
+	MainWin->setTarget("group_files");
+	MainWin->addListView("!nobar,select-single\\file", 0, 0, "file_list");
+	MainWin->setTarget("function_expander");
+	MainWin->addTreeView("!nobar\\function", 0, 0, "function_list");
 	MainWin->setBorderWidth(5);
 	MainWin->hideControl("table_side", true);
 
@@ -599,6 +592,8 @@ bool SgribthMaker::onStartup(const Array<string> &arg)
 	MainWin->setMenu(hui::CreateResourceMenu("menu"));
 	MainWin->setMaximized(maximized);
 	MainWin->show();
+
+	hui::RaiseError("test");
 
 	MainWin->eventX("file_list", "hui:select", std::bind(&SgribthMaker::OnFileList, this));
 	MainWin->eventX("function_list", "hui:select", std::bind(&SgribthMaker::OnFunctionList, this));
