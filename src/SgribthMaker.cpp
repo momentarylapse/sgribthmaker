@@ -593,8 +593,6 @@ bool SgribthMaker::onStartup(const Array<string> &arg)
 	MainWin->setMaximized(maximized);
 	MainWin->show();
 
-	hui::RaiseError("test");
-
 	MainWin->eventX("file_list", "hui:select", std::bind(&SgribthMaker::OnFileList, this));
 	MainWin->eventX("function_list", "hui:select", std::bind(&SgribthMaker::OnFunctionList, this));
 
