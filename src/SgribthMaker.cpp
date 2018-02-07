@@ -311,7 +311,7 @@ void SgribthMaker::CompileShader()
 {
 	return;
 
-	hui::Window *w = new hui::Window("nix", -1, -1, 640, 480);
+	hui::Window *w = new hui::Window("nix", 640, 480);
 	w->addDrawingArea("!opengl", 0, 0, "nix-area");
 	w->show();
 //	nix::init("OpenGL", w, "nix-area");
@@ -505,7 +505,7 @@ bool SgribthMaker::onStartup(const Array<string> &arg)
 	int height = hui::Config.getInt("Window.Height", 600);
 	bool maximized = hui::Config.getBool("Window.Maximized", false);
 
-	MainWin = new hui::Window(AppTitle, -1, -1, width, height);
+	MainWin = new hui::Window(AppTitle, width, height);
 
 	MainWin->event("about", std::bind(&SgribthMaker::OnAbout, this));
 	MainWin->event("hui:close", std::bind(&SgribthMaker::OnExit, this));
@@ -581,10 +581,6 @@ bool SgribthMaker::onStartup(const Array<string> &arg)
 	console->show(false);
 
 	MainWin->toolbar[0]->setByID("toolbar");
-
-	MainWin->setTooltip("new", _("neue Datei"));
-	MainWin->setTooltip("open", _("eine Datei &offnen"));
-	MainWin->setTooltip("save", _("Datei speichern"));
 
 	InitParser();
 	HighlightScheme::default_scheme = HighlightScheme::get(hui::Config.getStr("HighlightScheme", "default"));
