@@ -1,33 +1,32 @@
 Menu menu ""
-	Menu menu_file "Datei"
-		Item /new "Neu" image=hui:new "tooltip=neue Datei"
-		Item /open "Öffnen..." image=hui:open "tooltip=eine Datei öffnen"
-		Item /save "Speichern" image=hui:save "tooltip=Datei speichern"
-		Item /save_as "Speichern unter..." image=hui:save-as
-		Separator "" ""
-		Item /reload "Aktualisieren" image=hui:refresh
-		Item /follow "Verfolgen"
-		Separator "" ""
-		Item /exit "Beenden" image=hui:quit
-	Menu menu_edit "Bearbeiten"
-		Item /undo "Rückgängig" image=hui:undo
-		Item /redo "Wiederherstellen" image=hui:redo
-		Separator "" ""
-		Item /cut "Ausschneiden" image=hui:cut
-		Item /copy "Kopieren" image=hui:copy
-		Item /paste "Einfügen" image=hui:paste
-		Separator "" ""
-		Item /find "Suchen..." image=hui:find
-		Item /execute_command "Befehl ausführen..." image=hui:execute
-		Separator "" ""
-		Item /settings "Einstellungen" image=hui:preferences
+	Menu menu_file "File"
+		Item /new "New" image=hui:new "tooltip=new file"
+		Item /open "Open" image=hui:open "tooltip=open a new file"
+		Item /save "Save" image=hui:save "tooltip=save file"
+		Item /save_as "Save as..." image=hui:save-as
+		Separator
+		Item /reload "Reload" image=hui:refresh
+		Item /follow "Follow"
+		Separator
+		Item /exit "Exit" image=hui:quit
+	Menu menu_edit "Edit"
+		Item /undo "Undo" image=hui:undo
+		Item /redo "Redo" image=hui:redo
+		Separator
+		Item /cut "Cut" image=hui:cut
+		Item /copy "Copy" image=hui:copy
+		Item /paste "Paste" image=hui:paste
+		Separator
+		Item /find "Find..." image=hui:find
+		Item /execute_command "Execute command..." image=hui:execute
+		Separator
+		Item /settings "Settings" image=hui:preferences
 	Menu menu_script "Script"
-		Item show_data_type "Datentypen anzeigen" image=hui:find
-		Separator "" ""
-		Item /compile "Übersetzen" image=hui:media-record
-		Item /compile_and_run "Ausführen (schnell)" image=hui:media-play
-		Item /compile_and_run_verbose "Ausführen (debug)" image=hui:media-play
-	Menu menu_help "Hilfe"
-		Item show_script_docu "Script Referenz" image=hui:help
+		Item show_data_type "Show data type" image=hui:find
+		Separator
+		Item /compile "Compile" image=hui:media-record
+		Item /compile_and_run "Execute (fast)" image=hui:media-play
+		Item /compile_and_run_verbose "Execute (debug)" image=hui:media-play
+	Menu menu_help "Help"
+		Item show_script_docu "Script reference" image=hui:help
 		Item /about "Info..." image=hui:about
-

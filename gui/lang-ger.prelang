@@ -1,97 +1,103 @@
 // Language
-English
+Deutsch
 // Num IDs
-40
+50
 // Data (ID,Text,Tooltip)
 /about
 Info...
 
 /cancel
-Cancel
+Abbrechen
 
 /close
-Close
+Schließen
 
 /compile
-Compile
+Übersetzen
 
 /compile_and_run
-Execute (fast)
+Ausführen (schnell)
 
 /compile_and_run_verbose
-Execute (debug)
+Ausführen (debug)
 
 /copy
-Copy
+Kopieren
 
 /cut
-Cut
+Ausschneiden
 
 /execute_command
-Execute command...
+Befehl ausführen...
 
 /exit
-Exit
+Beenden
 
 /find
-Find...
+Suchen...
 
 /follow
-Follow
+Verfolgen
 
 /new
-New
-new file
+Neu
+neue Datei
 /ok
 OK
 
 /open
-Open
-open a new file
+Öffnen...
+eine Datei öffnen
 /paste
-Paste
+Einfügen
 
 /redo
-Redo
+Wiederherstellen
 
 /reload
-Reload
+Aktualisieren
 
 /save
-Save
-save file
+Speichern
+Datei speichern
 /save_as
-Save as...
+Speichern unter...
 
 /settings
-Settings
+Einstellungen
 
 /undo
-Undo
+Rückgängig
+
+command_dialog/command
+
 
 command_dialog/command_dialog
-Command
+Befehl
+
+menu/menu
+
 
 menu/menu_edit
-Edit
+Bearbeiten
 
 menu/menu_file
-File
+Datei
 
 menu/menu_help
-Help
+Hilfe
 
 menu/menu_script
 Script
 
 menu/show_data_type
-Show data type
+Datentypen anzeigen
 
 menu/show_script_docu
-Script reference
+Script Referenz
 
 settings_dialog/bold
-Bold
+Fett
 
 settings_dialog/cdt_col_text
 Text
@@ -100,82 +106,108 @@ settings_dialog/cdt_font
 Font
 
 settings_dialog/cdt_highlighting
-Syntax highlighting
+Syntax Highlighting
 
 settings_dialog/cdt_scheme_bg
-Background
+Hintergrund
 
 settings_dialog/cdt_tab
-Tab size
+Tabbreite
+
+settings_dialog/color_background
+
+
+settings_dialog/color_text
+
 
 settings_dialog/context_list
 context
 
+settings_dialog/copy_scheme
+
+
+settings_dialog/font
+
+
 settings_dialog/italic
-italic
+Kursiv
 
 settings_dialog/overwrite_background
-Background
+Hintergrund
+
+settings_dialog/save_scheme
+
+
+settings_dialog/scheme_background
+
+
+settings_dialog/schemes
+
 
 settings_dialog/settings_dialog
-Settings
+Einstellungen
 
 settings_dialog/tab_width
 1
 
+toolbar/toolbar
+
+
 // Num Language Strings
-58
+56
 // Data (ID,Text)
                   Close dialog box to exit program.
                   Close dialog box to exit program.
- (schreibgeschützt)
  (write protected)
+ (schreibgeschützt)
  has crashed.\t\tThe last lines of the file message.txt:
  has crashed.\t\tThe last lines of the file message.txt:
+\"%s\" not found
+\"%s\" nicht gefunden
 (anonymous)
 (anonymous)
-- Keine Labels -
 - no labels -
+- Keine Labels -
 ...done
 ...done
-Alles (*.*)
 All (*.*)
-Api Funktion
+Alles (*.*)
 Api function
-Api Variable
+Api Funktion
 Api variable
+Api Variable
 Bug Report
 Bug Report
 Cancel
 Cancel
 Comment/what happened:
 Comment/what happened:
-Compilieren: %s         Opcode: %db         Ausführen: %s
 Compiling: %s         opcode: %db         execution: %s
-Datei lässt sich nicht öffnen
+Compilieren: %s         Opcode: %db         Ausführen: %s
 File does not want to be opened
-Datei nicht UTF-8 kompatibel
+Datei lässt sich nicht öffnen
 File is not UTF-8 compatible
-Datei speichern
+Datei nicht UTF-8 kompatibel
 Save file
-Datei öffnen
+Datei speichern
 Open file
+Datei öffnen
 Description
 Description
+Error
 Error
 Error
 Fehler
-Error
-Font wählen
 Select font
+Font wählen
 Just happened somehow...
 Just happened somehow...
-Kommentar Ebene 1
 Comment level 1
-Kommentar Ebene 2
+Kommentar Ebene 1
 Comment level 2
-Kommentar Zeile
+Kommentar Ebene 2
 Comment line
+Kommentar Zeile
 Macro
 Macro
 Messages
@@ -188,57 +220,51 @@ Operator
 Operator
 Program was compiled without network support...
 Program was compiled without network support...
-Script ist fehler-frei übersetzbar!        (in %s)
 Script compilable without errors!         (in %s)
+Script ist fehler-frei übersetzbar!        (in %s)
 Send bug report to Michi
 Send bug report to Michi
-demütige aber höfliche Frage
-respectful question
-eine Datei öffnen
-open a file
-eingefügt
-pasted
-gespeichert
-saved
-i'm now going to clean up...
-i'm now going to clean up...
-kopiert
-copied
-neu geladen
-reloaded
-neue Datei
-new file
-neues Schema
-new scheme
-nur *.kaba und *.shader-Dateien können übersetzt werden!
-only *.kaba and *.shader files can be compiled!
-nur *.kaba-Dateien können ausgeführt werden!
-only *.kaba files can be executed!
-open message.txt
-open message.txt
-program has crashed, error handler has been called... maybe SegFault... m(-_-)m
-program has crashed, error handler has been called... maybe SegFault... m(-_-)m
-reserviertes Wort
-reserved word
-Shader ist fehler-frei übersetzbar!
 Shader compiles without error!
-Sie haben die Entropie erhöht. Wollen Sie Ihr Werk speichern?
+Shader ist fehler-frei übersetzbar!
 You increased entropy. Do you wish to save your work?
+Sie haben die Entropie erhöht. Wollen Sie Ihr Werk speichern?
 String
 String
 Text
 Text
-Texteditor und Kaba-Compiler
 Text editor and kaba compiler
-Trennzeichen
+Texteditor und Kaba-Compiler
 Separator
-Typ
+Trennzeichen
 Type
+Typ
 Your comments and the contents of the file message.txt will be sent.
 Your comments and the contents of the file message.txt will be sent.
-Zahl
 Number
-Zeile  %d : %d
+Zahl
 Line  %d : %d
-\"%s\" nicht gefunden
-\"%s\" not found
+Zeile  %d : %d
+respectful question
+demütige aber höfliche Frage
+pasted
+eingefügt
+saved
+gespeichert
+i'm now going to clean up...
+i'm now going to clean up...
+copied
+kopiert
+reloaded
+neu geladen
+new scheme
+neues Schema
+only *.kaba and *.shader files can be compiled!
+nur *.kaba und *.shader-Dateien können übersetzt werden!
+only *.kaba files can be executed!
+nur *.kaba-Dateien können ausgeführt werden!
+open message.txt
+open message.txt
+program has crashed, error handler has been called... maybe SegFault... m(-_-)m
+program has crashed, error handler has been called... maybe SegFault... m(-_-)m
+reserved word
+reserviertes Wort

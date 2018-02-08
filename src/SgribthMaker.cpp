@@ -109,7 +109,7 @@ bool SgribthMaker::AllowTermination()
 	for (Document *d: documents)
 	if (d->history->changed){
 		SetActiveDocument(d);
-		string answer = QuestionBox(MainWin, _("dem&utige aber h&ofliche Frage"), _("Sie haben die Entropie erh&oht. Wollen Sie Ihr Werk speichern?"), true);
+		string answer = QuestionBox(MainWin, _("respectful question"), _("You increased entropy. Do you wish to save your work?"), true);
 		if (answer == "hui:cancel")
 			return false;
 		if (answer == "hui:yes")
@@ -123,7 +123,7 @@ bool SgribthMaker::AllowDocTermination(Document *d)
 {
 	if (d->history->changed){
 		SetActiveDocument(d);
-		string answer = QuestionBox(MainWin, _("dem&utige aber h&ofliche Frage"), _("Sie haben die Entropie erh&oht. Wollen Sie Ihr Werk speichern?"), true);
+		string answer = QuestionBox(MainWin, _("respectful question"), _("You increased entropy. Do you wish to save your work?"), true);
 		if (answer == "hui:cancel")
 			return false;
 		if (answer == "hui:yes")
@@ -187,20 +187,20 @@ bool SgribthMaker::WriteToFile(Document *doc, const string &filename)
 {
 	bool ok = doc->save(filename);
 	if (ok)
-		SetMessage(_("gespeichert"));
+		SetMessage(_("saved"));
 	return ok;
 }
 
 bool SgribthMaker::Open()
 {
-	if (hui::FileDialogOpen(MainWin, _("Datei &offnen"), cur_doc->filename.dirname(), _("Alles (*.*)"), "*"))
+	if (hui::FileDialogOpen(MainWin, _("Open file"), cur_doc->filename.dirname(), _("All (*.*)"), "*"))
 		return LoadFromFile(hui::Filename);
 	return false;
 }
 
 bool SgribthMaker::SaveAs(Document *doc)
 {
-	if (hui::FileDialogSave(MainWin, _("Datei speichern"), doc->filename.dirname(), _("Alles (*.*)"), "*"))
+	if (hui::FileDialogSave(MainWin, _("Save file"), doc->filename.dirname(), _("All (*.*)"), "*"))
 		return WriteToFile(doc, hui::Filename);
 	return false;
 }
@@ -229,7 +229,7 @@ bool SgribthMaker::Reload()
 	if (cur_doc->filename.num > 0){
 		bool r = cur_doc->load(cur_doc->filename);
 		if (r)
-			SetMessage(_("neu geladen"));
+			SetMessage(_("reloaded"));
 		return r;
 	}
 	return true;
@@ -247,13 +247,13 @@ void SgribthMaker::OnRedo()
 void SgribthMaker::OnCopy()
 {
 	hui::Clipboard::Copy(cur_doc->source_view->GetSelection());
-	SetMessage(_("kopiert"));
+	SetMessage(_("copied"));
 }
 
 void SgribthMaker::OnPaste()
 {
 	cur_doc->source_view->InsertAtCursor(hui::Clipboard::Paste());
-	SetMessage(_("eingef&ugt"));
+	SetMessage(_("pasted"));
 }
 
 void SgribthMaker::OnDelete()
@@ -293,11 +293,11 @@ void SgribthMaker::CompileKaba()
 
 		//compile_script->Show();
 
-		SetMessage(format(_("Script ist fehler-frei &ubersetzbar!        (in %s)"), get_time_str(dt).c_str()));
+		SetMessage(format(_("Script compilable without errors!         (in %s)"), get_time_str(dt).c_str()));
 
 	}catch(const Kaba::Exception &e){
 		e.print();
-		ErrorBox(MainWin, _("Fehler"), e.message);
+		ErrorBox(MainWin, _("Error"), e.message);
 		cur_doc->source_view->MoveCursorTo(e.line, e.column);
 	}
 
@@ -318,9 +318,9 @@ void SgribthMaker::CompileShader()
 
 	nix::Shader *shader = nix::LoadShader(cur_doc->filename);
 	if (!shader){
-		ErrorBox(MainWin, _("Fehler"), nix::shader_error);
+		ErrorBox(MainWin, _("Error"), nix::shader_error);
 	}else{
-		SetMessage(_("Shader ist fehler-frei &ubersetzbar!"));
+		SetMessage(_("Shader compiles without error!"));
 		shader->unref();
 	}
 	delete(w);
@@ -340,13 +340,13 @@ void SgribthMaker::Compile()
 	else if (ext == "shader")
 		CompileShader();
 	else
-		SetMessage(_("nur *.kaba und *.shader-Dateien k&onnen &ubersetzt werden!"));
+		SetMessage(_("only *.kaba and *.shader files can be compiled!"));
 }
 
 void SgribthMaker::CompileAndRun(bool verbose)
 {
 	if (cur_doc->filename.extension() != "kaba"){
-		SetMessage(_("nur *.kaba-Dateien k&onnen ausgef&uhrt werden!"));
+		SetMessage(_("only *.kaba files can be executed!"));
 		return;
 	}
 
@@ -381,7 +381,7 @@ void SgribthMaker::CompileAndRun(bool verbose)
 		//compile_script->ShowVars(false);
 		dt_execute = CompileTimer.get();
 		
-		SetMessage(format(_("Compilieren: %s         Opcode: %db         Ausf&uhren: %s"), get_time_str(dt_compile).c_str(), compile_script->opcode_size, get_time_str(dt_execute).c_str()));
+		SetMessage(format(_("Compiling: %s         opcode: %db         execution: %s"), get_time_str(dt_compile).c_str(), compile_script->opcode_size, get_time_str(dt_execute).c_str()));
 		//if (verbose)
 		//	HuiInfoBox(MainWin,"Speicher",string("nicht freigegebener Speicher des Scriptes: ",i2s(script->MemoryUsed),"b"));}
 
@@ -392,7 +392,7 @@ void SgribthMaker::CompileAndRun(bool verbose)
 
 	}catch(const Kaba::Exception &e){
 		e.print();
-		ErrorBox(MainWin, _("Fehler"), e.message);
+		ErrorBox(MainWin, _("Error"), e.message);
 		cur_doc->source_view->MoveCursorTo(e.line, e.column);
 	}
 	
@@ -414,14 +414,14 @@ void SgribthMaker::ShowCurLine()
 {
 	int line, off;
 	cur_doc->source_view->GetCurLinePos(line, off);
-	SetMessage(format(_("Zeile  %d : %d"), line + 1, off + 1));
+	SetMessage(format(_("Line  %d : %d"), line + 1, off + 1));
 }
 
 void SgribthMaker::ExecuteCommand(const string &cmd)
 {
 	bool found = cur_doc->source_view->Find(cmd);
 	if (!found)
-		SetMessage(format(_("\"%s\" nicht gefunden"), cmd.c_str()));
+		SetMessage(format(_("\"%s\" not found"), cmd.c_str()));
 }
 
 void SgribthMaker::ExecuteCommandDialog()
@@ -482,11 +482,11 @@ void SgribthMaker::OnPreviousDocument()
 }
 
 SgribthMaker::SgribthMaker() :
-	hui::Application("sgribthmaker", "Deutsch", hui::FLAG_LOAD_RESOURCE | hui::FLAG_SILENT)
+	hui::Application("sgribthmaker", "English", hui::FLAG_LOAD_RESOURCE | hui::FLAG_SILENT)
 {
 	setProperty("name", AppTitle);
 	setProperty("version", AppVersion);
-	setProperty("comment", _("Texteditor und Kaba-Compiler"));
+	setProperty("comment", _("Text editor and kaba compiler"));
 	setProperty("website", "http://michi.is-a-geek.org/michisoft");
 	setProperty("copyright", "© 2006-2018 by MichiSoft TM");
 	setProperty("author", "Michael Ankele <michi@lupina.de>");

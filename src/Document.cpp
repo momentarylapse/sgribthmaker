@@ -46,7 +46,7 @@ bool Document::load(const string &_filename)
 	try{
 		string temp = FileReadText(_filename);
 		if (!source_view->Fill(temp))
-			sgribthmaker->SetMessage(_("Datei nicht UTF-8 kompatibel"));
+			sgribthmaker->SetMessage(_("File is not UTF-8 compatible"));
 
 		filename = _filename;
 
@@ -54,7 +54,7 @@ bool Document::load(const string &_filename)
 
 		sgribthmaker->UpdateMenu();
 	}catch(...){
-		sgribthmaker->SetMessage(_("Datei l&asst sich nicht &offnen"));
+		sgribthmaker->SetMessage(_("File does not want to be opened"));
 		return false;
 	}
 	return true;
@@ -66,7 +66,7 @@ bool Document::save(const string &_filename)
 		FileWriteText(_filename, source_view->GetAll());
 		filename = _filename;
 		history->DefineAsSaved();
-		//SetMessage(_("gespeichert"));
+		//SetMessage(_("saved"));
 		//UpdateMenu();
 	}catch(...){
 	}

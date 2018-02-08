@@ -98,7 +98,7 @@ void populate_popup(GtkTextView *text_view, GtkMenu *menu, gpointer user_data)
 	gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), m);
 	gtk_widget_show(m);
 	if (labels.num == 0){
-		m = gtk_menu_item_new_with_label(_("- Keine Labels -").c_str());
+		m = gtk_menu_item_new_with_label(_("- no labels -").c_str());
 		gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), m);
 		gtk_widget_set_sensitive(m, false);
 		gtk_widget_show(m);

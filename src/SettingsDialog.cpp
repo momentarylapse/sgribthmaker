@@ -16,18 +16,18 @@ SettingsDialog::SettingsDialog(SgribthMaker *_sgribthmaker) :
 	setInt("tab_width", hui::Config.getInt("TabWidth", 8));
 	setString("font", hui::Config.getStr("Font", "Monospace 10"));
 	addString("context_list", _("Text"));
-	addString("context_list", _("reserviertes Wort"));
-	addString("context_list", _("Api Funktion"));
-	addString("context_list", _("Api Variable"));
-	addString("context_list", _("Typ"));
-	addString("context_list", _("Kommentar Zeile"));
-	addString("context_list", _("Kommentar Ebene 1"));
-	addString("context_list", _("Kommentar Ebene 2"));
+	addString("context_list", _("reserved word"));
+	addString("context_list", _("Api function"));
+	addString("context_list", _("Api variable"));
+	addString("context_list", _("Type"));
+	addString("context_list", _("Comment line"));
+	addString("context_list", _("Comment level 1"));
+	addString("context_list", _("Comment level 2"));
 	addString("context_list", _("Macro"));
-	addString("context_list", _("Trennzeichen"));
+	addString("context_list", _("Separator"));
 	addString("context_list", _("String"));
 	addString("context_list", _("Operator"));
-	addString("context_list", _("Zahl"));
+	addString("context_list", _("Number"));
 
 	fillSchemeList();
 
@@ -62,7 +62,7 @@ string get_scheme_name(HighlightScheme *s)
 {
 	string n = s->name;
 	if (s->is_default)
-		n += _(" (schreibgesch&utzt)");
+		n += _(" (write protected)");
 	if (s->changed)
 		n += " *";
 	return n;
@@ -81,7 +81,7 @@ void SettingsDialog::fillSchemeList()
 
 void SettingsDialog::onFont()
 {
-	if (hui::SelectFont(this, _("Font w&ahlen"))){
+	if (hui::SelectFont(this, _("Select font"))){
 		setString("font", hui::Fontname);
 		hui::Config.setStr("Font", hui::Fontname);
 		for (SourceView *sv: sgribthmaker->source_view)
@@ -146,7 +146,7 @@ void SettingsDialog::onSchemes()
 
 void SettingsDialog::onCopyScheme()
 {
-	HighlightScheme *s = HighlightScheme::default_scheme->copy(_("neues Schema"));
+	HighlightScheme *s = HighlightScheme::default_scheme->copy(_("new scheme"));
 	for (SourceView *sv: sgribthmaker->source_view)
 		sv->ApplyScheme(s);
 	fillSchemeList();

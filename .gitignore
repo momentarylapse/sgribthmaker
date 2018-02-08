@@ -3,7 +3,7 @@ Release
 Unoptimized
 sgribthmaker
 message.txt
-Data/config.txt
+config.txt
 *.o
 *.a
 *.exe
