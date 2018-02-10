@@ -1,7 +1,7 @@
 // Language
 Deutsch
 // Num IDs
-50
+54
 // Data (ID,Text,Tooltip)
 /about
 Info...
@@ -152,6 +152,18 @@ settings_dialog/tab_width
 
 toolbar/toolbar
 
+
+main-window/file_list
+file
+
+main-window/function_expander
+Funktionen
+
+main-window/function_list
+function
+
+main-window/group_files
+Dokumente
 
 // Num Language Strings
 56

@@ -18,8 +18,6 @@ void insert_text(GtkTextBuffer *textbuffer, GtkTextIter *location, gchar *text, 
 	if (!sv->history->enabled)
 		return;
 
-	msg_db_f("insert_text", 1);
-
 	if ((strcmp(text, "\n") == 0) && (sv->change_return)){
 		g_signal_stop_emission_by_name(textbuffer, "insert-text");
 		sv->change_return = false;
@@ -45,7 +43,6 @@ void delete_range(GtkTextBuffer *textbuffer, GtkTextIter *start, GtkTextIter *en
 	SourceView *sv = (SourceView*)user_data;
 	if (!sv->history->enabled)
 		return;
-	msg_db_f("delete_range", 1);
 	char *text = gtk_text_buffer_get_text(textbuffer, start, end, false);
 	sv->history->Execute(new CommandDelete(text, strlen(text), gtk_text_iter_get_offset(start)));
 	//SetWindowTitle();
@@ -57,7 +54,6 @@ void delete_range(GtkTextBuffer *textbuffer, GtkTextIter *start, GtkTextIter *en
 void move_cursor(GtkTextView *text_view, GtkMovementStep step, gint count, gboolean extend_selection, gpointer user_data)
 {
 	SourceView *sv = (SourceView*)user_data;
-	msg_db_f("move_cursor", 1);
 	if (step == GTK_MOVEMENT_DISPLAY_LINE_ENDS){
 		g_signal_stop_emission_by_name(text_view, "move-cursor");
 		if (count > 0)
@@ -69,21 +65,20 @@ void move_cursor(GtkTextView *text_view, GtkMovementStep step, gint count, gbool
 }
 
 void copy_clipboard(GtkTextView *text_view, gpointer user_data)
-{	msg_db_f("copy_cb", 1);	g_signal_stop_emission_by_name(text_view, "copy-clipboard");	}
+{	g_signal_stop_emission_by_name(text_view, "copy-clipboard");	}
 
 void paste_clipboard(GtkTextView *text_view, gpointer user_data)
-{	msg_db_f("paste_cb", 1);	g_signal_stop_emission_by_name(text_view, "paste-clipboard");	}
+{	g_signal_stop_emission_by_name(text_view, "paste-clipboard");	}
 
 void cut_clipboard(GtkTextView *text_view, gpointer user_data)
-{	msg_db_f("cut_cb", 1);	g_signal_stop_emission_by_name(text_view, "cut-clipboard");	}
+{	g_signal_stop_emission_by_name(text_view, "cut-clipboard");	}
 
 void toggle_cursor_visible(GtkTextView *text_view, gpointer user_data)
-{	msg_db_f("toggle_cursor_visible", 1);	g_signal_stop_emission_by_name(text_view, "toggle-cursor-visible");	}
+{	g_signal_stop_emission_by_name(text_view, "toggle-cursor-visible");	}
 
 gboolean CallbackJumpLine(GtkWidget *widget, gpointer user_data)
 {
 	SourceView::JumpData *j = (SourceView::JumpData*)user_data;
-	msg_db_f("CallbackJumpLine", 1);
 	j->sv->ShowLineOnScreen(j->line);
 	//msg_write((int)(long)data);
 	return FALSE;
@@ -92,7 +87,6 @@ gboolean CallbackJumpLine(GtkWidget *widget, gpointer user_data)
 void populate_popup(GtkTextView *text_view, GtkMenu *menu, gpointer user_data)
 {
 	SourceView *sv = (SourceView*)user_data;
-	msg_db_f("populate_popup", 1);
 	Array<Parser::Label> labels = sv->parser->FindLabels(sv);
 	GtkWidget *m = gtk_separator_menu_item_new();
 	gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), m);
@@ -119,13 +113,11 @@ void populate_popup(GtkTextView *text_view, GtkMenu *menu, gpointer user_data)
 
 void SourceView::CreateTextColors(int first_line, int last_line)
 {
-	msg_db_f("CreateColors", 1);
 	parser->CreateTextColors(this, first_line, last_line);
 }
 
 void SourceView::CreateColorsIfNotBusy()
 {
-	msg_db_f("CreateColorsIfNotBusy", 1);
 	color_busy_level --;
 	if (color_busy_level == 0)
 		CreateTextColors();
@@ -134,7 +126,6 @@ void SourceView::CreateColorsIfNotBusy()
 void changed(GtkTextBuffer *textbuffer, gpointer user_data)
 {
 	SourceView *sv = (SourceView*)user_data;
-	msg_db_f("changed", 1);
 	//printf("change\n");
 	sv->CreateTextColors(sv->NeedsUpdateStart, sv->NeedsUpdateEnd);
 	RunLater(1, std::bind(&SourceView::CreateColorsIfNotBusy, sv));
@@ -212,7 +203,6 @@ void SourceView::Clear()
 
 string convert_to_utf8(string temp)
 {
-	msg_db_f("convert_to_utf8", 1);
 	string utf8;// = new char[strlen(temp)];
 	const char *t = temp.c_str();
 	while(*t){
@@ -346,7 +336,6 @@ void SourceView::MarkWord(int line, int start, int end, int type, char *p0, char
 {
 	if (start == end)
 		return;
-	msg_db_f("MarkWord", 1);
 	if (type == IN_WORD)
 		if ((start == 0) || (p0[-1] != '.'))
 		if ((long)p - (long)p0 < 64){
@@ -365,8 +354,7 @@ void SourceView::MarkWord(int line, int start, int end, int type, char *p0, char
 
 void SourceView::undo_insert_text(int pos, char *text, int length)
 {
-	msg_db_f("undo_insert_text", 1);
-	GtkTextIter start, end;
+	GtkTextIter start;
 	gtk_text_buffer_get_iter_at_offset(tb, &start, pos);
 	gtk_text_buffer_insert(tb, &start, text, length);
 	gtk_text_buffer_place_cursor(tb, &start);
@@ -375,7 +363,6 @@ void SourceView::undo_insert_text(int pos, char *text, int length)
 
 void SourceView::undo_remove_text(int pos, char *text, int length)
 {
-	msg_db_f("undo_remove_text", 1);
 	GtkTextIter start, end;
 	gtk_text_buffer_get_iter_at_offset(tb, &start, pos);
 	gtk_text_buffer_get_iter_at_offset(tb, &end, pos);
@@ -387,7 +374,6 @@ void SourceView::undo_remove_text(int pos, char *text, int length)
 
 void SourceView::JumpToStartOfLine(bool shift)
 {
-	msg_db_f("JumpToStartOfLine", 1);
 	GtkTextMark *mi = gtk_text_buffer_get_insert(tb);
 	GtkTextMark *msb = gtk_text_buffer_get_selection_bound(tb);
 	GtkTextIter ii, isb, i0, i1;
@@ -414,7 +400,6 @@ void SourceView::JumpToStartOfLine(bool shift)
 
 void SourceView::JumpToEndOfLine(bool shift)
 {
-	msg_db_f("JumpToEndOfLine", 1);
 	GtkTextMark *mi = gtk_text_buffer_get_insert(tb);
 	GtkTextMark *msb = gtk_text_buffer_get_selection_bound(tb);
 	GtkTextIter ii, isb;
@@ -435,7 +420,6 @@ void SourceView::JumpToEndOfLine(bool shift)
 
 void SourceView::MoveCursorTo(int line, int pos)
 {
-	msg_db_f("MoveCursorTo", 1);
 	GtkTextIter iter;
 	gtk_text_buffer_get_iter_at_line_index(tb, &iter, line, 0);
 	while (!gtk_text_iter_ends_line(&iter))
@@ -449,7 +433,6 @@ void SourceView::MoveCursorTo(int line, int pos)
 
 void SourceView::ShowLineOnScreen(int line)
 {
-	msg_db_f("ShowLineOnScreen", 1);
 	GtkTextIter it;
 	gtk_text_buffer_get_iter_at_line(tb, &it, line);
 	gtk_text_buffer_place_cursor(tb, &it);
@@ -459,7 +442,6 @@ void SourceView::ShowLineOnScreen(int line)
 
 void SourceView::InsertReturn()
 {
-	msg_db_f("InsertReturn", 1);
 	GtkTextMark *mi = gtk_text_buffer_get_insert(tb);
 	GtkTextIter ii, i0, i1;
 	gtk_text_buffer_get_iter_at_mark(tb, &ii, mi);

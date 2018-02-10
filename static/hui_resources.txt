@@ -1,6 +1,6 @@
 t7
 // Number Of Resources
-4
+5
 // Resource
 Dialog
 command_dialog
@@ -36,6 +36,61 @@ DefButton
 ok
 image=hui:ok
 1
+0
+0
+// Resource
+Window
+main-window
+borderwidth=0
+0
+0
+1
+Grid
+table_main
+
+0
+0
+1
+Grid
+table_doc
+
+0
+0
+2
+TabControl
+tab
+nobar,expandx
+0
+0
+0
+Grid
+table_side
+noexpandx,width=180,vertical,hidden
+1
+0
+2
+Group
+group_files
+
+0
+0
+1
+ListView
+file_list
+nobar,select-single,noindent
+0
+0
+0
+Expander
+function_expander
+
+1
+0
+1
+TreeView
+function_list
+nobar,noindent
+0
 0
 0
 // Resource
@@ -460,7 +515,7 @@ image=hui:media-play
 // Language
 English
 // Number Of IDs
-40
+44
 // Text
 /about
 Info...
@@ -531,6 +586,18 @@ Undo
 command_dialog/command_dialog
 Command
 
+main-window/file_list
+file
+
+main-window/function_expander
+Functions
+
+main-window/function_list
+function
+
+main-window/group_files
+Documents
+
 menu/menu_edit
 Edit
 
@@ -588,7 +655,7 @@ settings_dialog/tab_width
 // Language
 Deutsch
 // Number Of IDs
-40
+44
 // Text
 /about
 Info...
@@ -658,6 +725,18 @@ Rückgängig
 
 command_dialog/command_dialog
 Befehl
+
+main-window/file_list
+file
+
+main-window/function_expander
+Funktionen
+
+main-window/function_list
+function
+
+main-window/group_files
+Dokumente
 
 menu/menu_edit
 Bearbeiten

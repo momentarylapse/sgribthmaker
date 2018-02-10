@@ -108,7 +108,7 @@ public:
 	{
 		addGrid("", 0, 0, "root");
 		setTarget("root");
-		addLabel(Application::getProperty("name") + " " + Application::getProperty("version") + _(" has crashed.\t\tThe last lines of the file message.txt:"), 0, 0, "error_header");
+		addLabel(Application::getProperty("name") + " " + Application::getProperty("version") + _(" has crashed.		The last lines of the file message.txt:"), 0, 0, "error_header");
 		addListView(_("Messages"), 0, 1, "message_list");
 		addGrid("!buttonbar", 0, 2, "buttonbar");
 		setTarget("buttonbar");

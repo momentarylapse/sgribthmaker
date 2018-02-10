@@ -506,6 +506,7 @@ bool SgribthMaker::onStartup(const Array<string> &arg)
 	bool maximized = hui::Config.getBool("Window.Maximized", false);
 
 	MainWin = new hui::Window(AppTitle, width, height);
+	MainWin->fromResource("main-window");
 
 	MainWin->event("about", std::bind(&SgribthMaker::OnAbout, this));
 	MainWin->event("hui:close", std::bind(&SgribthMaker::OnExit, this));
@@ -557,24 +558,6 @@ bool SgribthMaker::onStartup(const Array<string> &arg)
 	MainWin->event("show_cur_line", std::bind(&SgribthMaker::ShowCurLine, this));
 	MainWin->setKeyCode("show_cur_line", hui::KEY_F2);
 
-
-	MainWin->setBorderWidth(0);
-	MainWin->setIndent(0);
-	MainWin->addGrid("", 0, 0, "table_main");
-	MainWin->setTarget("table_main");
-	MainWin->addGrid("", 0, 0, "table_doc");
-	MainWin->setTarget("table_doc");
-	MainWin->addTabControl("!nobar", 0, 0, "tab");
-	MainWin->addGrid("!noexpandx,width=180", 1, 0, "table_side");
-	MainWin->setTarget("table_side");
-	MainWin->addGroup("Dokumente", 0, 0, "group_files");
-	MainWin->addExpander("Funktionen", 0, 1, "function_expander");
-	MainWin->setTarget("group_files");
-	MainWin->addListView("!nobar,select-single\\file", 0, 0, "file_list");
-	MainWin->setTarget("function_expander");
-	MainWin->addTreeView("!nobar\\function", 0, 0, "function_list");
-	MainWin->setBorderWidth(5);
-	MainWin->hideControl("table_side", true);
 
 	console = new Console;
 	MainWin->embed(console, "table_main", 0, 1);
