@@ -139,6 +139,24 @@ SourceView::JumpData::JumpData(SourceView *_sv, int _line)
 	line = _line;
 }
 
+void source_callback(SourceView *v)
+{
+	/*GtkTextIter iter;
+	int line_top = 0;
+	gtk_text_view_get_line_at_y(GTK_TEXT_VIEW(v->tv), &iter, 0, &line_top);
+	printf("%d\n", line_top);*/
+	int x, y;
+	gtk_text_view_buffer_to_window_coords(GTK_TEXT_VIEW(v->tv), GTK_TEXT_WINDOW_WIDGET, 0, 0, &x, &y);
+	//printf("%d  %d\n", x, y);
+	int height = gtk_widget_get_allocated_height(v->tv);
+
+	GtkTextIter iter;//gtk_text_iter_
+	int top;
+	gtk_text_view_get_line_at_y(GTK_TEXT_VIEW(v->line_no_tv), &iter, -y, &top);
+	gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(v->line_no_tv), &iter, 0, 1, 0, 0);
+
+}
+
 SourceView::SourceView(hui::Window *win, const string &_id, Document *d)
 {
 	doc = d;
@@ -146,6 +164,21 @@ SourceView::SourceView(hui::Window *win, const string &_id, Document *d)
 
 	tv = win->_get_control_(id)->widget;
 	tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tv));
+
+	line_no_tv = NULL;
+	line_no_tb = NULL;
+
+	auto cc = win->_get_control_(id + "-lines");
+	if (cc){
+		line_no_tv = cc->widget;
+		line_no_tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(line_no_tv));
+
+
+		string lines;
+		for (int i=0; i<1000; i++)
+			lines += format("%04d\n", i+1);
+		gtk_text_buffer_set_text(line_no_tb, lines.c_str(), -1);
+	}
 
 
 	for (int i=0; i<NUM_TAG_TYPES; i++)
@@ -176,7 +209,10 @@ SourceView::SourceView(hui::Window *win, const string &_id, Document *d)
 	UpdateFont();
 	//g_object_set(tv, "wrap-mode", GTK_WRAP_WORD_CHAR, NULL);
 
-	RunLater(0.05f, std::bind(&SourceView::UpdateTabSize, this));
+	hui::RunLater(0.05f, std::bind(&SourceView::UpdateTabSize, this));
+
+	if (line_no_tv)
+		hui::RunRepeated(1.0f, std::bind(source_callback, this));
 }
 
 SourceView::~SourceView()
@@ -537,6 +573,8 @@ void SourceView::UpdateFont()
 	string font_name = hui::Config.getStr("Font", "Monospace 10");
 	PangoFontDescription *font_desc = pango_font_description_from_string(font_name.c_str());
 	gtk_widget_override_font(tv, font_desc);
+	if (line_no_tv)
+		gtk_widget_override_font(line_no_tv, font_desc);
 	pango_font_description_free(font_desc);
 
 	RunLater(0.010f, std::bind(&SourceView::UpdateTabSize, this));

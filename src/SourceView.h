@@ -62,6 +62,8 @@ public:
 	string id;
 	GtkTextBuffer *tb;
 	GtkWidget *tv;
+	GtkTextBuffer *line_no_tb;
+	GtkWidget *line_no_tv;
 
 	GtkTextTag *tag[NUM_TAG_TYPES];
 

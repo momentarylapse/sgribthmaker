@@ -17,7 +17,7 @@
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.6.4";
+string AppVersion = "0.4.7.0";
 
 //#define ALLOW_LOGGING			true
 #define ALLOW_LOGGING			false
@@ -144,7 +144,13 @@ void SgribthMaker::New()
 	if (documents.num > 0)
 		MainWin->addString("tab", i2s(documents.num));
 	MainWin->setTarget("tab");
-	MainWin->addMultilineEdit("!handlekeys,noframe", documents.num, 0, id);
+	MainWin->addGrid("", documents.num, 0, id + "-grid");
+	MainWin->setTarget(id + "-grid");
+	if (hui::Config.getBool("ShowLineNumbers", false)){
+		MainWin->addMultilineEdit("!noframe,disabled,width=70,noexpandx", 0, 0, id + "-lines");
+		MainWin->enable(id + "-lines", false);
+	}
+	MainWin->addMultilineEdit("!handlekeys,noframe", 1, 0, id);
 
 	documents.add(new Document(this));
 	SourceView *sv = new SourceView(MainWin, id, documents.back());
