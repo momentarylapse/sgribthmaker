@@ -303,7 +303,7 @@ void SgribthMaker::CompileKaba()
 
 	}catch(const Kaba::Exception &e){
 		e.print();
-		ErrorBox(MainWin, _("Error"), e.message);
+		ErrorBox(MainWin, _("Error"), e.message());
 		cur_doc->source_view->MoveCursorTo(e.line, e.column);
 	}
 
@@ -398,7 +398,7 @@ void SgribthMaker::CompileAndRun(bool verbose)
 
 	}catch(const Kaba::Exception &e){
 		e.print();
-		ErrorBox(MainWin, _("Error"), e.message);
+		ErrorBox(MainWin, _("Error"), e.message());
 		cur_doc->source_view->MoveCursorTo(e.line, e.column);
 	}
 	
