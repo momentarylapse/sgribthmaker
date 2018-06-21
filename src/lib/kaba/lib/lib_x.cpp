@@ -712,11 +712,13 @@ void SIAddPackageX()
 		class_add_element("output",			TypeTextureP,	GetDACamera(output));
 		class_add_element("input",			TypeTextureP,	GetDACamera(input));
 		class_add_element("shader",			TypeShaderP,	GetDACamera(shader));
+		class_add_element("override_shader",			TypeShaderP,	GetDACamera(override_shader));
 		class_add_element("shaded_displays",TypeBool,		GetDACamera(shaded_displays));
 		class_add_element("pos",			TypeVector,		GetDACamera(pos));
 		class_add_element("ang",			TypeQuaternion,	GetDACamera(ang));
 		class_add_element("vel",			TypeVector,		GetDACamera(vel));
 		class_add_element("rot",			TypeVector,		GetDACamera(rot));
+		class_add_element("m_all",			TypeMatrix,		GetDACamera(m_all));
 		class_add_element("zoom",			TypeFloat32,		GetDACamera(zoom));
 		class_add_element("scale_x",		TypeFloat32,		GetDACamera(scale_x));
 		class_add_element("dest",			TypeRect,		GetDACamera(dest));
