@@ -141,8 +141,7 @@ void SgribthMaker::New()
 	string id = format("edit-%06d", randi(1000000));
 
 	MainWin->setBorderWidth(0);
-	if (documents.num > 0)
-		MainWin->addString("tab", i2s(documents.num));
+	MainWin->addString("tab", i2s(documents.num));
 	MainWin->setTarget("tab");
 	MainWin->addGrid("", documents.num, 0, id + "-grid");
 	MainWin->setTarget(id + "-grid");
