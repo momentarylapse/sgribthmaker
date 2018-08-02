@@ -56,6 +56,8 @@ public:
 	void CompileShader();
 	void Compile();
 	void CompileAndRun(bool verbose);
+	void OnAutoComplete();
+	void OnInsertAutoComplete(int n);
 	void OnCompileAndRunVerbose();
 	void OnCompileAndRunSilent();
 	void ShowCurLine();

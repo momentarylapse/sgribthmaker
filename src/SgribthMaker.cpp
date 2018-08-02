@@ -12,6 +12,7 @@
 #include "SourceView.h"
 #include "Parser/BaseParser.h"
 #include "Document.h"
+#include "AutoComplete.h"
 #include "lib/kaba/kaba.h"
 
 
@@ -415,6 +416,43 @@ void SgribthMaker::OnCompileAndRunSilent()
 {	CompileAndRun(false);	}
 
 
+static AutoComplete::Data _auto_complete_data_;
+
+void SgribthMaker::OnInsertAutoComplete(int n)
+{
+	printf("insert %d\n", n);
+	printf("%s\n", hui::GetEvent()->id.c_str());
+	if ((n >= 0) and (n < _auto_complete_data_.suggestions.num))
+		cur_doc->source_view->InsertAtCursor(_auto_complete_data_.suggestions[n].substr(_auto_complete_data_.offset, -1));
+
+}
+
+void SgribthMaker::OnAutoComplete()
+{
+	if (cur_doc->filename.extension() != "kaba"){
+		SetMessage(_("auto-completion only available for *.kaba files!"));
+		return;
+	}
+
+	int line, pos;
+	cur_doc->source_view->GetCurLinePos(line, pos);
+	auto data = AutoComplete::run(cur_doc->source_view->GetAll(), line, pos);
+	_auto_complete_data_ = data;
+
+	if (data.suggestions.num == 1){
+		cur_doc->source_view->InsertAtCursor(data.suggestions[0].substr(data.offset, -1));
+
+	}else if (data.suggestions.num > 1){
+		auto *m = new hui::Menu;
+		foreachi (string &s, data.suggestions, i)
+			m->add(s, "auto-complete-" + i2s(i));
+		m->open_popup(MainWin);
+	}else{
+		SetMessage(_("????"));
+	}
+}
+
+
 void SgribthMaker::ShowCurLine()
 {
 	int line, off;
@@ -553,6 +591,8 @@ bool SgribthMaker::onStartup(const Array<string> &arg)
 	MainWin->setKeyCode("compile_and_run_verbose", hui::KEY_F6 + hui::KEY_CONTROL);
 	MainWin->event("compile_and_run", std::bind(&SgribthMaker::OnCompileAndRunSilent, this));
 	MainWin->setKeyCode("compile_and_run", hui::KEY_F6);
+	MainWin->event("auto-complete", std::bind(&SgribthMaker::OnAutoComplete, this));
+	MainWin->setKeyCode("auto-complete", hui::KEY_CONTROL + hui::KEY_SPACE);
 	MainWin->event("settings", std::bind(&SgribthMaker::ExecuteSettingsDialog, this));
 	//MainWin->event("script_help", "hui:help", hui::KEY_F1 + hui::KEY_SHIFT);
 	MainWin->event("next_document", std::bind(&SgribthMaker::OnNextDocument, this));
@@ -562,6 +602,9 @@ bool SgribthMaker::onStartup(const Array<string> &arg)
 
 	MainWin->event("show_cur_line", std::bind(&SgribthMaker::ShowCurLine, this));
 	MainWin->setKeyCode("show_cur_line", hui::KEY_F2);
+
+	for (int i=0; i<100; i++)
+		MainWin->event("auto-complete-" + i2s(i), [this,i]{ OnInsertAutoComplete(i); });
 
 
 	console = new Console;

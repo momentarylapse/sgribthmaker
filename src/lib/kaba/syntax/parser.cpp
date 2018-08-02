@@ -2075,11 +2075,9 @@ void SyntaxTree::ParseAllClassNames()
 
 void SyntaxTree::ParseAllFunctionBodies()
 {
-	for (int i=0;i<functions.num;i++){
-		Function *f = functions[i];
+	for (auto *f: functions)
 		if ((!f->is_extern) and (f->_logical_line_no >= 0))
 			ParseFunctionBody(f);
-	}
 }
 
 // convert text into script data
