@@ -15,10 +15,17 @@ class AutoComplete
 public:
 	//AutoComplete();
 
+	struct Item
+	{
+		string name, context;
+	};
+
 	struct Data
 	{
-		Array<string> suggestions;
+		Array<Item> suggestions;
 		int offset;
+		void add(const string &name, const string &context);
+		void append(const Data &d);
 	};
 
 	static Data run(const string &code, int line, int pos);

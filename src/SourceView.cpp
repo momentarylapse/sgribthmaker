@@ -349,6 +349,8 @@ int SourceView::GetNumLines()
 
 void SourceView::InsertAtCursor(const string &text)
 {
+	if (text == "")
+		return;
 	gtk_text_buffer_insert_at_cursor(tb, (const gchar*)text.data, text.num);
 	gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb));
 }

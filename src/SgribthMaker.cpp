@@ -18,7 +18,7 @@
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.8.0";
+string AppVersion = "0.4.8.1";
 
 //#define ALLOW_LOGGING			true
 #define ALLOW_LOGGING			false
@@ -421,7 +421,7 @@ static AutoComplete::Data _auto_complete_data_;
 void SgribthMaker::OnInsertAutoComplete(int n)
 {
 	if ((n >= 0) and (n < _auto_complete_data_.suggestions.num))
-		cur_doc->source_view->InsertAtCursor(_auto_complete_data_.suggestions[n].substr(_auto_complete_data_.offset, -1));
+		cur_doc->source_view->InsertAtCursor(_auto_complete_data_.suggestions[n].name.substr(_auto_complete_data_.offset, -1));
 
 }
 
@@ -440,12 +440,13 @@ void SgribthMaker::OnAutoComplete()
 	_auto_complete_data_ = data;
 
 	if (data.suggestions.num == 1){
-		cur_doc->source_view->InsertAtCursor(data.suggestions[0].substr(data.offset, -1));
+		cur_doc->source_view->InsertAtCursor(data.suggestions[0].name.substr(data.offset, -1));
+		SetMessage(data.suggestions[0].context);
 
 	}else if (data.suggestions.num > 1){
 		auto *m = new hui::Menu;
-		foreachi (string &s, data.suggestions, i)
-			m->add(s, "auto-complete-" + i2s(i));
+		foreachi (auto &s, data.suggestions, i)
+			m->add(s.name, "auto-complete-" + i2s(i));
 		m->open_popup(MainWin);
 	}else{
 		SetMessage(_("????"));
