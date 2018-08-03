@@ -11,10 +11,6 @@
 
 namespace Kaba
 {
-	extern bool next_extern;
-	extern bool next_const;
-
-
 
 void _ParseFunctionBody(SyntaxTree *syntax, Function *f)
 {
@@ -31,13 +27,33 @@ void _ParseFunctionBody(SyntaxTree *syntax, Function *f)
 	}
 }
 
+Array<string> find_top_level_from_class(Class *t, const string &yyy)
+{
+	if (t->is_pointer)
+		t = t->parent;
+	Array<string> suggestions;
+	for (auto &e: t->elements)
+		if (e.name.head(yyy.num) == yyy)
+			suggestions.add(e.name);
+	for (auto &f: t->functions)
+		if (f.name.head(yyy.num) == yyy)
+			suggestions.add(f.name);
+	return suggestions;
+}
+
 Array<string> find_top_level(SyntaxTree *syntax, Function *f, const string &yyy)
 {
 	Array<string> suggestions;
+	Array<string> expressions = {"class", "extends", "while", "virtual", "extern", "override", "enum", "and", "or", "while", "for", "if", "else", "const", "new", "delete", "break", "continue", "return"};
+	for (string &e: expressions)
+		if (yyy == e.head(yyy.num))
+			suggestions.add(e);
 	if (f){
 		for (auto &v: f->var)
 			if (yyy == v.name.head(yyy.num))
 				suggestions.add(v.name);
+		if (f->_class)
+			suggestions.append(find_top_level_from_class(f->_class, yyy));
 	}
 	for (auto &v: syntax->root_of_all_evil.var)
 		if (yyy == v.name.head(yyy.num))
@@ -48,6 +64,9 @@ Array<string> find_top_level(SyntaxTree *syntax, Function *f, const string &yyy)
 				if (yyy == f->name.head(yyy.num))
 					suggestions.add(f->name);
 	}
+	for (auto *c: syntax->constants)
+		if (yyy == c->name.head(yyy.num))
+			suggestions.add(c->name);
 	for (auto *t: syntax->classes)
 		if (t->name.find("[") < 0 and t->name.find("*") < 0)
 		if (yyy == t->name.head(yyy.num))
@@ -61,6 +80,9 @@ Array<string> find_top_level(SyntaxTree *syntax, Function *f, const string &yyy)
 			if (t->name.find("[") < 0 and t->name.find("*") < 0)
 			if (yyy == t->name.head(yyy.num))
 				suggestions.add(t->name);
+		for (auto *c: i->syntax->constants)
+			if (yyy == c->name.head(yyy.num))
+				suggestions.add(c->name);
 	}
 	return suggestions;
 }
@@ -74,6 +96,8 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 		xx = cur_line.replace(o, " ");
 	xx = xx.explode(" ").back();
 	//printf("-->>>>>  %s\n", xx.c_str());
+	if (xx.num == 0)
+		return data;
 	auto yy = xx.explode(".");
 	//printf("yy=%s\n", sa2s(yy).c_str());
 	data.offset = yy.back().num;
@@ -91,8 +115,10 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 		Array<Class*> types;
 		auto nodes = syntax->GetExistence(yy[0], syntax->blocks.back());
 		//printf("res: %d\n", nodes.num);
-		for (auto &n: nodes)
+		for (auto &n: nodes){
+		//	printf("%s\n", n.type->name.c_str());
 			types.add(n.type);
+		}
 
 		// middle layers
 		for (int i=1; i<yy.num-1; i++){
@@ -111,12 +137,7 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 		// top layer
 		string yyy = yy.back();
 		for (auto *t: types){
-				for (auto &e: t->elements)
-					if (e.name.head(yyy.num) == yyy)
-						data.suggestions.add(e.name);
-				for (auto &f: t->functions)
-					if (f.name.head(yyy.num) == yyy)
-						data.suggestions.add(f.name);
+			data.suggestions.append(find_top_level_from_class(t, yyy));
 		}
 	}
 

@@ -432,6 +432,8 @@ void SgribthMaker::OnAutoComplete()
 		return;
 	}
 
+	hui::SetDirectory(cur_doc->filename.dirname());
+
 	int line, pos;
 	cur_doc->source_view->GetCurLinePos(line, pos);
 	auto data = AutoComplete::run(cur_doc->source_view->GetAll(), line, pos);
