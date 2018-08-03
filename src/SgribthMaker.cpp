@@ -18,7 +18,7 @@
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.7.0";
+string AppVersion = "0.4.8.0";
 
 //#define ALLOW_LOGGING			true
 #define ALLOW_LOGGING			false
@@ -420,8 +420,6 @@ static AutoComplete::Data _auto_complete_data_;
 
 void SgribthMaker::OnInsertAutoComplete(int n)
 {
-	printf("insert %d\n", n);
-	printf("%s\n", hui::GetEvent()->id.c_str());
 	if ((n >= 0) and (n < _auto_complete_data_.suggestions.num))
 		cur_doc->source_view->InsertAtCursor(_auto_complete_data_.suggestions[n].substr(_auto_complete_data_.offset, -1));
 

@@ -225,6 +225,7 @@ public:
 	
 	// syntax parsing
 	void Parser();
+	void ParseTopLevel();
 	void ParseAllClassNames();
 	void ParseAllFunctionBodies();
 	void ParseImport();
@@ -370,7 +371,7 @@ public:
 };
 
 string Kind2Str(int kind);
-string LinkNr2Str(SyntaxTree *s, int kind, int64 nr);
+string LinkNr2Str(SyntaxTree *s, Function *f, int kind, int64 nr);
 
 
 

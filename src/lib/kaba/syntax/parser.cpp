@@ -2080,8 +2080,7 @@ void SyntaxTree::ParseAllFunctionBodies()
 			ParseFunctionBody(f);
 }
 
-// convert text into script data
-void SyntaxTree::Parser()
+void SyntaxTree::ParseTopLevel()
 {
 	root_of_all_evil.name = "RootOfAllEvil";
 	cur_func = nullptr;
@@ -2142,6 +2141,12 @@ void SyntaxTree::Parser()
 		if (!Exp.end_of_file())
 			Exp.next_line();
 	}
+}
+
+// convert text into script data
+void SyntaxTree::Parser()
+{
+	ParseTopLevel();
 
 	ParseAllFunctionBodies();
 

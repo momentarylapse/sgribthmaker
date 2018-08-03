@@ -14,69 +14,6 @@ namespace Kaba
 	extern bool next_extern;
 	extern bool next_const;
 
-void _Parser_shallow(Kaba::SyntaxTree *syntax)
-{
-	syntax->root_of_all_evil.name = "RootOfAllEvil";
-	syntax->cur_func = nullptr;
-
-	// syntax analysis
-
-	syntax->ParseAllClassNames();
-
-	syntax->Exp.reset_parser();
-
-	// global definitions (enum, class, variables and functions)
-	while (!syntax->Exp.end_of_file()){
-		next_extern = false;
-		next_const = false;
-
-		// extern?
-		if (syntax->Exp.cur == IDENTIFIER_EXTERN){
-			next_extern = true;
-			syntax->Exp.next();
-		}
-
-		// const?
-		if (syntax->Exp.cur == IDENTIFIER_CONST){
-			next_const = true;
-			syntax->Exp.next();
-		}
-
-
-		/*if ((Exp.cur == "import") or (Exp.cur == "use")){
-			ParseImport();
-
-		// enum
-		}else*/ if (syntax->Exp.cur == IDENTIFIER_ENUM){
-			syntax->ParseEnum();
-
-		// class
-		}else if (syntax->Exp.cur == IDENTIFIER_CLASS){
-			syntax->ParseClass();
-
-		}else{
-
-			// type of definition
-			bool is_function = false;
-			for (int j=1;j<syntax->Exp.cur_line->exp.num-1;j++)
-				if (syntax->Exp.cur_line->exp[j].name == "(")
-				    is_function = true;
-
-			// function?
-			if (is_function){
-				syntax->ParseFunctionHeader(nullptr, next_extern);
-				syntax->SkipParsingFunctionBody();
-
-			// global variables
-			}else{
-				syntax->ParseVariableDef(false, syntax->root_of_all_evil.block);
-			}
-		}
-		if (!syntax->Exp.end_of_file())
-			syntax->Exp.next_line();
-	}
-}
-
 
 
 void _ParseFunctionBody(SyntaxTree *syntax, Function *f)
@@ -129,11 +66,49 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 	xx = xx.explode(" ").back();
 	//printf("-->>>>>  %s\n", xx.c_str());
 	auto yy = xx.explode(".");
+	//printf("yy=%s\n", sa2s(yy).c_str());
 	data.offset = yy.back().num;
 	if (yy.num == 1){
 		data.suggestions = find_top_level(syntax, f, yy[0]);
 	}else{
+		if (!f)
+			f = &syntax->root_of_all_evil;
 
+		//printf("first:  %s\n", yy[0].c_str());
+		if (syntax->blocks.num == 0)
+			return data;
+
+		// base layer
+		Array<Class*> types;
+		auto nodes = syntax->GetExistence(yy[0], syntax->blocks.back());
+		//printf("res: %d\n", nodes.num);
+		for (auto &n: nodes)
+			types.add(n.type);
+
+		// middle layers
+		for (int i=1; i<yy.num-1; i++){
+			Array<Class*> types2;
+			for (Class *t: types){
+				for (auto &e: t->elements)
+					if (e.name == yy[i])
+						types2.add(e.type);
+				for (auto &f: t->functions)
+					if (f.name == yy[i])
+						types2.add(f.return_type);
+			}
+			types = types2;
+		}
+
+		// top layer
+		string yyy = yy.back();
+		for (auto *t: types){
+				for (auto &e: t->elements)
+					if (e.name.head(yyy.num) == yyy)
+						data.suggestions.add(e.name);
+				for (auto &f: t->functions)
+					if (f.name.head(yyy.num) == yyy)
+						data.suggestions.add(f.name);
+		}
 	}
 
 	return data;
@@ -167,7 +142,7 @@ AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos)
 		s->syntax->PreCompiler(true);
 
 		//printf("--c\n");
-		_Parser_shallow(s->syntax);
+		s->syntax->ParseTopLevel();
 
 		//printf("--d\n");
 		Kaba::Function *ff = NULL;
@@ -192,5 +167,10 @@ AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos)
 	}
 	//delete(s);
 	Kaba::DeleteAllScripts(true, true);
+
+	for (int i=0; i<data.suggestions.num; i++)
+		for (int j=i+1; j<data.suggestions.num; j++)
+			if (data.suggestions[j] < data.suggestions[i])
+				data.suggestions.swap(i, j);
 	return data;
 }
