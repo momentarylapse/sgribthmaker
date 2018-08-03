@@ -90,10 +90,10 @@ Array<string> find_top_level(SyntaxTree *syntax, Function *f, const string &yyy)
 AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &cur_line)
 {
 	AutoComplete::Data data;
-	Array<string> ops = {"+", "-", "*", "/", "=", "/=", "*=", "+=", "(", ")", ",", "\t"};
+	Array<string> ops = {"+", "-", "*", "/", "=", "/=", "*=", "+=", "&", "%", "and", "or", "!", "(", ")", ",", "\t"};
 	string xx = cur_line;
 	for (string &o: ops)
-		xx = cur_line.replace(o, " ");
+		xx = xx.replace(o, " ");
 	xx = xx.explode(" ").back();
 	//printf("-->>>>>  %s\n", xx.c_str());
 	if (xx.num == 0)

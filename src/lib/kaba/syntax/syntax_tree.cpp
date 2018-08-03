@@ -291,7 +291,7 @@ void SyntaxTree::ParseBuffer(const string &buffer, bool just_analyse)
 	Parser();
 
 	Exp.clear();
-	
+
 	if (config.verbose)
 		Show();
 
@@ -705,6 +705,16 @@ Array<Node> SyntaxTree::GetExistenceShared(const string &name)
 			link.type = v.type;
 			link.link_no = i;
 			link.kind = KIND_VAR_GLOBAL;
+			links.add(link);
+			return links;
+		}
+
+	// named constants
+	foreachi(Constant *c, constants, i)
+		if (name == c->name){
+			link.type = c->type;
+			link.link_no = i;
+			link.kind = KIND_CONSTANT;
 			links.add(link);
 			return links;
 		}
