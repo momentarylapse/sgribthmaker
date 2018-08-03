@@ -48,11 +48,20 @@ Array<string> find_top_level(SyntaxTree *syntax, Function *f, const string &yyy)
 				if (yyy == f->name.head(yyy.num))
 					suggestions.add(f->name);
 	}
-	for (auto *i: syntax->includes)
+	for (auto *t: syntax->classes)
+		if (t->name.find("[") < 0 and t->name.find("*") < 0)
+		if (yyy == t->name.head(yyy.num))
+			suggestions.add(t->name);
+	for (auto *i: syntax->includes){
 		for (auto *f: i->syntax->functions)
 			if (f->name.find(".") < 0)
 				if (yyy == f->name.head(yyy.num))
 					suggestions.add(f->name);
+		for (auto *t: i->syntax->classes)
+			if (t->name.find("[") < 0 and t->name.find("*") < 0)
+			if (yyy == t->name.head(yyy.num))
+				suggestions.add(t->name);
+	}
 	return suggestions;
 }
 
@@ -169,8 +178,12 @@ AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos)
 	Kaba::DeleteAllScripts(true, true);
 
 	for (int i=0; i<data.suggestions.num; i++)
-		for (int j=i+1; j<data.suggestions.num; j++)
-			if (data.suggestions[j] < data.suggestions[i])
+		for (int j=i+1; j<data.suggestions.num; j++){
+			if (data.suggestions[j] == data.suggestions[i]){
+				data.suggestions.erase(j);
+				j --;
+			}else if (data.suggestions[j] < data.suggestions[i])
 				data.suggestions.swap(i, j);
+		}
 	return data;
 }
