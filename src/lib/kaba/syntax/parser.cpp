@@ -1806,10 +1806,15 @@ void SyntaxTree::ParseGlobalConst(const string &name, Class *type)
 
 	if ((cv->kind != KIND_CONSTANT) or (cv->type != type))
 		DoError(format("only constants of type \"%s\" allowed as value for this constant", type->name.c_str()));
+	Constant *c_orig = cv->as_const();
+
+	int nc = AddConstant(type);
+	Constant *c = constants[nc];
+	c->set(*c_orig);
+	c->name = name;
 
 	// give our const the name
-	Constant *c = constants[cv->link_no];
-	c->name = name;
+	//c_orig->name = name;
 }
 
 void SyntaxTree::ParseVariableDef(bool single, Block *block)
