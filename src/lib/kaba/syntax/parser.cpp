@@ -200,16 +200,18 @@ Node *SyntaxTree::GetOperandExtensionArray(Node *Operand, Block *block)
 	Exp.next();
 
 	// subarray() ?
-	ClassFunction *cf = Operand->type->get_func("subarray", Operand->type, 2, index->type);
-	if (cf){
-		Node *f = add_node_classfunc(cf, ref_node(Operand));
-		f->set_param(0, index);
-		f->set_param(1, index2);
-		return f;
+	if (index2){
+		auto *cf = Operand->type->get_func("subarray", Operand->type, 2, index->type);
+		if (cf){
+			Node *f = add_node_classfunc(cf, ref_node(Operand));
+			f->set_param(0, index);
+			f->set_param(1, index2);
+			return f;
+		}
 	}
 
 	// __get__() ?
-	cf = Operand->type->get_get(index->type);
+	auto *cf = Operand->type->get_get(index->type);
 	if (cf){
 		Node *f = add_node_classfunc(cf, ref_node(Operand));
 		f->set_param(0, index);
@@ -1518,7 +1520,7 @@ void SyntaxTree::ParseImport()
 	string name = Exp.cur;
 	if (name.find(".kaba") >= 0){
 
-		string filename = script->filename.dirname() + name.substr(1, name.num - 2); // remove "
+		string filename = script->filename.dirname() + name.substr(1, name.num - 2); // remove ""
 		filename = filename.no_recursion();
 
 
