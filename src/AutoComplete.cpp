@@ -123,6 +123,13 @@ Block* guess_block(SyntaxTree *syntax, Function *f)
 	//syntax->blocks.back()
 }
 
+Kaba::Class *simplify_type(Kaba::Class *c)
+{
+	if (c->is_pointer)
+		return c->parent;
+	return c;
+}
+
 AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &cur_line)
 {
 	AutoComplete::Data data;
@@ -152,8 +159,8 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 		auto nodes = syntax->GetExistence(yy[0], guess_block(syntax, f));
 		//printf("res: %d\n", nodes.num);
 		for (auto &n: nodes){
-		//	printf("%s\n", n.type->name.c_str());
-			types.add(n.type);
+			//printf("%s\n", n.type->name.c_str());
+			types.add(simplify_type(n.type));
 		}
 
 		// middle layers
@@ -162,10 +169,10 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 			for (Class *t: types){
 				for (auto &e: t->elements)
 					if (e.name == yy[i])
-						types2.add(e.type);
+						types2.add(simplify_type(e.type));
 				for (auto &f: t->functions)
 					if (f.name == yy[i])
-						types2.add(f.return_type);
+						types2.add(simplify_type(f.return_type));
 			}
 			types = types2;
 		}
@@ -173,7 +180,7 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 		// top layer
 		string yyy = yy.back();
 		for (auto *t: types){
-			printf("type %s\n", t->name.c_str());
+			//printf("type %s\n", t->name.c_str());
 			data.append(find_top_level_from_class(t, yyy));
 		}
 	}
@@ -189,15 +196,18 @@ AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos)
 {
 	auto *s = new Kaba::Script;
 	auto ll = _code.explode("\n");
-	auto ll2 = ll.sub(0, line);//+1);
+	auto lines_pre = ll.sub(0, line);//+1);
+	auto lines_post = ll.sub(line+1, -1);
 
 	string cur_line = ll[line].substr(0, pos);
 	//ll2.back() = ll2.back().substr(0, pos);
-	string code = implode(ll2, "\n");
+	string code = implode(lines_pre, "\n") + "\n" + implode(lines_post, "\n");
 	//printf("%s\n", code.c_str());
 	//printf("---->>  %s\n", cur_line.c_str());
 	s->just_analyse = true;
 	Data data;
+	Kaba::Function *ff = nullptr;
+
 	try{
 		//s->syntax->ParseBuffer(code, true);
 
@@ -212,7 +222,6 @@ AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos)
 		s->syntax->ParseTopLevel();
 
 		//printf("--d\n");
-		Kaba::Function *ff = NULL;
 		for (auto *f: s->syntax->functions){
 			if ((!f->is_extern) and (f->_logical_line_no >= 0) and (f->_logical_line_no < line))
 				ff = f;
@@ -230,7 +239,7 @@ AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos)
 		printf("err: %s\n", e.message().c_str());
 		//if (e.line)
 		//throw e;
-		data = simple_parse(s->syntax, NULL, cur_line);
+		data = simple_parse(s->syntax, ff, cur_line);
 	}
 	//delete(s);
 	Kaba::DeleteAllScripts(true, true);
