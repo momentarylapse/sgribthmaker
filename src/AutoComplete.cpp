@@ -45,7 +45,7 @@ void _ParseFunctionBody(SyntaxTree *syntax, Function *f)
 
 AutoComplete::Data find_top_level_from_class(Class *t, const string &yyy)
 {
-	if (t->is_pointer)
+	if (t->is_pointer())
 		t = t->parent;
 	AutoComplete::Data suggestions;
 	for (auto &e: t->elements)
@@ -125,7 +125,7 @@ Block* guess_block(SyntaxTree *syntax, Function *f)
 
 Kaba::Class *simplify_type(Kaba::Class *c)
 {
-	if (c->is_pointer)
+	if (c->is_pointer())
 		return c->parent;
 	return c;
 }

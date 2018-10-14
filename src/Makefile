@@ -1,8 +1,8 @@
 BIN = ../sgribthmaker
 CPP = g++
-GLOBALFLAGS = -O2 -g -std=c++14 -DHAS_LIB_GTK3=1 -DHAS_LIB_ZLIB=1 -DHAS_LIB_GL=1 -DHAS_LIB_XLIB=1 -DHAS_LIB_UNWIND=1
+GLOBALFLAGS = -O2 -g -std=c++14 -DHAS_LIB_GTK3=1 -DHAS_LIB_ZLIB=1 -DHAS_LIB_GL=1 -DHAS_LIB_XLIB=1 -DHAS_LIB_UNWIND=1 -DHAS_LIB_DL=1
 CXXFLAGS =  `pkg-config --cflags gtk+-3.0` $(GLOBALFLAGS)
-CXXFLAGSLINKING =  `pkg-config --cflags --libs gtk+-3.0` -lz -lGL -lX11 -lunwind $(GLOBALFLAGS)
+CXXFLAGSLINKING =  `pkg-config --cflags --libs gtk+-3.0` -lz -lGL -lX11 -lunwind -ldl $(GLOBALFLAGS)
 
 OBJ = lib/algebra/crypto.o \
  lib/algebra/vli.o \
@@ -437,7 +437,7 @@ lib/kaba/compiler/serializer_x86.o : lib/kaba/compiler/serializer_x86.cpp lib/ka
 lib/kaba/lib/exception.o : lib/kaba/lib/exception.cpp lib/kaba/lib/exception.h lib/base/base.h lib/base/macros.h lib/base/array.h lib/base/strings.h lib/kaba/kaba.h lib/kaba/asm/asm.h lib/kaba/lib/lib.h lib/kaba/syntax/syntax_tree.h lib/kaba/syntax/class.h lib/kaba/syntax/lexical.h lib/file/msg.h
 	$(CPP) -c lib/kaba/lib/exception.cpp -o $@ $(CXXFLAGS)
 
-lib/kaba/lib/lib.o : lib/kaba/lib/lib.cpp lib/kaba/kaba.h lib/base/base.h lib/base/macros.h lib/base/array.h lib/base/strings.h lib/kaba/asm/asm.h lib/kaba/lib/lib.h lib/kaba/syntax/syntax_tree.h lib/kaba/syntax/class.h lib/kaba/syntax/lexical.h lib/kaba/lib/common.h lib/kaba/lib/exception.h lib/config.h lib/hui/hui.h lib/hui/common.h lib/file/file.h lib/file/msg.h lib/file/file_op.h lib/image/image.h lib/image/color.h lib/hui/Callback.h lib/hui/Application.h lib/base/map.h lib/base/set.h lib/hui/main.h lib/hui/Event.h lib/hui/Menu.h lib/hui/Panel.h lib/hui/Window.h lib/hui/common_dlg.h lib/hui/language.h lib/hui/Config.h lib/hui/Resource.h lib/hui/utility.h lib/hui/Painter.h lib/image/Painter.h lib/hui/Timer.h lib/hui/Toolbar.h lib/hui/error.h lib/hui/Clipboard.h
+lib/kaba/lib/lib.o : lib/kaba/lib/lib.cpp lib/kaba/kaba.h lib/base/base.h lib/base/macros.h lib/base/array.h lib/base/strings.h lib/kaba/asm/asm.h lib/kaba/lib/lib.h lib/kaba/syntax/syntax_tree.h lib/kaba/syntax/class.h lib/kaba/syntax/lexical.h lib/kaba/lib/common.h lib/kaba/lib/exception.h lib/config.h lib/math/complex.h lib/hui/hui.h lib/hui/common.h lib/file/file.h lib/file/msg.h lib/file/file_op.h lib/image/image.h lib/image/color.h lib/hui/Callback.h lib/hui/Application.h lib/base/map.h lib/base/set.h lib/hui/main.h lib/hui/Event.h lib/hui/Menu.h lib/hui/Panel.h lib/hui/Window.h lib/hui/common_dlg.h lib/hui/language.h lib/hui/Config.h lib/hui/Resource.h lib/hui/utility.h lib/hui/Painter.h lib/image/Painter.h lib/hui/Timer.h lib/hui/Toolbar.h lib/hui/error.h lib/hui/Clipboard.h
 	$(CPP) -c lib/kaba/lib/lib.cpp -o $@ $(CXXFLAGS)
 
 lib/kaba/lib/lib_file.o : lib/kaba/lib/lib_file.cpp lib/file/file.h lib/base/base.h lib/base/macros.h lib/base/array.h lib/base/strings.h lib/file/msg.h lib/file/file_op.h lib/kaba/kaba.h lib/kaba/asm/asm.h lib/kaba/lib/lib.h lib/kaba/syntax/syntax_tree.h lib/kaba/syntax/class.h lib/kaba/syntax/lexical.h lib/config.h lib/kaba/lib/common.h lib/kaba/lib/exception.h
