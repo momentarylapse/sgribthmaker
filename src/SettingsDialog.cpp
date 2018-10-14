@@ -13,8 +13,8 @@ SettingsDialog::SettingsDialog(SgribthMaker *_sgribthmaker) :
 	hui::Window("settings_dialog", _sgribthmaker->MainWin)
 {
 	sgribthmaker = _sgribthmaker;
-	setInt("tab_width", hui::Config.getInt("TabWidth", 8));
-	setString("font", hui::Config.getStr("Font", "Monospace 10"));
+	setInt("tab_width", hui::Config.get_int("TabWidth", 8));
+	setString("font", hui::Config.get_str("Font", "Monospace 10"));
 	addString("context_list", _("Text"));
 	addString("context_list", _("reserved word"));
 	addString("context_list", _("Api function"));
@@ -83,7 +83,7 @@ void SettingsDialog::onFont()
 {
 	if (hui::SelectFont(this, _("Select font"))){
 		setString("font", hui::Fontname);
-		hui::Config.setStr("Font", hui::Fontname);
+		hui::Config.set_str("Font", hui::Fontname);
 		for (SourceView *sv: sgribthmaker->source_view)
 			sv->UpdateFont();
 	}
@@ -91,7 +91,7 @@ void SettingsDialog::onFont()
 
 void SettingsDialog::onTabWidth()
 {
-	hui::Config.setInt("TabWidth", getInt("tab_width"));
+	hui::Config.set_int("TabWidth", getInt("tab_width"));
 	for (SourceView *sv: sgribthmaker->source_view)
 		sv->UpdateTabSize();
 }

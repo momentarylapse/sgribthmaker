@@ -556,12 +556,12 @@ void SourceView::ApplyScheme(HighlightScheme *s)
 	gtk_widget_override_cursor(tv, &_color, &_color);
 	}
 	scheme = s;
-	hui::Config.setStr("HighlightScheme", s->name);
+	hui::Config.set_str("HighlightScheme", s->name);
 }
 
 void SourceView::UpdateTabSize()
 {
-	int tab_size = hui::Config.getInt("TabWidth", 8);
+	int tab_size = hui::Config.get_int("TabWidth", 8);
 	PangoLayout *layout = gtk_widget_create_pango_layout(tv, "W");
 	int width, height;
 	pango_layout_get_pixel_size(layout, &width, &height);
@@ -572,7 +572,7 @@ void SourceView::UpdateTabSize()
 
 void SourceView::UpdateFont()
 {
-	string font_name = hui::Config.getStr("Font", "Monospace 10");
+	string font_name = hui::Config.get_str("Font", "Monospace 10");
 	PangoFontDescription *font_desc = pango_font_description_from_string(font_name.c_str());
 	gtk_widget_override_font(tv, font_desc);
 	if (line_no_tv)

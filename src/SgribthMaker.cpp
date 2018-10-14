@@ -18,7 +18,7 @@
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.8.1";
+string AppVersion = "0.4.8.2";
 
 //#define ALLOW_LOGGING			true
 #define ALLOW_LOGGING			false
@@ -146,7 +146,7 @@ void SgribthMaker::New()
 	MainWin->setTarget("tab");
 	MainWin->addGrid("", documents.num, 0, id + "-grid");
 	MainWin->setTarget(id + "-grid");
-	if (hui::Config.getBool("ShowLineNumbers", false)){
+	if (hui::Config.get_bool("ShowLineNumbers", false)){
 		MainWin->addMultilineEdit("!noframe,disabled,width=70,noexpandx", 0, 0, id + "-lines");
 		MainWin->enable(id + "-lines", false);
 	}
@@ -528,12 +528,12 @@ void SgribthMaker::OnPreviousDocument()
 SgribthMaker::SgribthMaker() :
 	hui::Application("sgribthmaker", "English", hui::FLAG_LOAD_RESOURCE | hui::FLAG_SILENT)
 {
-	setProperty("name", AppTitle);
-	setProperty("version", AppVersion);
-	setProperty("comment", _("Text editor and kaba compiler"));
-	setProperty("website", "http://michi.is-a-geek.org/michisoft");
-	setProperty("copyright", "© 2006-2018 by MichiSoft TM");
-	setProperty("author", "Michael Ankele <michi@lupina.de>");
+	set_property("name", AppTitle);
+	set_property("version", AppVersion);
+	set_property("comment", _("Text editor and kaba compiler"));
+	set_property("website", "http://michi.is-a-geek.org/michisoft");
+	set_property("copyright", "© 2006-2018 by MichiSoft TM");
+	set_property("author", "Michael Ankele <michi@lupina.de>");
 
 	hui::RegisterFileType("kaba","MichiSoft Script Datei", directory + "Data/kaba.ico", filename,"open",true);
 
@@ -543,11 +543,11 @@ SgribthMaker::SgribthMaker() :
 	MainWin = NULL;
 }
 
-bool SgribthMaker::onStartup(const Array<string> &arg)
+bool SgribthMaker::on_startup(const Array<string> &arg)
 {
-	int width = hui::Config.getInt("Window.Width", 800);
-	int height = hui::Config.getInt("Window.Height", 600);
-	bool maximized = hui::Config.getBool("Window.Maximized", false);
+	int width = hui::Config.get_int("Window.Width", 800);
+	int height = hui::Config.get_int("Window.Height", 600);
+	bool maximized = hui::Config.get_bool("Window.Maximized", false);
 
 	MainWin = new hui::Window(AppTitle, width, height);
 	MainWin->fromResource("main-window");
@@ -615,7 +615,7 @@ bool SgribthMaker::onStartup(const Array<string> &arg)
 	MainWin->toolbar[0]->setByID("toolbar");
 
 	InitParser();
-	HighlightScheme::default_scheme = HighlightScheme::get(hui::Config.getStr("HighlightScheme", "default"));
+	HighlightScheme::default_scheme = HighlightScheme::get(hui::Config.get_str("HighlightScheme", "default"));
 
 	MainWin->setMenu(hui::CreateResourceMenu("menu"));
 	MainWin->setMaximized(maximized);
@@ -643,9 +643,9 @@ void SgribthMaker::OnExit()
 	if (AllowTermination()){
 		int w, h;
 		MainWin->getSizeDesired(w, h);
-		hui::Config.setInt("Window.Width", w);
-		hui::Config.setInt("Window.Height", h);
-		hui::Config.setBool("Window.Maximized", MainWin->isMaximized());
+		hui::Config.set_int("Window.Width", w);
+		hui::Config.set_int("Window.Height", h);
+		hui::Config.set_bool("Window.Maximized", MainWin->isMaximized());
 		delete MainWin;
 		end();
 	}

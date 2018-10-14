@@ -20,7 +20,7 @@ class SgribthMaker : public hui::Application
 {
 public:
 	SgribthMaker();
-	virtual bool onStartup(const Array<string> &arg);
+	bool on_startup(const Array<string> &arg) override;
 
 	void OnAbout();
 	void OnExit();
