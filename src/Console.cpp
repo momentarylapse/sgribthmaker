@@ -9,41 +9,41 @@
 
 Console::Console()
 {
-	addGrid("", 0, 0, "table_console");
+	add_grid("", 0, 0, "table_console");
 	//SetBorderWidth(5);
-	setTarget("table_console");
-	addMultilineEdit("", 0, 0, "log");
+	set_target("table_console");
+	add_multiline_edit("", 0, 0, "log");
 	enable("log", false);
-	addGrid("!noexpandy", 0, 1, "table_command");
-	setTarget("table_command");
-	addEdit("!expandx", 0, 0, "console");
-	addButton("OK", 1, 0, "console_ok");
-	setImage("console_ok", "hui:ok");
-	addButton("", 2, 0, "console_close");
-	setImage("console_close", "hui:close");
+	add_grid("!noexpandy", 0, 1, "table_command");
+	set_target("table_command");
+	add_edit("!expandx", 0, 0, "console");
+	add_button("OK", 1, 0, "console_ok");
+	set_image("console_ok", "hui:ok");
+	add_button("", 2, 0, "console_close");
+	set_image("console_close", "hui:close");
 	show(false);
 
 
-	event("console_close", std::bind(&Console::onClose, this));
+	event("console_close", std::bind(&Console::on_close, this));
 }
 
 Console::~Console()
 {
 }
 
-void Console::onClose()
+void Console::on_close()
 {
 	show(false);
 }
 
 void Console::show(bool show)
 {
-	hideControl("table_console", !show);
+	hide_control("table_console", !show);
 }
 
 void Console::set(const string &msg)
 {
 	show(true);
-	setString("log", msg);
+	set_string("log", msg);
 }
 

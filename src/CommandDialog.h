@@ -18,8 +18,8 @@ public:
 	CommandDialog(SgribthMaker *sgribthmaker);
 	virtual ~CommandDialog();
 
-	void onOk();
-	void onCancel();
+	void on_ok();
+	void on_cancel();
 
 	SgribthMaker *sgribthmaker;
 	string last_command;

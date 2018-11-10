@@ -13,31 +13,31 @@ SettingsDialog::SettingsDialog(SgribthMaker *_sgribthmaker) :
 	hui::Window("settings_dialog", _sgribthmaker->MainWin)
 {
 	sgribthmaker = _sgribthmaker;
-	setInt("tab_width", hui::Config.get_int("TabWidth", 8));
-	setString("font", hui::Config.get_str("Font", "Monospace 10"));
-	addString("context_list", _("Text"));
-	addString("context_list", _("reserved word"));
-	addString("context_list", _("Api function"));
-	addString("context_list", _("Api variable"));
-	addString("context_list", _("Type"));
-	addString("context_list", _("Comment line"));
-	addString("context_list", _("Comment level 1"));
-	addString("context_list", _("Comment level 2"));
-	addString("context_list", _("Macro"));
-	addString("context_list", _("Separator"));
-	addString("context_list", _("String"));
-	addString("context_list", _("Operator"));
-	addString("context_list", _("Number"));
+	set_int("tab_width", hui::Config.get_int("TabWidth", 8));
+	set_string("font", hui::Config.get_str("Font", "Monospace 10"));
+	add_string("context_list", _("Text"));
+	add_string("context_list", _("reserved word"));
+	add_string("context_list", _("Api function"));
+	add_string("context_list", _("Api variable"));
+	add_string("context_list", _("Type"));
+	add_string("context_list", _("Comment line"));
+	add_string("context_list", _("Comment level 1"));
+	add_string("context_list", _("Comment level 2"));
+	add_string("context_list", _("Macro"));
+	add_string("context_list", _("Separator"));
+	add_string("context_list", _("String"));
+	add_string("context_list", _("Operator"));
+	add_string("context_list", _("Number"));
 
 	fillSchemeList();
 
-	setInt("context_list", 0);
+	set_int("context_list", 0);
 	onContextListSelect();
 
 	event("close", std::bind(&SettingsDialog::onClose, this));
 	event("font", std::bind(&SettingsDialog::onFont, this));
 	event("tab_width", std::bind(&SettingsDialog::onTabWidth, this));
-	eventX("context_list", "hui:select", std::bind(&SettingsDialog::onContextListSelect, this));
+	event_x("context_list", "hui:select", std::bind(&SettingsDialog::onContextListSelect, this));
 	event("schemes", std::bind(&SettingsDialog::onSchemes, this));
 	event("copy_scheme", std::bind(&SettingsDialog::onCopyScheme, this));
 	event("scheme_background", std::bind(&SettingsDialog::onSchemeChange, this));
@@ -73,16 +73,16 @@ void SettingsDialog::fillSchemeList()
 	reset("schemes");
 	Array<HighlightScheme*> schemes = HighlightScheme::get_all();
 	foreachi(HighlightScheme *s, schemes, i){
-		addString("schemes", get_scheme_name(s));
+		add_string("schemes", get_scheme_name(s));
 		if (s == HighlightScheme::default_scheme)
-			setInt("schemes", i);
+			set_int("schemes", i);
 	}
 }
 
 void SettingsDialog::onFont()
 {
 	if (hui::SelectFont(this, _("Select font"))){
-		setString("font", hui::Fontname);
+		set_string("font", hui::Fontname);
 		hui::Config.set_str("Font", hui::Fontname);
 		for (SourceView *sv: sgribthmaker->source_view)
 			sv->UpdateFont();
@@ -91,19 +91,19 @@ void SettingsDialog::onFont()
 
 void SettingsDialog::onTabWidth()
 {
-	hui::Config.set_int("TabWidth", getInt("tab_width"));
+	hui::Config.set_int("TabWidth", get_int("tab_width"));
 	for (SourceView *sv: sgribthmaker->source_view)
 		sv->UpdateTabSize();
 }
 
 void SettingsDialog::onContextListSelect()
 {
-	int n = getInt("context_list");
+	int n = get_int("context_list");
 	HighlightScheme *s = HighlightScheme::default_scheme;
-	setColor("scheme_background", s->bg);
+	set_color("scheme_background", s->bg);
 	HighlightContext c = s->context[n];
-	setColor("color_text", c.fg);
-	setColor("color_background", c.bg);
+	set_color("color_text", c.fg);
+	set_color("color_background", c.bg);
 	check("overwrite_background", c.set_bg);
 	check("bold", c.bold);
 	check("italic", c.italic);
@@ -119,15 +119,15 @@ void SettingsDialog::onContextListSelect()
 
 void SettingsDialog::onSchemeChange()
 {
-	int n = getInt("context_list");
+	int n = get_int("context_list");
 	HighlightScheme *s = HighlightScheme::default_scheme;
 	HighlightContext &c = s->context[n];
-	s->bg = getColor("scheme_background");
-	c.fg = getColor("color_text");
-	c.bg = getColor("color_background");
-	c.set_bg = isChecked("overwrite_background");
-	c.bold = isChecked("bold");
-	c.italic = isChecked("italic");
+	s->bg = get_color("scheme_background");
+	c.fg = get_color("color_text");
+	c.bg = get_color("color_background");
+	c.set_bg = is_checked("overwrite_background");
+	c.bold = is_checked("bold");
+	c.italic = is_checked("italic");
 	s->changed = true;
 	for (SourceView *sv: sgribthmaker->source_view)
 		sv->ApplyScheme(s);
@@ -136,7 +136,7 @@ void SettingsDialog::onSchemeChange()
 
 void SettingsDialog::onSchemes()
 {
-	int n = getInt("");
+	int n = get_int("");
 	HighlightScheme *s = HighlightScheme::get_all()[n];
 	HighlightScheme::default_scheme = s;
 	for (SourceView *sv: sgribthmaker->source_view)

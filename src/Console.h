@@ -19,7 +19,7 @@ public:
 	void set(const string &msg);
 	void show(bool show);
 
-	void onClose();
+	void on_close();
 };
 
 #endif /* CONSOLE_H_ */
