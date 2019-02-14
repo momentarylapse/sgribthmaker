@@ -18,7 +18,14 @@ ParserShader::ParserShader()
 	special_words.add("in");
 	special_words.add("out");
 	special_words.add("layout");
-	special_words.add("location");
+	special_words.add("push_constant");
+	special_words.add("buffer");
+	special_words.add("sampler");
+	special_words.add("triangles");
+	special_words.add("lines");
+	special_words.add("points");
+	special_words.add("triangle_strip");
+	special_words.add("max_vertices");
 	special_words.add("struct");
 	special_words.add("if");
 	special_words.add("else");
@@ -32,6 +39,7 @@ ParserShader::ParserShader()
 	special_words.add("</VertexShader>");
 	special_words.add("<FragmentShader>");
 	special_words.add("</FragmentShader>");*/
+	special_words.add("Layout");
 	special_words.add("VertexShader");
 	special_words.add("FragmentShader");
 	special_words.add("GeometryShader");
@@ -74,7 +82,20 @@ ParserShader::ParserShader()
 	compiler_functions.add("normalize");
 	compiler_functions.add("inverse");
 	compiler_functions.add("transpose");
+	compiler_functions.add("EmitVertex");
+	compiler_functions.add("EndPrimitive");
 	globals.add("gl_Position");
+	globals.add("gl_in");
+	// <Layout>...
+	globals.add("bindings");
+	globals.add("pushsize");
+	globals.add("input");
+	globals.add("topology");
+	// layout(x=y...)
+	globals.add("location");
+	globals.add("binding");
+	globals.add("set");
+
 	/*globals.add("gl_TexCoord");
 	globals.add("gl_Vertex");
 	globals.add("gl_MultiTexCoord0");
