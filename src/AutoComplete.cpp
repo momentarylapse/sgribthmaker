@@ -65,15 +65,15 @@ AutoComplete::Data find_top_level(SyntaxTree *syntax, Function *f, const string 
 		if (yyy == e.head(yyy.num))
 			suggestions.add(e, e);
 	if (f){
-		for (auto &v: f->var)
-			if (yyy == v.name.head(yyy.num))
-				suggestions.add(v.name, v.type->name + " " + v.name);
+		for (auto *v: f->var)
+			if (yyy == v->name.head(yyy.num))
+				suggestions.add(v->name, v->type->name + " " + v->name);
 		if (f->_class)
 			suggestions.append(find_top_level_from_class(f->_class, yyy));
 	}
-	for (auto &v: syntax->root_of_all_evil.var)
-		if (yyy == v.name.head(yyy.num))
-			suggestions.add(v.name, v.type->name + " " + v.name);
+	for (auto *v: syntax->root_of_all_evil.var)
+		if (yyy == v->name.head(yyy.num))
+			suggestions.add(v->name, v->type->name + " " + v->name);
 	if (f){
 		for (auto *f: syntax->functions)
 			if (f->name.find(".") < 0)
@@ -151,16 +151,17 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 			f = &syntax->root_of_all_evil;
 
 		//printf("first:  %s\n", yy[0].c_str());
-		if (syntax->blocks.num == 0)
-			return data;
+	//	if (syntax->blocks.num == 0)
+	//		return data;
+		// FIXME?
 
 		// base layer
 		Array<Class*> types;
 		auto nodes = syntax->GetExistence(yy[0], guess_block(syntax, f));
 		//printf("res: %d\n", nodes.num);
-		for (auto &n: nodes){
+		for (auto *n: nodes){
 			//printf("%s\n", n.type->name.c_str());
-			types.add(simplify_type(n.type));
+			types.add(simplify_type(n->type));
 		}
 
 		// middle layers

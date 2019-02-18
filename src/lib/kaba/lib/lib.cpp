@@ -28,7 +28,7 @@
 
 namespace Kaba{
 
-string LibVersion = "0.16.8.0";
+string LibVersion = "0.17.-1.2";
 
 const string IDENTIFIER_CLASS = "class";
 const string IDENTIFIER_FUNC_INIT = "__init__";
@@ -280,7 +280,7 @@ void add_operator(int primitive_op, Class *return_type, Class *param_type1, Clas
 		if (f->inline_no == inline_index)
 			o.func_index = i;
 	if (o.func_index >0)*/
-	o.func_index = add_func("op...", return_type, func);
+	o.func_index = add_func(PrimitiveOperators[primitive_op].function_name, return_type, func);
 	func_set_inline(inline_index);
 	func_add_param("a", param_type1);
 	func_add_param("b", param_type2);
@@ -435,6 +435,7 @@ void add_const(const string &name, Class *type, void *value)
 {
 	Constant *c = new Constant(type);
 	c->name = name;
+	c->address = c->p();
 
 	// config.PointerSize might be smaller than needed for the following assignment
 	if ((type == TypeInt) or (type == TypeFloat32) or (type == TypeChar)  or (type == TypeBool) or (type->is_pointer()))
@@ -442,7 +443,6 @@ void add_const(const string &name, Class *type, void *value)
 	else
 		memcpy(c->p(), value, type->size);
 	cur_package_script->syntax->constants.add(c);
-	cur_package_script->cnst.add((char*)c->value.data);
 }
 
 //------------------------------------------------------------------------------------------------//
@@ -452,8 +452,9 @@ void add_const(const string &name, Class *type, void *value)
 
 void add_ext_var(const string &name, Class *type, void *var)
 {
-	cur_package_script->syntax->root_of_all_evil.block->add_var(name, type);
-	cur_package_script->g_var.add(config.allow_std_lib ? (char*)var : nullptr);
+	int no = cur_package_script->syntax->root_of_all_evil.block->add_var(name, type);
+	if (config.allow_std_lib)
+		cur_package_script->syntax->root_of_all_evil.var[no]->memory = var;
 };
 
 //------------------------------------------------------------------------------------------------//
@@ -622,10 +623,8 @@ void func_set_inline(int index)
 
 void func_add_param(const string &name, Class *type)
 {
-	Variable v;
-	v.name = name;
-	v.type = type;
 	if (cur_func){
+		Variable *v = new Variable(name, type);
 		cur_func->var.add(v);
 		cur_func->literal_param_type.add(type);
 		cur_func->num_params ++;
@@ -1582,6 +1581,8 @@ void Init(int instruction_set, int abi, bool allow_std_lib)
 
 	config.compile_silently = false;
 	config.verbose = false;
+	config.verbose_func_filter = "*";
+	config.verbose_stage_filter = "*";
 	config.show_compiler_stats = true;
 
 	config.compile_os = false;
@@ -1750,6 +1751,42 @@ void End()
 	Packages.clear();
 
 	ResetExternalLinkData();
+}
+
+
+bool CompilerConfiguration::allow_output_func(Function *f)
+{
+	if (!verbose)
+		return false;
+	if (!f)
+		return true;
+	Array<string> filters = verbose_func_filter.explode(",");
+	for (auto &fil: filters)
+		if (f->name.match(fil))
+			return true;
+	return false;
+}
+
+bool CompilerConfiguration::allow_output_stage(const string &stage)
+{
+	if (!verbose)
+		return false;
+	Array<string> filters = verbose_stage_filter.explode(",");
+	for (auto &fil: filters)
+		if (stage.match(fil))
+			return true;
+	return false;
+}
+
+bool CompilerConfiguration::allow_output(Function *f, const string &stage)
+{
+	if (!verbose)
+		return false;
+	if (!allow_output_func(f))
+		return false;
+	if (!allow_output_stage(stage))
+		return false;
+	return true;
 }
 
 };
