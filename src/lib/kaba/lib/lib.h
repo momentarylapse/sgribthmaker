@@ -36,6 +36,8 @@ extern const string IDENTIFIER_CLASS;
 extern const string IDENTIFIER_FUNC_INIT;
 extern const string IDENTIFIER_FUNC_DELETE;
 extern const string IDENTIFIER_FUNC_ASSIGN;
+extern const string IDENTIFIER_FUNC_GET;
+extern const string IDENTIFIER_FUNC_SUBARRAY;
 extern const string IDENTIFIER_SUPER;
 extern const string IDENTIFIER_SELF;
 extern const string IDENTIFIER_EXTENDS;
@@ -326,7 +328,7 @@ typedef void t_cast_func(Value&, Value&);
 struct TypeCast
 {
 	int penalty;
-	Class *source, *dest;
+	const Class *source, *dest;
 	int func_no;
 	Script *script;
 	t_cast_func *func;
@@ -363,8 +365,8 @@ struct CompilerConfiguration
 	bool verbose;
 	string verbose_func_filter;
 	string verbose_stage_filter;
-	bool allow_output(Function *f, const string &stage);
-	bool allow_output_func(Function *f);
+	bool allow_output(const Function *f, const string &stage);
+	bool allow_output_func(const Function *f);
 	bool allow_output_stage(const string &stage);
 	bool compile_silently;
 	bool show_compiler_stats;

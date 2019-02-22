@@ -43,7 +43,7 @@ void _ParseFunctionBody(SyntaxTree *syntax, Function *f)
 	}
 }
 
-AutoComplete::Data find_top_level_from_class(Class *t, const string &yyy)
+AutoComplete::Data find_top_level_from_class(const Class *t, const string &yyy)
 {
 	if (t->is_pointer())
 		t = t->parent;
@@ -108,7 +108,7 @@ AutoComplete::Data find_top_level(SyntaxTree *syntax, Function *f, const string 
 Block* guess_block(SyntaxTree *syntax, Function *f)
 {
 	Block *b = f->block;
-	while (true){
+	/*while (true){
 		Block *b_next = nullptr;
 		for (auto *n: b->nodes){
 			if (n->kind == KIND_BLOCK)
@@ -118,12 +118,12 @@ Block* guess_block(SyntaxTree *syntax, Function *f)
 			b = b_next;
 		else
 			break;
-	}
+	}*/
 	return b;
 	//syntax->blocks.back()
 }
 
-Kaba::Class *simplify_type(Kaba::Class *c)
+const Kaba::Class *simplify_type(const Kaba::Class *c)
 {
 	if (c->is_pointer())
 		return c->parent;
@@ -156,8 +156,8 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 		// FIXME?
 
 		// base layer
-		Array<Class*> types;
-		auto nodes = syntax->GetExistence(yy[0], guess_block(syntax, f));
+		Array<const Class*> types;
+		auto nodes = syntax->get_existence(yy[0], guess_block(syntax, f));
 		//printf("res: %d\n", nodes.num);
 		for (auto *n: nodes){
 			//printf("%s\n", n.type->name.c_str());
@@ -166,8 +166,8 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 
 		// middle layers
 		for (int i=1; i<yy.num-1; i++){
-			Array<Class*> types2;
-			for (Class *t: types){
+			Array<const Class*> types2;
+			for (auto *t: types){
 				for (auto &e: t->elements)
 					if (e.name == yy[i])
 						types2.add(simplify_type(e.type));
@@ -220,7 +220,7 @@ AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos)
 		s->syntax->PreCompiler(true);
 
 		//printf("--c\n");
-		s->syntax->ParseTopLevel();
+		s->syntax->parse_top_level();
 
 		//printf("--d\n");
 		for (auto *f: s->syntax->functions){

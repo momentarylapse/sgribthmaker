@@ -53,7 +53,8 @@ ParserKaba::ParserKaba()
 		for (auto *c: p.script->syntax->constants)
 			globals.add(c->name);
 		for (auto *f: p.script->syntax->functions)
-			compiler_functions.add(f->name);
+			if (!f->_class)
+				compiler_functions.add(f->name);
 	}
 	for (auto &s: Kaba::Statements)
 		compiler_functions.add(s.name);
