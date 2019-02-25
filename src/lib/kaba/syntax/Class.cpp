@@ -178,6 +178,8 @@ bool Class::needs_constructor() const
 		return false;
 	if (is_super_array() or is_dict())
 		return true;
+	if (is_array())
+		return parent->get_default_constructor();
 	if (vtable.num > 0)
 		return true;
 	if (parent)
@@ -207,6 +209,8 @@ bool Class::needs_destructor() const
 		return false;
 	if (is_super_array() or is_dict())
 		return true;
+	if (is_array())
+		return parent->get_destructor();
 	if (parent){
 		if (parent->get_destructor())
 			return true;
@@ -487,7 +491,7 @@ void *Class::create_instance() const
 	return p;
 }
 
-string Class::var2str(void *p) const
+string Class::var2str(const void *p) const
 {
 	if (this == TypeInt){
 		return i2s(*(int*)p);
