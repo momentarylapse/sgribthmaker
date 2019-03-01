@@ -499,6 +499,11 @@ string Class::var2str(const void *p) const
 		return f2s(*(float*)p, 3);
 	}else if (this == TypeBool){
 		return b2s(*(bool*)p);
+	}else if (this == TypeClass){
+		return ((Class*)p)->name;
+	}else if (this == TypeClassP){
+		if (p)
+			return "&" + (*(Class**)p)->name;
 	}else if (is_pointer()){
 		return p2s(*(void**)p);
 	}else if (this == TypeString){
@@ -518,8 +523,8 @@ string Class::var2str(const void *p) const
 		return "{...}";
 	}else if (elements.num > 0){
 		string s;
-		foreachi(ClassElement &e, elements, i){
-			if (i > 0)
+		for (auto &e: elements){
+			if (s.num > 0)
 				s += ", ";
 			s += e.type->var2str(((char*)p) + e.offset);
 		}
@@ -534,7 +539,7 @@ string Class::var2str(const void *p) const
 			}
 			return "[" + s + "]";
 		}
-	return string((char*)p, size).hex();
+	return d2h(p, size, false);
 }
 
 }

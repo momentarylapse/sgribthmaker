@@ -381,7 +381,7 @@ void SgribthMaker::CompileAndRun(bool verbose)
 		float dt_execute = 0;
 		CompileTimer.reset();
 		typedef void void_func();
-		void_func *f = (void_func*)compile_script->MatchFunction("main", "void", 0);
+		void_func *f = (void_func*)compile_script->match_function("main", "void", {});
 		if (f)
 			f();
 		//compile_script->ShowVars(false);

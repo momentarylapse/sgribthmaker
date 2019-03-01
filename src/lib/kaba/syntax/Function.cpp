@@ -21,6 +21,7 @@ Variable::Variable(const string &_name, const Class *_type)
 	dont_add_constructor = false;
 	memory = nullptr;
 	memory_owner = false;
+	_label = -1;
 }
 
 Variable::~Variable()
@@ -30,9 +31,9 @@ Variable::~Variable()
 }
 
 
-Function::Function(SyntaxTree *_tree, const string &_name, const Class *_return_type)
+Function::Function(const string &_name, const Class *_return_type, SyntaxTree *_owner)
 {
-	tree = _tree;
+	owner = _owner;
 	name = _name;
 	long_name = name;
 	block = nullptr;
@@ -54,12 +55,29 @@ Function::Function(SyntaxTree *_tree, const string &_name, const Class *_return_
 	_label = -1;
 }
 
+#include "../../base/set.h"
+#include "SyntaxTree.h"
+
+void test_node_recursion(Node *root, const string &message)
+{
+	Set<Node*> nodes;
+	SyntaxTree::transform_node(root, [&](Node *n){
+		if (nodes.contains(n)){
+			msg_error("node double..." + message);
+			//msg_write(f->long_name);
+			msg_write(n->str());
+		}else
+			nodes.add(n);
+		return n; });
+}
+
 Function::~Function()
 {
-	for (Variable* v: var)
-		delete v;
+	test_node_recursion(block, long_name);
 	if (block)
 		delete block;
+	for (Variable* v: var)
+		delete v;
 }
 
 void Function::show(const string &stage) const

@@ -50,9 +50,7 @@ enum
 	KIND_REFERENCE,          // = &
 	KIND_DEREFERENCE,        // = *
 	KIND_DEREF_ADDRESS_SHIFT,// = ->
-	KIND_REF_TO_LOCAL,
-	KIND_REF_TO_GLOBAL,
-	KIND_REF_TO_CONST,
+	KIND_CONSTANT_BY_ADDRESS,
 	KIND_ADDRESS,            // &global (for pre processing address shifts)
 	KIND_MEMORY,             // global (but LinkNr = address)
 	KIND_LOCAL_ADDRESS,      // &local (for pre processing address shifts)
@@ -64,7 +62,7 @@ enum
 	// compilation
 	KIND_VAR_TEMP,
 	KIND_DEREF_VAR_TEMP,
-	KIND_DEREF_VAR_LOCAL,
+	KIND_DEREF_LOCAL_MEMORY,
 	KIND_REGISTER,
 	KIND_DEREF_REGISTER,
 	KIND_MARKER,
@@ -81,15 +79,13 @@ struct Node
 {
 	int kind;
 	int64 link_no;
-	Script *script;
-	int ref_count;
 	// parameters
 	Array<Node*> params;
 	// linking of class function instances
 	Node *instance;
 	// return value
 	const Class *type;
-	Node(int kind, int64 link_no, Script *script, const Class *type);
+	Node(int kind, int64 link_no, const Class *type);
 	virtual ~Node();
 	Block *as_block() const;
 	Function *as_func() const;

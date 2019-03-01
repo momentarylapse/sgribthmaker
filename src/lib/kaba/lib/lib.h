@@ -335,8 +335,7 @@ struct TypeCast
 {
 	int penalty;
 	const Class *source, *dest;
-	int func_no;
-	Script *script;
+	Function *f;
 	t_cast_func *func;
 };
 extern Array<TypeCast> TypeCasts;
@@ -376,7 +375,6 @@ struct CompilerConfiguration
 	bool allow_output_stage(const string &stage);
 	bool compile_silently;
 	bool show_compiler_stats;
-	bool use_const_as_global_var;
 
 	bool compile_os;
 	bool no_function_frame;

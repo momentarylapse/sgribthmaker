@@ -127,6 +127,7 @@ public:
 	Node *parse_operand_extension_array(Node *operand, Block *block);
 	Node *parse_operand_extension_call(Array<Node*> operands, Block *block);
 	Node *parse_command(Block *block);
+	Node *parse_single_func_param(Block *block);
 	void parse_complete_command(Block *block);
 	void parse_local_definition(Block *block);
 	Node *parse_block(Block *parent, Block *block = nullptr);
@@ -173,12 +174,10 @@ public:
 	Function *add_function(const string &name, const Class *type);
 
 	// nodes
-	Node *AddNode(int kind, int64 link_no, const Class *type);
-	Node *AddNode(int kind, int64 link_no, const Class *type, Script *s);
 	Node *add_node_statement(int index);
 	Node *add_node_member_call(ClassFunction *f, Node *inst, bool force_non_virtual = false);
 	Node *add_node_func_name(Function *f);
-	Node *add_node_call(Function *f, const Class *return_type);
+	Node *add_node_call(Function *f);
 	Node *add_node_const(Constant *c);
 	Node *add_node_operator(Node *p1, Node *p2, Operator *op);
 	Node *add_node_operator_by_inline(Node *p1, Node *p2, int inline_index);
@@ -216,7 +215,6 @@ public:
 	Array<Constant*> constants;
 	Array<Operator*> operators;
 	Array<Function*> functions;
-	Array<Node*> nodes;
 
 	Function root_of_all_evil;
 
