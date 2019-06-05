@@ -28,7 +28,7 @@
 
 namespace Kaba{
 
-string LibVersion = "0.17.0.0";
+string LibVersion = "0.17.0.1";
 
 const string IDENTIFIER_CLASS = "class";
 const string IDENTIFIER_FUNC_INIT = "__init__";
@@ -200,9 +200,9 @@ const Class *add_type(const string &name, int size, ScriptFlag flag)
 const Class *add_type_p(const string &name, const Class *sub_type, ScriptFlag flag)
 {
 	Class *t = new Class(name, config.pointer_size, cur_package_script->syntax);
-	t->type = t->Type::POINTER;
+	t->type = Class::Type::POINTER;
 	if ((flag & FLAG_SILENT) > 0)
-		t->type = t->Type::POINTER_SILENT;
+		t->type = Class::Type::POINTER_SILENT;
 	t->parent = sub_type;
 	cur_package_script->syntax->classes.add(t);
 	return t;
@@ -213,12 +213,12 @@ const Class *add_type_a(const string &name, const Class *sub_type, int array_len
 	if (array_length < 0){
 		// super array
 		t->size = config.super_array_size;
-		t->type = t->Type::SUPER_ARRAY;
+		t->type = Class::Type::SUPER_ARRAY;
 		script_make_super_array(t);
 	}else{
 		// standard array
 		t->size = sub_type->size * array_length;
-		t->type = t->Type::ARRAY;
+		t->type = Class::Type::ARRAY;
 		t->array_length = array_length;
 	}
 	cur_package_script->syntax->classes.add(t);
@@ -228,7 +228,7 @@ const Class *add_type_a(const string &name, const Class *sub_type, int array_len
 const Class *add_type_d(const string &name, const Class *sub_type)
 {
 	Class *t = new Class(name, config.super_array_size, cur_package_script->syntax, sub_type);
-	t->type = t->Type::DICT;
+	t->type = Class::Type::DICT;
 	script_make_dict(t);
 	cur_package_script->syntax->classes.add(t);
 	return t;
@@ -303,10 +303,7 @@ void add_class(const Class *root_type)//, PreScript *ps = NULL)
 
 void class_add_element(const string &name, const Class *type, int offset, ScriptFlag flag)
 {
-	ClassElement e;
-	e.name = name;
-	e.type = type;
-	e.offset = offset;
+	auto e = ClassElement(name, type, offset);
 	e.hidden = ((flag & FLAG_HIDDEN) > 0);
 	cur_class->elements.add(e);
 }
@@ -515,7 +512,7 @@ void _ultra_sort(DynamicArray &array, int offset_by)
 		T *q = (T*)((char*)p + array.element_size);
 		for (int j=i+1; j<array.num; j++){
 			if (*p > *q)
-				array.swap(i, j);
+				array.simple_swap(i, j);
 			q = (T*)((char*)q + array.element_size);
 		}
 		p = (T*)((char*)p + array.element_size);
@@ -532,7 +529,7 @@ void _ultra_sort_p(DynamicArray &array, int offset_by)
 		for (int j=i+1; j<array.num; j++){
 			T *qq = (T*)(*q + offset_by);
 			if (*pp > *qq){
-				array.swap(i, j);
+				array.simple_swap(i, j);
 				pp = (T*)(*p + offset_by);
 			}
 			q ++;
@@ -704,13 +701,13 @@ void script_make_super_array(Class *t, SyntaxTree *ps)
 					func_add_param("x", t->parent);
 					func_add_param("index", TypeInt);
 			}
-			class_add_func(IDENTIFIER_FUNC_DELETE, TypeVoid, mf(&DynamicArray::clear));
-			class_add_func("clear", TypeVoid, mf(&DynamicArray::clear));
-			class_add_func(IDENTIFIER_FUNC_ASSIGN, TypeVoid, mf(&DynamicArray::assign));
+			class_add_func(IDENTIFIER_FUNC_DELETE, TypeVoid, mf(&DynamicArray::simple_clear));
+			class_add_func("clear", TypeVoid, mf(&DynamicArray::simple_clear));
+			class_add_func(IDENTIFIER_FUNC_ASSIGN, TypeVoid, mf(&DynamicArray::simple_assign));
 				func_add_param("other", t);
 			class_add_func("remove", TypeVoid, mf(&DynamicArray::delete_single));
 				func_add_param("index", TypeInt);
-			class_add_func("resize", TypeVoid, mf(&DynamicArray::resize));
+			class_add_func("resize", TypeVoid, mf(&DynamicArray::simple_resize));
 				func_add_param("num", TypeInt);
 		}
 }
@@ -849,6 +846,11 @@ void CastInt2Int64(Value &r, Value &s)
 {
 	r.init(TypeInt64);
 	r.as_int64() = (int64)s.as_int();
+}
+void CastInt642Int(Value &r, Value &s)
+{
+	r.init(TypeInt);
+	r.as_int() = s.as_int();
 }
 void CastInt2Char(Value &r, Value &s)
 {
@@ -1033,7 +1035,7 @@ void SIAddPackageBase()
 
 	add_class(TypeDynamicArray);
 		class_add_element("num", TypeInt, config.pointer_size);
-		class_add_func("swap", TypeVoid, mf(&DynamicArray::swap));
+		class_add_func("swap", TypeVoid, mf(&DynamicArray::simple_swap));
 			func_add_param("i1", TypeInt);
 			func_add_param("i2", TypeInt);
 		class_add_func(IDENTIFIER_FUNC_SUBARRAY, TypeDynamicArray, mf(&DynamicArray::ref_subarray));
@@ -1042,8 +1044,8 @@ void SIAddPackageBase()
 		// low level operations
 		class_add_func("__mem_init__", TypeVoid, mf(&DynamicArray::init));
 			func_add_param("element_size", TypeInt);
-		class_add_func("__mem_clear__", TypeVoid, mf(&DynamicArray::clear));
-		class_add_func("__mem_resize__", TypeVoid, mf(&DynamicArray::resize));
+		class_add_func("__mem_clear__", TypeVoid, mf(&DynamicArray::simple_clear));
+		class_add_func("__mem_resize__", TypeVoid, mf(&DynamicArray::simple_resize));
 			func_add_param("size", TypeInt);
 		class_add_func("__mem_remove__", TypeVoid, mf(&DynamicArray::delete_single));
 			func_add_param("index", TypeInt);
@@ -1053,8 +1055,8 @@ void SIAddPackageBase()
 		// low level operations
 		class_add_func("__mem_init__", TypeVoid, mf(&DynamicArray::init));
 			func_add_param("element_size", TypeInt);
-		class_add_func("__mem_clear__", TypeVoid, mf(&DynamicArray::clear));
-		class_add_func("__mem_resize__", TypeVoid, mf(&DynamicArray::resize));
+		class_add_func("__mem_clear__", TypeVoid, mf(&DynamicArray::simple_clear));
+		class_add_func("__mem_resize__", TypeVoid, mf(&DynamicArray::simple_resize));
 			func_add_param("size", TypeInt);
 		class_add_func("__mem_remove__", TypeVoid, mf(&DynamicArray::delete_single));
 			func_add_param("index", TypeInt);
@@ -1621,6 +1623,7 @@ void Init(int instruction_set, int abi, bool allow_std_lib)
 
 	add_type_cast(10, TypeInt, TypeFloat32, "i2f", (void*)&CastInt2Float);
 	add_type_cast(10, TypeInt, TypeInt64, "i2i64", (void*)&CastInt2Int64);
+	add_type_cast(15, TypeInt64, TypeInt, "i642i", (void*)&CastInt642Int);
 	add_type_cast(10, TypeFloat32, TypeFloat64,"f2f64", (void*)&CastFloat2Float64);
 	add_type_cast(20, TypeFloat32, TypeInt, "f2i", (void*)&CastFloat2Int);
 	add_type_cast(10, TypeInt, TypeChar, "i2c", (void*)&CastInt2Char);
@@ -1711,6 +1714,9 @@ void DeclareClassOffset(const string &class_name, const string &element, int off
 
 void DeclareClassVirtualIndex(const string &class_name, const string &func, void *p, void *instance)
 {
+#ifdef OS_WINDOWS
+	return;
+#endif
 	VirtualTable *v = *(VirtualTable**)instance;
 
 	ClassOffsetData d;

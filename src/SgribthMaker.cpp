@@ -535,7 +535,7 @@ SgribthMaker::SgribthMaker() :
 	set_property("copyright", "© 2006-2018 by MichiSoft TM");
 	set_property("author", "Michael Ankele <michi@lupina.de>");
 
-	hui::RegisterFileType("kaba","MichiSoft Script Datei", directory + "Data/kaba.ico", filename,"open",true);
+//	hui::RegisterFileType("kaba","MichiSoft Script Datei", directory + "Data/kaba.ico", filename,"open",true);
 
 	Kaba::Init();
 
