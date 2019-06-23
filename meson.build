@@ -201,3 +201,13 @@ sources = [
 
 
 executable('sgribthmaker', sources, dependencies : deps, install : true)
+
+install_subdir('static/Icon', install_dir : join_paths(get_option('datadir'), 'sgribthmaker'))
+install_data('static/hui_resources.txt', install_dir : join_paths(get_option('datadir'), 'sgribthmaker'))
+install_data('static/icon.ico', install_dir : join_paths(get_option('datadir'), 'sgribthmaker'))
+install_data('static/icon.png', install_dir : join_paths(get_option('datadir'), 'sgribthmaker'))
+install_data('static/kaba.ico', install_dir : join_paths(get_option('datadir'), 'sgribthmaker'))
+install_data('static/kaba.png', install_dir : join_paths(get_option('datadir'), 'sgribthmaker'))
+install_data('static/license.txt', install_dir : join_paths(get_option('datadir'), 'sgribthmaker'))
+install_data('static/license_small.txt', install_dir : join_paths(get_option('datadir'), 'sgribthmaker'))
+install_data('static/michisoft-sgribthmaker.desktop', install_dir : join_paths(get_option('datadir'), 'applications'))

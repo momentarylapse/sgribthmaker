@@ -1,8 +1,9 @@
 BIN = ../sgribthmaker
 CPP = g++
-GLOBALFLAGS = -O2 -g -std=c++14 -std=c++14  -DHAS_LIB_GTK3=1 -DHAS_LIB_ZLIB=1 -DHAS_LIB_GL=1 -DHAS_LIB_XLIB=1 -DHAS_LIB_UNWIND=1 -DHAS_LIB_DL=1
+GLOBALFLAGS = -O2 -g -std=c++14  -DHAS_LIB_GTK3=1 -DHAS_LIB_ZLIB=1 -DHAS_LIB_GL=1 -DHAS_LIB_XLIB=1 -DHAS_LIB_UNWIND=1 -DHAS_LIB_DL=1
 CXXFLAGS =  `pkg-config --cflags gtk+-3.0` $(GLOBALFLAGS)
 CXXFLAGSLINKING =  `pkg-config --cflags --libs gtk+-3.0` -lz -lGL -lX11 -lunwind -ldl $(GLOBALFLAGS)
+prefix = /usr/local
 
 OBJ = lib/algebra/crypto.o \
  lib/algebra/vli.o \
@@ -492,7 +493,7 @@ lib/kaba/syntax/Node.o : lib/kaba/syntax/Node.cpp lib/kaba/kaba.h lib/base/base.
 lib/kaba/syntax/Parser.o : lib/kaba/syntax/Parser.cpp lib/kaba/syntax/Parser.h
 	$(CPP) -c lib/kaba/syntax/Parser.cpp -o $@ $(CXXFLAGS)
 
-lib/kaba/syntax/parser.o : lib/kaba/syntax/parser.cpp lib/kaba/kaba.h lib/base/base.h lib/base/macros.h lib/base/array.h lib/base/strings.h lib/kaba/asm/asm.h lib/kaba/lib/lib.h lib/kaba/syntax/SyntaxTree.h lib/kaba/syntax/lexical.h lib/kaba/syntax/Class.h lib/kaba/syntax/Constant.h lib/kaba/syntax/Function.h lib/kaba/syntax/Node.h lib/file/file.h lib/file/msg.h lib/file/file_op.h
+lib/kaba/syntax/parser.o : lib/kaba/syntax/parser.cpp lib/kaba/kaba.h lib/base/base.h lib/base/macros.h lib/base/array.h lib/base/strings.h lib/kaba/asm/asm.h lib/kaba/lib/lib.h lib/kaba/syntax/SyntaxTree.h lib/kaba/syntax/lexical.h lib/kaba/syntax/Class.h lib/kaba/syntax/Constant.h lib/kaba/syntax/Function.h lib/kaba/syntax/Node.h lib/file/file.h lib/file/msg.h lib/file/file_op.h lib/hui/Application.h lib/base/map.h lib/base/set.h lib/hui/common.h lib/config.h
 	$(CPP) -c lib/kaba/syntax/parser.cpp -o $@ $(CXXFLAGS)
 
 lib/kaba/syntax/precompiler.o : lib/kaba/syntax/precompiler.cpp lib/kaba/kaba.h lib/base/base.h lib/base/macros.h lib/base/array.h lib/base/strings.h lib/kaba/asm/asm.h lib/kaba/lib/lib.h lib/kaba/syntax/SyntaxTree.h lib/kaba/syntax/lexical.h lib/kaba/syntax/Class.h lib/kaba/syntax/Constant.h lib/kaba/syntax/Function.h lib/kaba/syntax/Node.h lib/file/file.h lib/file/msg.h lib/file/file_op.h
@@ -610,16 +611,18 @@ SourceView.o : SourceView.cpp SourceView.h lib/hui/hui.h lib/hui/common.h lib/co
 	$(CPP) -c SourceView.cpp -o $@ $(CXXFLAGS)
 
 install :
-	mkdir -p /usr/share/sgribthmaker
-	cp -f ../static/hui_resources.txt /usr/share/sgribthmaker
-	cp -f ../static/icon.ico             /usr/share/sgribthmaker
-	cp -f ../static/icon.png             /usr/share/sgribthmaker
-	cp -f ../static/license.txt          /usr/share/sgribthmaker
-	cp -f ../static/license_small.txt    /usr/share/sgribthmaker
-	xdg-mime install ../static/michisoft-sgribthmaker.xml
-	cp ../static/michisoft-sgribthmaker.desktop /usr/share/applications/
+	mkdir -p $(prefix)/share/sgribthmaker
 	xdg-desktop-menu install ../static/michisoft-sgribthmaker.desktop
-	cp $(BIN) /usr/bin
+	xdg-mime install ../static/michisoft-sgribthmaker.xml
+	cp -rf '../static/Icon' $(prefix)/share/sgribthmaker
+	cp -f '../static/hui_resources.txt' $(prefix)/share/sgribthmaker
+	cp -f '../static/icon.ico' $(prefix)/share/sgribthmaker
+	cp -f '../static/icon.png' $(prefix)/share/sgribthmaker
+	cp -f '../static/kaba.ico' $(prefix)/share/sgribthmaker
+	cp -f '../static/kaba.png' $(prefix)/share/sgribthmaker
+	cp -f '../static/license.txt' $(prefix)/share/sgribthmaker
+	cp -f '../static/license_small.txt' $(prefix)/share/sgribthmaker
+	cp $(BIN) $(prefix)/bin
 
 clean :
 	rm -f $(BIN)

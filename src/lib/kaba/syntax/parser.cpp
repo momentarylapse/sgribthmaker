@@ -1,6 +1,7 @@
 #include "../kaba.h"
 #include "../asm/asm.h"
 #include "../../file/file.h"
+#include "../../hui/Application.h"
 #include <stdio.h>
 
 namespace Kaba{
@@ -1611,17 +1612,19 @@ Node *SyntaxTree::parse_block(Block *parent, Block *block)
 }
 
 // local (variable) definitions...
-void SyntaxTree::parse_local_definition(Block *block)
-{
+void SyntaxTree::parse_local_definition(Block *block) {
 	// type of variable
 	const Class *type = parse_type();
-	for (int l=0;!Exp.end_of_line();l++){
+	if (type->needs_constructor() and !type->get_default_constructor())
+		do_error(format("declaring a variable of type '%s' requires a constructor but no default constructor exists", type->name.c_str()));
+
+	for (int l=0;!Exp.end_of_line();l++) {
 		// name
 		block->add_var(Exp.cur, type);
 		Exp.next();
 
 		// assignment?
-		if (Exp.cur == "="){
+		if (Exp.cur == "=") {
 			Exp.rewind();
 			// parse assignment
 			block->add(parse_command(block));
@@ -1675,7 +1678,7 @@ void SyntaxTree::parse_import()
 		string base_name = name.substr(1, name.num - 2); // remove ""
 		string filename = script->filename.dirname() + base_name;
 		if (base_name.head(2) == "@/")
-			filename = "/usr/share/kaba/lib/" + base_name.substr(2, -1); // TODO...
+			filename = hui::Application::directory_static + "lib/" + base_name.substr(2, -1); // TODO...
 		filename = filename.no_recursion();
 
 
