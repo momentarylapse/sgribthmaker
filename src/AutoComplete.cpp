@@ -52,8 +52,8 @@ AutoComplete::Data find_top_level_from_class(const Class *t, const string &yyy)
 		if (e.name.head(yyy.num) == yyy)
 			suggestions.add(e.name, e.type->name + " " + t->name + "." + e.name);
 	for (auto &f: t->functions)
-		if (f.name.head(yyy.num) == yyy)
-			suggestions.add(f.name, f.signature(true));
+		if (f.func->name.head(yyy.num) == yyy)
+			suggestions.add(f.func->name, f.signature(true));
 	return suggestions;
 }
 
@@ -172,7 +172,7 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 					if (e.name == yy[i])
 						types2.add(simplify_type(e.type));
 				for (auto &f: t->functions)
-					if (f.name == yy[i])
+					if (f.func->name == yy[i])
 						types2.add(simplify_type(f.return_type));
 			}
 			types = types2;
