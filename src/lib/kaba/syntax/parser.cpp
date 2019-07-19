@@ -1236,6 +1236,7 @@ Node *SyntaxTree::parse_statement_return(Block *block)
 Node *SyntaxTree::parse_statement_raise(Block *block)
 {
 	throw "jhhhh";
+#if 0
 	Exp.next();
 	Node *cmd = add_node_statement(STATEMENT_RAISE);
 
@@ -1252,6 +1253,8 @@ Node *SyntaxTree::parse_statement_raise(Block *block)
 	}*/
 	expect_new_line();
 	return cmd;
+#endif
+	return nullptr;
 }
 
 // Node structure
@@ -1515,7 +1518,7 @@ Node *SyntaxTree::parse_statement_str(Block *block)
 	auto *c = add_constant(TypeClassP);
 	c->as_int64() = (int64)sub->type;
 
-	Array<Node*> links = get_existence("var2str", nullptr);
+	Array<Node*> links = get_existence("-var2str-", nullptr);
 	Function *f = links[0]->as_func();
 
 	Node *cmd = add_node_call(f);
@@ -1680,9 +1683,9 @@ void SyntaxTree::parse_import()
 		
 	
 	// internal packages?	
-	for (Package &p: Packages)
-		if (p.name == name){
-			AddIncludeData(p.script);
+	for (Script *p: Packages)
+		if (p->filename == name){
+			AddIncludeData(p);
 			return;
 		}
 	

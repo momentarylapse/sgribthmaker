@@ -45,14 +45,14 @@ ParserKaba::ParserKaba()
 	special_words.add(Kaba::IDENTIFIER_EXCEPT);
 	special_words.add(Kaba::IDENTIFIER_PASS);
 	special_words.add("as");
-	for (auto &p: Kaba::Packages){
-		for (auto *c: p.script->syntax->classes)
+	for (auto *p: Kaba::Packages){
+		for (auto *c: p->syntax->classes)
 			types.add(c->name);
-		for (auto *v: p.script->syntax->root_of_all_evil.var)
+		for (auto *v: p->syntax->root_of_all_evil.var)
 			globals.add(v->name);
-		for (auto *c: p.script->syntax->constants)
+		for (auto *c: p->syntax->constants)
 			globals.add(c->name);
-		for (auto *f: p.script->syntax->functions)
+		for (auto *f: p->syntax->functions)
 			if (!f->_class)
 				compiler_functions.add(f->name);
 	}
