@@ -18,7 +18,7 @@
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.8.3";
+string AppVersion = "0.4.8.4";
 
 //#define ALLOW_LOGGING			true
 #define ALLOW_LOGGING			false
@@ -258,6 +258,7 @@ void SgribthMaker::OnCopy()
 
 void SgribthMaker::OnPaste()
 {
+	cur_doc->source_view->DeleteSelection();
 	cur_doc->source_view->InsertAtCursor(hui::Clipboard::Paste());
 	SetMessage(_("pasted"));
 }

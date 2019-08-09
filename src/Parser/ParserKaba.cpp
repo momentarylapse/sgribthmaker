@@ -44,6 +44,11 @@ ParserKaba::ParserKaba()
 	special_words.add(Kaba::IDENTIFIER_TRY);
 	special_words.add(Kaba::IDENTIFIER_EXCEPT);
 	special_words.add(Kaba::IDENTIFIER_PASS);
+	special_words.add(Kaba::IDENTIFIER_LET);
+	compiler_functions.add(Kaba::IDENTIFIER_LEN);
+	compiler_functions.add(Kaba::IDENTIFIER_SIZEOF);
+	compiler_functions.add(Kaba::IDENTIFIER_STR);
+	compiler_functions.add(Kaba::IDENTIFIER_TYPE);
 	special_words.add("as");
 	for (auto *p: Kaba::Packages){
 		for (auto *c: p->syntax->classes)
@@ -56,8 +61,8 @@ ParserKaba::ParserKaba()
 			if (!f->_class)
 				compiler_functions.add(f->name);
 	}
-	for (auto &s: Kaba::Statements)
-		compiler_functions.add(s.name);
+	//for (auto &s: Kaba::Statements)
+	//	special_words.add(s.name);
 }
 
 ParserKaba::~ParserKaba()
