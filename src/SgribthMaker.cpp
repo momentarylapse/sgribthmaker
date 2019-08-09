@@ -173,14 +173,16 @@ void SgribthMaker::OnCloseDocument()
 	}
 
 	int n = MainWin->get_int("tab");
-	MainWin->remove_string("tab", n);
-	delete(documents[n]);
-	documents.erase(n);
-	delete(source_view[n]);
-	source_view.erase(n);
+	hui::RunLater(0.001f, [=]{
+		MainWin->remove_string("tab", n);
+		delete(documents[n]);
+		documents.erase(n);
+		delete(source_view[n]);
+		source_view.erase(n);
 
-	SetActiveDocument(documents.back());
-	UpdateMenu();
+		SetActiveDocument(documents.back());
+		UpdateMenu();
+	});
 }
 
 bool SgribthMaker::LoadFromFile(const string &filename)
