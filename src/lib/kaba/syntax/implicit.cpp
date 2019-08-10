@@ -482,6 +482,7 @@ void add_func_header(SyntaxTree *s, Class *t, const string &name, const Class *r
 {
 	Function *f = s->add_function(name, return_type);
 	f->auto_declared = true;
+	f->is_static = false;
 	foreachi (auto &p, param_types, i){
 		f->literal_param_type.add(p);
 		f->block->add_var(param_names[i], p);
@@ -637,6 +638,9 @@ void SyntaxTree::AutoImplementFunctions(const Class *t)
 			AutoImplementDestructor(prepare_auto_impl(t, t->get_destructor()), t);
 		AutoImplementAssign(prepare_auto_impl(t, t->get_assign()), t);
 	}
+
+	for (auto *c: t->classes)
+		AutoImplementFunctions(c);
 }
 
 

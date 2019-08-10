@@ -51,11 +51,11 @@ ParserKaba::ParserKaba()
 	compiler_functions.add(Kaba::IDENTIFIER_TYPE);
 	special_words.add("as");
 	for (auto *p: Kaba::Packages){
-		for (auto *c: p->syntax->classes)
+		for (auto *c: p->syntax->base_class->classes)
 			types.add(c->name);
-		for (auto *v: p->syntax->root_of_all_evil.var)
+		for (auto *v: p->syntax->root_of_all_evil->var)
 			globals.add(v->name);
-		for (auto *c: p->syntax->constants)
+		for (auto *c: p->syntax->base_class->constants)
 			globals.add(c->name);
 		for (auto *f: p->syntax->functions)
 			if (!f->_class)

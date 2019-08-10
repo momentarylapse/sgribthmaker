@@ -71,7 +71,7 @@ AutoComplete::Data find_top_level(SyntaxTree *syntax, Function *f, const string 
 		if (f->_class)
 			suggestions.append(find_top_level_from_class(f->_class, yyy));
 	}
-	for (auto *v: syntax->root_of_all_evil.var)
+	for (auto *v: syntax->root_of_all_evil->var)
 		if (yyy == v->name.head(yyy.num))
 			suggestions.add(v->name, v->type->name + " " + v->name);
 	if (f){
@@ -80,10 +80,10 @@ AutoComplete::Data find_top_level(SyntaxTree *syntax, Function *f, const string 
 				if (yyy == f->name.head(yyy.num))
 					suggestions.add(f->name, f->signature());
 	}
-	for (auto *c: syntax->constants)
+	for (auto *c: syntax->base_class->constants)
 		if (yyy == c->name.head(yyy.num))
 			suggestions.add(c->name, "const " + c->type->name + " " + c->name);
-	for (auto *t: syntax->classes)
+	for (auto *t: syntax->base_class->classes)
 		if (t->name.find("[") < 0 and t->name.find("*") < 0)
 			if (yyy == t->name.head(yyy.num))
 				suggestions.add(t->name, "class " + t->name);
@@ -92,11 +92,11 @@ AutoComplete::Data find_top_level(SyntaxTree *syntax, Function *f, const string 
 			if (f->name.find(".") < 0)
 				if (yyy == f->name.head(yyy.num))
 					suggestions.add(f->name, f->signature());
-		for (auto *t: i->syntax->classes)
+		for (auto *t: i->syntax->base_class->classes)
 			if (t->name.find("[") < 0 and t->name.find("*") < 0)
 				if (yyy == t->name.head(yyy.num))
 					suggestions.add(t->name, "class " + t->name);
-		for (auto *c: i->syntax->constants)
+		for (auto *c: i->syntax->base_class->constants)
 			if (yyy == c->name.head(yyy.num))
 				suggestions.add(c->name, "const " + c->type->name + " " + c->name);
 	}
@@ -148,7 +148,7 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 		data.append(find_top_level(syntax, f, yy[0]));
 	}else{
 		if (!f)
-			f = &syntax->root_of_all_evil;
+			f = syntax->root_of_all_evil;
 
 		//printf("first:  %s\n", yy[0].c_str());
 	//	if (syntax->blocks.num == 0)
@@ -157,7 +157,7 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 
 		// base layer
 		Array<const Class*> types;
-		auto nodes = syntax->get_existence(yy[0], guess_block(syntax, f));
+		auto nodes = syntax->get_existence(yy[0], guess_block(syntax, f), syntax->base_class, false);
 		//printf("res: %d\n", nodes.num);
 		for (auto *n: nodes){
 			//printf("%s\n", n.type->name.c_str());
