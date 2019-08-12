@@ -24,7 +24,7 @@
 
 namespace Kaba{
 
-string Version = "0.17.2.12";
+string Version = "0.17.3.0";
 
 //#define ScriptDebug
 
@@ -403,6 +403,10 @@ Array<Variable*> Script::variables() {
 
 Array<Constant*> Script::constants() {
 	return syntax->base_class->constants;
+}
+
+const Class *Script::base_class() {
+	return syntax->base_class;
 }
 
 };
