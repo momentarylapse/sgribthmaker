@@ -39,7 +39,7 @@ void _ParseFunctionBody(SyntaxTree *syntax, Function *f)
 
 // instructions
 	while(more_to_parse){
-		more_to_parse = syntax->ParseFunctionCommand(f, this_line);
+		more_to_parse = syntax->parse_function_command(f, this_line);
 	}
 }
 
@@ -51,55 +51,57 @@ AutoComplete::Data find_top_level_from_class(const Class *t, const string &yyy)
 	for (auto &e: t->elements)
 		if (e.name.head(yyy.num) == yyy)
 			suggestions.add(e.name, e.type->name + " " + t->name + "." + e.name);
-	for (auto &f: t->functions)
-		if (f.func->name.head(yyy.num) == yyy)
-			suggestions.add(f.func->name, f.signature(true));
+	for (auto *f: t->member_functions)
+		if (f->name.head(yyy.num) == yyy)
+			suggestions.add(f->name, f->signature());
+	for (auto *f: t->static_functions)
+		if (f->name.head(yyy.num) == yyy)
+			suggestions.add(f->name, f->signature());
+	for (auto *c: t->classes)
+		if (c->name.find("[") < 0 and c->name.find("*") < 0)
+			if (c->name.head(yyy.num) == yyy)
+				suggestions.add(c->name, "class " + c->long_name());
+	for (auto *c: t->constants)
+		if (c->name.head(yyy.num) == yyy)
+			suggestions.add(c->name, "const " + c->type->long_name() + " " + c->name);
 	return suggestions;
 }
 
 AutoComplete::Data find_top_level(SyntaxTree *syntax, Function *f, const string &yyy)
 {
 	AutoComplete::Data suggestions;
+	
+	// general expressions
 	Array<string> expressions = {"class", "extends", "while", "virtual", "extern", "override", "enum", "and", "or", "while", "for", "if", "else", "const", "new", "delete", "break", "continue", "return", "pass"};
 	for (string &e: expressions)
 		if (yyy == e.head(yyy.num))
 			suggestions.add(e, e);
+			
+	// function local
 	if (f){
 		for (auto *v: f->var)
 			if (yyy == v->name.head(yyy.num))
 				suggestions.add(v->name, v->type->name + " " + v->name);
-		if (f->_class)
-			suggestions.append(find_top_level_from_class(f->_class, yyy));
+		if (f->name_space)
+			suggestions.append(find_top_level_from_class(f->name_space, yyy));
 	}
+	
+	// global var
 	for (auto *v: syntax->root_of_all_evil->var)
 		if (yyy == v->name.head(yyy.num))
 			suggestions.add(v->name, v->type->name + " " + v->name);
 	if (f){
-		for (auto *f: syntax->functions)
+		for (auto *f: syntax->base_class->static_functions)
 			if (f->name.find(".") < 0)
 				if (yyy == f->name.head(yyy.num))
 					suggestions.add(f->name, f->signature());
 	}
-	for (auto *c: syntax->base_class->constants)
-		if (yyy == c->name.head(yyy.num))
-			suggestions.add(c->name, "const " + c->type->name + " " + c->name);
-	for (auto *t: syntax->base_class->classes)
-		if (t->name.find("[") < 0 and t->name.find("*") < 0)
-			if (yyy == t->name.head(yyy.num))
-				suggestions.add(t->name, "class " + t->name);
-	for (auto *i: syntax->includes){
-		for (auto *f: i->syntax->functions)
-			if (f->name.find(".") < 0)
-				if (yyy == f->name.head(yyy.num))
-					suggestions.add(f->name, f->signature());
-		for (auto *t: i->syntax->base_class->classes)
-			if (t->name.find("[") < 0 and t->name.find("*") < 0)
-				if (yyy == t->name.head(yyy.num))
-					suggestions.add(t->name, "class " + t->name);
-		for (auto *c: i->syntax->base_class->constants)
-			if (yyy == c->name.head(yyy.num))
-				suggestions.add(c->name, "const " + c->type->name + " " + c->name);
-	}
+	
+	
+	suggestions.append(find_top_level_from_class(syntax->base_class, yyy));
+	
+	for (auto *i: syntax->includes)
+		suggestions.append(find_top_level_from_class(i->syntax->base_class, yyy));
 	return suggestions;
 }
 
@@ -123,11 +125,16 @@ Block* guess_block(SyntaxTree *syntax, Function *f)
 	//syntax->blocks.back()
 }
 
-const Kaba::Class *simplify_type(const Kaba::Class *c)
-{
+const Kaba::Class *simplify_type(const Kaba::Class *c) {
 	if (c->is_pointer())
 		return c->parent;
 	return c;
+}
+
+const Kaba::Class *node_namespace(Kaba::Node *n) {
+	if (n->kind == KIND_CLASS)
+		return n->as_class();
+	return simplify_type(n->type);
 }
 
 AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &cur_line)
@@ -161,7 +168,7 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 		//printf("res: %d\n", nodes.num);
 		for (auto *n: nodes){
 			//printf("%s\n", n.type->name.c_str());
-			types.add(simplify_type(n->type));
+			types.add(node_namespace(n));
 		}
 
 		// middle layers
@@ -171,9 +178,18 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 				for (auto &e: t->elements)
 					if (e.name == yy[i])
 						types2.add(simplify_type(e.type));
-				for (auto &f: t->functions)
-					if (f.func->name == yy[i])
-						types2.add(simplify_type(f.return_type));
+				for (auto *f: t->member_functions)
+					if (f->name == yy[i])
+						types2.add(simplify_type(f->literal_return_type));
+				for (auto *f: t->static_functions)
+					if (f->name == yy[i])
+						types2.add(simplify_type(f->literal_return_type));
+				for (auto *c: t->constants)
+					if (c->name == yy[i])
+						types2.add(simplify_type(c->type));
+				for (auto *c: t->classes)
+					if (c->name == yy[i])
+						types2.add(simplify_type(c));
 			}
 			types = types2;
 		}
@@ -217,7 +233,7 @@ AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos)
 		s->syntax->Exp.Analyse(s->syntax, code + string("\0", 1)); // compatibility... expected by lexical
 
 		//printf("--b\n");
-		s->syntax->PreCompiler(true);
+		s->syntax->pre_compiler(true);
 
 		//printf("--c\n");
 		s->syntax->parse_top_level();

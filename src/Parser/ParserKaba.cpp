@@ -57,9 +57,8 @@ ParserKaba::ParserKaba()
 			globals.add(v->name);
 		for (auto *c: p->syntax->base_class->constants)
 			globals.add(c->name);
-		for (auto *f: p->syntax->functions)
-			if (f->is_static)
-				compiler_functions.add(f->name);
+		for (auto *f: p->syntax->base_class->static_functions)
+			compiler_functions.add(f->name);
 	}
 	//for (auto &s: Kaba::Statements)
 	//	special_words.add(s.name);
