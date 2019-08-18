@@ -64,6 +64,8 @@ Class::Class(const string &_name, int _size, SyntaxTree *_owner, const Class *_p
 	name_space = nullptr;
 	force_call_by_value = false;
 	fully_parsed = true;
+	_amd64_allow_pass_in_xmm = false;
+	_logical_line_no = _exp_no = -1;
 	_vtable_location_target_ = nullptr;
 	_vtable_location_compiler_ = nullptr;
 	_vtable_location_external_ = nullptr;
@@ -72,8 +74,17 @@ Class::Class(const string &_name, int _size, SyntaxTree *_owner, const Class *_p
 Class::~Class() {
 	for (auto *c: constants)
 		delete c;
+	for (auto *v: static_variables)
+		delete v;
+	for (auto *f: member_functions)
+		if (f->owner == owner)
+			delete f;
+	for (auto *f: static_functions)
+		if (f->owner == owner)
+			delete f;
 	for (auto *c: classes)
-		delete c;
+		if (c->owner == owner)
+			delete c;
 }
 
 
@@ -109,6 +120,8 @@ bool Class::uses_call_by_reference() const {
 }
 
 bool Class::uses_return_by_memory() const {
+	if (_amd64_allow_pass_in_xmm)
+		return false;
 	return (!force_call_by_value and !is_pointer()) or is_array();
 }
 
@@ -161,7 +174,7 @@ const Class *Class::get_array_element() const {
 }
 
 bool Class::needs_constructor() const {
-	if (!uses_call_by_reference())
+	if (!uses_call_by_reference()) // int/float/pointer etc
 		return false;
 	if (is_super_array() or is_dict())
 		return true;

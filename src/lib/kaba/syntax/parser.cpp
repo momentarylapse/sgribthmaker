@@ -303,17 +303,20 @@ void SyntaxTree::make_func_node_callable(Node *l, bool check) {
 }
 
 Array<Node*> SyntaxTree::make_class_node_callable(const Class *t, Block *block) {
-	/*if ((t == TypeVector) or (t == TypeColor) or (t == TypeRect) or (t == TypeComplex)) {
-
-		return;
-	}*/
-	auto *vv = block->add_var(block->function->create_slightly_hidden_name(), t);
-	vv->dont_add_constructor = true;
-	Node *dummy = add_node_local_var(vv);
+	// shortcut??? (inlineable)
+	if ((t == TypeVector) or (t == TypeColor) or (t == TypeRect) or (t == TypeComplex)) {
+		for (auto *f: t->static_functions)
+			if (f->name == "create")
+				return {add_node_call(f)};
+	}
+	
+	// constructor
+	//auto *vv = block->add_var(block->function->create_slightly_hidden_name(), t);
+	//vv->explicitly_constructed = true;
+	//Node *dummy = add_node_local_var(vv);
 	Array<Node*> links;
 	for (auto *cf: t->get_constructors()) {
-		Node *n = add_node_member_call(cf, ref_node(dummy));
-		//links.add(exlink_make_func_class(this, block->function, *cf));
+		Node *n = add_node_member_call(cf, nullptr /*ref_node(dummy)*/); // temp var added later...
 		n->kind = KIND_CONSTRUCTOR_AS_FUNCTION;
 		n->type = t;
 		links.add(n);
@@ -324,7 +327,7 @@ Array<Node*> SyntaxTree::make_class_node_callable(const Class *t, Block *block) 
 Node *SyntaxTree::parse_operand_extension_call(Array<Node*> links, Block *block, bool check)
 {
 	// parse all parameters
-	Array<Node*> params = parse_call_parameters(block);
+	auto params = parse_call_parameters(block);
 
 	// make links callable
 	for (Node *l: links){
@@ -2067,21 +2070,23 @@ void SyntaxTree::parse_global_const(const string &name, const Class *type)
 	//c_orig->name = name;
 }
 
-void SyntaxTree::parse_variable_def(bool single, Block *block)
-{
+void SyntaxTree::parse_variable_def(bool single, Block *block) {
 	const Class *type = parse_type(block->name_space()); // force
 
-	for (int j=0;true;j++){
+	for (int j=0;true;j++) {
 		expect_no_new_line();
 
 		// name
 		string name = Exp.cur;
 		Exp.next();
 
-		if (next_const){
+		if (next_const) {
 			parse_global_const(name, type);
-		}else
-			block->add_var(name, type);
+		} else {
+			auto *v = new Variable(name, type);
+			v->is_extern = next_extern;
+			base_class->static_variables.add(v);
+		}
 
 		if ((Exp.cur != ",") and (!Exp.end_of_line()))
 			do_error("\",\" or newline expected after definition of a global variable");
