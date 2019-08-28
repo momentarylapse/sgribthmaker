@@ -13,12 +13,13 @@
 
 ParserKaba::ParserKaba()
 {
-	macro_begin = "#";
-	line_comment_begin = "//";
+	macro_begin = "#define";
+	line_comment_begin = "#";
 	special_words.add(Kaba::IDENTIFIER_ENUM);
 	special_words.add(Kaba::IDENTIFIER_CLASS);
 	special_words.add(Kaba::IDENTIFIER_EXTENDS);
 	special_words.add(Kaba::IDENTIFIER_USE);
+	special_words.add(Kaba::IDENTIFIER_ASM);
 	special_words.add("import");
 	special_words.add(Kaba::IDENTIFIER_IF);
 	special_words.add(Kaba::IDENTIFIER_ELSE);

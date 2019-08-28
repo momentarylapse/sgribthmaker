@@ -230,7 +230,7 @@ AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos)
 
 
 		//printf("--a\n");
-		s->syntax->Exp.Analyse(s->syntax, code + string("\0", 1)); // compatibility... expected by lexical
+		s->syntax->Exp.analyse(s->syntax, code + string("\0", 1)); // compatibility... expected by lexical
 
 		//printf("--b\n");
 		s->syntax->pre_compiler(true);
