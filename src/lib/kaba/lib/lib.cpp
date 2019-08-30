@@ -28,7 +28,10 @@
 
 namespace Kaba{
 
-string LibVersion = "0.17.6.0";
+string LibVersion = "0.17.6.2";
+
+
+bool call_function(Function *f, void *ff, void *ret, void *inst, const Array<void*> &param);
 
 const string IDENTIFIER_CLASS = "class";
 const string IDENTIFIER_FUNC_INIT = "__init__";
@@ -76,6 +79,8 @@ const string IDENTIFIER_IS = "is";
 const string IDENTIFIER_ASM = "asm";
 const string IDENTIFIER_MAP = "map";
 const string IDENTIFIER_LAMBDA = "lambda";
+const string IDENTIFIER_SORTED = "sorted";
+const string IDENTIFIER_FILTER = "filter";
 
 CompilerConfiguration config;
 
@@ -495,12 +500,11 @@ bool _cdecl _Pointer2Bool(void *p)
 #pragma GCC optimize("0")
 
 template<class T>
-void _ultra_sort(DynamicArray &array, int offset_by)
-{
+void _kaba_array_sort(DynamicArray &array, int offset_by) {
 	T *p = (T*)((char*)array.data + offset_by);
-	for (int i=0; i<array.num; i++){
+	for (int i=0; i<array.num; i++) {
 		T *q = (T*)((char*)p + array.element_size);
-		for (int j=i+1; j<array.num; j++){
+		for (int j=i+1; j<array.num; j++) {
 			if (*p > *q)
 				array.simple_swap(i, j);
 			q = (T*)((char*)q + array.element_size);
@@ -510,13 +514,12 @@ void _ultra_sort(DynamicArray &array, int offset_by)
 }
 
 template<class T>
-void _ultra_sort_p(DynamicArray &array, int offset_by)
-{
+void _kaba_array_sort_p(DynamicArray &array, int offset_by) {
 	char **p = (char**)array.data;
-	for (int i=0; i<array.num; i++){
+	for (int i=0; i<array.num; i++) {
 		T *pp = (T*)(*p + offset_by);
 		char **q = p + 1;
-		for (int j=i+1; j<array.num; j++){
+		for (int j=i+1; j<array.num; j++) {
 			T *qq = (T*)(*q + offset_by);
 			if (*pp > *qq){
 				array.simple_swap(i, j);
@@ -528,60 +531,129 @@ void _ultra_sort_p(DynamicArray &array, int offset_by)
 	}
 }
 
-void _cdecl ultra_sort(DynamicArray &array, const Class *type, const string &by)
-{
+void kaba_var_assign(void *pa, const void *pb, const Class *type) {
+	//msg_write("assign " + type->long_name());
+	if ((type == TypeInt) or (type == TypeFloat32)) {
+		*(int*)pa = *(int*)pb;
+	} else if ((type == TypeBool) or (type == TypeChar)) {
+		*(char*)pa = *(char*)pb;
+	} else if (type->is_pointer()) {
+		*(void**)pa = *(void**)pb;
+	} else {
+		auto *f = type->get_assign();
+		if (!f)
+			kaba_raise_exception(new KabaException("can not assign variables of type " + type->long_name()));
+		typedef void func_t(void*, const void*);
+		auto *ff = (func_t*)f->address;
+		ff(pa, pb);
+	}
+}
+
+void kaba_var_init(void *p, const Class *type) {
+	//msg_write("init " + type->long_name());
+	if (!type->needs_constructor())
+		return;
+	auto *f = type->get_default_constructor();
+	if (!f)
+		kaba_raise_exception(new KabaException("can not init a variable of type " + type->long_name()));
+	typedef void func_t(void*);
+	auto *ff = (func_t*)f->address;
+	ff(p);
+}
+
+void kaba_array_add(DynamicArray &array, void *p, const Class *type) {
+	//msg_write("array add " + type->long_name());
+	if ((type == TypeIntList) or (type == TypeFloatList)) {
+		array.append_4_single(*(int*)p);
+	} else if (type == TypeBoolList) {
+		array.append_1_single(*(char*)p);
+	} else {
+		auto *f = type->get_func("add", TypeVoid, {type->parent});
+		if (!f)
+			kaba_raise_exception(new KabaException("can not add to array type " + type->long_name()));
+		typedef void func_t(void*, const void*);
+		auto *ff = (func_t*)f->address;
+		ff(&array, p);
+	}
+}
+
+DynamicArray _cdecl kaba_array_sort(DynamicArray &array, const Class *type, const string &by) {
 	if (!type->is_super_array())
 		kaba_raise_exception(new KabaException("type '" + type->name + "' is not an array"));
 	const Class *el = type->parent;
 	if (array.element_size != el->size)
 		kaba_raise_exception(new KabaException("element type size mismatch..."));
 
+	DynamicArray rr;
+	kaba_var_init(&rr, type);
+	kaba_var_assign(&rr, &array, type);
+
 	const Class *rel = el;
 
-	if (el->is_pointer()){
+	if (el->is_pointer())
 		rel = el->parent;
+
+	int offset = -1;
+	const Class *by_type = nullptr;
+	if (by == "") {
+		offset = 0;
+		by_type = rel;
+	} else {
+		for (auto &e: rel->elements)
+			if (e.name == by) {
+				by_type = e.type;
+				offset = e.offset;
+			}
+		if (!by_type)
+			kaba_raise_exception(new KabaException("type '" + rel->name + "' does not have an element '" + by + "'"));
 	}
 
-	ClassElement *ell = nullptr;
-	for (auto &e: rel->elements)
-		if (e.name == by)
-			ell = &e;
-	if (!ell)
-		kaba_raise_exception(new KabaException("type '" + rel->name + "' does not have an element '" + by + "'"));
-	int offset = ell->offset;
 
-
-	if (el->is_pointer()){
-		if (ell->type == TypeString)
-			_ultra_sort_p<string>(array, offset);
-		else if (ell->type == TypeInt)
-			_ultra_sort_p<int>(array, offset);
-		else if (ell->type == TypeFloat)
-			_ultra_sort_p<float>(array, offset);
-		else if (ell->type == TypeBool)
-			_ultra_sort_p<bool>(array, offset);
+	if (el->is_pointer()) {
+		if (by_type == TypeString)
+			_kaba_array_sort_p<string>(rr, offset);
+		else if (by_type == TypeInt)
+			_kaba_array_sort_p<int>(rr, offset);
+		else if (by_type == TypeFloat)
+			_kaba_array_sort_p<float>(rr, offset);
+		else if (by_type == TypeBool)
+			_kaba_array_sort_p<bool>(rr, offset);
 		else
-			kaba_raise_exception(new KabaException("can't sort by '" + ell->name + " " + by + "'"));
-	}else{
-		if (ell->type == TypeString)
-			_ultra_sort<string>(array, offset);
-		else if (ell->type == TypeInt)
-			_ultra_sort<int>(array, offset);
-		else if (ell->type == TypeFloat)
-			_ultra_sort<float>(array, offset);
-		else if (ell->type == TypeBool)
-			_ultra_sort<bool>(array, offset);
+			kaba_raise_exception(new KabaException("can't sort by type '" + by_type->long_name() + "' yet"));
+	} else {
+		if (by_type == TypeString)
+			_kaba_array_sort<string>(rr, offset);
+		else if (by_type == TypeInt)
+			_kaba_array_sort<int>(rr, offset);
+		else if (by_type == TypeFloat)
+			_kaba_array_sort<float>(rr, offset);
+		else if (by_type == TypeBool)
+			_kaba_array_sort<bool>(rr, offset);
 		else
-			kaba_raise_exception(new KabaException("can't sort by '" + ell->name + " " + by + "'"));
+			kaba_raise_exception(new KabaException("can't sort by type '" + by_type->long_name() + "' yet"));
 	}
+	return rr;
 }
 
-string _cdecl var2str(const void *var, const Class *type)
-{
+DynamicArray _cdecl kaba_array_filter(Function *f, DynamicArray &array, const Class *type) {
+	DynamicArray rr;
+	kaba_var_init(&rr, type);
+
+	for (int i=0; i<array.num; i++) {
+		bool filter_pass = false;
+		void *pa = (char*)array.data + i * array.element_size;
+		bool ok = call_function(f, f->address, &filter_pass, nullptr, {pa});
+		if (!ok)
+			kaba_raise_exception(new KabaException("can not call filter function " + f->signature()));
+		if (filter_pass)
+			kaba_array_add(rr, pa, type);
+	}
+	return rr;
+}
+
+string _cdecl var2str(const void *var, const Class *type) {
 	return type->var2str(var);
 }
-
-bool call_function(Function *f, void *ff, void *ret, void *inst, Array<void*> param);
 
 DynamicArray kaba_map(Function *func, DynamicArray *a) {
 	DynamicArray r;
@@ -620,21 +692,27 @@ string _cdecl kaba_shell_execute(const string &cmd)
 #pragma GCC pop_options
 
 
-Array<Statement> Statements;
+Array<Statement*> Statements;
 
 Function *add_func(const string &name, const Class *return_type, void *func, ScriptFlag flag) {
 	add_class(cur_package->base_class());
 	return class_add_func(name, return_type, func, flag);
 }
 
-int add_statement(const string &name, int index, int num_params = 0) {
-	Statement s;
-	s.name = name;
-	s.num_params = num_params;
-	if (Statements.num < NUM_STATEMENTS)
-		Statements.resize(NUM_STATEMENTS);
-	Statements[index] = s;
-	return index;
+Statement *statement_from_id(StatementID id) {
+	for (auto *s: Statements)
+		if (s->id == id)
+			return s;
+	return nullptr;
+}
+
+int add_statement(const string &name, StatementID id, int num_params = 0) {
+	Statement *s = new Statement;
+	s->name = name;
+	s->id = id;
+	s->num_params = num_params;
+	Statements.add(s);
+	return 0;
 }
 
 void func_set_inline(int index)
@@ -1292,7 +1370,8 @@ void SIAddPackageKaba() {
 	TypeFunctionCode	= add_type  ("func", 32); // whatever
 	TypeFunctionCodeP	= add_type_p("func*", TypeFunctionCode);
 	auto *TypeStatement = add_type  ("Statement", sizeof(Statement));
-	auto *TypeStatementList = add_type_a("Statement[]", TypeStatement, -1);
+	auto *TypeStatementP= add_type_p("Statement*", TypeStatement);
+	auto *TypeStatementPList = add_type_a("Statement*[]", TypeStatementP, -1);
 		
 
 	auto *TypeScript = add_type  ("Script", sizeof(Script));
@@ -1378,44 +1457,45 @@ void SIAddPackageKaba() {
 	
 	add_class(TypeStatement);
 		class_add_elementx("name", TypeString, &Statement::name);
+		class_add_elementx("id", TypeInt, &Statement::id);
 		class_add_elementx("num_params", TypeInt, &Statement::num_params);
 		
 	add_class(TypeClassElementList);
 		class_add_funcx(IDENTIFIER_FUNC_INIT, TypeVoid, &Array<ClassElement>::__init__);
-	add_class(TypeStatementList);
-		class_add_funcx(IDENTIFIER_FUNC_INIT, TypeVoid, &Array<Statement>::__init__);
 
 	add_funcx("get_dynamic_type", TypeClassP, &GetDynamicType, FLAG_STATIC);
 		func_add_param("p", TypePointer);
 
 	add_ext_var("packages", TypeScriptPList, (void*)&Packages);
-	add_ext_var("statements", TypeStatementList, (void*)&Statements);
+	add_ext_var("statements", TypeStatementPList, (void*)&Statements);
 }
 
 
 void SIAddBasicCommands() {
 	// statements
-	add_statement(IDENTIFIER_RETURN, STATEMENT_RETURN); // return: ParamType will be defined by the parser!
-	add_statement(IDENTIFIER_IF, STATEMENT_IF, 2);
-	add_statement("-if/else-", STATEMENT_IF_ELSE, 3);
-	add_statement(IDENTIFIER_WHILE, STATEMENT_WHILE, 2);
-	add_statement(IDENTIFIER_FOR, STATEMENT_FOR, 4); // internally like a while-loop... but a bit different...
-	add_statement(IDENTIFIER_BREAK, STATEMENT_BREAK);
-	add_statement(IDENTIFIER_CONTINUE, STATEMENT_CONTINUE);
-	add_statement(IDENTIFIER_NEW, STATEMENT_NEW);
-	add_statement(IDENTIFIER_DELETE, STATEMENT_DELETE, 1);
-	add_statement(IDENTIFIER_SIZEOF, STATEMENT_SIZEOF, 1);
-	add_statement(IDENTIFIER_TYPE, STATEMENT_TYPE, 1);
-	add_statement(IDENTIFIER_STR, STATEMENT_STR, 1);
-	add_statement(IDENTIFIER_LEN, STATEMENT_LEN, 1);
-	add_statement(IDENTIFIER_LET, STATEMENT_LET);
-	add_statement(IDENTIFIER_ASM, STATEMENT_ASM);
-	//add_statement(IDENTIFIER_RAISE, STATEMENT_RAISE); NOPE, now it's a function!
-	add_statement(IDENTIFIER_TRY, STATEMENT_TRY); // return: ParamType will be defined by the parser!
-	add_statement(IDENTIFIER_EXCEPT, STATEMENT_EXCEPT); // return: ParamType will be defined by the parser!
-	add_statement(IDENTIFIER_PASS, STATEMENT_PASS);
-	add_statement(IDENTIFIER_MAP, STATEMENT_MAP);
-	add_statement(IDENTIFIER_LAMBDA, STATEMENT_LAMBDA);
+	add_statement(IDENTIFIER_RETURN, StatementID::RETURN); // return: ParamType will be defined by the parser!
+	add_statement(IDENTIFIER_IF, StatementID::IF, 2);
+	add_statement("-if/else-", StatementID::IF_ELSE, 3);
+	add_statement(IDENTIFIER_WHILE, StatementID::WHILE, 2);
+	add_statement(IDENTIFIER_FOR, StatementID::FOR, 4); // internally like a while-loop... but a bit different...
+	add_statement(IDENTIFIER_BREAK, StatementID::BREAK);
+	add_statement(IDENTIFIER_CONTINUE, StatementID::CONTINUE);
+	add_statement(IDENTIFIER_NEW, StatementID::NEW);
+	add_statement(IDENTIFIER_DELETE, StatementID::DELETE, 1);
+	add_statement(IDENTIFIER_SIZEOF, StatementID::SIZEOF, 1);
+	add_statement(IDENTIFIER_TYPE, StatementID::TYPE, 1);
+	add_statement(IDENTIFIER_STR, StatementID::STR, 1);
+	add_statement(IDENTIFIER_LEN, StatementID::LEN, 1);
+	add_statement(IDENTIFIER_LET, StatementID::LET);
+	add_statement(IDENTIFIER_ASM, StatementID::ASM);
+	//add_statement(IDENTIFIER_RAISE, StatementID::RAISE); NOPE, now it's a function!
+	add_statement(IDENTIFIER_TRY, StatementID::TRY); // return: ParamType will be defined by the parser!
+	add_statement(IDENTIFIER_EXCEPT, StatementID::EXCEPT); // return: ParamType will be defined by the parser!
+	add_statement(IDENTIFIER_PASS, StatementID::PASS);
+	add_statement(IDENTIFIER_MAP, StatementID::MAP);
+	add_statement(IDENTIFIER_LAMBDA, StatementID::LAMBDA);
+	add_statement(IDENTIFIER_SORTED, StatementID::SORTED);
+	add_statement(IDENTIFIER_FILTER, StatementID::FILTER);
 }
 
 
@@ -1655,14 +1735,18 @@ void SIAddCommands() {
 		func_add_param("cmd", TypeString);
 
 
-	add_func("sort_list", TypeVoid, (void*)&ultra_sort, ScriptFlag(FLAG_RAISES_EXCEPTIONS | FLAG_STATIC));
+	add_func("-sorted-", TypeDynamicArray, (void*)&kaba_array_sort, ScriptFlag(FLAG_RAISES_EXCEPTIONS | FLAG_STATIC));
 		func_add_param("list", TypePointer);
 		func_add_param("class", TypeClassP);
 		func_add_param("by", TypeString);
+	add_func("-filter-", TypeDynamicArray, (void*)&kaba_array_filter, ScriptFlag(FLAG_RAISES_EXCEPTIONS | FLAG_STATIC));
+		func_add_param("func", TypeFunctionP);
+		func_add_param("list", TypePointer);
+		func_add_param("class", TypeClassP);
 	add_func("-var2str-", TypeString, (void*)var2str, ScriptFlag(FLAG_RAISES_EXCEPTIONS | FLAG_STATIC));
 		func_add_param("var", TypePointer);
 		func_add_param("class", TypeClassP);
-	add_func("-map-", TypeIntList/*TypeDynamicArray*/, (void*)kaba_map, ScriptFlag(FLAG_RAISES_EXCEPTIONS | FLAG_STATIC));
+	add_func("-map-", TypeDynamicArray, (void*)kaba_map, ScriptFlag(FLAG_RAISES_EXCEPTIONS | FLAG_STATIC));
 		func_add_param("func", TypeFunctionP);
 		func_add_param("array", TypePointer);
 

@@ -26,6 +26,7 @@ class Variable;
 class Node;
 class Constant;
 class Block;
+enum class StatementID;
 
 
 // macros
@@ -85,7 +86,7 @@ public:
 	void parse_variable_def(bool single, Block *block);
 	void parse_global_const(const string &name, const Class *type);
 	int which_primitive_operator(const string &name);
-	int which_statement(const string &name);
+	Statement *which_statement(const string &name);
 	const Class *which_owned_class(const string &name);
 
 	// pre compiler
@@ -159,6 +160,8 @@ public:
 	Node *parse_statement_let(Block *block);
 	Node *parse_statement_map(Block *block);
 	Node *parse_statement_lambda(Block *block);
+	Node *parse_statement_sorted(Block *block);
+	Node *parse_statement_filter(Block *block);
 
 	void create_asm_meta_info();
 
@@ -178,7 +181,7 @@ public:
 	Function *add_function(const string &name, const Class *type, const Class *name_space, bool is_static);
 
 	// nodes
-	Node *add_node_statement(int index);
+	Node *add_node_statement(StatementID id);
 	Node *add_node_member_call(Function *f, Node *inst, bool force_non_virtual = false);
 	Node *add_node_func_name(Function *f);
 	Node *add_node_call(Function *f);
