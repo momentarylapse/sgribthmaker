@@ -113,7 +113,7 @@ Block* guess_block(SyntaxTree *syntax, Function *f)
 	/*while (true){
 		Block *b_next = nullptr;
 		for (auto *n: b->nodes){
-			if (n->kind == KIND_BLOCK)
+			if (n->kind == NodeKind::BLOCK)
 				b_next = n->as_block();
 		}
 		if (b_next)
@@ -132,7 +132,7 @@ const Kaba::Class *simplify_type(const Kaba::Class *c) {
 }
 
 const Kaba::Class *node_namespace(Kaba::Node *n) {
-	if (n->kind == KIND_CLASS)
+	if (n->kind == NodeKind::CLASS)
 		return n->as_class();
 	return simplify_type(n->type);
 }
