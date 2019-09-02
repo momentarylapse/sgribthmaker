@@ -53,7 +53,6 @@ ParserKaba::ParserKaba()
 	compiler_functions.add(Kaba::IDENTIFIER_TYPE);
 	compiler_functions.add(Kaba::IDENTIFIER_MAP);
 	compiler_functions.add(Kaba::IDENTIFIER_SORTED);
-	compiler_functions.add(Kaba::IDENTIFIER_FILTER);
 	special_words.add("as");
 	for (auto *p: Kaba::Packages){
 		for (auto *c: p->syntax->base_class->classes)
