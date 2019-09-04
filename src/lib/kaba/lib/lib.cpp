@@ -17,6 +17,7 @@
 #include "exception.h"
 #include "../../config.h"
 #include "../../math/complex.h"
+#include "../../any/any.h"
 
 
 
@@ -28,7 +29,7 @@
 
 namespace Kaba{
 
-string LibVersion = "0.17.7.1";
+string LibVersion = "0.17.7.4";
 
 
 bool call_function(Function *f, void *ff, void *ret, void *inst, const Array<void*> &param);
@@ -80,6 +81,7 @@ const string IDENTIFIER_ASM = "asm";
 const string IDENTIFIER_MAP = "map";
 const string IDENTIFIER_LAMBDA = "lambda";
 const string IDENTIFIER_SORTED = "sorted";
+const string IDENTIFIER_DYN = "dyn";
 
 CompilerConfiguration config;
 
@@ -130,6 +132,9 @@ const Class *TypeVector;
 const Class *TypeRect;
 const Class *TypeColor;
 const Class *TypeQuaternion;
+const Class *TypeAny;
+const Class *TypeAnyList;
+const Class *TypeAnyDict;
  // internal:
 const Class *TypeDynamicArray;
 const Class *TypeDictBase;
@@ -560,6 +565,24 @@ void kaba_var_init(void *p, const Class *type) {
 	ff(p);
 }
 
+void kaba_array_clear(void *p, const Class *type) {
+	auto *f = type->get_func("clear", TypeVoid, {});
+	if (!f)
+		kaba_raise_exception(new KabaException("can not clear an array of type " + type->long_name()));
+	typedef void func_t(void*);
+	auto *ff = (func_t*)f->address;
+	ff(p);
+}
+
+void kaba_array_resize(void *p, const Class *type, int num) {
+	auto *f = type->get_func("resize", TypeVoid, {TypeInt});
+	if (!f)
+		kaba_raise_exception(new KabaException("can not resize an array of type " + type->long_name()));
+	typedef void func_t(void*, int);
+	auto *ff = (func_t*)f->address;
+	ff(p, num);
+}
+
 void kaba_array_add(DynamicArray &array, void *p, const Class *type) {
 	//msg_write("array add " + type->long_name());
 	if ((type == TypeIntList) or (type == TypeFloatList)) {
@@ -636,6 +659,42 @@ DynamicArray _cdecl kaba_array_sort(DynamicArray &array, const Class *type, cons
 
 string _cdecl var2str(const void *var, const Class *type) {
 	return type->var2str(var);
+}
+
+Any _cdecl kaba_dyn(const void *var, const Class *type) {
+	if (type == TypeInt)
+		return Any(*(int*)var);
+	if (type == TypeFloat)
+		return Any(*(float*)var);
+	if (type == TypeBool)
+		return Any(*(bool*)var);
+	if (type == TypeString)
+		return Any(*(string*)var);
+	if (type->is_pointer())
+		return Any(*(void**)var);
+	if (type->is_array()) {
+		Any a;
+		auto *t_el = type->get_array_element();
+		for (int i=0; i<type->array_length; i++)
+			a.add(kaba_dyn((char*)var + t_el->size * i, t_el));
+		return a;
+	}
+	if (type->is_super_array()) {
+		Any a;
+		auto *ar = (DynamicArray*)var;
+		auto *t_el = type->get_array_element();
+		for (int i=0; i<ar->num; i++)
+			a.add(kaba_dyn((char*)ar->data + ar->element_size * i, t_el));
+		return a;
+	}
+	
+	// class
+	Any a;
+	for (auto &e: type->elements) {
+		if (!e.hidden)
+			a.map_set(e.name, kaba_dyn((char*)var + e.offset, e.type));
+	}
+	return a;
 }
 
 DynamicArray kaba_map(Function *func, DynamicArray *a) {
@@ -1478,6 +1537,7 @@ void SIAddBasicCommands() {
 	add_statement(IDENTIFIER_MAP, StatementID::MAP);
 	add_statement(IDENTIFIER_LAMBDA, StatementID::LAMBDA);
 	add_statement(IDENTIFIER_SORTED, StatementID::SORTED);
+	add_statement(IDENTIFIER_DYN, StatementID::DYN);
 }
 
 
@@ -1727,6 +1787,9 @@ void SIAddCommands() {
 	add_func("-map-", TypeDynamicArray, (void*)kaba_map, ScriptFlag(FLAG_RAISES_EXCEPTIONS | FLAG_STATIC));
 		func_add_param("func", TypeFunctionP);
 		func_add_param("array", TypePointer);
+	add_func("-dyn-", TypeAny, (void*)kaba_dyn, ScriptFlag(FLAG_RAISES_EXCEPTIONS | FLAG_STATIC));
+		func_add_param("var", TypePointer);
+		func_add_param("class", TypeClassP);
 
 
 // add_func("ExecuteScript", TypeVoid);
@@ -1833,6 +1896,12 @@ void Init(Asm::InstructionSet instruction_set, Abi abi, bool allow_std_lib) {
 	add_type_cast(50, TypeFloatList, TypeString, "@fa2s", nullptr);
 	add_type_cast(50, TypeBoolList, TypeString, "@ba2s", nullptr);
 	add_type_cast(50, TypeStringList, TypeString, "@sa2s", nullptr);
+	cur_package = Packages[2];
+	add_type_cast(50, TypeInt, TypeAny, "@int2any", nullptr);
+	add_type_cast(50, TypeFloat32, TypeAny, "@float2any", nullptr);
+	add_type_cast(50, TypeBool, TypeAny, "@bool2any", nullptr);
+	add_type_cast(50, TypeString, TypeAny, "@str2any", nullptr);
+	add_type_cast(50, TypePointer, TypeAny, "@pointer2any", nullptr);
 
 
 	// consistency checks

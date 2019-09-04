@@ -896,7 +896,7 @@ Node *apply_type_cast(SyntaxTree *ps, int tc, Node *param) {
 		ps->do_error("automatic .str() not implemented yet");
 		return param;
 	}
-	if (param->kind == NodeKind::CONSTANT) {
+	if (param->kind == NodeKind::CONSTANT and TypeCasts[tc].func) {
 		Node *c_new = ps->add_node_const(ps->add_constant(TypeCasts[tc].dest));
 		TypeCasts[tc].func(*c_new->as_const(), *param->as_const());
 
@@ -1541,6 +1541,12 @@ Node *SyntaxTree::parse_statement_len(Block *block) {
 		if (e.type == TypeInt and (e.name == "length" or e.name == "num")) {
 			return shift_node(sub, false, e.offset, e.type);
 		}
+		
+	// length() function?
+	auto *f = sub->type->get_func("length", TypeInt, {});
+	if (f) {
+		return add_node_member_call(f, ref_node(sub));
+	}
 
 
 	do_error("don't know how to get the length of class " + sub->type->name);
@@ -1697,6 +1703,21 @@ Node *SyntaxTree::parse_statement_sorted(Block *block) {
 	return cmd;
 }
 
+Node *SyntaxTree::parse_statement_dyn(Block *block) {
+	Exp.next(); // dyn
+	Node *sub = parse_single_func_param(block);
+
+	auto *c = add_constant_pointer(TypeClassP, sub->type);
+
+	Array<Node*> links = get_existence("-dyn-", nullptr, nullptr, false);
+	Function *f = links[0]->as_func();
+
+	Node *cmd = add_node_call(f);
+	cmd->set_param(0, ref_node(sub));
+	cmd->set_param(1, add_node_const(c));
+	return cmd;
+}
+
 Node *SyntaxTree::parse_statement(Block *block) {
 	if (Exp.cur == IDENTIFIER_FOR) {
 		return parse_statement_for(block);
@@ -1736,7 +1757,10 @@ Node *SyntaxTree::parse_statement(Block *block) {
 		return parse_statement_lambda(block);
 	} else if (Exp.cur == IDENTIFIER_SORTED) {
 		return parse_statement_sorted(block);
+	} else if (Exp.cur == IDENTIFIER_DYN) {
+		return parse_statement_dyn(block);
 	}
+	do_error("unhandled statement..." + Exp.cur);
 	return nullptr;
 }
 
