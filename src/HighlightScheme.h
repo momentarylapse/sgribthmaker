@@ -12,7 +12,7 @@
 
 class SourceView;
 
-enum{
+enum {
 	IN_WORD,
 	IN_WORD_SPECIAL,
 	IN_WORD_COMPILER_FUNCTION,
@@ -24,13 +24,13 @@ enum{
 	IN_MACRO,
 	IN_SPACE,
 	IN_STRING,
+	IN_STRING_SUBSTITUDE,
 	IN_OPERATOR,
 	IN_NUMBER,
 	NUM_TAG_TYPES
 };
 
-struct HighlightContext
-{
+struct HighlightContext {
 	color fg, bg;
 	bool set_bg;
 	bool bold, italic;
@@ -38,8 +38,7 @@ struct HighlightContext
 	HighlightContext(const color &_fg, const color &_bg, bool _set_bg, bool _bold, bool _italic);
 };
 
-class HighlightScheme
-{
+class HighlightScheme {
 public:
 	string name;
 	color bg;

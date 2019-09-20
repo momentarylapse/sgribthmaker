@@ -12,23 +12,25 @@
 
 class SourceView;
 
-class Parser
-{
+class Parser {
 public:
-	Parser();
+	Parser(const string &name);
 	virtual ~Parser();
-	virtual string GetName() = 0;
 
+	string name;
 	string macro_begin;
 	string line_comment_begin;
+	string multi_comment_begin;
+	string multi_comment_end;
+	string string_sub_begin;
+	string string_sub_end;
 	Array<string> special_words;
 	Array<string> types;
 	Array<string> compiler_functions;
 	Array<string> globals;
 
 
-	struct Label
-	{
+	struct Label {
 		string name;
 		int line;
 		int level;
@@ -48,20 +50,19 @@ void InitParser();
 Parser *GetParser(const string &filename);
 
 
-enum{
+enum {
 	CHAR_SPACE,
 	CHAR_LETTER,
 	CHAR_NUMBER,
 	CHAR_SIGN
 };
 
-inline int char_type(char c)
-{
-	if ((c >= '0') && (c <= '9'))
+inline int char_type(char c) {
+	if ((c >= '0') and (c <= '9'))
 		return CHAR_NUMBER;
-	if ((c == ' ') || (c == '\n') || (c == '\t'))
+	if ((c == ' ') or (c == '\n') or (c == '\t'))
 		return CHAR_SPACE;
-	if (((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')) || (c == '_'))
+	if (((c >= 'a') and (c <= 'z')) or ((c >= 'A') and (c <= 'Z')) or (c == '_'))
 		return CHAR_LETTER;
 	return CHAR_SIGN;
 }

@@ -12,17 +12,10 @@
 static Array<HighlightScheme*> HighlightSchemas;
 HighlightScheme *HighlightScheme::default_scheme;
 
-HighlightContext::HighlightContext()
-{
-	fg = Black;
-	bg = White;
-	set_bg = false;
-	bold = false;
-	italic = false;
+HighlightContext::HighlightContext() : HighlightContext(Black, White, false, false, false) {
 }
 
-HighlightContext::HighlightContext(const color &_fg, const color &_bg, bool _set_bg, bool _bold, bool _italic)
-{
+HighlightContext::HighlightContext(const color &_fg, const color &_bg, bool _set_bg, bool _bold, bool _italic) {
 	fg = _fg;
 	bg = _bg;
 	set_bg = _set_bg;
@@ -30,15 +23,13 @@ HighlightContext::HighlightContext(const color &_fg, const color &_bg, bool _set
 	italic = _italic;
 }
 
-HighlightScheme::HighlightScheme()
-{
+HighlightScheme::HighlightScheme() {
 	bg = White;
 	is_default = false;
 	changed = false;
 }
 
-HighlightScheme *HighlightScheme::copy(const string &name)
-{
+HighlightScheme *HighlightScheme::copy(const string &name) {
 	HighlightScheme *s = new HighlightScheme;
 	*s = *this;
 	s->name = name;
@@ -48,8 +39,7 @@ HighlightScheme *HighlightScheme::copy(const string &name)
 	return s;
 }
 
-void HighlightScheme::init()
-{
+void HighlightScheme::init() {
 	HighlightScheme *schema = new HighlightScheme;
 	schema->name = "default";
 	schema->is_default = true;
@@ -66,6 +56,7 @@ void HighlightScheme::init()
 	schema->context[IN_NUMBER] = HighlightContext(color(1, 0, 0.5f, 0), Black, false, false, false);
 	schema->context[IN_OPERATOR] = HighlightContext(color(1, 0.25f, 0.25f, 0), Black, false, false, false);
 	schema->context[IN_STRING] = HighlightContext(color(1, 1, 0, 0), Black, false, false, false);
+	schema->context[IN_STRING_SUBSTITUDE] = HighlightContext(color(1, 0.6f, 0.3f, 0), Black, false, false, true);
 	schema->context[IN_MACRO] = HighlightContext(color(1, 0, 0.5f, 0.5f), Black, false, false, false);
 	default_scheme = schema;
 	HighlightSchemas.add(schema);
@@ -86,6 +77,7 @@ void HighlightScheme::init()
 	schema->context[IN_NUMBER] = HighlightContext(color(1, 0.3f, 1, 0.3f), Black, false, false, false);
 	schema->context[IN_OPERATOR] = HighlightContext(color(1, 1, 1, 0.75f), Black, false, false, false);
 	schema->context[IN_STRING] = HighlightContext(color(1, 1, 0, 0), Black, false, false, false);
+	schema->context[IN_STRING_SUBSTITUDE] = HighlightContext(color(1, 0.6f, 0.3f, 0), Black, false, false, true);
 	schema->context[IN_MACRO] = HighlightContext(color(1, 0, 0.5f, 0.5f), Black, false, false, false);
 	HighlightSchemas.add(schema);
 
@@ -105,12 +97,12 @@ void HighlightScheme::init()
 	schema->context[IN_NUMBER] = HighlightContext(color(1, 0.2f, 0.7f, 0.2f), Black, false, false, false);
 	schema->context[IN_OPERATOR] = HighlightContext(color(1, 1, 1, 0.3f), Black, false, false, false);
 	schema->context[IN_STRING] = HighlightContext(color(1, 1, 0, 0), Black, false, false, false);
+	schema->context[IN_STRING_SUBSTITUDE] = HighlightContext(color(1, 0.6f, 0.3f, 0), Black, false, false, true);
 	schema->context[IN_MACRO] = HighlightContext(color(1, 0, 0.5f, 0.5f), Black, false, false, false);
 	HighlightSchemas.add(schema);
 }
 
-HighlightScheme *HighlightScheme::get(const string &name)
-{
+HighlightScheme *HighlightScheme::get(const string &name) {
 	if (HighlightSchemas.num == 0)
 		init();
 	for (HighlightScheme *s : HighlightSchemas)
@@ -119,8 +111,7 @@ HighlightScheme *HighlightScheme::get(const string &name)
 	return HighlightSchemas[0];
 }
 
-Array<HighlightScheme*> HighlightScheme::get_all()
-{
+Array<HighlightScheme*> HighlightScheme::get_all() {
 	if (HighlightSchemas.num == 0)
 		init();
 	return HighlightSchemas;

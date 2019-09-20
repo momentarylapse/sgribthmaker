@@ -8,10 +8,11 @@
 #include "ParserC.h"
 #include "../HighlightScheme.h"
 
-ParserC::ParserC()
-{
+ParserC::ParserC() : Parser("C/C++") {
 	macro_begin = "#";
 	line_comment_begin = "//";
+	multi_comment_begin = "/*";
+	multi_comment_end = "*/";
 	special_words.add("enum");
 	special_words.add("class");
 	special_words.add("if");
@@ -54,11 +55,6 @@ ParserC::ParserC()
 	globals.add("false");
 }
 
-ParserC::~ParserC()
-{
-}
-
-void ParserC::CreateTextColors(SourceView *sv, int first_line, int last_line)
-{
+void ParserC::CreateTextColors(SourceView *sv, int first_line, int last_line) {
 	CreateTextColorsDefault(sv, first_line, last_line);
 }

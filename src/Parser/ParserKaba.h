@@ -10,15 +10,12 @@
 
 #include "BaseParser.h"
 
-class ParserKaba : public Parser
-{
+class ParserKaba : public Parser {
 public:
 	ParserKaba();
-	virtual ~ParserKaba();
-	virtual string GetName(){	return "Kaba";	}
 
-	virtual Array<Label> FindLabels(SourceView *sv);
-	virtual void CreateTextColors(SourceView *sv, int first_line = -1, int last_line = -1);
+	Array<Label> FindLabels(SourceView *sv) override;
+	void CreateTextColors(SourceView *sv, int first_line = -1, int last_line = -1) override;
 };
 
 #endif /* PARSERKABA_H_ */

@@ -10,15 +10,12 @@
 
 #include "BaseParser.h"
 
-class ParserShader : public Parser
-{
+class ParserShader : public Parser {
 public:
 	ParserShader();
-	virtual ~ParserShader();
-	virtual string GetName(){	return "Shader";	}
 
-	//virtual Array<Label> FindLabels(SourceView *sv);
-	virtual void CreateTextColors(SourceView *sv, int first_line = -1, int last_line = -1);
+	//Array<Label> FindLabels(SourceView *sv) override;
+	void CreateTextColors(SourceView *sv, int first_line = -1, int last_line = -1) override;
 };
 
 #endif /* PARSERSHADER_H_ */

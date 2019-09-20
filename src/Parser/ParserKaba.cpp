@@ -11,10 +11,11 @@
 #include "../SourceView.h"
 
 
-ParserKaba::ParserKaba()
-{
+ParserKaba::ParserKaba() : Parser("Kaba") {
 	macro_begin = "#define";
 	line_comment_begin = "#";
+	string_sub_begin = "{{";
+	string_sub_end = "}}";
 	special_words.add(Kaba::IDENTIFIER_ENUM);
 	special_words.add(Kaba::IDENTIFIER_CLASS);
 	special_words.add(Kaba::IDENTIFIER_EXTENDS);
@@ -68,13 +69,8 @@ ParserKaba::ParserKaba()
 	//	special_words.add(s.name);
 }
 
-ParserKaba::~ParserKaba()
-{
-}
 
-
-Array<Parser::Label> ParserKaba::FindLabels(SourceView *sv)
-{
+Array<Parser::Label> ParserKaba::FindLabels(SourceView *sv) {
 	Array<Parser::Label> labels;
 	int num_lines = sv->GetNumLines();
 	string last_class;
@@ -104,8 +100,7 @@ Array<Parser::Label> ParserKaba::FindLabels(SourceView *sv)
 }
 
 
-void ParserKaba::CreateTextColors(SourceView *sv, int first_line, int last_line)
-{
+void ParserKaba::CreateTextColors(SourceView *sv, int first_line, int last_line) {
 	CreateTextColorsDefault(sv, first_line, last_line);
 }
 

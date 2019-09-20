@@ -8,8 +8,7 @@
 #include "ParserPython.h"
 #include "../HighlightScheme.h"
 
-ParserPython::ParserPython()
-{
+ParserPython::ParserPython() : Parser("Python") {
 	line_comment_begin = "#";
 	special_words.add("enum");
 	special_words.add("class");
@@ -28,6 +27,10 @@ ParserPython::ParserPython()
 	special_words.add("continue");
 	special_words.add("and");
 	special_words.add("or");
+	special_words.add("not");
+	special_words.add("pass");
+	special_words.add("raise");
+	special_words.add("except");
 	special_words.add("const");
 	special_words.add("self");
 	special_words.add("namespace");
@@ -36,6 +39,7 @@ ParserPython::ParserPython()
 	types.add("str");
 	types.add("list");
 	types.add("tuple");
+	types.add("Exception");
 	compiler_functions.add("print");
 	compiler_functions.add("len");
 	compiler_functions.add("range");
@@ -50,12 +54,7 @@ ParserPython::ParserPython()
 	globals.add("None");
 }
 
-ParserPython::~ParserPython()
-{
-}
-
-void ParserPython::CreateTextColors(SourceView *sv, int first_line, int last_line)
-{
+void ParserPython::CreateTextColors(SourceView *sv, int first_line, int last_line) {
 	CreateTextColorsDefault(sv, first_line, last_line);
 }
 

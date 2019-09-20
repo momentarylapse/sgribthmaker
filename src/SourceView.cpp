@@ -18,7 +18,7 @@ void insert_text(GtkTextBuffer *textbuffer, GtkTextIter *location, gchar *text, 
 	if (!sv->history->enabled)
 		return;
 
-	if ((strcmp(text, "\n") == 0) && (sv->change_return)){
+	if ((strcmp(text, "\n") == 0) and (sv->change_return)){
 		g_signal_stop_emission_by_name(textbuffer, "insert-text");
 		sv->change_return = false;
 		sv->InsertReturn();
@@ -375,7 +375,7 @@ void SourceView::MarkWord(int line, int start, int end, int type, char *p0, char
 	if (start == end)
 		return;
 	if (type == IN_WORD)
-		if ((start == 0) || (p0[-1] != '.'))
+		if ((start == 0) or (p0[-1] != '.'))
 		if ((long)p - (long)p0 < 64){
 			string temp = string(p0, (long)p - (long)p0);
 			int type2 = parser->WordType(temp);
@@ -486,7 +486,7 @@ void SourceView::InsertReturn()
 	int line = gtk_text_iter_get_line(&ii);
 	gtk_text_buffer_get_iter_at_line_index(tb, &i0, line, 0);
 	i1 = i0;
-	while ((!gtk_text_iter_ends_line(&i1)) && (!gtk_text_iter_equal(&i1, &ii))){
+	while ((!gtk_text_iter_ends_line(&i1)) and (!gtk_text_iter_equal(&i1, &ii))){
 		int c = gtk_text_iter_get_char(&i1);
 		if (!g_unichar_isspace(c))
 			break;

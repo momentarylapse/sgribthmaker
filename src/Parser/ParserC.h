@@ -10,14 +10,11 @@
 
 #include "BaseParser.h"
 
-class ParserC : public Parser
-{
+class ParserC : public Parser {
 public:
 	ParserC();
-	virtual ~ParserC();
-	virtual string GetName(){	return "C/C++";	}
 
-	virtual void CreateTextColors(SourceView *sv, int first_line = -1, int last_line = -1);
+	void CreateTextColors(SourceView *sv, int first_line = -1, int last_line = -1) override;
 };
 
 #endif /* PARSERC_H_ */

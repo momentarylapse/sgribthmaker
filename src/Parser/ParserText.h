@@ -10,12 +10,9 @@
 
 #include "BaseParser.h"
 
-class ParserText: public Parser
-{
+class ParserText: public Parser {
 public:
 	ParserText();
-	virtual ~ParserText();
-	virtual string GetName(){	return "Text";	}
 };
 
 #endif /* PARSERTEXT_H_ */

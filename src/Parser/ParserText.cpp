@@ -7,11 +7,6 @@
 
 #include "ParserText.h"
 
-ParserText::ParserText()
-{
-}
-
-ParserText::~ParserText()
-{
+ParserText::ParserText() : Parser("Text") {
 }
 

@@ -8,10 +8,11 @@
 #include "ParserShader.h"
 #include "../HighlightScheme.h"
 
-ParserShader::ParserShader()
-{
+ParserShader::ParserShader() : Parser("Sader") {
 	macro_begin = "#";
 	line_comment_begin = "//";
+	multi_comment_begin = "/*";
+	multi_comment_end = "*/";
 	special_words.add("varying");
 	special_words.add("uniform");
 	special_words.add("invariant");
@@ -118,12 +119,7 @@ ParserShader::ParserShader()
 	globals.add("gl_FragColor");*/
 }
 
-ParserShader::~ParserShader()
-{
-}
-
-void ParserShader::CreateTextColors(SourceView *sv, int first_line, int last_line)
-{
+void ParserShader::CreateTextColors(SourceView *sv, int first_line, int last_line) {
 	CreateTextColorsDefault(sv, first_line, last_line);
 }
 

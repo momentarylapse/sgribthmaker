@@ -10,14 +10,11 @@
 
 #include "BaseParser.h"
 
-class ParserPython : public Parser
-{
+class ParserPython : public Parser {
 public:
 	ParserPython();
-	virtual ~ParserPython();
-	virtual string GetName(){	return "Python";	}
 
-	virtual void CreateTextColors(SourceView *sv, int first_line = -1, int last_line = -1);
+	void CreateTextColors(SourceView *sv, int first_line = -1, int last_line = -1) override;
 };
 
 #endif /* PARSERPYTHON_H_ */
