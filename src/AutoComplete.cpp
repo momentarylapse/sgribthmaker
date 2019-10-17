@@ -51,10 +51,7 @@ AutoComplete::Data find_top_level_from_class(const Class *t, const string &yyy)
 	for (auto &e: t->elements)
 		if (e.name.head(yyy.num) == yyy)
 			suggestions.add(e.name, e.type->name + " " + t->name + "." + e.name);
-	for (auto *f: t->member_functions)
-		if (f->name.head(yyy.num) == yyy)
-			suggestions.add(f->name, f->signature());
-	for (auto *f: t->static_functions)
+	for (auto *f: t->functions)
 		if (f->name.head(yyy.num) == yyy)
 			suggestions.add(f->name, f->signature());
 	for (auto *c: t->classes)
@@ -91,7 +88,7 @@ AutoComplete::Data find_top_level(SyntaxTree *syntax, Function *f, const string 
 		if (yyy == v->name.head(yyy.num))
 			suggestions.add(v->name, v->type->name + " " + v->name);
 	if (f){
-		for (auto *f: syntax->base_class->static_functions)
+		for (auto *f: syntax->base_class->functions)
 			if (f->name.find(".") < 0)
 				if (yyy == f->name.head(yyy.num))
 					suggestions.add(f->name, f->signature());
@@ -178,10 +175,7 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 				for (auto &e: t->elements)
 					if (e.name == yy[i])
 						types2.add(simplify_type(e.type));
-				for (auto *f: t->member_functions)
-					if (f->name == yy[i])
-						types2.add(simplify_type(f->literal_return_type));
-				for (auto *f: t->static_functions)
+				for (auto *f: t->functions)
 					if (f->name == yy[i])
 						types2.add(simplify_type(f->literal_return_type));
 				for (auto *c: t->constants)

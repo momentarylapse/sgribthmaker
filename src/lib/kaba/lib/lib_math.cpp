@@ -325,7 +325,7 @@ void SIAddPackageMath() {
 		class_add_elementx("x", TypeFloat32, &vector::x);
 		class_add_elementx("y", TypeFloat32, &vector::y);
 		class_add_elementx("z", TypeFloat32, &vector::z);
-		class_add_element("e", TypeFloatArray3, 0, FLAG_HIDDEN);
+		class_add_element("_e", TypeFloatArray3, 0);
 		class_add_func("length", TypeFloat32, type_p(mf(&vector::length)), FLAG_PURE);
 		class_add_func("length_sqr", TypeFloat32, type_p(mf(&vector::length_sqr)), FLAG_PURE);
 		class_add_func("length_fuzzy", TypeFloat32, type_p(mf(&vector::length_fuzzy)), FLAG_PURE);
@@ -355,6 +355,18 @@ void SIAddPackageMath() {
 			func_add_param("x", TypeFloat32);
 			func_add_param("y", TypeFloat32);
 			func_add_param("z", TypeFloat32);
+		class_add_func("ang_add", TypeVector, mf(&VecAngAdd), ScriptFlag(FLAG_PURE | FLAG_STATIC));
+			func_add_param("ang1", TypeVector);
+			func_add_param("ang2", TypeVector);
+		class_add_func("ang_interpolate", TypeVector, mf(&VecAngInterpolate), ScriptFlag(FLAG_PURE | FLAG_STATIC));
+			func_add_param("ang1", TypeVector);
+			func_add_param("ang2", TypeVector);
+			func_add_param("t", TypeFloat32);
+		class_add_const("0", TypeVector, (void*)&vector::ZERO);
+		class_add_const("O", TypeVector, (void*)&vector::ZERO);
+		class_add_const("EX", TypeVector, (void*)&vector::EX);
+		class_add_const("EY", TypeVector, (void*)&vector::EY);
+		class_add_const("EZ", TypeVector, (void*)&vector::EZ);
 		add_operator(OperatorID::ADD, TypeVector, TypeVector, TypeVector, InlineID::VECTOR_ADD);
 		add_operator(OperatorID::SUBTRACT, TypeVector, TypeVector, TypeVector, InlineID::VECTOR_SUBTRACT);
 		add_operator(OperatorID::MULTIPLY, TypeFloat32, TypeVector, TypeVector, InlineID::VECTOR_MULTIPLY_VV);
@@ -511,8 +523,8 @@ void SIAddPackageMath() {
 		class_add_element("_13", TypeFloat32, 52);
 		class_add_element("_23", TypeFloat32, 56);
 		class_add_element("_33", TypeFloat32, 60);
-		class_add_element("e", TypeFloatArray4x4, 0, FLAG_HIDDEN);
-		class_add_element("_e", TypeFloatArray16, 0, FLAG_HIDDEN);
+		class_add_element("e", TypeFloatArray4x4, 0);
+		class_add_element("_e", TypeFloatArray16, 0);
 		class_add_func("__imul__", TypeVoid, mf(&matrix::imul));
 			func_add_param("other", TypeMatrix);
 		class_add_func("__mul__", TypeMatrix, mf(&matrix::mul), FLAG_PURE);
@@ -566,15 +578,15 @@ void SIAddPackageMath() {
 		class_add_element("_13", TypeFloat32, 24);
 		class_add_element("_23", TypeFloat32, 28);
 		class_add_element("_33", TypeFloat32, 32);
-		class_add_element("e", TypeFloatArray3x3, 0, FLAG_HIDDEN);
-		class_add_element("_e", TypeFloatArray9, 0, FLAG_HIDDEN);
+		class_add_element("e", TypeFloatArray3x3, 0);
+		class_add_element("_e", TypeFloatArray9, 0);
 		class_add_func("__mul__", TypeMatrix3, mf(&matrix3::mul), FLAG_PURE);
 			func_add_param("other", TypeMatrix3);
 		class_add_func("__mul__", TypeVector, mf(&matrix3::mul_v), FLAG_PURE);
 			func_add_param("other", TypeVector);
 		class_add_func("str", TypeString, mf(&matrix3::str), FLAG_PURE);
 		class_add_func("inverse", TypeMatrix3, mf(&matrix3::inverse), FLAG_PURE);
-		class_add_const("m3_id", TypeMatrix3, (void*)&matrix3::ID);
+		class_add_const("ID", TypeMatrix3, (void*)&matrix3::ID);
 	
 	add_class(TypeVli);
 		class_add_element("sign", TypeBool, 0);
@@ -688,6 +700,11 @@ void SIAddPackageMath() {
 		class_add_func("decrypt", TypeString, algebra_p(mf(&Crypto::Decrypt)));
 			func_add_param("str", TypeString);
 			func_add_param("cut", TypeBool);
+		class_add_func("create_keys", TypeVoid, algebra_p(&CryptoCreateKeys), FLAG_STATIC);
+			func_add_param("c1", TypeCrypto);
+			func_add_param("c2", TypeCrypto);
+			func_add_param("type", TypeString);
+			func_add_param("bits", TypeInt);
 
 	add_class(TypeRandom);
 		class_add_func(IDENTIFIER_FUNC_INIT, TypeVoid, mf(&Random::__init__));
@@ -829,27 +846,14 @@ void SIAddPackageMath() {
 		func_add_param("start", TypeFloat32);
 		func_add_param("end", TypeFloat32);
 		func_add_param("step", TypeFloat32);
-	// vectors
-	add_func("VecAngAdd", TypeVector, mf(&VecAngAdd), ScriptFlag(FLAG_PURE | FLAG_STATIC));
-		func_add_param("ang1", TypeVector);
-		func_add_param("ang2", TypeVector);
-	add_func("VecAngInterpolate", TypeVector, mf(&VecAngInterpolate), ScriptFlag(FLAG_PURE | FLAG_STATIC));
-		func_add_param("ang1", TypeVector);
-		func_add_param("ang2", TypeVector);
-		func_add_param("t", TypeFloat32);
 	// other types
-	add_func("GetBaryCentric", TypeVoid, (void*)&GetBaryCentric, ScriptFlag(FLAG_PURE | FLAG_STATIC));
+	add_func("bary_centric", TypeVoid, (void*)&GetBaryCentric, ScriptFlag(FLAG_PURE | FLAG_STATIC));
 		func_add_param("p", TypeVector);
 		func_add_param("a", TypeVector);
 		func_add_param("b", TypeVector);
 		func_add_param("c", TypeVector);
 		func_add_param("f", TypeFloatPs);
 		func_add_param("g", TypeFloatPs);
-	add_func("CryptoCreateKeys", TypeVoid, algebra_p(&CryptoCreateKeys), FLAG_STATIC);
-		func_add_param("c1", TypeCrypto);
-		func_add_param("c2", TypeCrypto);
-		func_add_param("type", TypeString);
-		func_add_param("bits", TypeInt);
 	// random numbers
 	add_func("randi", TypeInt, (void*)&randi, FLAG_STATIC);
 		func_add_param("max", TypeInt);
@@ -861,11 +865,6 @@ void SIAddPackageMath() {
 	
 	// float
 	add_const("pi",  TypeFloat32, *(void**)&pi);
-	// vector
-	add_const("v_0", TypeVector, (void*)&vector::ZERO);
-	add_const("e_x", TypeVector, (void*)&vector::EX);
-	add_const("e_y", TypeVector, (void*)&vector::EY);
-	add_const("e_z", TypeVector, (void*)&vector::EZ);
 	// color
 	add_const("White",  TypeColor, (void*)&White);
 	add_const("Black",  TypeColor, (void*)&Black);

@@ -62,7 +62,7 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 			globals.add(v->name);
 		for (auto *c: p->syntax->base_class->constants)
 			globals.add(c->name);
-		for (auto *f: p->syntax->base_class->static_functions)
+		for (auto *f: p->syntax->base_class->functions)
 			compiler_functions.add(f->name);
 	}
 	//for (auto &s: Kaba::Statements)

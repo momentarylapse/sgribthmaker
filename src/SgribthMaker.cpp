@@ -540,7 +540,7 @@ SgribthMaker::SgribthMaker() :
 
 //	hui::RegisterFileType("kaba","MichiSoft Script Datei", directory + "Data/kaba.ico", filename,"open",true);
 
-	Kaba::Init();
+	Kaba::init();
 
 	console = NULL;
 	MainWin = NULL;

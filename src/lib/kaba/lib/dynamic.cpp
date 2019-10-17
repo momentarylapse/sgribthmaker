@@ -107,7 +107,7 @@ void kaba_array_add(DynamicArray &array, void *p, const Class *type) {
 	} else if (type == TypeBoolList) {
 		array.append_1_single(*(char*)p);
 	} else {
-		auto *f = type->get_func("add", TypeVoid, {type->parent});
+		auto *f = type->get_func("add", TypeVoid, {type->param});
 		if (!f)
 			kaba_raise_exception(new KabaException("can not add to array type " + type->long_name()));
 		typedef void func_t(void*, const void*);
@@ -119,7 +119,7 @@ void kaba_array_add(DynamicArray &array, void *p, const Class *type) {
 DynamicArray _cdecl kaba_array_sort(DynamicArray &array, const Class *type, const string &by) {
 	if (!type->is_super_array())
 		kaba_raise_exception(new KabaException("type '" + type->name + "' is not an array"));
-	const Class *el = type->parent;
+	const Class *el = type->param;
 	if (array.element_size != el->size)
 		kaba_raise_exception(new KabaException("element type size mismatch..."));
 
@@ -130,7 +130,7 @@ DynamicArray _cdecl kaba_array_sort(DynamicArray &array, const Class *type, cons
 	const Class *rel = el;
 
 	if (el->is_pointer())
-		rel = el->parent;
+		rel = el->param;
 
 	int offset = -1;
 	const Class *by_type = nullptr;
@@ -196,43 +196,45 @@ string _cdecl var_repr(const void *p, const Class *type) {
 	} else if (type == TypeBool) {
 		return b2s(*(bool*)p);
 	} else if (type == TypeClass) {
-		return ((Class*)p)->name;
-	} else if (type == TypeClassP) {
-		return class_repr(*(Class**)p);
-	} else if (type == TypeFunctionP) {
-		return func_repr(*(Function**)p);
+		return class_repr((Class*)p);
+	} else if (type == TypeFunction) {
+		return func_repr((Function*)p);
 	} else if (type == TypeAny) {
 		return ((Any*)p)->repr();
 	} else if (type->is_pointer()) {
-		return p2s(*(void**)p);
+		auto *pp = *(void**)p;
+		// auto deref?
+		if (pp and (type->param != TypeVoid))
+			return var_repr(pp, type->param);
+		return p2s(pp);
 	} else if (type == TypeString) {
 		return ((string*)p)->repr();
 	} else if (type == TypeCString) {
 		return string((char*)p).repr();
 	} else if (type->is_super_array()) {
 		string s;
-		DynamicArray *da = (DynamicArray*)p;
+		auto *da = reinterpret_cast<const DynamicArray*>(p);
 		for (int i=0; i<da->num; i++) {
 			if (i > 0)
 				s += ", ";
-			s += var_repr(((char*)da->data) + i * da->element_size, type->parent);
+			s += var_repr(((char*)da->data) + i * da->element_size, type->param);
 		}
 		return "[" + s + "]";
 	} else if (type->is_dict()) {
 		string s;
-		DynamicArray *da = (DynamicArray*)p;
+		auto *da = reinterpret_cast<const DynamicArray*>(p);
 		for (int i=0; i<da->num; i++) {
 			if (i > 0)
 				s += ", ";
 			s += var_repr(((char*)da->data) + i * da->element_size, TypeString);
 			s += ": ";
-			s += var_repr(((char*)da->data) + i * da->element_size + sizeof(string), type->parent);
+			s += var_repr(((char*)da->data) + i * da->element_size + sizeof(string), type->param);
 		}
 		return "{" + s + "}";
 	} else if (type->elements.num > 0) {
 		string s;
 		for (auto &e: type->elements) {
-			if (e.hidden)
+			if (e.hidden())
 				continue;
 			if (s.num > 0)
 				s += ", ";
@@ -245,7 +247,7 @@ string _cdecl var_repr(const void *p, const Class *type) {
 		for (int i=0; i<type->array_length; i++) {
 			if (i > 0)
 				s += ", ";
-			s += var_repr(((char*)p) + i * type->parent->size, type->parent);
+			s += var_repr(((char*)p) + i * type->param->size, type->param);
 		}
 		return "[" + s + "]";
 	}
@@ -258,7 +260,7 @@ string _cdecl var2str(const void *p, const Class *type) {
 	if (type == TypeCString)
 		return string((char*)p);
 	if (type == TypeAny)
-		return ((Any*)p)->str();
+		return reinterpret_cast<const Any*>(p)->str();
 	return var_repr(p, type);
 }
 
@@ -284,7 +286,7 @@ Any _cdecl kaba_dyn(const void *var, const Class *type) {
 	}
 	if (type->is_super_array()) {
 		Any a;
-		auto *ar = (DynamicArray*)var;
+		auto *ar = reinterpret_cast<const DynamicArray*>(var);
 		auto *t_el = type->get_array_element();
 		for (int i=0; i<ar->num; i++)
 			a.add(kaba_dyn((char*)ar->data + ar->element_size * i, t_el));
@@ -294,7 +296,7 @@ Any _cdecl kaba_dyn(const void *var, const Class *type) {
 	// class
 	Any a;
 	for (auto &e: type->elements) {
-		if (!e.hidden)
+		if (!e.hidden())
 			a.map_set(e.name, kaba_dyn((char*)var + e.offset, e.type));
 	}
 	return a;

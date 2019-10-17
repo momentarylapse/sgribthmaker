@@ -30,7 +30,7 @@
 
 namespace Kaba{
 
-string LibVersion = "0.17.9.0";
+string LibVersion = "0.17.10.2";
 
 
 const string IDENTIFIER_CLASS = "class";
@@ -207,16 +207,15 @@ const Class *add_type(const string &name, int size, ScriptFlag flag) {
 }
 
 const Class *add_type_p(const string &name, const Class *sub_type, ScriptFlag flag) {
-	Class *t = new Class(name, config.pointer_size, cur_package->syntax);
+	Class *t = new Class(name, config.pointer_size, cur_package->syntax, nullptr, sub_type);
 	t->type = Class::Type::POINTER;
 	if ((flag & FLAG_SILENT) > 0)
 		t->type = Class::Type::POINTER_SILENT;
-	t->parent = sub_type;
 	__add_class__(t);
 	return t;
 }
 const Class *add_type_a(const string &name, const Class *sub_type, int array_length) {
-	Class *t = new Class(name, 0, cur_package->syntax, sub_type);
+	Class *t = new Class(name, 0, cur_package->syntax, nullptr, sub_type);
 	if (array_length < 0) {
 		// super array
 		t->size = config.super_array_size;
@@ -233,7 +232,7 @@ const Class *add_type_a(const string &name, const Class *sub_type, int array_len
 }
 
 const Class *add_type_d(const string &name, const Class *sub_type) {
-	Class *t = new Class(name, config.super_array_size, cur_package->syntax, sub_type);
+	Class *t = new Class(name, config.super_array_size, cur_package->syntax, nullptr, sub_type);
 	t->type = Class::Type::DICT;
 	script_make_dict(t);
 	__add_class__(t);
@@ -335,9 +334,7 @@ Class *add_class(const Class *root_type) {
 }
 
 void class_add_element(const string &name, const Class *type, int offset, ScriptFlag flag) {
-	auto e = ClassElement(name, type, offset);
-	e.hidden = ((flag & FLAG_HIDDEN) > 0);
-	cur_class->elements.add(e);
+	cur_class->elements.add(ClassElement(name, type, offset));
 }
 
 void class_derive_from(const Class *parent, bool increase_size, bool copy_vtable) {
@@ -351,11 +348,11 @@ int _class_override_num_params = -1;
 void _class_add_member_func(const Class *ccc, Function *f, ScriptFlag flag) {
 	Class *c = const_cast<Class*>(ccc);
 	if ((flag & FLAG_OVERRIDE) > 0) {
-		foreachi(Function *ff, c->member_functions, i)
+		foreachi(Function *ff, c->functions, i)
 			if (ff->name == f->name) {
 				if (_class_override_num_params < 0 or _class_override_num_params == ff->num_params) {
 					//msg_write("OVERRIDE");
-					c->member_functions[i] = f;
+					c->functions[i] = f;
 					return;
 				}
 			}
@@ -369,7 +366,7 @@ void _class_add_member_func(const Class *ccc, Function *f, ScriptFlag flag) {
 					break;
 				}
 			}*/
-		c->member_functions.add(f);
+		c->functions.add(f);
 	}
 }
 
@@ -387,7 +384,7 @@ Function* class_add_func(const string &name, const Class *return_type, void *fun
 
 
 	if (f->is_static)
-		cur_class->static_functions.add(f);
+		cur_class->functions.add(f);
 	else
 		_class_add_member_func(cur_class, f, flag);
 	return f;
@@ -535,9 +532,9 @@ void func_add_param(const string &name, const Class *type) {
 
 void script_make_super_array(Class *t, SyntaxTree *ps)
 {
-	const Class *parent = t->parent;
+	const Class *p = t->param;
 	t->derive_from(TypeDynamicArray, false);
-	t->parent = parent;
+	t->param = p;
 	add_class(t);
 
 	Function *sub = t->get_func(IDENTIFIER_FUNC_SUBARRAY, TypeDynamicArray, {nullptr,nullptr});
@@ -545,42 +542,42 @@ void script_make_super_array(Class *t, SyntaxTree *ps)
 	sub->return_type = t;
 
 	// FIXME  wrong for complicated classes
-	if (t->parent->is_simple_class()){
-		if (!t->parent->uses_call_by_reference()){
-			if (t->parent->is_pointer()){
+	if (p->is_simple_class()){
+		if (!p->uses_call_by_reference()){
+			if (p->is_pointer()){
 				class_add_funcx(IDENTIFIER_FUNC_INIT, TypeVoid, &Array<void*>::__init__);
 				class_add_funcx("add", TypeVoid, &DynamicArray::append_p_single);
-					func_add_param("x", t->parent);
+					func_add_param("x", p);
 				class_add_funcx("insert", TypeVoid, &DynamicArray::insert_p_single);
-					func_add_param("x", t->parent);
+					func_add_param("x", p);
 					func_add_param("index", TypeInt);
-			}else if (t->parent == TypeFloat32){
+			}else if (p == TypeFloat32){
 				class_add_funcx(IDENTIFIER_FUNC_INIT, TypeVoid, &Array<float>::__init__);
 				class_add_funcx("add", TypeVoid, &DynamicArray::append_f_single);
-					func_add_param("x", t->parent);
+					func_add_param("x", p);
 				class_add_funcx("insert", TypeVoid, &DynamicArray::insert_f_single);
-					func_add_param("x", t->parent);
+					func_add_param("x", p);
 					func_add_param("index", TypeInt);
-			}else if (t->parent == TypeFloat64){
+			}else if (p == TypeFloat64){
 				class_add_funcx(IDENTIFIER_FUNC_INIT, TypeVoid, &Array<double>::__init__);
 				class_add_funcx("add", TypeVoid, &DynamicArray::append_d_single);
-					func_add_param("x", t->parent);
+					func_add_param("x", p);
 				class_add_funcx("insert", TypeVoid, &DynamicArray::insert_d_single);
-					func_add_param("x", t->parent);
+					func_add_param("x", p);
 					func_add_param("index", TypeInt);
-			}else if (t->parent->size == 4){
+			}else if (p->size == 4){
 				class_add_funcx(IDENTIFIER_FUNC_INIT, TypeVoid, &Array<int>::__init__);
 				class_add_funcx("add", TypeVoid, &DynamicArray::append_4_single);
-					func_add_param("x", t->parent);
+					func_add_param("x", p);
 				class_add_funcx("insert", TypeVoid, &DynamicArray::insert_4_single);
-					func_add_param("x", t->parent);
+					func_add_param("x", p);
 					func_add_param("index", TypeInt);
-			}else if (t->parent->size == 1){
+			}else if (p->size == 1){
 				class_add_funcx(IDENTIFIER_FUNC_INIT, TypeVoid, &Array<char>::__init__);
 				class_add_funcx("add", TypeVoid, &DynamicArray::append_1_single);
-					func_add_param("x", t->parent);
+					func_add_param("x", p);
 				class_add_funcx("insert", TypeVoid, &DynamicArray::insert_1_single);
-					func_add_param("x", t->parent);
+					func_add_param("x", p);
 					func_add_param("index", TypeInt);
 			}else{
 				msg_error("evil class:  " + t->name);
@@ -588,9 +585,9 @@ void script_make_super_array(Class *t, SyntaxTree *ps)
 		}else{
 			// __init__ must be defined manually...!
 			class_add_funcx("add", TypeVoid, &DynamicArray::append_single);
-				func_add_param("x", t->parent);
+				func_add_param("x", p);
 			class_add_funcx("insert", TypeVoid, &DynamicArray::insert_single);
-				func_add_param("x", t->parent);
+				func_add_param("x", p);
 				func_add_param("index", TypeInt);
 		}
 		class_add_funcx(IDENTIFIER_FUNC_DELETE, TypeVoid, &DynamicArray::simple_clear);
@@ -601,7 +598,7 @@ void script_make_super_array(Class *t, SyntaxTree *ps)
 			func_add_param("index", TypeInt);
 		class_add_funcx("resize", TypeVoid, &DynamicArray::simple_resize);
 			func_add_param("num", TypeInt);
-	}else if (t->parent == TypeString){
+	}else if (p == TypeString){
 		// handled manually later...
 	}else{
 		msg_error("evil class:  " + t->name);
@@ -617,7 +614,7 @@ void add_type_cast(int penalty, const Class *source, const Class *dest, const st
 	TypeCast c;
 	c.penalty = penalty;
 	c.f = nullptr;
-	for (auto *f: cur_package->syntax->base_class->static_functions)
+	for (auto *f: cur_package->syntax->functions)
 		if (f->long_name() == cmd){
 			c.f = f;
 			break;
@@ -683,7 +680,7 @@ void SIAddPackageImage();
 void SIAddPackageSound();
 void SIAddPackageX();
 
-void Init(Asm::InstructionSet instruction_set, Abi abi, bool allow_std_lib) {
+void init(Asm::InstructionSet instruction_set, Abi abi, bool allow_std_lib) {
 	Asm::init(instruction_set);
 	config.instruction_set = Asm::instruction_set.set;
 	if (abi == Abi::NATIVE){
@@ -751,13 +748,13 @@ void Init(Asm::InstructionSet instruction_set, Abi abi, bool allow_std_lib) {
 
 
 
-	add_type_cast(10, TypeInt, TypeFloat32, "i2f");
-	add_type_cast(10, TypeInt, TypeInt64, "i2i64");
-	add_type_cast(15, TypeInt64, TypeInt, "i642i");
-	add_type_cast(10, TypeFloat32, TypeFloat64,"f2f64");
-	add_type_cast(20, TypeFloat32, TypeInt, "f2i");
-	add_type_cast(10, TypeInt, TypeChar, "i2c");
-	add_type_cast(20, TypeChar, TypeInt, "c2i");
+	add_type_cast(10, TypeInt, TypeFloat32, "int.float");
+	add_type_cast(10, TypeInt, TypeInt64, "int.int64");
+	add_type_cast(15, TypeInt64, TypeInt, "int64.int");
+	add_type_cast(10, TypeFloat32, TypeFloat64,"float.float64");
+	add_type_cast(20, TypeFloat32, TypeInt, "float.int");
+	add_type_cast(10, TypeInt, TypeChar, "int.char");
+	add_type_cast(20, TypeChar, TypeInt, "char.int");
 	add_type_cast(50, TypePointer, TypeBool, "p2b");
 	add_type_cast(50, TypePointer, TypeString, "p2s");
 	cur_package = Packages[2];
@@ -777,23 +774,21 @@ void Init(Asm::InstructionSet instruction_set, Abi abi, bool allow_std_lib) {
 					msg_error("SUPER ARRAY INCONSISTENT: " + c->name);
 			}
 			// x package failing
-			/*for (auto *f: c->member_functions)
+			/*for (auto *f: c->functions)
 				if (f->needs_overriding and (f->name != IDENTIFIER_FUNC_SUBARRAY))
 					msg_error(f->signature());*/
 		}
 #endif
 }
 
-void ResetExternalLinkData()
-{
+void reset_external_data() {
 	ExternalLinks.clear();
 	ClassOffsets.clear();
 	ClassSizes.clear();
 }
 
 // program variables - specific to the surrounding program, can't always be there...
-void LinkExternal(const string &name, void *pointer)
-{
+void link_external(const string &name, void *pointer) {
 	ExternalLinkData l;
 	l.name = name;
 	l.pointer = pointer;
@@ -803,7 +798,7 @@ void LinkExternal(const string &name, void *pointer)
 	string sname = names[0].replace("@list", "[]").replace("@@", ".");
 	for (auto *p: Packages)
 		foreachi(Function *f, p->syntax->functions, i)
-			if (f->long_name() == sname){
+			if (f->long_name() == sname) {
 				if (names.num > 0)
 					if (f->num_params != names[1]._int())
 						continue;
@@ -811,84 +806,81 @@ void LinkExternal(const string &name, void *pointer)
 			}
 }
 
-void *GetExternalLink(const string &name)
-{
+void *get_external_link(const string &name) {
 	for (ExternalLinkData &l: ExternalLinks)
 		if (l.name == name)
 			return l.pointer;
 	return nullptr;
 }
 
-void DeclareClassSize(const string &class_name, int size)
-{
+void declare_class_size(const string &class_name, int size) {
 	ClassSizeData d;
 	d.class_name = class_name;
 	d.size = size;
 	ClassSizes.add(d);
 }
 
-void DeclareClassOffset(const string &class_name, const string &element, int offset)
-{
+void split_namespace(const string &name, string &class_name, string &element) {
+	int p = name.rfind(".");
+	class_name = name.substr(0, p);
+	element = name.tail(name.num - p - 1);
+}
+
+void _declare_class_element(const string &name, int offset) {
 	ClassOffsetData d;
-	d.class_name = class_name;
-	d.element = element;
+	split_namespace(name, d.class_name, d.element);
 	d.offset = offset;
 	d.is_virtual = false;
 	ClassOffsets.add(d);
 }
 
-void DeclareClassVirtualIndex(const string &class_name, const string &func, void *p, void *instance)
-{
+void _link_external_virtual(const string &name, void *p, void *instance) {
 #ifdef OS_WINDOWS
 	return;
 #endif
 	VirtualTable *v = *(VirtualTable**)instance;
 
+
 	ClassOffsetData d;
-	d.class_name = class_name;
-	d.element = func;
-	d.offset = get_virtual_index(p, class_name, func);
+	split_namespace(name, d.class_name, d.element);
+	d.offset = get_virtual_index(p, d.class_name, d.element);
 	d.is_virtual = true;
 	ClassOffsets.add(d);
 
-	LinkExternal(class_name + "." + func, v[d.offset]);
+	link_external(name, v[d.offset]);
 }
 
-int process_class_offset(const string &class_name, const string &element, int offset)
-{
+int process_class_offset(const string &class_name, const string &element, int offset) {
 	for (ClassOffsetData &d: ClassOffsets)
 		if ((d.class_name == class_name) and (d.element == element))
 			return d.offset;
 	return offset;
 }
-int ProcessClassSize(const string &class_name, int size)
-{
+
+int process_class_size(const string &class_name, int size) {
 	for (ClassSizeData &d: ClassSizes)
 		if (d.class_name == class_name)
 			return d.size;
 	return size;
 }
 
-int ProcessClassNumVirtuals(const string &class_name, int num_virtual)
-{
+int process_class_num_virtuals(const string &class_name, int num_virtual) {
 	for (ClassOffsetData &d: ClassOffsets)
 		if ((d.class_name == class_name) and (d.is_virtual))
 			num_virtual = max(num_virtual, d.offset + 1);
 	return num_virtual;
 }
 
-void End()
-{
+void clean_up() {
 	DeleteAllScripts(true, true);
 
 	Packages.clear();
 
-	ResetExternalLinkData();
+	reset_external_data();
 }
 
 
-bool CompilerConfiguration::allow_output_func(const Function *f)
-{
+bool CompilerConfiguration::allow_output_func(const Function *f) {
 	if (!verbose)
 		return false;
 	if (!f)
@@ -900,8 +892,7 @@ bool CompilerConfiguration::allow_output_func(const Function *f)
 	return false;
 }
 
-bool CompilerConfiguration::allow_output_stage(const string &stage)
-{
+bool CompilerConfiguration::allow_output_stage(const string &stage) {
 	if (!verbose)
 		return false;
 	Array<string> filters = verbose_stage_filter.explode(",");
@@ -911,8 +902,7 @@ bool CompilerConfiguration::allow_output_stage(const string &stage)
 	return false;
 }
 
-bool CompilerConfiguration::allow_output(const Function *f, const string &stage)
-{
+bool CompilerConfiguration::allow_output(const Function *f, const string &stage) {
 	if (!verbose)
 		return false;
 	if (!allow_output_func(f))
