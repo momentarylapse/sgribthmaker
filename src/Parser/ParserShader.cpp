@@ -16,6 +16,7 @@ ParserShader::ParserShader() : Parser("Sader") {
 	special_words.add("varying");
 	special_words.add("uniform");
 	special_words.add("invariant");
+	special_words.add("writeonly");
 	special_words.add("in");
 	special_words.add("out");
 	special_words.add("layout");
@@ -27,6 +28,8 @@ ParserShader::ParserShader() : Parser("Sader") {
 	special_words.add("points");
 	special_words.add("triangle_strip");
 	special_words.add("max_vertices");
+	special_words.add("local_size_x");
+	special_words.add("local_size_y");
 	special_words.add("struct");
 	special_words.add("if");
 	special_words.add("else");
@@ -53,6 +56,9 @@ ParserShader::ParserShader() : Parser("Sader") {
 	types.add("vec2");
 	types.add("vec3");
 	types.add("vec4");
+	types.add("ivec2");
+	types.add("ivec3");
+	types.add("ivec4");
 	types.add("bool");
 	types.add("mat2");
 	types.add("mat3");
@@ -67,6 +73,7 @@ ParserShader::ParserShader() : Parser("Sader") {
 	types.add("mat4x4");
 	types.add("sampler2D");
 	types.add("samplerCube");
+	types.add("image2D");
 	compiler_functions.add("max");
 	compiler_functions.add("dot");
 	compiler_functions.add("pow");
@@ -78,6 +85,8 @@ ParserShader::ParserShader() : Parser("Sader") {
 	compiler_functions.add("texture");
 	compiler_functions.add("texture2D");
 	compiler_functions.add("textureCube");
+	compiler_functions.add("imageStore");
+	compiler_functions.add("imageLoad");
 	compiler_functions.add("reflect");
 	compiler_functions.add("refract");
 	compiler_functions.add("normalize");
@@ -97,7 +106,7 @@ ParserShader::ParserShader() : Parser("Sader") {
 	globals.add("binding");
 	globals.add("set");
 
-	/*globals.add("gl_TexCoord");
+	globals.add("gl_TexCoord");
 	globals.add("gl_Vertex");
 	globals.add("gl_MultiTexCoord0");
 	globals.add("gl_MultiTexCoord1");
@@ -116,7 +125,12 @@ ParserShader::ParserShader() : Parser("Sader") {
 	globals.add("gl_FogFragCoord");
 	globals.add("gl_FragCoord");
 	globals.add("gl_Color");
-	globals.add("gl_FragColor");*/
+	globals.add("gl_FragColor");
+	globals.add("gl_GlobalInvocationID");
+	globals.add("gl_NumWorkGroups");
+	globals.add("gl_WorkGroupID");
+	globals.add("gl_WorkGroupSize");
+	globals.add("gl_LocalInvocationID");
 }
 
 void ParserShader::CreateTextColors(SourceView *sv, int first_line, int last_line) {
