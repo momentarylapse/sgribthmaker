@@ -30,7 +30,7 @@
 
 namespace Kaba{
 
-string LibVersion = "0.17.10.2";
+string LibVersion = "0.17.10.3";
 
 
 const string IDENTIFIER_CLASS = "class";
@@ -466,7 +466,7 @@ void class_add_const(const string &name, const Class *type, const void *value) {
 	// enums can't be referenced...
 	if (type == TypeInt)
 		*(const void**)c->p() = value;
-	else
+	else if (value)
 		memcpy(c->p(), value, type->size);
 }
 
