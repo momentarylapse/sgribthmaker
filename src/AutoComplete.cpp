@@ -28,6 +28,20 @@ void AutoComplete::Data::append(const AutoComplete::Data &d)
 namespace Kaba
 {
 
+
+const Kaba::Class *simplify_type(const Kaba::Class *c) {
+	if (c->is_pointer())
+		return c->param;
+	return c;
+}
+
+const Kaba::Class *node_namespace(Kaba::Node *n) {
+	if (n->kind == NodeKind::CLASS)
+		return n->as_class();
+	return simplify_type(n->type);
+}
+
+
 void _ParseFunctionBody(SyntaxTree *syntax, Function *f)
 {
 	syntax->Exp.cur_line = &syntax->Exp.line[f->_logical_line_no];
@@ -45,8 +59,7 @@ void _ParseFunctionBody(SyntaxTree *syntax, Function *f)
 
 AutoComplete::Data find_top_level_from_class(const Class *t, const string &yyy)
 {
-	if (t->is_pointer())
-		t = t->parent;
+	t = simplify_type(t);
 	AutoComplete::Data suggestions;
 	for (auto &e: t->elements)
 		if (e.name.head(yyy.num) == yyy)
@@ -120,18 +133,6 @@ Block* guess_block(SyntaxTree *syntax, Function *f)
 	}*/
 	return b;
 	//syntax->blocks.back()
-}
-
-const Kaba::Class *simplify_type(const Kaba::Class *c) {
-	if (c->is_pointer())
-		return c->parent;
-	return c;
-}
-
-const Kaba::Class *node_namespace(Kaba::Node *n) {
-	if (n->kind == NodeKind::CLASS)
-		return n->as_class();
-	return simplify_type(n->type);
 }
 
 AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &cur_line)
