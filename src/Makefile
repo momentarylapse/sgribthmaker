@@ -114,6 +114,7 @@ OBJ = lib/algebra/crypto.o \
  lib/kaba/lib/lib_nix.o \
  lib/kaba/lib/lib_sound.o \
  lib/kaba/lib/lib_threads.o \
+ lib/kaba/lib/lib_vulkan.o \
  lib/kaba/lib/lib_x.o \
  lib/kaba/syntax/Class.o \
  lib/kaba/syntax/Constant.o \
@@ -492,6 +493,9 @@ lib/kaba/lib/lib_sound.o : lib/kaba/lib/lib_sound.cpp lib/file/file.h lib/base/b
 
 lib/kaba/lib/lib_threads.o : lib/kaba/lib/lib_threads.cpp lib/file/file.h lib/base/base.h lib/base/macros.h lib/base/array.h lib/base/strings.h lib/file/msg.h lib/file/file_op.h lib/kaba/kaba.h lib/kaba/asm/asm.h lib/kaba/lib/lib.h lib/kaba/syntax/SyntaxTree.h lib/kaba/syntax/lexical.h lib/kaba/syntax/Class.h lib/kaba/syntax/Constant.h lib/kaba/syntax/Function.h lib/kaba/syntax/Node.h lib/config.h lib/kaba/lib/common.h
 	$(CPP) -c lib/kaba/lib/lib_threads.cpp -o $@ $(CXXFLAGS)
+
+lib/kaba/lib/lib_vulkan.o : lib/kaba/lib/lib_vulkan.cpp lib/file/file.h lib/base/base.h lib/base/macros.h lib/base/array.h lib/base/strings.h lib/file/msg.h lib/file/file_op.h lib/kaba/kaba.h lib/kaba/asm/asm.h lib/kaba/lib/lib.h lib/kaba/syntax/SyntaxTree.h lib/kaba/syntax/lexical.h lib/kaba/syntax/Class.h lib/kaba/syntax/Constant.h lib/kaba/syntax/Function.h lib/kaba/syntax/Node.h lib/config.h lib/kaba/lib/common.h lib/kaba/lib/exception.h lib/image/image.h lib/image/color.h lib/math/math.h lib/math/vector.h lib/math/matrix.h lib/math/matrix3.h lib/math/quaternion.h lib/math/plane.h lib/math/rect.h lib/math/complex.h lib/math/interpolation.h lib/math/random.h lib/math/ray.h
+	$(CPP) -c lib/kaba/lib/lib_vulkan.cpp -o $@ $(CXXFLAGS)
 
 lib/kaba/lib/lib_x.o : lib/kaba/lib/lib_x.cpp lib/file/file.h lib/base/base.h lib/base/macros.h lib/base/array.h lib/base/strings.h lib/file/msg.h lib/file/file_op.h lib/kaba/kaba.h lib/kaba/asm/asm.h lib/kaba/lib/lib.h lib/kaba/syntax/SyntaxTree.h lib/kaba/syntax/lexical.h lib/kaba/syntax/Class.h lib/kaba/syntax/Constant.h lib/kaba/syntax/Function.h lib/kaba/syntax/Node.h lib/config.h lib/kaba/lib/common.h lib/kaba/lib/exception.h
 	$(CPP) -c lib/kaba/lib/lib_x.cpp -o $@ $(CXXFLAGS)
