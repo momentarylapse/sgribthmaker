@@ -72,6 +72,7 @@ ParserShader::ParserShader() : Parser("Sader") {
 	types.add("mat4x3");
 	types.add("mat4x4");
 	types.add("sampler2D");
+	types.add("sampler2DShadow");
 	types.add("samplerCube");
 	types.add("image2D");
 	compiler_functions.add("max");
@@ -82,6 +83,8 @@ ParserShader::ParserShader() : Parser("Sader") {
 	compiler_functions.add("sin");
 	compiler_functions.add("cos");
 	compiler_functions.add("tan");
+	compiler_functions.add("step");
+	compiler_functions.add("smoothstep");
 	compiler_functions.add("texture");
 	compiler_functions.add("texture2D");
 	compiler_functions.add("textureCube");
@@ -126,6 +129,7 @@ ParserShader::ParserShader() : Parser("Sader") {
 	globals.add("gl_FragCoord");
 	globals.add("gl_Color");
 	globals.add("gl_FragColor");
+	globals.add("gl_FragDepth");
 	globals.add("gl_GlobalInvocationID");
 	globals.add("gl_NumWorkGroups");
 	globals.add("gl_WorkGroupID");
