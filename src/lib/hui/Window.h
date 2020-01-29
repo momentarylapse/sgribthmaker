@@ -37,6 +37,7 @@ struct CompleteWindowMessage {
 struct InputData {
 	// mouse
 	float x, y, dx, dy, scroll_x, scroll_y;	// position, change
+	float pressure;
 	bool inside, inside_smart;
 	bool lb, mb, rb; // buttons
 	int row, column, row_target;
@@ -167,9 +168,16 @@ private:
 public:
 	GtkWidget *window;
 private:
-	GtkWidget *vbox, *hbox, *menubar, *statusbar, *infobar;
+	GtkWidget *vbox, *hbox, *menubar, *statusbar;
 	Array<GtkWidget*> gtk_menu;
 	int gtk_num_menus;
+	struct InfoBar {
+		GtkWidget *widget;
+		GtkWidget *label;
+		string id;
+	};
+	Array<InfoBar> info_bars;
+	InfoBar *_get_info_bar(const string &id);
 #endif
 	
 protected:
