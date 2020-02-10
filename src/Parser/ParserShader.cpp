@@ -77,6 +77,7 @@ ParserShader::ParserShader() : Parser("Sader") {
 	types.add("image2D");
 	compiler_functions.add("max");
 	compiler_functions.add("dot");
+	compiler_functions.add("cross");
 	compiler_functions.add("pow");
 	compiler_functions.add("abs");
 	compiler_functions.add("exp");

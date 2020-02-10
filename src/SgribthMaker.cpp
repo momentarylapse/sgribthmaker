@@ -325,7 +325,7 @@ void SgribthMaker::CompileShader()
 	w->show();
 //	nix::init("OpenGL", w, "nix-area");
 
-	nix::Shader *shader = nix::LoadShader(cur_doc->filename);
+	nix::Shader *shader = nix::Shader::load(cur_doc->filename);
 	if (!shader){
 		ErrorBox(MainWin, _("Error"), nix::shader_error);
 	}else{
