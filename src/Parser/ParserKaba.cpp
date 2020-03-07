@@ -30,6 +30,7 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 	special_words.add(Kaba::IDENTIFIER_RETURN);
 	special_words.add(Kaba::IDENTIFIER_BREAK);
 	special_words.add(Kaba::IDENTIFIER_CONTINUE);
+	special_words.add(Kaba::IDENTIFIER_NOT);
 	special_words.add(Kaba::IDENTIFIER_AND);
 	special_words.add(Kaba::IDENTIFIER_OR);
 	special_words.add(Kaba::IDENTIFIER_NEW);

@@ -42,18 +42,17 @@ const Kaba::Class *node_namespace(Kaba::Node *n) {
 }
 
 
-void _ParseFunctionBody(SyntaxTree *syntax, Function *f)
-{
+void _ParseFunctionBody(SyntaxTree *syntax, Function *f) {
 	syntax->Exp.cur_line = &syntax->Exp.line[f->_logical_line_no];
 
-	ExpressionBuffer::Line *this_line = syntax->Exp.cur_line;
+	int indent0 = syntax->Exp.cur_line->indent;
 	bool more_to_parse = true;
 
 	syntax->parser_loop_depth = 0;
 
 // instructions
-	while(more_to_parse){
-		more_to_parse = syntax->parse_function_command(f, this_line);
+	while (more_to_parse) {
+		more_to_parse = syntax->parse_function_command(f, indent0);
 	}
 }
 
