@@ -48,6 +48,7 @@ extern const Class *TypeIntList;
 extern const Class *TypeBoolList;
 extern const Class *TypeFloatPs;
 extern const Class *TypeAny;
+extern const Class *TypeAnyList;
 
 
 float _cdecl f_sqr(float f){	return f*f;	}
@@ -87,6 +88,16 @@ public:
 	void _cdecl imul2f(float x)	IMPLEMENT_IOP2(*=, complex)
 	void _cdecl idiv2f(float x)	IMPLEMENT_IOP2(/=, complex)
 	void _cdecl assign_complex(complex x)	IMPLEMENT_IOP2(=, complex)
+};
+
+class AnyList : public Array<Any> {
+public:
+	void __delete__() {
+		this->~AnyList();
+	}
+	void assign(AnyList &o) {
+		*this = o;
+	}
 };
 
 Array<int> _cdecl int_range(int start, int end) {
@@ -284,7 +295,7 @@ void SIAddPackageMath() {
 		class_add_func("bar", TypeComplex, 		mf(&complex::bar), FLAG_PURE);
 		class_add_func("str", TypeString, mf(&complex::str), FLAG_PURE);
 		class_add_const("I", TypeComplex, &complex::I);
-		class_add_func("create", TypeComplex, (void*)__complex_set, ScriptFlag(FLAG_PURE | FLAG_STATIC));
+		class_add_func("_create", TypeComplex, (void*)__complex_set, ScriptFlag(FLAG_PURE | FLAG_STATIC));
 			func_set_inline(InlineID::COMPLEX_SET);
 			func_add_param("x", TypeFloat32);
 			func_add_param("y", TypeFloat32);
@@ -366,11 +377,12 @@ void SIAddPackageMath() {
 		class_add_funcx("cross", TypeVector, &vector::cross, ScriptFlag(FLAG_PURE | FLAG_STATIC));
 			func_add_param("v1", TypeVector);
 			func_add_param("v2", TypeVector);
-		class_add_func("create", TypeVector, (void*)&__vector_set, ScriptFlag(FLAG_PURE | FLAG_STATIC));
+		class_add_func("_create", TypeVector, (void*)&__vector_set, ScriptFlag(FLAG_PURE | FLAG_STATIC));
 			func_set_inline(InlineID::VECTOR_SET);
 			func_add_param("x", TypeFloat32);
 			func_add_param("y", TypeFloat32);
 			func_add_param("z", TypeFloat32);
+		// ignored, but useful for docu
 		class_add_func(IDENTIFIER_FUNC_INIT, TypeVoid, (void*)&__vector_set);
 			func_add_param("x", TypeFloat32);
 			func_add_param("y", TypeFloat32);
@@ -420,16 +432,23 @@ void SIAddPackageMath() {
 		class_add_func("normalize", TypeVoid, mf(&quaternion::normalize));
 		class_add_func("angles", TypeVector, mf(&quaternion::get_angles), FLAG_PURE);
 		class_add_func("str", TypeString, mf(&quaternion::str), FLAG_PURE);
-		class_add_func("rotation", TypeQuaternion, (void*)&quaternion::rotation_v, ScriptFlag(FLAG_PURE | FLAG_STATIC));
+		class_add_func(IDENTIFIER_FUNC_INIT, TypeVoid, nullptr);
 			func_add_param("ang", TypeVector);
-		class_add_func("rotation", TypeQuaternion, (void*)&quaternion::rotation_a, ScriptFlag(FLAG_PURE | FLAG_STATIC));
+		class_add_func(IDENTIFIER_FUNC_INIT, TypeVoid, nullptr);
 			func_add_param("axis", TypeVector);
 			func_add_param("angle", TypeFloat32);
-		class_add_func("rotation", TypeQuaternion, (void*)&quaternion::rotation_m, ScriptFlag(FLAG_PURE | FLAG_STATIC));
-			func_add_param("m_in", TypeMatrix);
+		class_add_func(IDENTIFIER_FUNC_INIT, TypeVoid, nullptr);
+			func_add_param("m", TypeMatrix);
+		class_add_func("_rotation_v", TypeQuaternion, (void*)&quaternion::rotation_v, ScriptFlag(FLAG_PURE | FLAG_STATIC));
+			func_add_param("ang", TypeVector);
+		class_add_func("_rotation_a", TypeQuaternion, (void*)&quaternion::rotation_a, ScriptFlag(FLAG_PURE | FLAG_STATIC));
+			func_add_param("axis", TypeVector);
+			func_add_param("angle", TypeFloat32);
+		class_add_func("_rotation_m", TypeQuaternion, (void*)&quaternion::rotation_m, ScriptFlag(FLAG_PURE | FLAG_STATIC));
+			func_add_param("m", TypeMatrix);
 		class_add_func("interpolate", TypeQuaternion, (void*)(quaternion(*)(const quaternion&, const quaternion&, float))&quaternion::interpolate, ScriptFlag(FLAG_PURE | FLAG_STATIC));
-			func_add_param("q_0", TypeQuaternion);
-			func_add_param("q_1", TypeQuaternion);
+			func_add_param("q0", TypeQuaternion);
+			func_add_param("q1", TypeQuaternion);
 			func_add_param("t", TypeFloat32);
 		class_add_func("drag", TypeQuaternion, (void*)&quaternion::drag, ScriptFlag(FLAG_PURE | FLAG_STATIC));
 			func_add_param("up", TypeVector);
@@ -452,7 +471,7 @@ void SIAddPackageMath() {
 			func_add_param("y", TypeFloat32);
 		class_add_func("str", TypeString, mf(&rect::str), FLAG_PURE);
 		class_add_const("ID", TypeRect, (void*)&rect::ID);
-		class_add_func("create", TypeRect, (void*)__rect_set, ScriptFlag(FLAG_PURE | FLAG_STATIC));
+		class_add_func("_create", TypeRect, (void*)__rect_set, ScriptFlag(FLAG_PURE | FLAG_STATIC));
 			func_set_inline(InlineID::RECT_SET);
 			func_add_param("x1", TypeFloat32);
 			func_add_param("x2", TypeFloat32);
@@ -493,7 +512,7 @@ void SIAddPackageMath() {
 			func_add_param("c1", TypeColor);
 			func_add_param("c2", TypeColor);
 			func_add_param("t", TypeFloat32);
-		class_add_func("create", TypeColor, (void*)&__color_set, ScriptFlag(FLAG_PURE | FLAG_STATIC));
+		class_add_func("_create", TypeColor, (void*)&__color_set, ScriptFlag(FLAG_PURE | FLAG_STATIC));
 			func_set_inline(InlineID::COLOR_SET);
 			func_add_param("a", TypeFloat32);
 			func_add_param("r", TypeFloat32);
@@ -711,7 +730,6 @@ void SIAddPackageMath() {
 			func_add_param("var", TypePointer);
 			func_add_param("type", TypeClassP);
 
-
 	add_funcx("@int2any", TypeAny, &kaba_int2any, FLAG_STATIC);
 		func_add_param("i", TypeInt);
 	add_funcx("@float2any", TypeAny, &kaba_float2any, FLAG_STATIC);
@@ -910,6 +928,17 @@ void SIAddPackageMath() {
 	add_const("Blue",   TypeColor, (void*)&Blue);
 	add_const("Yellow", TypeColor, (void*)&Yellow);
 	add_const("Orange", TypeColor, (void*)&Orange);
+
+
+	// needs to be defined after any
+	TypeAnyList = add_type_l(TypeAny);
+	add_class(TypeAnyList);
+		class_add_func(IDENTIFIER_FUNC_INIT, TypeVoid, mf(&AnyList::__init__));
+		class_add_func(IDENTIFIER_FUNC_DELETE, TypeVoid, mf(&AnyList::__delete__));
+		class_add_func("add", TypeVoid, mf(&AnyList::add));
+			func_add_param("a", TypeAny);
+		class_add_funcx(IDENTIFIER_FUNC_ASSIGN, TypeVoid, &AnyList::assign);
+			func_add_param("other", TypeAnyList);
 }
 
 };
