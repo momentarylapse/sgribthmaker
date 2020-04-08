@@ -11,6 +11,7 @@ namespace Kaba {
 
 extern const Class *TypeDynamicArray;
 const Class *TypeAbstractList;
+const Class *TypeAbstractDict;
 extern const Class *TypeDictBase;
 extern const Class *TypeFloat;
 extern const Class *TypePointerList;
@@ -91,6 +92,12 @@ public:
 	}
 	bool __contains__(const string &s) {
 		return this->find(s) >= 0;
+	}
+	Array<string> __add__(const Array<string> &o) {
+		return *this + o;
+	}
+	void __adds__(const Array<string> &o) {
+		append(o);
 	}
 };
 
@@ -379,6 +386,7 @@ void SIAddPackageBase() {
 	TypeChar			= add_type  ("char", sizeof(char), FLAG_CALL_BY_VALUE);
 	TypeDynamicArray	= add_type  ("@DynamicArray", config.super_array_size);
 	TypeAbstractList	= add_type  ("-abstract-list-", config.super_array_size);
+	TypeAbstractDict	= add_type  ("-abstract-dict-", config.super_array_size);
 	TypeDictBase		= add_type  ("@DictBase",   config.super_array_size);
 
 	TypeException		= add_type  ("Exception", sizeof(KabaException));
@@ -499,7 +507,7 @@ void SIAddPackageBase() {
 
 	add_class(TypeInt64);
 		class_add_funcx("str", TypeString, &i642s, FLAG_PURE);
-		class_add_funcx("int", TypeString, &_Int642Int, FLAG_PURE);
+		class_add_funcx("int", TypeInt, &_Int642Int, FLAG_PURE);
 			func_set_inline(InlineID::INT64_TO_INT);
 		add_operator(OperatorID::ASSIGN, TypeVoid, TypeInt64, TypeInt64, InlineID::INT64_ASSIGN);
 		add_operator(OperatorID::ADD, TypeInt64, TypeInt64, TypeInt64, InlineID::INT64_ADD, (void*)op_int64_add);
@@ -830,6 +838,10 @@ void SIAddPackageBase() {
 			func_add_param("glue", TypeString);
 		class_add_funcx("__contains__", TypeBool, &StringList::__contains__, FLAG_PURE);
 			func_add_param("s", TypeString);
+		class_add_funcx("__add__", TypeStringList, &StringList::__add__, FLAG_PURE);
+			func_add_param("o", TypeStringList);
+		class_add_funcx("__adds__", TypeVoid, &StringList::__adds__);
+			func_add_param("o", TypeStringList);
 		class_add_funcx("str", TypeString, &sa2s, FLAG_PURE);
 
 
