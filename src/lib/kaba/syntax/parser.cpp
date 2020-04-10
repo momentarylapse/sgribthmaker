@@ -217,6 +217,7 @@ Node *SyntaxTree::parse_operand_extension_array(Node *operand, Block *block) {
 		auto *cf = operand->type->get_func(IDENTIFIER_FUNC_SUBARRAY, operand->type, {index->type, index->type});
 		if (cf) {
 			Node *f = add_node_member_call(cf, operand);
+			f->is_const = operand->is_const;
 			f->set_param(1, index);
 			f->set_param(2, index2);
 			return f;
@@ -227,6 +228,7 @@ Node *SyntaxTree::parse_operand_extension_array(Node *operand, Block *block) {
 	auto *cf = operand->type->get_get(index->type);
 	if (cf) {
 		Node *f = add_node_member_call(cf, operand);
+		f->is_const = operand->is_const;
 		f->set_param(1, index);
 		return f;
 	}
@@ -267,6 +269,7 @@ Node *SyntaxTree::parse_operand_extension_array(Node *operand, Block *block) {
 	} else {
 		array = add_node_array(operand, index);
 	}
+	array->is_const = operand->is_const;
 	return array;
 }
 
@@ -681,7 +684,7 @@ Node *SyntaxTree::apply_params_with_cast(Node *operand, const Array<Node*> &para
 }
 
 Node *SyntaxTree::build_abstract_list(const Array<Node*> &el) {
-	Node *c = new Node(NodeKind::ARRAY_BUILDER, 0, TypeAbstractList);
+	Node *c = new Node(NodeKind::ARRAY_BUILDER, 0, TypeAbstractList, true);
 	c->set_num_params(el.num);
 	for (int i=0; i<el.num; i++)
 		c->set_param(i, el[i]);
@@ -689,7 +692,7 @@ Node *SyntaxTree::build_abstract_list(const Array<Node*> &el) {
 }
 
 Node *SyntaxTree::build_abstract_dict(const Array<Node*> &el) {
-	Node *c = new Node(NodeKind::DICT_BUILDER, 0, TypeAbstractDict);
+	Node *c = new Node(NodeKind::DICT_BUILDER, 0, TypeAbstractDict, true);
 	c->set_num_params(el.num);
 	for (int i=0; i<el.num; i++)
 		c->set_param(i, el[i]);
@@ -1208,6 +1211,9 @@ Node *SyntaxTree::link_operator(PrimitiveOperator *primop, Node *param1, Node *p
 	bool order_inverted = primop->order_inverted;
 	string op_func_name = primop->function_name;
 	Node *op = nullptr;
+
+	if (primop->left_modifiable and param1->is_const)
+		do_error("trying to modify a constant expression");
 
 	if (primop->id == OperatorID::IS)
 		return link_special_operator_is(param1, param2);
@@ -2055,9 +2061,16 @@ Node *SyntaxTree::parse_statement_lambda(Block *block) {
 		for (int k=0;;k++) {
 			// like variable definitions
 
+			bool rw = false;
+			if (Exp.cur == IDENTIFIER_OUT) {
+				rw = true;
+				Exp.next();
+			}
+
 			// type of parameter variable
 			const Class *param_type = parse_type(base_class); // force
-			f->block->add_var(Exp.cur, param_type);
+			auto v = f->block->add_var(Exp.cur, param_type);
+			v->is_const = !rw;
 			f->literal_param_type.add(param_type);
 			Exp.next();
 			f->num_params ++;
@@ -2737,9 +2750,16 @@ Function *SyntaxTree::parse_function_header(Class *name_space, bool as_extern, b
 		for (int k=0;;k++) {
 			// like variable definitions
 
+			bool rw = false;
+			if (Exp.cur == IDENTIFIER_OUT) {
+				rw = true;
+				Exp.next();
+			}
+
 			// type of parameter variable
 			const Class *param_type = parse_type(name_space); // force
-			f->block->add_var(Exp.cur, param_type);
+			auto v = f->block->add_var(Exp.cur, param_type);
+			v->is_const = !rw;
 			f->literal_param_type.add(param_type);
 			Exp.next();
 			f->num_params ++;
