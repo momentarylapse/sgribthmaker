@@ -234,7 +234,7 @@ AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos)
 
 		//printf("--d\n");
 		for (auto *f: s->syntax->functions){
-			if ((!f->is_extern) and (f->_logical_line_no >= 0) and (f->_logical_line_no < line))
+			if ((!f->is_extern()) and (f->_logical_line_no >= 0) and (f->_logical_line_no < line))
 				ff = f;
 		}
 		if (ff){
