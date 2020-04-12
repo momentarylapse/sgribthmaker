@@ -51,6 +51,7 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 	special_words.add(Kaba::IDENTIFIER_PASS);
 	special_words.add(Kaba::IDENTIFIER_LET);
 	special_words.add(Kaba::IDENTIFIER_LAMBDA);
+	special_words.add(Kaba::IDENTIFIER_CALL);
 	compiler_functions.add(Kaba::IDENTIFIER_LEN);
 	compiler_functions.add(Kaba::IDENTIFIER_SIZEOF);
 	compiler_functions.add(Kaba::IDENTIFIER_STR);
