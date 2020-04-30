@@ -46,7 +46,7 @@ void SgribthMaker::SetMessage(const string &str)
 	MainWin->set_status_text(str);
 	MainWin->enable_statusbar(true);
 	status_count ++;
-	hui::RunLater(5, std::bind(&SgribthMaker::UpdateStatusBar, this));
+	hui::RunLater(5, [=]{ UpdateStatusBar(); });
 }
 
 void SgribthMaker::SetWindowTitle()
@@ -66,8 +66,7 @@ void SgribthMaker::UpdateDocList()
 	}
 }
 
-void SgribthMaker::UpdateMenu()
-{
+void SgribthMaker::UpdateMenu() {
 	MainWin->enable("undo", cur_doc->history->Undoable());
 	MainWin->enable("redo", cur_doc->history->Redoable());
 	MainWin->enable("save", cur_doc->history->changed);
@@ -162,12 +161,11 @@ void SgribthMaker::New()
 	UpdateMenu();
 }
 
-void SgribthMaker::OnCloseDocument()
-{
+void SgribthMaker::OnCloseDocument() {
 	if (!AllowDocTermination(cur_doc))
 		return;
 
-	if (documents.num <= 1){
+	if (documents.num <= 1) {
 		OnExit();
 		return;
 	}
@@ -175,9 +173,9 @@ void SgribthMaker::OnCloseDocument()
 	int n = MainWin->get_int("tab");
 	hui::RunLater(0.001f, [=]{
 		MainWin->remove_string("tab", n);
-		delete(documents[n]);
+		delete documents[n];
 		documents.erase(n);
-		delete(source_view[n]);
+		delete source_view[n];
 		source_view.erase(n);
 
 		SetActiveDocument(documents.back());
@@ -185,36 +183,31 @@ void SgribthMaker::OnCloseDocument()
 	});
 }
 
-bool SgribthMaker::LoadFromFile(const string &filename)
-{
+bool SgribthMaker::LoadFromFile(const string &filename) {
 	New();
 	return documents.back()->load(filename);
 }
 
-bool SgribthMaker::WriteToFile(Document *doc, const string &filename)
-{
+bool SgribthMaker::WriteToFile(Document *doc, const string &filename) {
 	bool ok = doc->save(filename);
 	if (ok)
 		SetMessage(_("saved"));
 	return ok;
 }
 
-bool SgribthMaker::Open()
-{
+bool SgribthMaker::Open() {
 	if (hui::FileDialogOpen(MainWin, _("Open file"), cur_doc->filename.dirname(), _("All (*.*)"), "*"))
 		return LoadFromFile(hui::Filename);
 	return false;
 }
 
-bool SgribthMaker::SaveAs(Document *doc)
-{
+bool SgribthMaker::SaveAs(Document *doc) {
 	if (hui::FileDialogSave(MainWin, _("Save file"), doc->filename.dirname(), _("All (*.*)"), "*"))
 		return WriteToFile(doc, hui::Filename);
 	return false;
 }
 
-bool SgribthMaker::Save(Document *doc)
-{
+bool SgribthMaker::Save(Document *doc) {
 	if (doc->filename.num > 0)
 		return WriteToFile(doc, doc->filename);
 	else
@@ -230,11 +223,10 @@ void SgribthMaker::OnSave()
 void SgribthMaker::OnSaveAs()
 {	SaveAs(cur_doc);	}
 
-bool SgribthMaker::Reload()
-{
+bool SgribthMaker::Reload() {
 	if (!AllowTermination())
 		return false;
-	if (cur_doc->filename.num > 0){
+	if (cur_doc->filename.num > 0) {
 		bool r = cur_doc->load(cur_doc->filename);
 		if (r)
 			SetMessage(_("reloaded"));
@@ -252,40 +244,34 @@ void SgribthMaker::OnUndo()
 void SgribthMaker::OnRedo()
 {	cur_doc->history->Redo();	}
 
-void SgribthMaker::OnCopy()
-{
+void SgribthMaker::OnCopy() {
 	hui::Clipboard::Copy(cur_doc->source_view->GetSelection());
 	SetMessage(_("copied"));
 }
 
-void SgribthMaker::OnPaste()
-{
+void SgribthMaker::OnPaste() {
 	cur_doc->source_view->DeleteSelection();
 	cur_doc->source_view->InsertAtCursor(hui::Clipboard::Paste());
 	SetMessage(_("pasted"));
 }
 
-void SgribthMaker::OnDelete()
-{
+void SgribthMaker::OnDelete() {
 	cur_doc->source_view->DeleteSelection();
 }
 
-void SgribthMaker::OnCut()
-{
+void SgribthMaker::OnCut() {
 	OnCopy();
 	OnDelete();
 }
 
-string get_time_str(float t)
-{
+string get_time_str(float t) {
 	if (t < 0.3f)
 		return format("%.2fms", t * 1000.0f);
 	else
 		return format("%.2fs", t);
 }
 
-void SgribthMaker::CompileKaba()
-{
+void SgribthMaker::CompileKaba() {
 
 	//HuiSetDirectory(SgribthDir);
 	msg_set_verbose(true);
@@ -295,7 +281,7 @@ void SgribthMaker::CompileKaba()
 	Kaba::config.compile_silently = true;
 	//Kaba::config.verbose = true;
 
-	try{
+	try {
 		Kaba::Script *compile_script = Kaba::Load(cur_doc->filename, true);
 
 		float dt = CompileTimer.get();
@@ -304,7 +290,7 @@ void SgribthMaker::CompileKaba()
 
 		SetMessage(format(_("Script compilable without errors!         (in %s)"), get_time_str(dt).c_str()));
 
-	}catch(const Kaba::Exception &e){
+	} catch(const Kaba::Exception &e) {
 		e.print();
 		ErrorBox(MainWin, _("Error"), e.message());
 		cur_doc->source_view->MoveCursorTo(e.line, e.column);
@@ -555,56 +541,56 @@ bool SgribthMaker::on_startup(const Array<string> &arg)
 	MainWin = new hui::Window(AppTitle, width, height);
 	MainWin->from_resource("main-window");
 
-	MainWin->event("about", std::bind(&SgribthMaker::OnAbout, this));
-	MainWin->event("hui:close", std::bind(&SgribthMaker::OnExit, this));
+	MainWin->event("about", [=]{ OnAbout(); });
+	MainWin->event("hui:close", [=]{ OnExit(); });
 
-	MainWin->event("new", std::bind(&SgribthMaker::New, this));
+	MainWin->event("new", [=]{ New(); });
 	MainWin->set_key_code("new", hui::KEY_N + hui::KEY_CONTROL, "hui:new");
 	//hui::HuiAddKeyCode(HMM_NEW_HEX, hui::KEY_F1 + 256);
-	MainWin->event("open", std::bind(&SgribthMaker::OnOpen, this));
+	MainWin->event("open", [=]{ OnOpen(); });
 	MainWin->set_key_code("open", hui::KEY_O + hui::KEY_CONTROL, "hui:open");
 	//hui::HuiAddKeyCode(HMM_OPEN_HEX, hui::KEY_F9 + 256);
-	MainWin->event("save", std::bind(&SgribthMaker::OnSave, this));
+	MainWin->event("save", [=]{ OnSave(); });
 	MainWin->set_key_code("save", hui::KEY_S + hui::KEY_CONTROL, "hui:save");
-	MainWin->event("save_as", std::bind(&SgribthMaker::OnSaveAs, this));
+	MainWin->event("save_as", [=]{ OnSaveAs(); });
 	MainWin->set_key_code("save_as", hui::KEY_S + hui::KEY_SHIFT + hui::KEY_CONTROL, "hui:save_as");
-	MainWin->event("close", std::bind(&SgribthMaker::OnCloseDocument, this));
+	MainWin->event("close", [=]{ OnCloseDocument(); });
 	MainWin->set_key_code("close", hui::KEY_W + hui::KEY_CONTROL, "hui:close");
-	MainWin->event("exit", std::bind(&SgribthMaker::OnExit, this));
+	MainWin->event("exit", [=]{ OnExit(); });
 	MainWin->set_key_code("exit", hui::KEY_Q + hui::KEY_CONTROL, "hui:quit");
 	//MainWin->event("show_data", "", hui::KEY_D + hui::KEY_CONTROL, &ShowData);
-	MainWin->event("execute_command", std::bind(&SgribthMaker::ExecuteCommandDialog, this));
+	MainWin->event("execute_command", [=]{ ExecuteCommandDialog(); });
 	MainWin->set_key_code("execute_command", hui::KEY_E + hui::KEY_CONTROL, "");
-	MainWin->event("find", std::bind(&SgribthMaker::ExecuteCommandDialog, this));
+	MainWin->event("find", [=]{ ExecuteCommandDialog(); });
 	MainWin->set_key_code("find", hui::KEY_F + hui::KEY_CONTROL, "");
-	MainWin->event("cut", std::bind(&SgribthMaker::OnCut, this));
+	MainWin->event("cut", [=]{ OnCut(); });
 	MainWin->set_key_code("cut", hui::KEY_X + hui::KEY_CONTROL, "hui:cut");
-	MainWin->event("copy", std::bind(&SgribthMaker::OnCopy, this));
+	MainWin->event("copy", [=]{ OnCopy(); });
 	MainWin->set_key_code("copy", hui::KEY_C + hui::KEY_CONTROL, "hui:copy");
-	MainWin->event("paste", std::bind(&SgribthMaker::OnPaste, this));
+	MainWin->event("paste", [=]{ OnPaste(); });
 	MainWin->set_key_code("paste", hui::KEY_V + hui::KEY_CONTROL, "hui:paste");
-	MainWin->event("reload", std::bind(&SgribthMaker::OnReload, this));
+	MainWin->event("reload", [=]{ OnReload(); });
 	MainWin->set_key_code("reload", hui::KEY_R + hui::KEY_CONTROL, "hui:reload");
-	MainWin->event("undo", std::bind(&SgribthMaker::OnUndo, this));
+	MainWin->event("undo", [=]{ OnUndo(); });
 	MainWin->set_key_code("undo", hui::KEY_Z + hui::KEY_CONTROL, "hui:undo");
-	MainWin->event("redo", std::bind(&SgribthMaker::OnRedo, this));
+	MainWin->event("redo", [=]{ OnRedo(); });
 	MainWin->set_key_code("redo", hui::KEY_Z + hui::KEY_SHIFT + hui::KEY_CONTROL, "hui:redo");
-	MainWin->event("compile", std::bind(&SgribthMaker::Compile, this));
+	MainWin->event("compile", [=]{ Compile(); });
 	MainWin->set_key_code("compile", hui::KEY_F7);
-	MainWin->event("compile_and_run_verbose", std::bind(&SgribthMaker::OnCompileAndRunVerbose, this));
+	MainWin->event("compile_and_run_verbose", [=]{ OnCompileAndRunVerbose(); });
 	MainWin->set_key_code("compile_and_run_verbose", hui::KEY_F6 + hui::KEY_CONTROL);
-	MainWin->event("compile_and_run", std::bind(&SgribthMaker::OnCompileAndRunSilent, this));
+	MainWin->event("compile_and_run", [=]{ OnCompileAndRunSilent(); });
 	MainWin->set_key_code("compile_and_run", hui::KEY_F6);
-	MainWin->event("auto-complete", std::bind(&SgribthMaker::OnAutoComplete, this));
+	MainWin->event("auto-complete", [=]{ OnAutoComplete(); });
 	MainWin->set_key_code("auto-complete", hui::KEY_CONTROL + hui::KEY_SPACE);
-	MainWin->event("settings", std::bind(&SgribthMaker::ExecuteSettingsDialog, this));
+	MainWin->event("settings", [=]{ ExecuteSettingsDialog(); });
 	//MainWin->event("script_help", "hui:help", hui::KEY_F1 + hui::KEY_SHIFT);
-	MainWin->event("next_document", std::bind(&SgribthMaker::OnNextDocument, this));
+	MainWin->event("next_document", [=]{ OnNextDocument(); });
 	MainWin->set_key_code("next_document", hui::KEY_PRIOR + hui::KEY_CONTROL, "hui:down");
-	MainWin->event("prev_document", std::bind(&SgribthMaker::OnPreviousDocument, this));
+	MainWin->event("prev_document", [=]{ OnPreviousDocument(); });
 	MainWin->set_key_code("prev_document", hui::KEY_NEXT + hui::KEY_CONTROL, "hui:up");
 
-	MainWin->event("show_cur_line", std::bind(&SgribthMaker::ShowCurLine, this));
+	MainWin->event("show_cur_line", [=]{ ShowCurLine(); });
 	MainWin->set_key_code("show_cur_line", hui::KEY_F2);
 
 	for (int i=0; i<100; i++)
@@ -624,8 +610,8 @@ bool SgribthMaker::on_startup(const Array<string> &arg)
 	MainWin->set_maximized(maximized);
 	MainWin->show();
 
-	MainWin->event_x("file_list", "hui:select", std::bind(&SgribthMaker::OnFileList, this));
-	MainWin->event_x("function_list", "hui:select", std::bind(&SgribthMaker::OnFunctionList, this));
+	MainWin->event_x("file_list", "hui:select", [=]{ OnFileList(); });
+	MainWin->event_x("function_list", "hui:select", [=]{ OnFunctionList(); });
 
 
 

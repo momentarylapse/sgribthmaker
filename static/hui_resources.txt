@@ -1,7 +1,7 @@
 t7
-// Number Of Resources
+# Number Of Resources
 5
-// Resource
+# Resource
 Dialog
 command_dialog
 width=550,height=65
@@ -38,7 +38,7 @@ image=hui:ok
 1
 0
 0
-// Resource
+# Resource
 Window
 main-window
 borderwidth=0
@@ -93,7 +93,7 @@ nobar,noindent
 0
 0
 0
-// Resource
+# Resource
 Menu
 menu
 
@@ -286,7 +286,7 @@ image=hui:about
 1
 0
 0
-// Resource
+# Resource
 Dialog
 settings_dialog
 width=340,height=550
@@ -449,7 +449,7 @@ image=hui:close
 0
 0
 0
-// Resource
+# Resource
 Toolbar
 toolbar
 
@@ -458,7 +458,7 @@ toolbar
 9
 Item
 new
-image=hui:new
+image=hui:new,important
 0
 0
 0
@@ -470,7 +470,7 @@ image=hui:open
 0
 Item
 save
-image=hui:save
+image=hui:save,important
 2
 0
 0
@@ -482,7 +482,7 @@ Separator
 0
 Item
 undo
-image=hui:undo
+image=hui:undo,important
 4
 0
 0
@@ -500,23 +500,23 @@ Separator
 0
 Item
 compile
-image=hui:media-record
+image=hui:media-record,important
 7
 0
 0
 Item
 compile_and_run
-image=hui:media-play
+image=hui:media-play,important
 8
 0
 0
-// Number Of Languages
+# Number Of Languages
 2
-// Language
+# Language
 English
-// Number Of IDs
+# Number Of IDs
 44
-// Text
+# Text
 /about
 Info...
 
@@ -649,14 +649,14 @@ Settings
 settings_dialog/tab_width
 1
 
-// Num Language Strings
+# Num Language Strings
 0
-// Text
-// Language
+# Text
+# Language
 Deutsch
-// Number Of IDs
+# Number Of IDs
 44
-// Text
+# Text
 /about
 Info...
 
@@ -789,9 +789,9 @@ Einstellungen
 settings_dialog/tab_width
 1
 
-// Num Language Strings
+# Num Language Strings
 56
-// Text
+# Text
                   Close dialog box to exit program.
                   Close dialog box to exit program.
  (write protected)

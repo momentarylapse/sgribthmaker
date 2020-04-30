@@ -42,6 +42,7 @@ ParserPython::ParserPython() : Parser("Python") {
 	types.add("Exception");
 	compiler_functions.add("print");
 	compiler_functions.add("len");
+	compiler_functions.add("type");
 	compiler_functions.add("range");
 	compiler_functions.add("enumerate");
 	compiler_functions.add("dir");
