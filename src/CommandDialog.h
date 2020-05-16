@@ -12,17 +12,17 @@
 
 class SgribthMaker;
 
-class CommandDialog : public hui::Window
-{
+class CommandDialog : public hui::Dialog {
 public:
 	CommandDialog(SgribthMaker *sgribthmaker);
 	virtual ~CommandDialog();
 
 	void on_ok();
-	void on_cancel();
 
 	SgribthMaker *sgribthmaker;
-	string last_command;
+
+	static string prev_command;
+	static string prev_subsitude;
 };
 
 #endif /* COMMANDDIALOG_H_ */

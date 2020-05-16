@@ -1,7 +1,9 @@
-Dialog command_dialog "Command" width=550 height=65
-	Grid ? ""
-		Edit command "" expandx
-		---|
+Dialog command_dialog "Command" width=500 height=20 headerbar closebutton=no
+	Grid ? "" vertical
+		Edit command "" width=400 expandx
+		Edit substitude ""
 		Grid ? "" buttonbar
-			Button /cancel "Cancel" image=hui:cancel
-			DefButton /ok "OK" image=hui:ok
+			Button /cancel "Close" image=hui:cancel
+			ToggleButton replace "" image=hui:edit "tooltip=Replace" grabfocus=no
+			---|
+			Button ok "Run" default image=hui:ok

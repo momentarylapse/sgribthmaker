@@ -4,39 +4,51 @@ t7
 # Resource
 Dialog
 command_dialog
-width=550,height=65
+width=500,height=20,headerbar,closebutton=no
 0
 0
 1
 Grid
 ?
-
+vertical
 0
 0
-2
+3
 Edit
 command
-expandx
+width=400,expandx
 0
+0
+0
+Edit
+substitude
+
+1
 0
 0
 Grid
 ?
 buttonbar
-0
-1
 2
+0
+3
 Button
 cancel
 image=hui:cancel
 0
 0
 0
-DefButton
-ok
-image=hui:ok
+ToggleButton
+replace
+image=hui:edit,grabfocus=no
 1
 0
+0
+Button
+ok
+default,image=hui:ok
+0
+1
 0
 # Resource
 Window
@@ -289,7 +301,7 @@ image=hui:about
 # Resource
 Dialog
 settings_dialog
-width=340,height=550
+width=340,height=550,resizable
 0
 0
 1
@@ -515,13 +527,13 @@ image=hui:media-play,important
 # Language
 English
 # Number Of IDs
-44
+45
 # Text
 /about
 Info...
 
 /cancel
-Cancel
+Close
 
 /close
 Close
@@ -556,9 +568,6 @@ Follow
 /new
 New
 new file
-/ok
-OK
-
 /open
 Open
 open a new file
@@ -586,6 +595,12 @@ Undo
 command_dialog/command_dialog
 Command
 
+command_dialog/ok
+Run
+
+command_dialog/replace
+
+Replace
 main-window/file_list
 file
 
