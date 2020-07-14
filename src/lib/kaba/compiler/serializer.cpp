@@ -224,10 +224,10 @@ string signed_hex(int64 i) {
 		i = -i;
 	}
 	if (i < 256)
-		return s + d2h(&i, 1);
+		return s + "0x" + i2h(i, 1);
 	if (i < 65536)
-		return s + d2h(&i, 2);
-	return s + d2h(&i, 4);
+		return s + "0x" + i2h(i, 2);
+	return s + "0x" + i2h(i, 4);
 }
 
 
@@ -262,7 +262,7 @@ string SerialNodeParam::str(Serializer *ser) const
 		else if (kind == NodeKind::LOCAL_MEMORY)
 			n = signed_hex(p);
 		else if (kind == NodeKind::MEMORY)
-			n = d2h(&p, config.pointer_size);
+			n = "0x" + i2h(p, config.pointer_size);
 		else if (kind == NodeKind::IMMEDIATE)
 			n = guess_constant(p, ser);
 		str = "  (" + type_name_safe(type) + ") " + kind2str(kind) + " " + n;
@@ -301,7 +301,7 @@ void Serializer::cmd_list_out(const string &stage) {
 	if (true) {
 		msg_write("-----------");
 		foreachi(TempVar &v, temp_var, i)
-			msg_write(format("  %d   %d -> %d    %s   %s", i, v.first, v.last, v.type->name.c_str(), v.referenced ? "-referenced-" : ""));
+			msg_write(format("  %d   %d -> %d    %s   %s", i, v.first, v.last, v.type->name, v.referenced ? "-referenced-" : ""));
 		msg_write("--------------------------------");
 	}
 }

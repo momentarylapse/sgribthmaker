@@ -3,6 +3,8 @@
 
 #include "array.h"
 
+class Exception;
+
 
 #define REGEX_MAX_MATCHES			128
 
@@ -42,7 +44,7 @@ class string : public Array<char> {
 	Array<string> _cdecl explode(const string &s) const;
 	string _cdecl lower() const;
 	string _cdecl upper() const;
-	string _cdecl hex(bool inverted = false) const;
+	string _cdecl hex() const;
 	string _cdecl unhex() const;
 	bool _cdecl match(const string &glob) const;
 	string repr() const;
@@ -121,9 +123,26 @@ class string : public Array<char> {
 // string operations
 
 
-string _cdecl format(const string &s, ...);
+template<typename T>
+string _xf_str_(const string &f, const T value);
+
+bool _xf_split_first_(const string &s, string &pre, string &f, string &post);
+
+template<typename T, typename... Args>
+string format(const string &s, T value, Args... args) {
+	string pre, f, post;
+	if (_xf_split_first_(s, pre, f, post)) {
+		string t = _xf_str_(f, value);
+		return pre + t + format(post, args...);
+	}
+	return pre;
+}
+
+string format(const string &s);
+
+
 string _cdecl i2s(int i);
-string _cdecl i642s(long long i);
+string _cdecl i642s(int64 i);
 string _cdecl i2s2(int i, int l);
 string _cdecl f2s(float f, int dez);
 string _cdecl f642s(double f, int dez);
@@ -140,7 +159,8 @@ bool _cdecl s2b(const string &s);
 float _cdecl s2f(const string &s);
 double _cdecl s2f64(const string &s);
 
-string _cdecl d2h(const void *data, int bytes, bool inverted = true);
+string _cdecl d2h(const void *data, int bytes);
+string _cdecl i2h(int64, int bytes);
 string _cdecl h2d(const string &hex_str, int bytes);
 
 string _cdecl implode(const Array<string> &a, const string &glue);

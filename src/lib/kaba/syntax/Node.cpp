@@ -94,7 +94,7 @@ string kind2str(NodeKind kind) {
 		return "immediate";
 	if (kind == NodeKind::DEREF_LOCAL_MEMORY)
 		return "deref local";
-	return format("UNKNOWN KIND: %d", kind);
+	return format("UNKNOWN KIND: %d", (int)kind);
 }
 
 
@@ -147,13 +147,13 @@ string Node::sig() const {
 	if (kind == NodeKind::REGISTER)
 		return t + Asm::get_reg_name(link_no);
 	if (kind == NodeKind::ADDRESS)
-		return t + d2h(&link_no, config.pointer_size);
+		return t + i2h(link_no, config.pointer_size);
 	if (kind == NodeKind::MEMORY)
-		return t + d2h(&link_no, config.pointer_size);
+		return t + i2h(link_no, config.pointer_size);
 	if (kind == NodeKind::LOCAL_ADDRESS)
-		return t + d2h(&link_no, config.pointer_size);
+		return t + i2h(link_no, config.pointer_size);
 	if (kind == NodeKind::LOCAL_MEMORY)
-		return t + d2h(&link_no, config.pointer_size);
+		return t + i2h(link_no, config.pointer_size);
 	return t + i2s(link_no);
 }
 
@@ -208,7 +208,7 @@ void Block::set(int index, Node *c) {
 
 Variable *Block::add_var(const string &name, const Class *type) {
 	if (get_var(name))
-		function->owner()->do_error(format("variable '%s' already declared in this context", name.c_str()));
+		function->owner()->do_error(format("variable '%s' already declared in this context", name));
 	Variable *v = new Variable(name, type);
 	function->var.add(v);
 	vars.add(v);
