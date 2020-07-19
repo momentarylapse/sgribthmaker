@@ -50,7 +50,7 @@ int64 s2i2(const string &str) {
 // find the type of a (potential) constant
 //  "1.2" -> float
 const Class *SyntaxTree::get_constant_type(const string &str) {
-	// character "..."
+	// character '...'
 	if ((str[0] == '\'') and (str.back() == '\''))
 		return TypeChar;
 
@@ -96,11 +96,11 @@ void SyntaxTree::get_constant_value(const string &str, Value &value) {
 	value.init(get_constant_type(str));
 // literal
 	if (value.type == TypeChar) {
-		value.as_int() = str[1];
+		value.as_int() = str.unescape()[1];
 	} else if (value.type == TypeString) {
-		value.as_string() = str.substr(1, -2);
+		value.as_string() = str.substr(1, -2).unescape();
 	} else if (value.type == TypeCString) {
-		strcpy((char*)value.p(), str.substr(1, -2).c_str());
+		strcpy((char*)value.p(), str.substr(1, -2).unescape().c_str());
 	} else if (value.type == TypeInt) {
 		value.as_int() = (int)s2i2(str);
 	} else if (value.type == TypeInt64) {
@@ -293,8 +293,10 @@ void SyntaxTree::make_func_node_callable(Node *l) {
 Node *SyntaxTree::make_fake_constructor(const Class *t, Block *block, const Class *param_type) {
 	//if ((t == TypeInt) and (param_type == TypeFloat32))
 	//	return add_node_call(get_existence("f2i", nullptr, nullptr, false)[0]->as_func());
+	if (param_type->is_pointer())
+		param_type = param_type->param;
 		
-	auto *cf = param_type->get_func(t->name, t, {});
+	auto *cf = param_type->get_func("__" + t->name + "__", t, {});
 	if (!cf)
 		do_error(format("illegal fake constructor... requires '%s.%s()'", param_type->long_name(), t->long_name()));
 	return add_node_member_call(cf, nullptr); // temp var added later...
@@ -886,6 +888,7 @@ Node *SyntaxTree::try_parse_format_string(Block *block, Value &v) {
 		
 		try {
 			Node *n = parse_operand_super_greedy(block);
+			n = deref_if_pointer(n);
 
 			if (fmt != "") {
 				n = apply_format(n, fmt);
@@ -1122,7 +1125,7 @@ bool type_match_with_cast(Node *node, bool is_modifiable, const Class *wanted, i
 		}
 	}
 	if (wanted == TypeString) {
-		Function *cf = given->get_func("str", TypeString, {});
+		Function *cf = given->get_func(IDENTIFIER_FUNC_STR, TypeString, {});
 		if (cf) {
 			penalty = 50;
 			cast = TYPE_CAST_OWN_STRING;
@@ -1146,7 +1149,7 @@ Node *SyntaxTree::apply_type_cast(int tc, Node *node, const Class *wanted) {
 	if (tc == TYPE_CAST_REFERENCE)
 		return ref_node(node);
 	if (tc == TYPE_CAST_OWN_STRING) {
-		Function *cf = node->type->get_func("str", TypeString, {});
+		Function *cf = node->type->get_func(IDENTIFIER_FUNC_STR, TypeString, {});
 		if (cf)
 			return add_node_member_call(cf, node);
 		do_error("automatic .str() not implemented yet");
@@ -1250,6 +1253,31 @@ Node *SyntaxTree::link_operator(PrimitiveOperator *primop, Node *param1, Node *p
 	const Class *pp1 = p1;
 	if (pp1->is_pointer())
 		pp1 = p1->param;
+
+	if (primop->id == OperatorID::ASSIGN) {
+		//param1->show();
+		if (param1->kind == NodeKind::FUNCTION_CALL) {
+			auto f = param1->as_func();
+			if (f->name == "__get__") {
+				auto inst = param1->params[0];
+				auto index = param1->params[1];
+				//msg_write(format("[]=...    void %s.__set__(%s, %s)?", inst->type->long_name(), index->type->long_name(), p2->long_name()));
+				for (auto *ff: inst->type->functions)
+					if (ff->name == "__set__" and ff->return_type == TypeVoid and ff->num_params == 2) {
+						if (ff->literal_param_type[0] != index->type)
+							continue;
+						int pen, cast;
+						if (!type_match_with_cast(param2, false, ff->literal_param_type[1], pen, cast))
+							continue;
+						//msg_write(ff->signature());
+						auto nn = add_node_member_call(ff, inst);
+						nn->set_param(1, index);
+						nn->set_param(2, apply_type_cast(cast, param2, ff->literal_param_type[1]));
+						return nn;
+					}
+			}
+		}
+	}
 
 	// exact match as class function?
 	for (Function *f: pp1->functions)
@@ -1880,9 +1908,8 @@ Node *SyntaxTree::parse_statement_len(Block *block) {
 	sub = deref_if_pointer(sub);
 
 	// array?
-	if (sub->type->is_array()) {
+	if (sub->type->is_array())
 		return add_node_const(add_constant_int(sub->type->array_length));
-	}
 
 	// element "int num/length"?
 	for (auto &e: sub->type->elements)
@@ -1890,11 +1917,10 @@ Node *SyntaxTree::parse_statement_len(Block *block) {
 			return shift_node(sub, false, e.offset, e.type);
 		}
 		
-	// length() function?
-	auto *f = sub->type->get_func("length", TypeInt, {});
-	if (f) {
+	// __length__() function?
+	auto *f = sub->type->get_func(IDENTIFIER_FUNC_LENGTH, TypeInt, {});
+	if (f)
 		return add_node_member_call(f, sub);
-	}
 
 
 	do_error(format("don't know how to get the length of an object of class '%s'", sub->type->long_name()));
@@ -1979,18 +2005,17 @@ Node *SyntaxTree::deref_if_pointer(Node *node) {
 
 Node *SyntaxTree::add_converter_str(Node *sub, bool repr) {
 	sub = force_concrete_type(sub);
+	// evil shortcut for pointers (carefull with nil!!)
+	if (!repr)
+		sub = deref_if_pointer(sub);
 	
 	auto *t = sub->type;
 
-	// evil shortcut for pointers (carefull with nil!!)
-	if (!repr and t->is_pointer())
-		return add_converter_str(deref_node(sub), repr);
-
 	Function *cf = nullptr;	
 	if (repr)
-		cf = t->get_func("repr", TypeString, {});
+		cf = t->get_func(IDENTIFIER_FUNC_REPR, TypeString, {});
 	if (!cf)
-		cf = t->get_func("str", TypeString, {});
+		cf = t->get_func(IDENTIFIER_FUNC_STR, TypeString, {});
 	if (cf)
 		return add_node_member_call(cf, sub);
 
@@ -2014,7 +2039,7 @@ Node *SyntaxTree::parse_statement_str(Block *block) {
 }
 
 Node *SyntaxTree::parse_statement_repr(Block *block) {
-	Exp.next(); // str
+	Exp.next(); // repr
 	Node *sub = parse_single_func_param(block);
 
 	return add_converter_str(sub, true);

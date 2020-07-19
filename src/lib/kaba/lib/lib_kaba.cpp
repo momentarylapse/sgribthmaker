@@ -6,7 +6,6 @@
 
 namespace Kaba {
 
-
 #pragma GCC push_options
 #pragma GCC optimize("no-omit-frame-pointer")
 #pragma GCC optimize("no-inline")
@@ -91,9 +90,10 @@ void SIAddPackageKaba() {
 			func_add_param("return_type", TypeClass);
 			func_add_param("params", TypeClassPList);
 		class_add_funcx("long_name", TypeString, &Class::long_name, Flags::PURE);
+		class_add_funcx(IDENTIFIER_FUNC_STR, TypeString, &class_repr, Flags::PURE);
 
 	add_class(TypeClassP);
-		class_add_funcx("str", TypeString, &class_repr, Flags::PURE);
+		class_add_funcx(IDENTIFIER_FUNC_STR, TypeString, &class_repr, Flags::PURE);
 
 	add_class(TypeFunction);
 		class_add_elementx("name", TypeString, &Function::name);
@@ -114,9 +114,9 @@ void SIAddPackageKaba() {
 		class_add_elementx("virtual_index", TypeInt, &Function::virtual_index);
 		class_add_elementx("inline_index", TypeInt, &Function::inline_no);
 		class_add_elementx("code", TypeFunctionCodeP, &Function::address);
+		class_add_funcx(IDENTIFIER_FUNC_STR, TypeString, &func_repr, Flags::PURE);
 
-	add_class(TypeFunctionP);
-		class_add_funcx("str", TypeString, &func_repr, Flags::PURE);
+	//add_class(TypeFunctionP);
 
 	add_class(TypeVariable);
 		class_add_elementx("name", TypeString, &Variable::name);

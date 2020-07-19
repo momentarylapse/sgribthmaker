@@ -20,10 +20,10 @@ Node *conv_break_down_med_level(SyntaxTree *tree, Node *c);
 
 string Operator::sig() const {
 	if (param_type_1 and param_type_2)
-		return "(" + param_type_1->name + ") " + primitive->name + " (" + param_type_2->name + ")";
+		return format("(%s) %s (%s)", param_type_1->name, primitive->name, param_type_2->name);
 	if (param_type_1)
-		return "(" + param_type_1->name + ") " + primitive->name;
-	return primitive->name + " (" + param_type_2->name + ")";
+		return format("(%s) %s", param_type_1->name, primitive->name);
+	return format("%s (%s)", primitive->name, param_type_2->name);
 }
 
 
@@ -263,7 +263,7 @@ void SyntaxTree::digest() {
 
 	transform([&](Node* n){ return conv_class_and_func_to_const(n); });
 
-	eval_const_expressions();
+	eval_const_expressions(true);
 
 	transformb([&](Node* n, Block* b){ return conv_break_down_high_level(n, b); });
 	if (config.verbose)
@@ -278,7 +278,7 @@ void SyntaxTree::digest() {
 	simplify_shift_deref();
 	simplify_ref_deref();
 
-	eval_const_expressions();
+	eval_const_expressions(true);
 
 	if (config.verbose)
 		show("digest:pre-proc");
@@ -300,7 +300,7 @@ void SyntaxTree::digest() {
 	if (config.verbose)
 		show("digest:deref");
 
-	eval_const_expressions();
+	eval_const_expressions(false);
 	if (config.verbose)
 		show("digest:map");
 
@@ -1048,9 +1048,9 @@ Node *SyntaxTree::conv_break_down_high_level(Node *n, Block *b) {
 		return array;
 	} else if (n->kind == NodeKind::DICT_BUILDER) {
 		auto *t_el = n->type->get_array_element();
-		Function *cf = n->type->get_func("set", TypeVoid, {TypeString, t_el});
+		Function *cf = n->type->get_func("__set__", TypeVoid, {TypeString, t_el});
 		if (!cf)
-			do_error(format("[..]: can not find '%s.set(string,%s)' function???", n->type->long_name(), t_el->long_name()));
+			do_error(format("[..]: can not find '%s.__set__(string,%s)' function???", n->type->long_name(), t_el->long_name()));
 
 		// temp var
 		auto *f = cur_func;
