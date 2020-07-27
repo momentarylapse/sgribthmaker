@@ -97,6 +97,7 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 
 	sv->ClearMarkings(first_line, last_line);
 
+
 	for (int l=first_line; l<=last_line; l++) {
 		string s = sv->GetLine(l);
 

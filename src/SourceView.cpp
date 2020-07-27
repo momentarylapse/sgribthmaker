@@ -370,18 +370,33 @@ void SourceView::ClearMarkings(int first_line, int last_line)
 	gtk_text_buffer_remove_all_tags(tb, &start, &end);
 }
 
-void SourceView::MarkWord(int line, int start, int end, int type, char *p0, char *p)
-{
+static string word_namespace;
+
+void SourceView::MarkWord(int line, int start, int end, int type, char *p0, char *p) {
 	if (start == end)
 		return;
-	if (type == IN_WORD)
-		if ((start == 0) or (p0[-1] != '.'))
-		if ((long)p - (long)p0 < 64){
-			string temp = string(p0, (long)p - (long)p0);
-			int type2 = parser->WordType(temp);
+	string temp;
+	if ((long)p - (long)p0 < 64)
+		temp = string(p0, (long)p - (long)p0);
+	if (start == 0)
+		word_namespace = "";
+
+	if (type == IN_WORD) {
+		//word_namespace
+		//if ((start == 0) or (p0[-1] != '.')) {
+			int type2 = parser->WordType(word_namespace + temp);
 			if (type2 >= 0)
 				type = type2;
-		}
+			if (type == IN_WORD_TYPE)
+				word_namespace += temp;
+			else
+				word_namespace = "";
+		//}
+	} else if (temp == ".") {
+		word_namespace += ".";
+	} else {
+		word_namespace = "";
+	}
 	GtkTextIter _start, _end;
 	gtk_text_buffer_get_iter_at_line_offset(tb, &_start, line, start);
 	gtk_text_buffer_get_iter_at_line_offset(tb, &_end, line, end);

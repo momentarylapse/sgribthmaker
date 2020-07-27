@@ -7,6 +7,7 @@
 
 #include "AutoComplete.h"
 #include "lib/kaba/kaba.h"
+#include "lib/kaba/syntax/Parser.h"
 #include <stdio.h>
 
 
@@ -43,16 +44,16 @@ const Kaba::Class *node_namespace(Kaba::Node *n) {
 
 
 void _ParseFunctionBody(SyntaxTree *syntax, Function *f) {
-	syntax->Exp.cur_line = &syntax->Exp.line[f->_logical_line_no];
+	syntax->parser->Exp.cur_line = &syntax->parser->Exp.line[f->_logical_line_no];
 
-	int indent0 = syntax->Exp.cur_line->indent;
+	int indent0 = syntax->parser->Exp.cur_line->indent;
 	bool more_to_parse = true;
 
-	syntax->parser_loop_depth = 0;
+	syntax->parser->parser_loop_depth = 0;
 
 // instructions
 	while (more_to_parse) {
-		more_to_parse = syntax->parse_function_command(f, indent0);
+		more_to_parse = syntax->parser->parse_function_command(f, indent0);
 	}
 }
 
@@ -224,13 +225,13 @@ AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos)
 
 
 		//printf("--a\n");
-		s->syntax->Exp.analyse(s->syntax, code + string("\0", 1)); // compatibility... expected by lexical
+		s->syntax->parser->Exp.analyse(s->syntax, code + string("\0", 1)); // compatibility... expected by lexical
 
 		//printf("--b\n");
-		s->syntax->pre_compiler(true);
+		s->syntax->parser->pre_compiler(true);
 
 		//printf("--c\n");
-		s->syntax->parse_top_level();
+		s->syntax->parser->parse_top_level();
 
 		//printf("--d\n");
 		for (auto *f: s->syntax->functions){
