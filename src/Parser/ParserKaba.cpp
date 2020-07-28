@@ -10,17 +10,22 @@
 #include "../lib/kaba/kaba.h"
 #include "../SourceView.h"
 
+void add_class(ParserKaba *p, const Kaba::Class *c, const string &ns);
 
-void add_class(ParserKaba *p, const Kaba::Class *c) {
-	p->types.add(c->long_name());
+void add_class_content(ParserKaba *p, const Kaba::Class *c, const string &ns) {
 	for (auto *v: c->static_variables)
-		p->globals.add(c->long_name() + "." + v->name);
+		p->globals.add(ns + v->name);
 	for (auto *cc: c->constants)
-		p->globals.add(c->long_name() + "." + cc->name);
+		p->globals.add(ns + cc->name);
 	for (auto *f: c->functions)
-		p->compiler_functions.add(f->long_name());
+		p->compiler_functions.add(ns + f->name);
 	for (auto *cc: c->classes)
-		add_class(p, cc);
+		add_class(p, cc, ns);
+}
+
+void add_class(ParserKaba *p, const Kaba::Class *c, const string &ns) {
+	p->types.add(ns + c->name);
+	add_class_content(p, c, ns + c->name + ".");
 }
 
 ParserKaba::ParserKaba() : Parser("Kaba") {
@@ -73,16 +78,9 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 	compiler_functions.add(Kaba::IDENTIFIER_SORTED);
 	special_words.add("as");
 	for (auto *p: Kaba::packages){
-		add_class(this, p->base_class());
-		/*types.add(p->filename);
-		for (auto *c: p->syntax->base_class->classes)
-			types.add(c->name);
-		for (auto *v: p->syntax->root_of_all_evil->var)
-			globals.add(v->name);
-		for (auto *c: p->syntax->base_class->constants)
-			globals.add(c->name);
-		for (auto *f: p->syntax->base_class->functions)
-			compiler_functions.add(f->name);*/
+		add_class(this, p->base_class(), "");
+		if (p->used_by_default)
+			add_class_content(this, p->base_class(), "");
 	}
 	//for (auto &s: Kaba::Statements)
 	//	special_words.add(s.name);

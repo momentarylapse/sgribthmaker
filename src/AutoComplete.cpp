@@ -11,23 +11,20 @@
 #include <stdio.h>
 
 
-void AutoComplete::Data::add(const string &name, const string &context)
-{
+void AutoComplete::Data::add(const string &name, const string &context) {
 	AutoComplete::Item i;
 	i.name = name;
 	i.context = context;
 	suggestions.add(i);
 }
 
-void AutoComplete::Data::append(const AutoComplete::Data &d)
-{
+void AutoComplete::Data::append(const AutoComplete::Data &d) {
 	for (auto &s: d.suggestions)
 		suggestions.add(s);
 }
 
 
-namespace Kaba
-{
+namespace Kaba {
 
 
 const Kaba::Class *simplify_type(const Kaba::Class *c) {
@@ -57,40 +54,50 @@ void _ParseFunctionBody(SyntaxTree *syntax, Function *f) {
 	}
 }
 
-AutoComplete::Data find_top_level_from_class(const Class *t, const string &yyy)
-{
+
+bool allow(const string &name) {
+	if (name.head(1) == "-")
+		return false;
+	if (name.head(1) == "@")
+		return false;
+	if (name.find(".") >= 0)
+		return false;
+	if (name.find("[") >= 0 or name.find("*") >= 0 or name.find("{") >= 0 or name.find("&") >= 0)
+		return false;
+	return true;
+}
+
+AutoComplete::Data find_top_level_from_class(const Class *t, const string &yyy) {
 	t = simplify_type(t);
 	AutoComplete::Data suggestions;
 	for (auto &e: t->elements)
-		if (e.name.head(yyy.num) == yyy)
+		if (e.name.head(yyy.num) == yyy and allow(e.name))
 			suggestions.add(e.name, e.type->name + " " + t->name + "." + e.name);
 	for (auto *f: t->functions)
-		if (f->name.head(yyy.num) == yyy)
+		if (f->name.head(yyy.num) == yyy and allow(f->name))
 			suggestions.add(f->name, f->signature());
 	for (auto *c: t->classes)
-		if (c->name.find("[") < 0 and c->name.find("*") < 0)
-			if (c->name.head(yyy.num) == yyy)
+			if (c->name.head(yyy.num) == yyy and allow(c->name))
 				suggestions.add(c->name, "class " + c->long_name());
 	for (auto *c: t->constants)
-		if (c->name.head(yyy.num) == yyy)
+		if (c->name.head(yyy.num) == yyy and allow(c->name))
 			suggestions.add(c->name, "const " + c->type->long_name() + " " + c->name);
 	return suggestions;
 }
 
-AutoComplete::Data find_top_level(SyntaxTree *syntax, Function *f, const string &yyy)
-{
+AutoComplete::Data find_top_level(SyntaxTree *syntax, Function *f, const string &yyy) {
 	AutoComplete::Data suggestions;
 	
 	// general expressions
-	Array<string> expressions = {"class", "extends", "while", "virtual", "extern", "override", "enum", "and", "or", "while", "for", "if", "else", "const", "new", "delete", "break", "continue", "return", "pass"};
+	Array<string> expressions = {"class", "extends", "while", "virtual", "extern", "override", "enum", "and", "or", "while", "for", "if", "else", "const", "selfref", "new", "delete", "break", "continue", "return", "pass" "use", "import", "in", "is"};
 	for (string &e: expressions)
 		if (yyy == e.head(yyy.num))
 			suggestions.add(e, e);
 			
 	// function local
-	if (f){
+	if (f) {
 		for (auto *v: f->var)
-			if (yyy == v->name.head(yyy.num))
+			if (yyy == v->name.head(yyy.num) and allow(v->name))
 				suggestions.add(v->name, v->type->name + " " + v->name);
 		if (f->name_space)
 			suggestions.append(find_top_level_from_class(f->name_space, yyy));
@@ -98,13 +105,12 @@ AutoComplete::Data find_top_level(SyntaxTree *syntax, Function *f, const string 
 	
 	// global var
 	for (auto *v: syntax->root_of_all_evil->var)
-		if (yyy == v->name.head(yyy.num))
+		if (yyy == v->name.head(yyy.num) and allow(v->name))
 			suggestions.add(v->name, v->type->name + " " + v->name);
-	if (f){
+	if (f) {
 		for (auto *f: syntax->base_class->functions)
-			if (f->name.find(".") < 0)
-				if (yyy == f->name.head(yyy.num))
-					suggestions.add(f->name, f->signature());
+			if (yyy == f->name.head(yyy.num) and allow(f->name))
+				suggestions.add(f->name, f->signature());
 	}
 	
 	
@@ -117,8 +123,7 @@ AutoComplete::Data find_top_level(SyntaxTree *syntax, Function *f, const string 
 
 
 // get deep "tail" block
-Block* guess_block(SyntaxTree *syntax, Function *f)
-{
+Block* guess_block(SyntaxTree *syntax, Function *f) {
 	Block *b = f->block;
 	/*while (true){
 		Block *b_next = nullptr;
@@ -135,8 +140,7 @@ Block* guess_block(SyntaxTree *syntax, Function *f)
 	//syntax->blocks.back()
 }
 
-AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &cur_line)
-{
+AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &cur_line) {
 	AutoComplete::Data data;
 	Array<string> ops = {"+", "-", "*", "/", "=", "/=", "*=", "+=", "&", "%", "and", "or", "!", "(", ")", ",", "\t"};
 	string xx = cur_line;
@@ -149,9 +153,9 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 	auto yy = xx.explode(".");
 	//printf("yy=%s\n", sa2s(yy).c_str());
 	data.offset = yy.back().num;
-	if (yy.num == 1){
+	if (yy.num == 1) {
 		data.append(find_top_level(syntax, f, yy[0]));
-	}else{
+	} else {
 		if (!f)
 			f = syntax->root_of_all_evil;
 
@@ -170,7 +174,7 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 		}
 
 		// middle layers
-		for (int i=1; i<yy.num-1; i++){
+		for (int i=1; i<yy.num-1; i++) {
 			Array<const Class*> types2;
 			for (auto *t: types){
 				for (auto &e: t->elements)
@@ -191,7 +195,7 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 
 		// top layer
 		string yyy = yy.back();
-		for (auto *t: types){
+		for (auto *t: types) {
 			//printf("type %s\n", t->name.c_str());
 			data.append(find_top_level_from_class(t, yyy));
 		}
@@ -204,8 +208,7 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 
 
 
-AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos)
-{
+AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos) {
 	auto *s = new Kaba::Script;
 	auto ll = _code.explode("\n");
 	auto lines_pre = ll.sub(0, line);//+1);
@@ -219,8 +222,9 @@ AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos)
 	s->just_analyse = true;
 	Data data;
 	Kaba::Function *ff = nullptr;
+	s->syntax->parser = new Kaba::Parser(s->syntax);
 
-	try{
+	try {
 		//s->syntax->ParseBuffer(code, true);
 
 
@@ -234,11 +238,11 @@ AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos)
 		s->syntax->parser->parse_top_level();
 
 		//printf("--d\n");
-		for (auto *f: s->syntax->functions){
-			if ((!f->is_extern()) and (f->_logical_line_no >= 0) and (f->_logical_line_no < line))
+		for (auto *f: s->syntax->functions) {
+			if (!f->is_extern() and (f->_logical_line_no >= 0) and (f->_logical_line_no < line))
 				ff = f;
 		}
-		if (ff){
+		if (ff) {
 	//		printf("func: %s\n", ff->name.c_str());
 			_ParseFunctionBody(s->syntax, ff);
 		}
@@ -247,7 +251,7 @@ AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos)
 
 
 
-	}catch(const Kaba::Exception &e){
+	} catch (const Kaba::Exception &e) {
 		printf("err: %s\n", e.message().c_str());
 		//if (e.line)
 		//throw e;
@@ -257,12 +261,13 @@ AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos)
 	Kaba::DeleteAllScripts(true, true);
 
 	for (int i=0; i<data.suggestions.num; i++)
-		for (int j=i+1; j<data.suggestions.num; j++){
-			if (data.suggestions[j].context == data.suggestions[i].context){
+		for (int j=i+1; j<data.suggestions.num; j++) {
+			if (data.suggestions[j].context == data.suggestions[i].context) {
 				data.suggestions.erase(j);
 				j --;
-			}else if (data.suggestions[j].name < data.suggestions[i].name)
+			} else if (data.suggestions[j].name < data.suggestions[i].name) {
 				data.suggestions.swap(i, j);
+			}
 		}
 	return data;
 }

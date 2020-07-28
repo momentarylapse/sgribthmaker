@@ -213,8 +213,10 @@ SyntaxTree::SyntaxTree(Script *_script) {
 
 	// "include" default stuff
 	for (Script *p: packages)
-		if (p->used_by_default)
+		if (p->used_by_default) {
 			add_include_data(p, false);
+			imported_symbols->classes.add(p->base_class());
+		}
 }
 
 
@@ -308,7 +310,7 @@ void _asm_add_static_vars(Asm::MetaInfo *meta, const Class *c, const Class *base
 		Asm::GlobalVar vv;
 		vv.name = v->name;
 		if (c->name.head(1) != "-" and c != base_ns)
-			vv.name = c->cname(base_ns) + "." + v->name;
+			vv.name = c->cname(c->owner->base_class) + "." + v->name;
 		vv.size = v->type->size;
 		vv.pos = v->memory;
 		meta->global_var.add(vv);
