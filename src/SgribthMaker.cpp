@@ -18,12 +18,12 @@
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.8.9";
+string AppVersion = "0.4.9.0";
 
 //#define ALLOW_LOGGING			true
 #define ALLOW_LOGGING			false
 
-namespace nix{
+namespace nix {
 	extern string shader_error;
 }
 
@@ -34,32 +34,28 @@ namespace nix{
 
 int status_count = 0;
 
-void SgribthMaker::UpdateStatusBar()
-{
+void SgribthMaker::UpdateStatusBar() {
 	status_count --;
 	if (status_count == 0)
 		MainWin->enable_statusbar(false);
 }
 
-void SgribthMaker::SetMessage(const string &str)
-{
+void SgribthMaker::SetMessage(const string &str) {
 	MainWin->set_status_text(str);
 	MainWin->enable_statusbar(true);
 	status_count ++;
 	hui::RunLater(5, [=]{ UpdateStatusBar(); });
 }
 
-void SgribthMaker::SetWindowTitle()
-{
+void SgribthMaker::SetWindowTitle() {
 	if (!cur_doc)
 		return;
 	MainWin->set_title(cur_doc->name(true) + " - " + AppTitle);
 }
 
-void SgribthMaker::UpdateDocList()
-{
+void SgribthMaker::UpdateDocList() {
 	MainWin->reset("file_list");
-	foreachi(Document *d, documents, i){
+	foreachi(Document *d, documents, i) {
 		MainWin->add_string("file_list", d->name(false));
 		if (cur_doc == d)
 			MainWin->set_int("file_list", i);
@@ -74,27 +70,25 @@ void SgribthMaker::UpdateMenu() {
 	SetWindowTitle();
 }
 
-void SgribthMaker::UpdateFunctionList()
-{
+void SgribthMaker::UpdateFunctionList() {
 	MainWin->reset("function_list");
 	if (!cur_doc->parser)
 		return;
-	Array<Parser::Label> labels = cur_doc->parser->FindLabels(cur_doc->source_view);
+	auto labels = cur_doc->parser->FindLabels(cur_doc->source_view);
 	int last_parent = -1;
-	foreachi(Parser::Label &l, labels, i){
-		if (l.level > 0){
+	foreachi(Parser::Label &l, labels, i) {
+		if (l.level > 0) {
 			MainWin->add_child_string("function_list", last_parent, l.name);
-		}else{
+		} else {
 			last_parent = i;
 			MainWin->add_string("function_list", l.name);
 		}
 	}
 }
 
-void SgribthMaker::SetActiveDocument(Document *d)
-{
+void SgribthMaker::SetActiveDocument(Document *d) {
 	foreachi(Document *dd, documents, i)
-		if (dd == d){
+		if (dd == d) {
 			MainWin->set_int("tab", i);
 			MainWin->activate(dd->source_view->id);
 			break;
@@ -104,10 +98,9 @@ void SgribthMaker::SetActiveDocument(Document *d)
 	UpdateFunctionList();
 }
 
-bool SgribthMaker::AllowTermination()
-{
+bool SgribthMaker::AllowTermination() {
 	for (Document *d: documents)
-	if (d->history->changed){
+	if (d->history->changed) {
 		SetActiveDocument(d);
 		string answer = QuestionBox(MainWin, _("respectful question"), _("You increased entropy. Do you wish to save your work?"), true);
 		if (answer == "hui:cancel")
@@ -119,9 +112,8 @@ bool SgribthMaker::AllowTermination()
 	return true;
 }
 
-bool SgribthMaker::AllowDocTermination(Document *d)
-{
-	if (d->history->changed){
+bool SgribthMaker::AllowDocTermination(Document *d) {
+	if (d->history->changed) {
 		SetActiveDocument(d);
 		string answer = QuestionBox(MainWin, _("respectful question"), _("You increased entropy. Do you wish to save your work?"), true);
 		if (answer == "hui:cancel")
@@ -133,8 +125,7 @@ bool SgribthMaker::AllowDocTermination(Document *d)
 	return true;
 }
 
-void SgribthMaker::New()
-{
+void SgribthMaker::New() {
 	if (documents.num > 0)
 		MainWin->hide_control("table_side", false);
 
@@ -145,7 +136,7 @@ void SgribthMaker::New()
 	MainWin->set_target("tab");
 	MainWin->add_grid("", documents.num, 0, id + "-grid");
 	MainWin->set_target(id + "-grid");
-	if (hui::Config.get_bool("ShowLineNumbers", false)){
+	if (hui::Config.get_bool("ShowLineNumbers", false)) {
 		MainWin->add_multiline_edit("!noframe,disabled,width=70,noexpandx", 0, 0, id + "-lines");
 		MainWin->enable(id + "-lines", false);
 	}
@@ -208,6 +199,7 @@ bool SgribthMaker::SaveAs(Document *doc) {
 }
 
 bool SgribthMaker::Save(Document *doc) {
+	printf("save %s\n", doc->filename.c_str());
 	if (doc->filename.num > 0)
 		return WriteToFile(doc, doc->filename);
 	else
@@ -302,8 +294,7 @@ void SgribthMaker::CompileKaba() {
 	msg_set_verbose(ALLOW_LOGGING);
 }
 
-void SgribthMaker::CompileShader()
-{
+void SgribthMaker::CompileShader() {
 	return;
 
 	hui::Window *w = new hui::Window("nix", 640, 480);
@@ -312,9 +303,9 @@ void SgribthMaker::CompileShader()
 //	nix::init("OpenGL", w, "nix-area");
 
 	nix::Shader *shader = nix::Shader::load(cur_doc->filename);
-	if (!shader){
+	if (!shader) {
 		ErrorBox(MainWin, _("Error"), nix::shader_error);
-	}else{
+	} else {
 		SetMessage(_("Shader compiles without error!"));
 		shader->unref();
 	}
@@ -323,8 +314,7 @@ void SgribthMaker::CompileShader()
 	msg_set_verbose(ALLOW_LOGGING);
 }
 
-void SgribthMaker::Compile()
-{
+void SgribthMaker::Compile() {
 	string ext = cur_doc->filename.extension();
 
 	if (!Save(cur_doc))
@@ -338,9 +328,8 @@ void SgribthMaker::Compile()
 		SetMessage(_("only *.kaba and *.shader files can be compiled!"));
 }
 
-void SgribthMaker::CompileAndRun(bool verbose)
-{
-	if (cur_doc->filename.extension() != "kaba"){
+void SgribthMaker::CompileAndRun(bool verbose) {
+	if (cur_doc->filename.extension() != "kaba") {
 		SetMessage(_("only *.kaba files can be executed!"));
 		return;
 	}
@@ -357,7 +346,7 @@ void SgribthMaker::CompileAndRun(bool verbose)
 	Kaba::config.compile_silently = true;
 	//Kaba::config.verbose = true;
 
-	try{
+	try {
 		Kaba::Script *compile_script = Kaba::Load(cur_doc->filename);
 		float dt_compile = CompileTimer.get();
 
@@ -385,7 +374,7 @@ void SgribthMaker::CompileAndRun(bool verbose)
 		if (msg_size > msg_size0)
 			console->set(msg_get_buffer(msg_size - msg_size0));
 
-	}catch(const Kaba::Exception &e){
+	} catch(const Kaba::Exception &e) {
 		e.print();
 		ErrorBox(MainWin, _("Error"), e.message());
 		cur_doc->source_view->MoveCursorTo(e.line, e.column);
@@ -407,16 +396,14 @@ void SgribthMaker::OnCompileAndRunSilent()
 
 static AutoComplete::Data _auto_complete_data_;
 
-void SgribthMaker::OnInsertAutoComplete(int n)
-{
+void SgribthMaker::OnInsertAutoComplete(int n) {
 	if ((n >= 0) and (n < _auto_complete_data_.suggestions.num))
 		cur_doc->source_view->InsertAtCursor(_auto_complete_data_.suggestions[n].name.substr(_auto_complete_data_.offset, -1));
 
 }
 
-void SgribthMaker::OnAutoComplete()
-{
-	if (cur_doc->filename.extension() != "kaba"){
+void SgribthMaker::OnAutoComplete() {
+	if (cur_doc->filename.extension() != "kaba") {
 		SetMessage(_("auto-completion only available for *.kaba files!"));
 		return;
 	}
@@ -428,72 +415,65 @@ void SgribthMaker::OnAutoComplete()
 	auto data = AutoComplete::run(cur_doc->source_view->GetAll(), line, pos);
 	_auto_complete_data_ = data;
 
-	if (data.suggestions.num == 1){
+	if (data.suggestions.num == 1) {
 		cur_doc->source_view->InsertAtCursor(data.suggestions[0].name.substr(data.offset, -1));
 		SetMessage(data.suggestions[0].context);
 
-	}else if (data.suggestions.num > 1){
+	} else if (data.suggestions.num > 1) {
 		auto *m = new hui::Menu;
 		foreachi (auto &s, data.suggestions, i)
 			m->add(s.name, "auto-complete-" + i2s(i));
 		m->open_popup(MainWin);
-	}else{
+	} else {
 		SetMessage(_("????"));
 	}
 }
 
 
-void SgribthMaker::ShowCurLine()
-{
+void SgribthMaker::ShowCurLine() {
 	int line, off;
 	cur_doc->source_view->GetCurLinePos(line, off);
 	SetMessage(format(_("Line  %d : %d"), line + 1, off + 1));
 }
 
-void SgribthMaker::ExecuteCommand(const string &cmd)
-{
+void SgribthMaker::ExecuteCommand(const string &cmd) {
 	bool found = cur_doc->source_view->Find(cmd);
 	if (!found)
 		SetMessage(format(_("\"%s\" not found"), cmd.c_str()));
 }
 
-void SgribthMaker::ExecuteCommandDialog()
-{
-	CommandDialog *dlg = new CommandDialog(this);
+void SgribthMaker::ExecuteCommandDialog() {
+	auto dlg = new CommandDialog(this);
 	dlg->run();
 	delete dlg;
 }
 
-void SgribthMaker::ExecuteSettingsDialog()
-{
-	SettingsDialog *dlg = new SettingsDialog(this);
+void SgribthMaker::ExecuteSettingsDialog() {
+	auto dlg = new SettingsDialog(this);
 	dlg->run();
 	delete dlg;
 }
 
 
 
-void SgribthMaker::OnFunctionList()
-{
+void SgribthMaker::OnFunctionList() {
 	int n = MainWin->get_int("");
-	Array<Parser::Label> labels = cur_doc->parser->FindLabels(cur_doc->source_view);
-	if ((n >= 0) and (n < labels.num)){
+	auto labels = cur_doc->parser->FindLabels(cur_doc->source_view);
+	if ((n >= 0) and (n < labels.num)) {
 		cur_doc->source_view->ShowLineOnScreen(labels[n].line);
 		MainWin->activate(cur_doc->source_view->id);
 	}
 }
 
-void SgribthMaker::SgribthMaker::OnFileList()
-{
+void SgribthMaker::SgribthMaker::OnFileList() {
 	int s = MainWin->get_int("");
 	if (s >= 0)
 		SetActiveDocument(documents[s]);
 }
 
-void SgribthMaker::OnNextDocument()
-{
+void SgribthMaker::OnNextDocument() {
 	foreachi(Document *d, documents, i)
-		if (d == cur_doc){
+		if (d == cur_doc) {
 			if (i < documents.num - 1)
 				SetActiveDocument(documents[i + 1]);
 			else
@@ -502,10 +482,9 @@ void SgribthMaker::OnNextDocument()
 		}
 }
 
-void SgribthMaker::OnPreviousDocument()
-{
+void SgribthMaker::OnPreviousDocument() {
 	foreachi(Document *d, documents, i)
-		if (d == cur_doc){
+		if (d == cur_doc) {
 			if (i > 0)
 				SetActiveDocument(documents[i - 1]);
 			else
@@ -532,8 +511,17 @@ SgribthMaker::SgribthMaker() :
 	MainWin = NULL;
 }
 
-bool SgribthMaker::on_startup(const Array<string> &arg)
-{
+string absolute_path(const string &path) {
+	if (path[0] == '/')
+		return path;
+	if (path.head(2) == "./")
+		return get_current_dir() + path.substr(2, -1);
+	if (path.head(3) == "../")
+		return (get_current_dir() + path).no_recursion();
+	return path;
+}
+
+bool SgribthMaker::on_startup(const Array<string> &arg) {
 	int width = hui::Config.get_int("Window.Width", 800);
 	int height = hui::Config.get_int("Window.Height", 600);
 	bool maximized = hui::Config.get_bool("Window.Maximized", false);
@@ -615,11 +603,12 @@ bool SgribthMaker::on_startup(const Array<string> &arg)
 
 
 
-	if (arg.num > 1){
+	if (arg.num > 1) {
 		for (int i=1; i<arg.num; i++)
-			LoadFromFile(arg[i]);
-	}else
+			LoadFromFile(absolute_path(arg[i]));
+	} else {
 		New();
+	}
 	return true;
 }
 
@@ -627,9 +616,8 @@ bool SgribthMaker::on_startup(const Array<string> &arg)
 void SgribthMaker::OnAbout()
 {	AboutBox(MainWin);	}
 
-void SgribthMaker::OnExit()
-{
-	if (AllowTermination()){
+void SgribthMaker::OnExit() {
+	if (AllowTermination()) {
 		int w, h;
 		MainWin->get_size_desired(w, h);
 		hui::Config.set_int("Window.Width", w);

@@ -213,10 +213,8 @@ SyntaxTree::SyntaxTree(Script *_script) {
 
 	// "include" default stuff
 	for (Script *p: packages)
-		if (p->used_by_default) {
+		if (p->used_by_default)
 			add_include_data(p, false);
-			imported_symbols->classes.add(p->base_class());
-		}
 }
 
 

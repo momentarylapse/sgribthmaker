@@ -12,8 +12,7 @@
 #include "lib/file/file.h"
 #include "lib/hui/hui.h"
 
-Document::Document(SgribthMaker *_sgribthmaker)
-{
+Document::Document(SgribthMaker *_sgribthmaker) {
 	sgribthmaker = _sgribthmaker;
 	parser = NULL;
 	source_view = NULL;
@@ -23,27 +22,31 @@ Document::Document(SgribthMaker *_sgribthmaker)
 	buffer_dirty = false;
 }
 
-Document::~Document()
-{
+Document::~Document() {
 	//delete(history);
 }
 
-string Document::name(bool long_name) const
-{
-	string r = filename;
+string simplify_path(const string &filename) {
+	string home = getenv("HOME");
+	if (filename.head(home.num) == home)
+		return "~" + filename.substr(home.num, -1);
+	return filename;
+}
+
+string Document::name(bool long_name) const {
+	string r = simplify_path(filename);
 	if (!long_name)
 		r = filename.basename();
 	if (r.num == 0)
-		r = "neues Dokument";
+		r = _("new document");
 	if (history->changed)
 		return "*" + r;
 	return r;
 }
 
 
-bool Document::load(const string &_filename)
-{
-	try{
+bool Document::load(const string &_filename) {
+	try {
 		string temp = FileReadText(_filename);
 		if (!source_view->Fill(temp))
 			sgribthmaker->SetMessage(_("File is not UTF-8 compatible"));
@@ -53,25 +56,25 @@ bool Document::load(const string &_filename)
 		source_view->SetParser(filename);
 
 		sgribthmaker->UpdateMenu();
-	}catch(...){
+	} catch(...) {
 		sgribthmaker->SetMessage(_("File does not want to be opened"));
 		return false;
 	}
 	return true;
 }
 
-bool Document::save(const string &_filename)
-{
-	try{
+bool Document::save(const string &_filename) {
+	try {
 		FileWriteText(_filename, source_view->GetAll());
 		filename = _filename;
 		history->DefineAsSaved();
 		//SetMessage(_("saved"));
 		//UpdateMenu();
-	}catch(...){
+	} catch(...) {
+		sgribthmaker->SetMessage(_("Can not save file"));
+		return false;
 	}
 
 	source_view->SetParser(filename);
-
 	return true;
 }

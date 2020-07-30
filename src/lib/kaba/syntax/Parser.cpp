@@ -6,6 +6,9 @@
 #include "Parser.h"
 #include <stdio.h>
 
+
+string str_rep(const string &s, int n);
+
 namespace Kaba{
 
 void test_node_recursion(Node *root, const Class *ns, const string &message);
@@ -2440,33 +2443,57 @@ void Parser::parse_complete_command(Block *block) {
 
 extern Array<Script*> loading_script_stack;
 
+string find_import(Script *s, const string &_name) {
+	string name = _name.replace(".kaba", "");
+	name = name.replace(".", "/");
+	name += ".kaba";
+
+	if (name.head(2) == "@/")
+		return (hui::Application::directory_static + "lib/" + name.substr(2, -1)).no_recursion(); // TODO...
+
+
+	for (int i=0; i<5; i++) {
+		string filename = s->filename.dirname() + str_rep("../", i) + name;
+		filename = filename.no_recursion();
+		if (file_exists(filename))
+			return filename;
+	}
+
+	return "";
+}
+
 void Parser::parse_import() {
 	string command = Exp.cur; // 'use' / 'import'
 	bool indirect = (command == IDENTIFIER_IMPORT);
 	Exp.next();
 
+	// parse import name
 	string name = Exp.cur;
+	Exp.next();
+	while (!Exp.end_of_line()) {
+		if (Exp.cur != ".")
+			do_error("'.' expected in import name");
+		name += ".";
+		expect_no_new_line();
+		Exp.next();
+		name += Exp.cur;
+		Exp.next();
+	}
 	
 	if (name.match("\"*\""))
 		name = name.substr(1, name.num - 2); // remove ""
 		
 	
-	// internal packages?	
+	// internal packages?
 	for (Script *p: packages)
 		if (p->filename == name) {
 			tree->add_include_data(p, indirect);
 			return;
 		}
-	
-	if (name.tail(5) != ".kaba")
-		name += ".kaba";
 
-	string filename = tree->script->filename.dirname() + name;
-	if (name.head(2) == "@/")
-		filename = hui::Application::directory_static + "lib/" + name.substr(2, -1); // TODO...
-	filename = filename.no_recursion();
-
-
+	string filename = find_import(tree->script, name);
+	if (filename == "")
+		do_error(format("can not find import '%s'", name));
 
 	for (Script *ss: loading_script_stack)
 		if (ss->filename == filename.sys_filename())
@@ -2474,10 +2501,10 @@ void Parser::parse_import() {
 
 	msg_right();
 	Script *include;
-	try{
+	try {
 		include = Load(filename, tree->script->just_analyse or config.compile_os);
 		// os-includes will be appended to syntax_tree... so don't compile yet
-	}catch(Exception &e) {
+	} catch(Exception &e) {
 		msg_left();
 
 		int logical_line = Exp.get_line_no();
@@ -2573,7 +2600,7 @@ void Parser::parse_class(Class *_namespace) {
 	expect_new_line();
 
 	// elements
-	while(!Exp.end_of_file()) {
+	while (!Exp.end_of_file()) {
 		Exp.next_line();
 		if (Exp.cur_line->indent <= indent0) //(unindented)
 			break;
@@ -2595,7 +2622,7 @@ void Parser::parse_class(Class *_namespace) {
 		}
 
 		const Class *type = parse_type(_class); // force
-		while(!Exp.end_of_line()) {
+		while (!Exp.end_of_line()) {
 			//int indent = Exp.cur_line->indent;
 			
 			string name = Exp.cur;
@@ -2647,7 +2674,7 @@ void Parser::parse_class(Class *_namespace) {
 			} else {
 				if (type_needs_alignment(type))
 					_offset = mem_align(_offset, 4);
-				_offset = process_class_offset(_class->long_name(), name, _offset);
+				_offset = process_class_offset(_class->cname(tree->base_class), name, _offset);
 				auto el = ClassElement(name, type, _offset);
 				_offset += type->size;
 				_class->elements.add(el);
@@ -2673,7 +2700,7 @@ void Parser::parse_class(Class *_namespace) {
 			// element "-vtable-" being derived
 		} else {
 			for (ClassElement &e: _class->elements)
-				e.offset = process_class_offset(_class->long_name(), e.name, e.offset + config.pointer_size);
+				e.offset = process_class_offset(_class->cname(tree->base_class), e.name, e.offset + config.pointer_size);
 
 			auto el = ClassElement(IDENTIFIER_VTABLE_VAR, TypePointer, 0);
 			_class->elements.insert(el, 0);
@@ -2684,7 +2711,7 @@ void Parser::parse_class(Class *_namespace) {
 	for (auto &e: _class->elements)
 		if (type_needs_alignment(e.type))
 			_offset = mem_align(_offset, 4);
-	_class->size = process_class_size(_class->long_name(), _offset);
+	_class->size = process_class_size(_class->cname(tree->base_class), _offset);
 
 
 	tree->add_missing_function_headers_for_class(_class);
