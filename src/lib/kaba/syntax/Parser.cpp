@@ -2443,19 +2443,46 @@ void Parser::parse_complete_command(Block *block) {
 
 extern Array<Script*> loading_script_stack;
 
+string canonical_import_name(const string &s) {
+	return s.lower().replace(" ", "").replace("_", "");
+}
+
+string dir_has(const string &dir, const string &name) {
+	auto list = dir_search(dir, "*", true);
+	for (auto &e: list)
+		if (canonical_import_name(e) == name)
+			return e;
+	return "";
+}
+
+string import_dir_match(const string &dir0, const string &name) {
+	auto xx = name.explode("/");
+	string filename = dir0;
+
+	for (int i=0; i<xx.num; i++) {
+		filename.dir_ensure_ending();
+		string e = dir_has(filename, canonical_import_name(xx[i]));
+		if (e == "")
+			return "";
+		filename += e;
+	}
+	return filename;
+
+	if (file_exists(dir0 + name))
+		return dir0 + name;
+	return "";
+}
+
 string find_import(Script *s, const string &_name) {
 	string name = _name.replace(".kaba", "");
-	name = name.replace(".", "/");
-	name += ".kaba";
+	name = name.replace(".", "/") + ".kaba";
 
 	if (name.head(2) == "@/")
 		return (hui::Application::directory_static + "lib/" + name.substr(2, -1)).no_recursion(); // TODO...
 
-
 	for (int i=0; i<5; i++) {
-		string filename = s->filename.dirname() + str_rep("../", i) + name;
-		filename = filename.no_recursion();
-		if (file_exists(filename))
+		string filename = import_dir_match((s->filename.dirname() + str_rep("../", i)).no_recursion(), name);
+		if (filename != "")
 			return filename;
 	}
 

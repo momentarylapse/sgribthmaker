@@ -199,7 +199,6 @@ bool SgribthMaker::SaveAs(Document *doc) {
 }
 
 bool SgribthMaker::Save(Document *doc) {
-	printf("save %s\n", doc->filename.c_str());
 	if (doc->filename.num > 0)
 		return WriteToFile(doc, doc->filename);
 	else
