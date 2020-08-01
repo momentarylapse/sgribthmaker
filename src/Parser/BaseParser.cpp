@@ -228,9 +228,9 @@ void InitParser() {
 	ParserAssociations.add(ParserAssociation(new ParserPython, "py"));
 }
 
-Parser *GetParser(const string &filename) {
+Parser *GetParser(const Path &filename) {
 	string ext = filename.extension();
-	for (ParserAssociation &a : ParserAssociations)
+	for (auto &a: ParserAssociations)
 		if (ext == a.extension)
 			return a.parser;
 	return ParserAssociations[0].parser;

@@ -174,12 +174,12 @@ void SgribthMaker::OnCloseDocument() {
 	});
 }
 
-bool SgribthMaker::LoadFromFile(const string &filename) {
+bool SgribthMaker::LoadFromFile(const Path &filename) {
 	New();
 	return documents.back()->load(filename);
 }
 
-bool SgribthMaker::WriteToFile(Document *doc, const string &filename) {
+bool SgribthMaker::WriteToFile(Document *doc, const Path &filename) {
 	bool ok = doc->save(filename);
 	if (ok)
 		SetMessage(_("saved"));
@@ -187,19 +187,19 @@ bool SgribthMaker::WriteToFile(Document *doc, const string &filename) {
 }
 
 bool SgribthMaker::Open() {
-	if (hui::FileDialogOpen(MainWin, _("Open file"), cur_doc->filename.dirname(), _("All (*.*)"), "*"))
+	if (hui::FileDialogOpen(MainWin, _("Open file"), cur_doc->filename.parent(), _("All (*.*)"), "*"))
 		return LoadFromFile(hui::Filename);
 	return false;
 }
 
 bool SgribthMaker::SaveAs(Document *doc) {
-	if (hui::FileDialogSave(MainWin, _("Save file"), doc->filename.dirname(), _("All (*.*)"), "*"))
+	if (hui::FileDialogSave(MainWin, _("Save file"), doc->filename.parent(), _("All (*.*)"), "*"))
 		return WriteToFile(doc, hui::Filename);
 	return false;
 }
 
 bool SgribthMaker::Save(Document *doc) {
-	if (doc->filename.num > 0)
+	if (!doc->filename.is_empty())
 		return WriteToFile(doc, doc->filename);
 	else
 		return SaveAs(doc);
@@ -217,7 +217,7 @@ void SgribthMaker::OnSaveAs()
 bool SgribthMaker::Reload() {
 	if (!AllowTermination())
 		return false;
-	if (cur_doc->filename.num > 0) {
+	if (!cur_doc->filename.is_empty()) {
 		bool r = cur_doc->load(cur_doc->filename);
 		if (r)
 			SetMessage(_("reloaded"));
@@ -273,7 +273,7 @@ void SgribthMaker::CompileKaba() {
 	//Kaba::config.verbose = true;
 
 	try {
-		Kaba::Script *compile_script = Kaba::Load(cur_doc->filename, true);
+		auto *compile_script = Kaba::Load(cur_doc->filename, true);
 
 		float dt = CompileTimer.get();
 
@@ -281,7 +281,7 @@ void SgribthMaker::CompileKaba() {
 
 		SetMessage(format(_("Script compilable without errors!         (in %s)"), get_time_str(dt).c_str()));
 
-	} catch(const Kaba::Exception &e) {
+	} catch (const Kaba::Exception &e) {
 		e.print();
 		ErrorBox(MainWin, _("Error"), e.message());
 		cur_doc->source_view->MoveCursorTo(e.line, e.column);
@@ -296,19 +296,19 @@ void SgribthMaker::CompileKaba() {
 void SgribthMaker::CompileShader() {
 	return;
 
-	hui::Window *w = new hui::Window("nix", 640, 480);
+	auto *w = new hui::Window("nix", 640, 480);
 	w->add_drawing_area("!opengl", 0, 0, "nix-area");
 	w->show();
 //	nix::init("OpenGL", w, "nix-area");
 
-	nix::Shader *shader = nix::Shader::load(cur_doc->filename);
+	auto *shader = nix::Shader::load(cur_doc->filename);
 	if (!shader) {
 		ErrorBox(MainWin, _("Error"), nix::shader_error);
 	} else {
 		SetMessage(_("Shader compiles without error!"));
 		shader->unref();
 	}
-	delete(w);
+	delete w;
 
 	msg_set_verbose(ALLOW_LOGGING);
 }
@@ -336,7 +336,7 @@ void SgribthMaker::CompileAndRun(bool verbose) {
 	if (!Save(cur_doc))
 		return;
 
-	hui::SetDirectory(cur_doc->filename.dirname());
+	hui::SetDirectory(cur_doc->filename.parent());
 	//if (verbose)
 		msg_set_verbose(true);
 
@@ -346,7 +346,7 @@ void SgribthMaker::CompileAndRun(bool verbose) {
 	//Kaba::config.verbose = true;
 
 	try {
-		Kaba::Script *compile_script = Kaba::Load(cur_doc->filename);
+		auto *compile_script = Kaba::Load(cur_doc->filename);
 		float dt_compile = CompileTimer.get();
 
 		if (!verbose)
@@ -398,7 +398,6 @@ static AutoComplete::Data _auto_complete_data_;
 void SgribthMaker::OnInsertAutoComplete(int n) {
 	if ((n >= 0) and (n < _auto_complete_data_.suggestions.num))
 		cur_doc->source_view->InsertAtCursor(_auto_complete_data_.suggestions[n].name.substr(_auto_complete_data_.offset, -1));
-
 }
 
 void SgribthMaker::OnAutoComplete() {
@@ -407,7 +406,7 @@ void SgribthMaker::OnAutoComplete() {
 		return;
 	}
 
-	hui::SetDirectory(cur_doc->filename.dirname());
+	hui::SetDirectory(cur_doc->filename.parent());
 
 	int line, pos;
 	cur_doc->source_view->GetCurLinePos(line, pos);
@@ -510,15 +509,6 @@ SgribthMaker::SgribthMaker() :
 	MainWin = NULL;
 }
 
-string absolute_path(const string &path) {
-	if (path[0] == '/')
-		return path;
-	if (path.head(2) == "./")
-		return get_current_dir() + path.substr(2, -1);
-	if (path.head(3) == "../")
-		return (get_current_dir() + path).no_recursion();
-	return path;
-}
 
 bool SgribthMaker::on_startup(const Array<string> &arg) {
 	int width = hui::Config.get_int("Window.Width", 800);
@@ -604,7 +594,7 @@ bool SgribthMaker::on_startup(const Array<string> &arg) {
 
 	if (arg.num > 1) {
 		for (int i=1; i<arg.num; i++)
-			LoadFromFile(absolute_path(arg[i]));
+			LoadFromFile(Path(arg[i]).absolute().canonical());
 	} else {
 		New();
 	}

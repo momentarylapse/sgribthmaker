@@ -9,6 +9,7 @@
 #define DOCUMENT_H_
 
 #include "lib/base/base.h"
+#include "lib/file/path.h"
 
 class History;
 class Parser;
@@ -16,17 +17,16 @@ class HighlightScheme;
 class SourceView;
 class SgribthMaker;
 
-class Document
-{
+class Document {
 public:
 	Document(SgribthMaker *sgribthmaker);
 	virtual ~Document();
 
 	string name(bool long_name) const;
-	bool load(const string &filename);
-	bool save(const string &filename);
+	bool load(const Path &filename);
+	bool save(const Path &filename);
 
-	string filename;
+	Path filename;
 	string buffer;
 	bool buffer_dirty;
 

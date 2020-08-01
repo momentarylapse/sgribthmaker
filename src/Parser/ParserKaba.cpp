@@ -12,9 +12,16 @@
 
 void add_class(ParserKaba *p, const Kaba::Class *c, const string &ns);
 
+bool allowed(const string &s) {
+	if (s == "filename" or s == "config")
+		return false;
+	return true;
+}
+
 void add_class_content(ParserKaba *p, const Kaba::Class *c, const string &ns) {
 	for (auto *v: c->static_variables)
-		p->globals.add(ns + v->name);
+		if (allowed(ns + v->name))
+			p->globals.add(ns + v->name);
 	for (auto *cc: c->constants)
 		p->globals.add(ns + cc->name);
 	for (auto *f: c->functions)
@@ -79,7 +86,7 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 	special_words.add("as");
 	for (auto *p: Kaba::packages){
 		add_class(this, p->base_class(), "");
-		if (p->used_by_default)
+		//if (p->used_by_default)
 			add_class_content(this, p->base_class(), "");
 	}
 	//for (auto &s: Kaba::Statements)

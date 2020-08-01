@@ -26,11 +26,11 @@ Document::~Document() {
 	//delete(history);
 }
 
-string simplify_path(const string &filename) {
+string simplify_path(const Path &filename) {
 	string home = getenv("HOME");
-	if (filename.head(home.num) == home)
-		return "~" + filename.substr(home.num, -1);
-	return filename;
+	if (filename.str().head(home.num) == home)
+		return "~" + filename.str().substr(home.num, -1);
+	return filename.str();
 }
 
 string Document::name(bool long_name) const {
@@ -45,7 +45,7 @@ string Document::name(bool long_name) const {
 }
 
 
-bool Document::load(const string &_filename) {
+bool Document::load(const Path &_filename) {
 	try {
 		string temp = FileReadText(_filename);
 		if (!source_view->Fill(temp))
@@ -63,7 +63,7 @@ bool Document::load(const string &_filename) {
 	return true;
 }
 
-bool Document::save(const string &_filename) {
+bool Document::save(const Path &_filename) {
 	try {
 		FileWriteText(_filename, source_view->GetAll());
 		filename = _filename;

@@ -11,6 +11,7 @@
 #include "../lib/base/base.h"
 
 class SourceView;
+class Path;
 
 class Parser {
 public:
@@ -47,7 +48,7 @@ public:
 };
 
 void InitParser();
-Parser *GetParser(const string &filename);
+Parser *GetParser(const Path &filename);
 
 
 enum {

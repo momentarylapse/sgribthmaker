@@ -14,10 +14,10 @@
 class Document;
 class SourceView;
 class Console;
+class Path;
 
 
-class SgribthMaker : public hui::Application
-{
+class SgribthMaker : public hui::Application {
 public:
 	SgribthMaker();
 	bool on_startup(const Array<string> &arg) override;
@@ -36,8 +36,8 @@ public:
 	bool AllowDocTermination(Document *d);
 	void New();
 	void OnCloseDocument();
-	bool LoadFromFile(const string &filename);
-	bool WriteToFile(Document *doc, const string &filename);
+	bool LoadFromFile(const Path &filename);
+	bool WriteToFile(Document *doc, const Path &filename);
 	bool Open();
 	bool SaveAs(Document *doc);
 	bool Save(Document *doc);

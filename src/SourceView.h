@@ -15,8 +15,7 @@ class Document;
 class History;
 class Parser;
 
-class SourceView : public hui::EventHandler
-{
+class SourceView : public hui::EventHandler {
 public:
 	SourceView(hui::Window *win, const string &id, Document *d);
 	virtual ~SourceView();
@@ -75,8 +74,7 @@ public:
 	int color_busy_level;
 	bool change_return;
 
-	struct JumpData
-	{
+	struct JumpData {
 		SourceView *sv;
 		int line;
 		JumpData(){}
@@ -84,7 +82,7 @@ public:
 	};
 	Array<JumpData> jump_data;
 
-	void SetParser(const string &filename);
+	void SetParser(const Path &filename);
 	Parser *parser;
 	HighlightScheme *scheme;
 };

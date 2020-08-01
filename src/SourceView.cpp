@@ -157,8 +157,7 @@ void source_callback(SourceView *v)
 
 }
 
-SourceView::SourceView(hui::Window *win, const string &_id, Document *d)
-{
+SourceView::SourceView(hui::Window *win, const string &_id, Document *d) {
 	doc = d;
 	id = _id;
 
@@ -169,7 +168,7 @@ SourceView::SourceView(hui::Window *win, const string &_id, Document *d)
 	line_no_tb = NULL;
 
 	auto cc = win->_get_control_(id + "-lines");
-	if (cc){
+	if (cc) {
 		line_no_tv = cc->widget;
 		line_no_tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(line_no_tv));
 
@@ -189,7 +188,7 @@ SourceView::SourceView(hui::Window *win, const string &_id, Document *d)
 	color_busy_level = 0;
 	change_return = true;
 	scheme = HighlightScheme::default_scheme;
-	SetParser("");
+	SetParser(Path::EMPTY);
 
 	g_signal_connect(G_OBJECT(tb),"insert-text",G_CALLBACK(insert_text),this);
 	g_signal_connect(G_OBJECT(tb),"delete-range",G_CALLBACK(delete_range),this);
@@ -209,27 +208,25 @@ SourceView::SourceView(hui::Window *win, const string &_id, Document *d)
 	UpdateFont();
 	//g_object_set(tv, "wrap-mode", GTK_WRAP_WORD_CHAR, NULL);
 
-	hui::RunLater(0.05f, std::bind(&SourceView::UpdateTabSize, this));
+	hui::RunLater(0.05f, [=]{ UpdateTabSize(); });
 
 	if (line_no_tv)
-		hui::RunRepeated(1.0f, std::bind(source_callback, this));
+		hui::RunRepeated(1.0f, [=]{ source_callback(this); });
 }
 
-SourceView::~SourceView()
-{
-	delete(history);
+SourceView::~SourceView() {
+	delete history;
 }
 
 
-void SourceView::Clear()
-{
+void SourceView::Clear() {
 	history->enabled = false;
 
 	GtkTextIter start, end;
 	gtk_text_buffer_get_bounds(tb, &start, &end);
 	gtk_text_buffer_delete(tb, &start, &end);
 	gtk_text_buffer_set_modified(tb, false);
-	SetParser("");
+	SetParser(Path::EMPTY);
 
 	history->Reset();
 	history->enabled = true;
@@ -291,8 +288,7 @@ void SourceView::Undo()
 void SourceView::Redo()
 {	history->Redo();	}
 
-void SourceView::SetParser(const string &filename)
-{
+void SourceView::SetParser(const Path &filename) {
 	parser = GetParser(filename);
 	doc->parser = parser;
 	//msg_write("parser: " + parser->GetName());
