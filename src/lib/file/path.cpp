@@ -67,14 +67,33 @@ Path Path::operator <<(const string &p) const {
 	return *this << Path(p);
 }
 
+int icomparex(const string &a, const string &b) {
+	int i = a.icompare(b);
+	if (i == 0)
+		return a.compare(b);
+	return i;
+}
+
 // * ignore / at the end
 // * ignore recursion
+int Path::compare(const Path &p) const {
+	return icomparex(canonical().as_dir().s, p.canonical().as_dir().s);
+}
+
 bool Path::operator ==(const Path &p) const {
-	return canonical().as_dir().s == p.canonical().as_dir().s;
+	return compare(p) == 0;
 }
 
 bool Path::operator !=(const Path &p) const {
 	return !(*this == p);
+}
+
+bool Path::operator <(const Path &p) const {
+	return compare(p) < 0;
+}
+
+bool Path::operator >(const Path &p) const {
+	return compare(p) > 0;
 }
 
 
@@ -120,6 +139,14 @@ string Path::basename() const {
 	return s;
 }
 
+string Path::basename_no_ext() const {
+	string b = basename();
+	int pos = b.rfind(".");
+	if (pos >= 0)
+		return b.head(pos);
+	return "";
+}
+
 string Path::extension() const {
 	string b = basename();
 	int pos = b.rfind(".");
@@ -130,10 +157,7 @@ string Path::extension() const {
 
 // ends with '/' or '\'
 string Path::dirname() const {
-	int i = s.rfind(SEPARATOR);
-	if (i >= 0)
-		return s.head(i + 1);
-	return "";
+	return parent().str();
 }
 
 Path Path::absolute() const {
@@ -147,6 +171,14 @@ Path Path::root() const {
 	if (is_relative())
 		return EMPTY;
 	return Path(s.explode(SEPARATOR)[0]).as_dir();
+}
+
+Path Path::relative_to(const Path &p) const {
+	string dir = p.canonical().as_dir().s;
+	string me = canonical().s;
+	if (me.head(dir.num) != dir)
+		return EMPTY;
+	return Path(me.substr(dir.num, -1));
 }
 
 // cancel '/x/../'
