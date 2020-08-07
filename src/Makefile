@@ -113,11 +113,9 @@ OBJ = lib/algebra/crypto.o \
  lib/kaba/lib/lib_net.o \
  lib/kaba/lib/lib_nix.o \
  lib/kaba/lib/lib_os.o \
- lib/kaba/lib/lib_sound.o \
  lib/kaba/lib/lib_threads.o \
  lib/kaba/lib/lib_time.o \
  lib/kaba/lib/lib_vulkan.o \
- lib/kaba/lib/lib_x.o \
  lib/kaba/syntax/Class.o \
  lib/kaba/syntax/Constant.o \
  lib/kaba/syntax/Function.o \
@@ -492,9 +490,6 @@ lib/kaba/lib/lib_nix.o : lib/kaba/lib/lib_nix.cpp lib/file/file.h lib/base/base.
 lib/kaba/lib/lib_os.o : lib/kaba/lib/lib_os.cpp lib/file/file.h lib/base/base.h lib/base/macros.h lib/base/array.h lib/base/strings.h lib/file/msg.h lib/file/file_op.h lib/file/path.h lib/kaba/kaba.h lib/kaba/asm/asm.h lib/kaba/lib/lib.h lib/kaba/syntax/SyntaxTree.h lib/kaba/syntax/lexical.h lib/kaba/syntax/Class.h lib/kaba/syntax/Constant.h lib/kaba/syntax/Function.h lib/kaba/syntax/Node.h lib/config.h lib/kaba/lib/common.h lib/kaba/lib/exception.h
 	$(CPP) -c lib/kaba/lib/lib_os.cpp -o $@ $(CXXFLAGS)
 
-lib/kaba/lib/lib_sound.o : lib/kaba/lib/lib_sound.cpp lib/file/file.h lib/base/base.h lib/base/macros.h lib/base/array.h lib/base/strings.h lib/file/msg.h lib/file/file_op.h lib/file/path.h lib/kaba/kaba.h lib/kaba/asm/asm.h lib/kaba/lib/lib.h lib/kaba/syntax/SyntaxTree.h lib/kaba/syntax/lexical.h lib/kaba/syntax/Class.h lib/kaba/syntax/Constant.h lib/kaba/syntax/Function.h lib/kaba/syntax/Node.h lib/config.h lib/kaba/lib/common.h
-	$(CPP) -c lib/kaba/lib/lib_sound.cpp -o $@ $(CXXFLAGS)
-
 lib/kaba/lib/lib_threads.o : lib/kaba/lib/lib_threads.cpp lib/file/file.h lib/base/base.h lib/base/macros.h lib/base/array.h lib/base/strings.h lib/file/msg.h lib/file/file_op.h lib/file/path.h lib/kaba/kaba.h lib/kaba/asm/asm.h lib/kaba/lib/lib.h lib/kaba/syntax/SyntaxTree.h lib/kaba/syntax/lexical.h lib/kaba/syntax/Class.h lib/kaba/syntax/Constant.h lib/kaba/syntax/Function.h lib/kaba/syntax/Node.h lib/config.h lib/kaba/lib/common.h
 	$(CPP) -c lib/kaba/lib/lib_threads.cpp -o $@ $(CXXFLAGS)
 
@@ -503,9 +498,6 @@ lib/kaba/lib/lib_time.o : lib/kaba/lib/lib_time.cpp lib/file/file.h lib/base/bas
 
 lib/kaba/lib/lib_vulkan.o : lib/kaba/lib/lib_vulkan.cpp lib/file/file.h lib/base/base.h lib/base/macros.h lib/base/array.h lib/base/strings.h lib/file/msg.h lib/file/file_op.h lib/file/path.h lib/kaba/kaba.h lib/kaba/asm/asm.h lib/kaba/lib/lib.h lib/kaba/syntax/SyntaxTree.h lib/kaba/syntax/lexical.h lib/kaba/syntax/Class.h lib/kaba/syntax/Constant.h lib/kaba/syntax/Function.h lib/kaba/syntax/Node.h lib/config.h lib/kaba/lib/common.h lib/kaba/lib/exception.h
 	$(CPP) -c lib/kaba/lib/lib_vulkan.cpp -o $@ $(CXXFLAGS)
-
-lib/kaba/lib/lib_x.o : lib/kaba/lib/lib_x.cpp lib/file/file.h lib/base/base.h lib/base/macros.h lib/base/array.h lib/base/strings.h lib/file/msg.h lib/file/file_op.h lib/file/path.h lib/kaba/kaba.h lib/kaba/asm/asm.h lib/kaba/lib/lib.h lib/kaba/syntax/SyntaxTree.h lib/kaba/syntax/lexical.h lib/kaba/syntax/Class.h lib/kaba/syntax/Constant.h lib/kaba/syntax/Function.h lib/kaba/syntax/Node.h lib/config.h lib/kaba/lib/common.h lib/kaba/lib/exception.h
-	$(CPP) -c lib/kaba/lib/lib_x.cpp -o $@ $(CXXFLAGS)
 
 lib/kaba/syntax/Class.o : lib/kaba/syntax/Class.cpp lib/base/base.h lib/base/macros.h lib/base/array.h lib/base/strings.h lib/kaba/kaba.h lib/file/path.h lib/kaba/asm/asm.h lib/kaba/lib/lib.h lib/kaba/syntax/SyntaxTree.h lib/kaba/syntax/lexical.h lib/kaba/syntax/Class.h lib/kaba/syntax/Constant.h lib/kaba/syntax/Function.h lib/kaba/syntax/Node.h lib/file/file.h lib/file/msg.h lib/file/file_op.h
 	$(CPP) -c lib/kaba/syntax/Class.cpp -o $@ $(CXXFLAGS)
@@ -624,7 +616,7 @@ CommandDialog.o : CommandDialog.cpp CommandDialog.h lib/hui/hui.h lib/hui/common
 Console.o : Console.cpp Console.h lib/hui/hui.h lib/hui/common.h lib/config.h lib/base/base.h lib/base/macros.h lib/base/array.h lib/base/strings.h lib/file/file.h lib/file/msg.h lib/file/file_op.h lib/file/path.h lib/image/image.h lib/image/color.h lib/hui/Callback.h lib/hui/Application.h lib/base/map.h lib/base/set.h lib/hui/main.h lib/hui/Event.h lib/hui/Menu.h lib/hui/Panel.h lib/hui/Window.h lib/hui/common_dlg.h lib/hui/language.h lib/hui/Config.h lib/hui/Resource.h lib/hui/utility.h lib/hui/Painter.h lib/image/Painter.h lib/hui/Timer.h lib/hui/Toolbar.h lib/hui/error.h lib/hui/Clipboard.h
 	$(CPP) -c Console.cpp -o $@ $(CXXFLAGS)
 
-Document.o : Document.cpp Document.h lib/base/base.h lib/base/macros.h lib/base/array.h lib/base/strings.h History.h SourceView.h lib/hui/hui.h lib/hui/common.h lib/config.h lib/file/file.h lib/file/msg.h lib/file/file_op.h lib/file/path.h lib/image/image.h lib/image/color.h lib/hui/Callback.h lib/hui/Application.h lib/base/map.h lib/base/set.h lib/hui/main.h lib/hui/Event.h lib/hui/Menu.h lib/hui/Panel.h lib/hui/Window.h lib/hui/common_dlg.h lib/hui/language.h lib/hui/Config.h lib/hui/Resource.h lib/hui/utility.h lib/hui/Painter.h lib/image/Painter.h lib/hui/Timer.h lib/hui/Toolbar.h lib/hui/error.h lib/hui/Clipboard.h HighlightScheme.h SgribthMaker.h
+Document.o : Document.cpp Document.h lib/base/base.h lib/base/macros.h lib/base/array.h lib/base/strings.h lib/file/path.h History.h SourceView.h lib/hui/hui.h lib/hui/common.h lib/config.h lib/file/file.h lib/file/msg.h lib/file/file_op.h lib/image/image.h lib/image/color.h lib/hui/Callback.h lib/hui/Application.h lib/base/map.h lib/base/set.h lib/hui/main.h lib/hui/Event.h lib/hui/Menu.h lib/hui/Panel.h lib/hui/Window.h lib/hui/common_dlg.h lib/hui/language.h lib/hui/Config.h lib/hui/Resource.h lib/hui/utility.h lib/hui/Painter.h lib/image/Painter.h lib/hui/Timer.h lib/hui/Toolbar.h lib/hui/error.h lib/hui/Clipboard.h HighlightScheme.h SgribthMaker.h
 	$(CPP) -c Document.cpp -o $@ $(CXXFLAGS)
 
 HighlightScheme.o : HighlightScheme.cpp HighlightScheme.h lib/image/color.h lib/base/base.h lib/base/macros.h lib/base/array.h lib/base/strings.h SourceView.h lib/hui/hui.h lib/hui/common.h lib/config.h lib/file/file.h lib/file/msg.h lib/file/file_op.h lib/file/path.h lib/image/image.h lib/hui/Callback.h lib/hui/Application.h lib/base/map.h lib/base/set.h lib/hui/main.h lib/hui/Event.h lib/hui/Menu.h lib/hui/Panel.h lib/hui/Window.h lib/hui/common_dlg.h lib/hui/language.h lib/hui/Config.h lib/hui/Resource.h lib/hui/utility.h lib/hui/Painter.h lib/image/Painter.h lib/hui/Timer.h lib/hui/Toolbar.h lib/hui/error.h lib/hui/Clipboard.h
