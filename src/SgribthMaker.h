@@ -27,6 +27,8 @@ public:
 
 	void UpdateStatusBar();
 	void SetMessage(const string &str);
+	void SetError(const string &str);
+	void SetInfo(const string &str);
 	void SetWindowTitle();
 	void UpdateDocList();
 	void UpdateMenu();
