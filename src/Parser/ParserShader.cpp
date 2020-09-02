@@ -80,6 +80,8 @@ ParserShader::ParserShader() : Parser("Sader") {
 	compiler_functions.add("dot");
 	compiler_functions.add("cross");
 	compiler_functions.add("pow");
+	compiler_functions.add("sqrt");
+	compiler_functions.add("fract");
 	compiler_functions.add("abs");
 	compiler_functions.add("exp");
 	compiler_functions.add("sin");
@@ -90,6 +92,10 @@ ParserShader::ParserShader() : Parser("Sader") {
 	compiler_functions.add("texture");
 	compiler_functions.add("texture2D");
 	compiler_functions.add("textureCube");
+	compiler_functions.add("textureLod");
+	compiler_functions.add("textureSize");
+	compiler_functions.add("textureGrad");
+	compiler_functions.add("texelFetch");
 	compiler_functions.add("imageStore");
 	compiler_functions.add("imageLoad");
 	compiler_functions.add("reflect");
