@@ -46,7 +46,8 @@ void SgribthMaker::SetMessage(const string &str) {
 	MainWin->enable_statusbar(true);
 	status_count ++;
 	hui::RunLater(5, [=]{ UpdateStatusBar(); });*/
-	SetInfo(str);
+	if (str.num >= 20)
+		SetInfo(str);
 }
 
 void SgribthMaker::SetError(const string &str) {
