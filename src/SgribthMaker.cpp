@@ -598,9 +598,9 @@ bool SgribthMaker::on_startup(const Array<string> &arg) {
 	MainWin->event("settings", [=]{ ExecuteSettingsDialog(); });
 	//MainWin->event("script_help", "hui:help", hui::KEY_F1 + hui::KEY_SHIFT);
 	MainWin->event("next_document", [=]{ OnNextDocument(); });
-	MainWin->set_key_code("next_document", hui::KEY_PRIOR + hui::KEY_CONTROL, "hui:down");
+	MainWin->set_key_code("next_document", hui::KEY_PAGE_DOWN + hui::KEY_CONTROL, "hui:down");
 	MainWin->event("prev_document", [=]{ OnPreviousDocument(); });
-	MainWin->set_key_code("prev_document", hui::KEY_NEXT + hui::KEY_CONTROL, "hui:up");
+	MainWin->set_key_code("prev_document", hui::KEY_PAGE_UP + hui::KEY_CONTROL, "hui:up");
 
 	MainWin->event("show_cur_line", [=]{ ShowCurLine(); });
 	MainWin->set_key_code("show_cur_line", hui::KEY_F2);
