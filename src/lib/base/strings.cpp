@@ -365,7 +365,7 @@ string f2s(float f, int dez) {
 string f2s_clean(float f, int dez) {
 	auto s = f2s(f, dez);
 	for (int i=s.num-1; i>=0; i--)
-		if (s.back() == '0')
+		if (s.back() == '0' and s[s.num-2] != '.')
 			s.pop();
 	return s;
 }
@@ -1200,7 +1200,7 @@ Array<string> str_parse_tokens(const string &line, const string &splitters) {
 					if (keep_quotes)
 						tokens.add(line.substr(start, i-start+1));
 					else
-						tokens.add(line.substr(start+1, i-start-1));
+						tokens.add(line.substr(start+1, i-start-1).unescape());
 					break;
 				}
 			}
