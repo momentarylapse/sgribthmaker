@@ -84,6 +84,7 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 	compiler_functions.add(Kaba::IDENTIFIER_MAP);
 	compiler_functions.add(Kaba::IDENTIFIER_SORTED);
 	special_words.add("as");
+	special_words.add("shared");
 	for (auto *p: Kaba::packages){
 		add_class(this, p->base_class(), "");
 		//if (p->used_by_default)

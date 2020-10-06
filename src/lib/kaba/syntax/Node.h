@@ -79,7 +79,7 @@ enum class NodeKind {
 class Node;
 
 // single operand/command
-class Node {
+class Node : public Sharable<Empty> {
 public:
 	NodeKind kind;
 	int64 link_no;
@@ -94,7 +94,7 @@ public:
 	/*Node(const Class *c);
 	Node(const Block *b);
 	Node(const Constant *c);*/
-	virtual ~Node();
+	~Node();
 	Node *modifiable();
 	Node *make_const();
 	Block *as_block() const;
@@ -127,7 +127,6 @@ string node2str(SyntaxTree *s, Node *n);
 class Block : public Node {
 public:
 	Block(Function *f, Block *parent);
-	virtual ~Block();
 	Array<Variable*> vars;
 	Function *function;
 	Block *parent;
@@ -140,7 +139,7 @@ public:
 	const Class *name_space() const;
 
 	Variable *get_var(const string &name);
-	Variable *add_var(const string &name, const Class *type);
+	Variable *add_var(const string &name, const Class *type, bool is_const = false);
 };
 
 }

@@ -11,6 +11,7 @@ namespace Kaba{
 
 extern const Class *TypeDynamicArray;
 extern const Class *TypeDictBase;
+extern const Class *TypeSharedPointer;
 extern const Class *TypeMatrix;
 
 extern ExpressionBuffer *cur_exp_buf;
@@ -86,7 +87,7 @@ Node *SyntaxTree::deref_node(Node *sub, const Class *override_type) {
 	return c;
 }
 
-Node *SyntaxTree::shift_node(Node *sub, bool deref, int shift, const Class *type) {
+Node *SyntaxTree::shift_node(Node *sub, bool deref, int64 shift, const Class *type) {
 	Node *c = new Node(deref ? NodeKind::DEREF_ADDRESS_SHIFT : NodeKind::ADDRESS_SHIFT, shift, type, sub->is_const);
 	c->set_num_params(1);
 	c->set_param(0, sub);
@@ -390,15 +391,9 @@ Statement *Parser::which_statement(const string &name) {
 	return nullptr;
 }
 
-
-// xxxxx FIXME
-
 Node *SyntaxTree::exlink_add_element(Function *f, ClassElement &e) {
 	Node *self = add_node_local(f->__get_var(IDENTIFIER_SELF));
-	Node *link = new Node(NodeKind::ADDRESS_SHIFT, e.offset, e.type);
-	link->set_num_params(1);
-	link->params[0] = self;
-	return link;
+	return shift_node(self, false, e.offset, e.type);
 }
 
 // functions of our "self" class
@@ -438,7 +433,7 @@ Array<Node*> SyntaxTree::get_existence_global(const string &name, const Class *n
 		}
 
 		// types
-		for (const Class *c: ns->classes)
+		for (auto *c: ns->classes)
 			if (c->name == name)
 				return {add_node_class(c)};
 
@@ -460,7 +455,7 @@ Node* SyntaxTree::get_existence_block(const string &name, Block *block) {
 	auto *v = block->get_var(name);
 	if (v)
 		return add_node_local(v);
-	if (!f->is_static()){
+	if (!f->is_static()) {
 		if ((name == IDENTIFIER_SUPER) and (f->name_space->parent))
 			return add_node_local(f->__get_var(IDENTIFIER_SELF), f->name_space->parent);
 		// class elements (within a class function)
@@ -477,8 +472,7 @@ Node* SyntaxTree::get_existence_block(const string &name, Block *block) {
 	return nullptr;
 }
 
-Array<Node*> SyntaxTree::get_existence(const string &name, Block *block, const Class *ns, bool prefer_class)
-{
+Array<Node*> SyntaxTree::get_existence(const string &name, Block *block, const Class *ns, bool prefer_class) {
 	if (block and !prefer_class) {
 		Node *n = get_existence_block(name, block);
 		if (n)
@@ -493,7 +487,7 @@ Array<Node*> SyntaxTree::get_existence(const string &name, Block *block, const C
 	if (!prefer_class) {
 		// then the statements
 		auto s = Parser::which_statement(name);
-		if (s){
+		if (s) {
 			//return {add_node_statement(s->id)};
 			Node *n = new Node(NodeKind::STATEMENT, (int64)s, TypeVoid);
 			n->set_num_params(s->num_params);
@@ -560,6 +554,10 @@ Class *SyntaxTree::create_new_class(const string &name, Class::Type type, int si
 	} else if (t->is_array()) {
 		if (param->needs_constructor() and !param->get_default_constructor())
 			do_error(format("can not create an array from type '%s', missing default constructor", param->long_name()));
+		add_missing_function_headers_for_class(t);
+	} else if (t->is_pointer_shared()) {
+		//t->derive_from(TypeSharedPointer, true);
+		t->param = param;
 		add_missing_function_headers_for_class(t);
 	}
 	return t;
