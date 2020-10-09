@@ -8,7 +8,7 @@
 #include "ParserShader.h"
 #include "../HighlightScheme.h"
 
-ParserShader::ParserShader() : Parser("Sader") {
+ParserShader::ParserShader() : Parser("Shader") {
 	macro_begin = "#";
 	line_comment_begin = "//";
 	multi_comment_begin = "/*";
@@ -50,8 +50,13 @@ ParserShader::ParserShader() : Parser("Sader") {
 	special_words.add("ComputeShader");
 	special_words.add("TessComputeShader");
 	special_words.add("TessEvaluationShader");
+	special_words.add("RayGenShader");
+	special_words.add("RayMissShader");
+	special_words.add("RayClosestHitShader");
+	special_words.add("RayAnyHitShader");
 	types.add("void");
 	types.add("int");
+	types.add("uint");
 	types.add("float");
 	types.add("vec2");
 	types.add("vec3");
@@ -143,6 +148,17 @@ ParserShader::ParserShader() : Parser("Sader") {
 	globals.add("gl_WorkGroupID");
 	globals.add("gl_WorkGroupSize");
 	globals.add("gl_LocalInvocationID");
+
+	// rtx
+	special_words.add("GL_NV_ray_tracing");
+	special_words.add("accelerationStructureNV");
+	special_words.add("rayPayloadNV");
+	special_words.add("rayPayloadInNV");
+	special_words.add("hitAttributeNV");
+	globals.add("gl_LaunchIDNV");
+	globals.add("gl_LaunchSizeNV");
+	globals.add("gl_RayFlagsNoneNV");
+	compiler_functions.add("traceNV");
 }
 
 void ParserShader::CreateTextColors(SourceView *sv, int first_line, int last_line) {
