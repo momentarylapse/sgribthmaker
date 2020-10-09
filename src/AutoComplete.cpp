@@ -33,7 +33,7 @@ const Kaba::Class *simplify_type(const Kaba::Class *c) {
 	return c;
 }
 
-const Kaba::Class *node_namespace(Kaba::Node *n) {
+const Kaba::Class *node_namespace(shared<Kaba::Node> n) {
 	if (n->kind == NodeKind::CLASS)
 		return n->as_class();
 	return simplify_type(n->type);
@@ -73,13 +73,13 @@ AutoComplete::Data find_top_level_from_class(const Class *t, const string &yyy) 
 	for (auto &e: t->elements)
 		if (e.name.head(yyy.num) == yyy and allow(e.name))
 			suggestions.add(e.name, e.type->name + " " + t->name + "." + e.name);
-	for (auto *f: t->functions)
+	for (auto f: t->functions)
 		if (f->name.head(yyy.num) == yyy and allow(f->name))
 			suggestions.add(f->name, f->signature());
-	for (auto *c: t->classes)
+	for (auto c: t->classes)
 			if (c->name.head(yyy.num) == yyy and allow(c->name))
 				suggestions.add(c->name, "class " + c->long_name());
-	for (auto *c: t->constants)
+	for (auto c: t->constants)
 		if (c->name.head(yyy.num) == yyy and allow(c->name))
 			suggestions.add(c->name, "const " + c->type->long_name() + " " + c->name);
 	return suggestions;
@@ -96,7 +96,7 @@ AutoComplete::Data find_top_level(SyntaxTree *syntax, Function *f, const string 
 			
 	// function local
 	if (f) {
-		for (auto *v: f->var)
+		for (auto v: f->var)
 			if (yyy == v->name.head(yyy.num) and allow(v->name))
 				suggestions.add(v->name, v->type->name + " " + v->name);
 		if (f->name_space)
@@ -104,11 +104,11 @@ AutoComplete::Data find_top_level(SyntaxTree *syntax, Function *f, const string 
 	}
 	
 	// global var
-	for (auto *v: syntax->root_of_all_evil->var)
+	for (auto v: syntax->root_of_all_evil->var)
 		if (yyy == v->name.head(yyy.num) and allow(v->name))
 			suggestions.add(v->name, v->type->name + " " + v->name);
 	if (f) {
-		for (auto *f: syntax->base_class->functions)
+		for (auto f: syntax->base_class->functions)
 			if (yyy == f->name.head(yyy.num) and allow(f->name))
 				suggestions.add(f->name, f->signature());
 	}
@@ -116,7 +116,7 @@ AutoComplete::Data find_top_level(SyntaxTree *syntax, Function *f, const string 
 	
 	suggestions.append(find_top_level_from_class(syntax->base_class, yyy));
 	
-	for (auto *i: syntax->includes)
+	for (auto i: syntax->includes)
 		suggestions.append(find_top_level_from_class(i->syntax->base_class, yyy));
 	return suggestions;
 }
@@ -124,7 +124,7 @@ AutoComplete::Data find_top_level(SyntaxTree *syntax, Function *f, const string 
 
 // get deep "tail" block
 Block* guess_block(SyntaxTree *syntax, Function *f) {
-	Block *b = f->block;
+	Block *b = f->block.get();
 	/*while (true){
 		Block *b_next = nullptr;
 		for (auto *n: b->nodes){
@@ -157,7 +157,7 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 		data.append(find_top_level(syntax, f, yy[0]));
 	} else {
 		if (!f)
-			f = syntax->root_of_all_evil;
+			f = syntax->root_of_all_evil.get();
 
 		//printf("first:  %s\n", yy[0].c_str());
 	//	if (syntax->blocks.num == 0)
@@ -168,7 +168,7 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 		Array<const Class*> types;
 		auto nodes = syntax->get_existence(yy[0], guess_block(syntax, f), syntax->base_class, false);
 		//printf("res: %d\n", nodes.num);
-		for (auto *n: nodes){
+		for (auto n: nodes){
 			//printf("%s\n", n.type->name.c_str());
 			types.add(node_namespace(n));
 		}
@@ -180,13 +180,13 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 				for (auto &e: t->elements)
 					if (e.name == yy[i])
 						types2.add(simplify_type(e.type));
-				for (auto *f: t->functions)
+				for (auto f: t->functions)
 					if (f->name == yy[i])
 						types2.add(simplify_type(f->literal_return_type));
-				for (auto *c: t->constants)
+				for (auto c: t->constants)
 					if (c->name == yy[i])
 						types2.add(simplify_type(c->type));
-				for (auto *c: t->classes)
+				for (auto c: weak(t->classes))
 					if (c->name == yy[i])
 						types2.add(simplify_type(c));
 			}
@@ -258,7 +258,7 @@ AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos) {
 		data = simple_parse(s->syntax, ff, cur_line);
 	}
 	//delete(s);
-	Kaba::DeleteAllScripts(true, true);
+	Kaba::delete_all_scripts(true, true);
 
 	for (int i=0; i<data.suggestions.num; i++)
 		for (int j=i+1; j<data.suggestions.num; j++) {

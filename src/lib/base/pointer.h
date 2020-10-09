@@ -10,16 +10,16 @@
 
 
 #include "base.h"
-#include "../file/msg.h"
 
-static void pdb(const string &s) {
-	msg_write(s);
-}
+#define POINTER_DEBUG 0
 
-static void crash() {
-	int *p = nullptr;
-	*p = 0;
-}
+#if POINTER_DEBUG
+	void pdb(const string &s);
+	void pcrash(const char *msg);
+#else
+	#define pdb(x)
+	#define pcrash(m)
+#endif
 
 
 template <class T>
@@ -144,7 +144,7 @@ class Empty {};
 
 template <class T>
 class Sharable : public T {
-	int _pointer_ref_counter = 0;
+	mutable int _pointer_ref_counter = 0;
 public:
 	Sharable() {}
 
@@ -152,21 +152,19 @@ public:
 	Sharable(const Sharable<T> &o) = delete;
 	void operator=(const Sharable<T> &o) = delete;
 
-	auto _pointer_ref() {
+	auto _pointer_ref() const {
 		_pointer_ref_counter ++;
 		pdb(format("ref %s -> %d", p2s(this), _pointer_ref_counter));
 		return this;
 	}
-	void _pointer_unref() {
+	void _pointer_unref() const {
 		_pointer_ref_counter --;
 		pdb(format("unref %s -> %d", p2s(this), _pointer_ref_counter));
 		if (_pointer_ref_counter < 0) {
-			msg_error("---- OOOOOOO");
-			crash();
-			exit(1);
+			pcrash("---- ref count < O");
 		}
 	}
-	bool _has_pointer_refs() {
+	bool _has_pointer_refs() const {
 		return _pointer_ref_counter > 0;
 	}
 };
@@ -202,14 +200,20 @@ public:
 		pdb(format("shared  set %s", p2s(p)));
 		if (p == _p)
 			return;
-		release();
-		if (p)
-			_p = (T*)p->_pointer_ref();
+		if (p) {
+			// keep p, even if we are a parent to p!
+			auto p_next = (T*)p->_pointer_ref();
+			release();
+			_p = p_next;
+		} else {
+			release();
+		}
 	}
 	void release() {
 		if (_p) {
 			_p->_pointer_unref();
 			if (!_p->_has_pointer_refs()) {
+				pdb("  del");
 				delete _p;
 			}
 		}
@@ -220,12 +224,22 @@ public:
 	T &operator *() {
 		return *_p;
 	}
+	const T &operator *() const {
+		return *_p;
+	}
 	T *operator ->() {
+		return _p;
+	}
+	const T *operator ->() const {
 		return _p;
 	}
 	void operator=(const shared<T> o) {
 		pdb(format("shared/s = %s", p2s(o._p)));
 		set(o._p);
+	}
+	void operator=(T *o) {
+		pdb(format("shared/p = %s", p2s(o)));
+		set(o);
 	}
 	void operator=(owned<T> &&o) {
 		pdb(format("shared/o = %s", p2s(o._p)));
@@ -256,7 +270,36 @@ public:
 };
 
 
+template <class T>
+using shared_array = Array<shared<T>>;
 
+template <class T>
+class shared_arraywwww : public Array<shared<T>> {
+public:
+	/*shared_array() : Array<shared<T>>::Array() {}
+	shared_array(const shared_array &a) : Array<shared<T>>::Array(a) {}
+	shared_array(shared_array &&a) : Array<shared<T>>::Array(a) {}
+	shared_array(std::initializer_list<shared<T>> il) : shared_array() {
+		this->resize(il.size());
+		auto it = il.begin();
+		for (int i=0; i<this->num; i++)
+			(*this)[i] = *(it++);
+
+	}*/
+	const Array<T*> &weak() const {
+		return *(Array<T*>*)this;
+	}
+	const Array<T*> &weak() {
+		return *(Array<T*>*)this;
+	}
+};
+
+template <class T>
+const Array<T*> &weak(const shared_array<T> &a) {
+	return *(const Array<T*>*)&a;
+}
+
+#if 0
 template <class T>
 class shared_array : public Array<T*> {
 public:
@@ -331,7 +374,7 @@ public:
 	}
 	void erase(int index) {
 		pdb("shared[] erase");
-		auto p = (*this)[index];
+		auto p = (*this)[index].get();
 		p->_pointer_unref();
 		if (!p->_has_pointer_refs())
 			delete p;
@@ -354,7 +397,15 @@ public:
 		clear();
 		append(a);
 	}
+	shared<T> &operator[] (int index) const {
+		return ((shared<T>*)this->data)[index];
+	}
+	shared<T> &back() {
+		return ((shared<T>*)this->data)[this->num - 1];
+	}
 };
+
+#endif
 
 
 #endif /* SRC_LIB_BASE_POINTER_H_ */

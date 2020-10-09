@@ -19,14 +19,14 @@ bool allowed(const string &s) {
 }
 
 void add_class_content(ParserKaba *p, const Kaba::Class *c, const string &ns) {
-	for (auto *v: c->static_variables)
+	for (auto v: c->static_variables)
 		if (allowed(ns + v->name))
 			p->globals.add(ns + v->name);
-	for (auto *cc: c->constants)
+	for (auto cc: c->constants)
 		p->globals.add(ns + cc->name);
-	for (auto *f: c->functions)
+	for (auto f: c->functions)
 		p->compiler_functions.add(ns + f->name);
-	for (auto *cc: c->classes)
+	for (auto cc: weak(c->classes))
 		add_class(p, cc, ns);
 }
 
@@ -85,7 +85,7 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 	compiler_functions.add(Kaba::IDENTIFIER_SORTED);
 	special_words.add("as");
 	special_words.add("shared");
-	for (auto *p: Kaba::packages){
+	for (auto p: Kaba::packages){
 		add_class(this, p->base_class(), "");
 		//if (p->used_by_default)
 			add_class_content(this, p->base_class(), "");

@@ -287,7 +287,7 @@ void SgribthMaker::CompileKaba() {
 	//Kaba::config.verbose = true;
 
 	try {
-		auto *compile_script = Kaba::Load(cur_doc->filename, true);
+		auto compile_script = Kaba::load(cur_doc->filename, true);
 
 		float dt = CompileTimer.get();
 
@@ -303,7 +303,7 @@ void SgribthMaker::CompileKaba() {
 	}
 
 	//RemoveScript(compile_script);
-	Kaba::DeleteAllScripts(true, true);
+	Kaba::delete_all_scripts(true, true);
 
 	//msg_set_verbose(ALLOW_LOGGING);
 }
@@ -370,7 +370,7 @@ void SgribthMaker::CompileAndRun(bool verbose) {
 	//Kaba::config.verbose = true;
 
 	try {
-		auto *compile_script = Kaba::Load(cur_doc->filename);
+		auto compile_script = Kaba::load(cur_doc->filename);
 		float dt_compile = CompileTimer.get();
 
 		if (!verbose)
@@ -416,7 +416,7 @@ void SgribthMaker::CompileAndRun(bool verbose) {
 	
 
 	//RemoveScript(compile_script);
-	Kaba::DeleteAllScripts(true, true);
+	Kaba::delete_all_scripts(true, true);
 
 	//msg_set_verbose(ALLOW_LOGGING);
 }
