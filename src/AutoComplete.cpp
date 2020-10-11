@@ -185,7 +185,7 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 						types2.add(simplify_type(f->literal_return_type));
 				for (auto c: t->constants)
 					if (c->name == yy[i])
-						types2.add(simplify_type(c->type));
+						types2.add(simplify_type(c->type.get()));
 				for (auto c: weak(t->classes))
 					if (c->name == yy[i])
 						types2.add(simplify_type(c));

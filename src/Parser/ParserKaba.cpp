@@ -66,6 +66,7 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 	special_words.add(Kaba::IDENTIFIER_CONST);
 	special_words.add(Kaba::IDENTIFIER_SELFREF);
 	special_words.add(Kaba::IDENTIFIER_OUT);
+	special_words.add(Kaba::IDENTIFIER_SHARED);
 	special_words.add(Kaba::IDENTIFIER_SELF);
 	special_words.add(Kaba::IDENTIFIER_SUPER);
 	special_words.add(Kaba::IDENTIFIER_NAMESPACE);
@@ -77,6 +78,7 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 	special_words.add(Kaba::IDENTIFIER_LAMBDA);
 	special_words.add(Kaba::IDENTIFIER_CALL);
 	special_words.add(Kaba::IDENTIFIER_DYN);
+	special_words.add(Kaba::IDENTIFIER_WEAK);
 	compiler_functions.add(Kaba::IDENTIFIER_LEN);
 	compiler_functions.add(Kaba::IDENTIFIER_SIZEOF);
 	compiler_functions.add(Kaba::IDENTIFIER_STR);
@@ -84,7 +86,6 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 	compiler_functions.add(Kaba::IDENTIFIER_MAP);
 	compiler_functions.add(Kaba::IDENTIFIER_SORTED);
 	special_words.add("as");
-	special_words.add("shared");
 	for (auto p: Kaba::packages){
 		add_class(this, p->base_class(), "");
 		//if (p->used_by_default)
