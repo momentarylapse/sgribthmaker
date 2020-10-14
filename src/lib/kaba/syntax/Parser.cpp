@@ -58,6 +58,7 @@ Parser::Parser(SyntaxTree *t) {
 	for_index_count = 0;
 	Exp.cur_line = nullptr;
 	parser_loop_depth = 0;
+	found_dynamic_param = false;
 }
 
 
@@ -430,6 +431,7 @@ shared<Node> Parser::parse_operand_extension_call(const shared_array<Node> &link
 
 
 	auto xxx = [&](const shared_array<Node> &links) {
+		//force_concrete_types(params);
 
 
 	// find (and provisional link) the parameters in the source
@@ -701,6 +703,9 @@ bool Parser::direct_param_match(shared<Node> operand, shared_array<Node> &params
 	auto wanted_types = get_wanted_param_types(operand);
 	if (wanted_types.num != params.num)
 		return false;
+	for (auto c: wanted_types)
+		if (c == TypeDynamic)
+			found_dynamic_param = true;
 	for (int p=0; p<params.num; p++)
 		if (!type_match(params[p]->type, wanted_types[p]))
 			return false;
@@ -2320,15 +2325,20 @@ shared<Node> Parser::parse_statement_weak(Block *block) {
 		do_error("weak() expects 1 parameter");
 
 	auto t = params[0]->type;
-	if (t->is_pointer_shared()) {
-		auto tt = t->param->get_pointer();
-		return tree->shift_node(params[0], false, 0, tt);
-	} else if (t->is_super_array() and t->get_array_element()->is_pointer_shared()) {
-		auto tt = tree->make_class_super_array(t->param->param);
-		return tree->shift_node(params[0], false, 0, tt);
-	} else {
-		do_error("weak() expects either a shared pointer, or a shared pointer array");
+	while (true) {
+		if (t->is_pointer_shared()) {
+			auto tt = t->param->get_pointer();
+			return tree->shift_node(params[0], false, 0, tt);
+		} else if (t->is_super_array() and t->get_array_element()->is_pointer_shared()) {
+			auto tt = tree->make_class_super_array(t->param->param->get_pointer());
+			return tree->shift_node(params[0], false, 0, tt);
+		}
+		if (t->parent)
+			t = t->parent;
+		else
+			break;
 	}
+	do_error("weak() expects either a shared pointer, or a shared pointer array");
 	return nullptr;
 }
 
@@ -2590,6 +2600,13 @@ void Parser::parse_import() {
 
 void Parser::parse_enum(Class *_namespace) {
 	Exp.next(); // 'enum'
+
+	// class name?
+	if (!Exp.end_of_line()) {
+		_namespace = tree->create_new_class(Exp.cur, Class::Type::OTHER, 0, -1, nullptr, nullptr, _namespace);
+		Exp.next();
+	}
+
 	expect_new_line();
 	Exp.next_line();
 	expect_indent();
