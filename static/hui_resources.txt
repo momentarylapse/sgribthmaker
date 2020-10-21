@@ -53,7 +53,7 @@ default,image=hui:ok
 # Resource
 Window
 main-window
-borderwidth=0
+borderwidth=0,spacing=0
 0
 0
 1

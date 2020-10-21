@@ -1,4 +1,4 @@
-Window main-window "" borderwidth=0
+Window main-window "" borderwidth=0 spacing=0
 	Grid table_main ""
 		Grid table_doc ""
 			TabControl tab "" nobar expandx
