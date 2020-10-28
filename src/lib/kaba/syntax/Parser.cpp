@@ -546,12 +546,30 @@ const Class *Parser::parse_type_extension_pointer(const Class *c) {
 	return c->get_pointer();
 }
 
+const Class *Parser::parse_type_extension_func(const Class *c) {
+	Exp.next(); // "->"
+	auto tt = parse_type(TypeVoid);
+	return tree->make_class_func({c}, tt);
+}
+
+const Class *Parser::parse_type_extension_child(const Class *c) {
+	Exp.next(); // "."
+	const Class *sub = nullptr;
+	for (auto *cc: weak(c->classes))
+		if (cc->name == Exp.cur)
+			sub = cc;
+	if (!sub)
+		do_error(format("class '%s' does not have a sub-class '%s'", c->long_name(), Exp.cur));
+	Exp.next();
+	return sub;
+}
+
 
 // find any ".", or "[...]"'s    or operators?
 shared<Node> Parser::parse_operand_extension(const shared_array<Node> &operands, Block *block) {
 
 	// special
-	if ((operands[0]->kind == NodeKind::CLASS) and ((Exp.cur == "*") or (Exp.cur == "[") or (Exp.cur == "{"))) {
+	if ((operands[0]->kind == NodeKind::CLASS) and ((Exp.cur == "*") or (Exp.cur == "[") or (Exp.cur == "{") or (Exp.cur == "->"))) {
 		if (operands.num > 1)
 			do_error("ambiguous class?!?!?");
 		auto *t = operands[0]->as_class();
@@ -562,6 +580,10 @@ shared<Node> Parser::parse_operand_extension(const shared_array<Node> &operands,
 			t = parse_type_extension_array(t);
 		} else if (Exp.cur == "{") {
 			t = parse_type_extension_dict(t);
+		} else if (Exp.cur == "->") {
+			t = parse_type_extension_func(t);
+		} else if (Exp.cur == ".") {
+			t = parse_type_extension_child(t);
 		}
 
 		return parse_operand_extension({tree->add_node_class(t)}, block);
@@ -1761,14 +1783,20 @@ shared<Node> Parser::parse_statement_try(Block *block) {
 	cmd_try->set_param(0, parse_block(block));
 	Exp.next_line();
 
-	if (Exp.cur != IDENTIFIER_EXCEPT)
-		do_error("except after try expected");
-	if (Exp.cur_line->indent != ind)
-		do_error("wrong indentation for except");
-	Exp.next();
+
+	int num_excepts = 0;
+
+	// else?
+	while (!Exp.end_of_file() and (Exp.cur == IDENTIFIER_EXCEPT) and (Exp.cur_line->indent == ind)) {
+
+
+//	if (Exp.cur != IDENTIFIER_EXCEPT)
+//		do_error("except after try expected");
+//	if (Exp.cur_line->indent != ind)
+//		do_error("wrong indentation for except");
+	Exp.next(); // except
 
 	auto cmd_ex = tree->add_node_statement(StatementID::EXCEPT);
-	cmd_try->set_param(1, cmd_ex);
 
 	Block *except_block = new Block(block->function, block);
 
@@ -1803,7 +1831,20 @@ shared<Node> Parser::parse_statement_try(Block *block) {
 	//auto n = block->nodes.back();
 	//n->as_block()->
 
-	cmd_try->set_param(2, parse_block(block, except_block));
+	auto cmd_ex_block = parse_block(block, except_block);
+
+	num_excepts ++;
+	cmd_try->set_num_params(1 + num_excepts * 2);
+	cmd_try->set_param(num_excepts*2 - 1, cmd_ex);
+	cmd_try->set_param(num_excepts*2, cmd_ex_block);
+
+	Exp.next_line();
+	}
+
+	int line = Exp.get_line_no() - 1;
+	Exp.set(Exp.line[line].exp.num - 1, line);
+
+
 
 	//shared<Node> cmd_ex_block = add_node_block(new_block);
 	/*block->nodes.add(cmd_ex_block);
@@ -2292,6 +2333,14 @@ shared<Node> Parser::parse_statement_dyn(Block *block) {
 	return make_dynamical(sub);
 }
 
+bool is_function_pointer(const Class *c) {
+	if (c ==  TypeFunctionP)
+		return true;
+	if (c->is_pointer() and c->param->parent == TypeFunction)
+		return true;
+	return false;
+}
+
 shared<Node> Parser::parse_statement_call(Block *block) {
 	Exp.next(); // "call"
 	string name = Exp.cur;
@@ -2299,15 +2348,14 @@ shared<Node> Parser::parse_statement_call(Block *block) {
 	auto params = parse_call_parameters(block);
 	if (params.num == 0)
 		do_error("call() expects at least 1 parameter");
-	if (params[0]->type != TypeFunctionP)
+	if (!is_function_pointer(params[0]->type))
 		do_error("call(): first parameter must be a function pointer ..." + params[0]->type->long_name());
 
 	int np = params.num-1;
 	for (int i=0; i<np; i++)
 		params[i+1] = force_concrete_type(params[i+1]);
 
-	auto links = tree->get_existence("@call" + i2s(np), nullptr, nullptr, false);
-	Function *f = links[0]->as_func();
+	auto f = tree->required_func_global("@call" + i2s(np));
 
 	auto cmd = tree->add_node_call(f);
 	cmd->set_param(0, params[0]);
@@ -2977,53 +3025,20 @@ const Class *Parser::parse_type(const Class *ns, Flags flags) {
 		//t->type = Class::Type::POINTER_UNIQUE;
 	}
 
-	// extensions *,[],{},.
+	// extensions *,[],{},.,->
 	while (true) {
 
 		// pointer?
 		if (Exp.cur == "*") {
-			Exp.next();
-			t = t->get_pointer();
+			t = parse_type_extension_pointer(t);
 		} else if (Exp.cur == "[") {
-			Exp.next();
-
-			// no index -> super array
-			if (Exp.cur == "]") {
-				t = tree->make_class_super_array(t);
-			} else {
-
-				// find array index
-				auto c = tree->transform_node(parse_operand_greedy(tree->root_of_all_evil->block.get()), [&](shared<Node> n) { return tree->conv_eval_const_func(n); });
-
-				if ((c->kind != NodeKind::CONSTANT) or (c->type != TypeInt))
-					do_error("only constants of type 'int' allowed for size of arrays");
-				int array_size = c->as_const()->as_int();
-				//Exp.next();
-				if (Exp.cur != "]")
-					do_error("']' expected after array size");
-				t = tree->make_class_array(t, array_size);
-			}
-
-			Exp.next();
+			t = parse_type_extension_array(t);
 		} else if (Exp.cur == "{") {
-			Exp.next();
-
-			if (Exp.cur != "}")
-				do_error("'}' expected after dict{");
-
-			Exp.next();
-
-			t = tree->make_class_dict(t);
+			t = parse_type_extension_dict(t);
+		} else if (Exp.cur == "->") {
+			t = parse_type_extension_func(t);
 		} else if (Exp.cur == ".") {
-			Exp.next();
-			const Class *sub = nullptr;
-			for (auto *c: weak(t->classes))
-				if (c->name == Exp.cur)
-					sub = c;
-			if (!sub)
-				do_error(format("class '%s' does not have a sub-class '%s'", t->long_name(), Exp.cur));
-			t = sub;
-			Exp.next();
+			t = parse_type_extension_child(t);
 		} else {
 			break;
 		}
