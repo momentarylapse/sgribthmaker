@@ -29,7 +29,7 @@ namespace Kaba {
 
 const Kaba::Class *simplify_type(const Kaba::Class *c) {
 	if (c->is_pointer())
-		return c->param;
+		return c->param[0];
 	return c;
 }
 

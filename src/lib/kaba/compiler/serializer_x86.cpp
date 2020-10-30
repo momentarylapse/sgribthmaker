@@ -160,7 +160,7 @@ SerialNodeParam SerializerX86::serialize_parameter(Node *link, Block *block, int
 			p.kind = NodeKind::MARKER;
 			p.p = fp->_label;
 		}
-	}else if ((link->kind == NodeKind::OPERATOR) or (link->kind == NodeKind::FUNCTION_CALL) or (link->kind == NodeKind::INLINE_CALL) or (link->kind == NodeKind::VIRTUAL_CALL) or (link->kind == NodeKind::STATEMENT)){
+	}else if ((link->kind == NodeKind::OPERATOR) or (link->kind == NodeKind::FUNCTION_CALL) or (link->kind == NodeKind::INLINE_CALL) or (link->kind == NodeKind::VIRTUAL_CALL) or (link->kind == NodeKind::POINTER_CALL) or (link->kind == NodeKind::STATEMENT)){
 		p = serialize_node(link, block, index);
 	}else if (link->kind == NodeKind::REFERENCE){
 		auto param = serialize_parameter(link->params[0].get(), block, index);
@@ -343,7 +343,7 @@ void SerializerX86::serialize_statement(Node *com, const SerialNodeParam &ret, B
 		case StatementID::NEW:{
 			// malloc()
 			auto f = syntax_tree->required_func_global("@malloc");
-			add_function_call(f, {param_imm(TypeInt, ret.type->param->size)}, ret);
+			add_function_call(f, {param_imm(TypeInt, ret.type->param[0]->size)}, ret);
 
 			// __init__()
 			auto sub = com->params[0];
