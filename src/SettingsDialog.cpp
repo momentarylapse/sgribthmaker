@@ -48,18 +48,15 @@ SettingsDialog::SettingsDialog(SgribthMaker *_sgribthmaker) :
 	event("italic", std::bind(&SettingsDialog::onSchemeChange, this));
 }
 
-SettingsDialog::~SettingsDialog()
-{
+SettingsDialog::~SettingsDialog() {
 }
 
 
-void SettingsDialog::onClose()
-{
-	destroy();
+void SettingsDialog::onClose() {
+	request_destroy();
 }
 
-string get_scheme_name(HighlightScheme *s)
-{
+string get_scheme_name(HighlightScheme *s) {
 	string n = s->name;
 	if (s->is_default)
 		n += _(" (write protected)");
@@ -68,20 +65,18 @@ string get_scheme_name(HighlightScheme *s)
 	return n;
 }
 
-void SettingsDialog::fillSchemeList()
-{
+void SettingsDialog::fillSchemeList() {
 	reset("schemes");
 	Array<HighlightScheme*> schemes = HighlightScheme::get_all();
-	foreachi(HighlightScheme *s, schemes, i){
+	foreachi(HighlightScheme *s, schemes, i) {
 		add_string("schemes", get_scheme_name(s));
 		if (s == HighlightScheme::default_scheme)
 			set_int("schemes", i);
 	}
 }
 
-void SettingsDialog::onFont()
-{
-	if (hui::SelectFont(this, _("Select font"))){
+void SettingsDialog::onFont() {
+	if (hui::SelectFont(this, _("Select font"))) {
 		set_string("font", hui::Fontname);
 		hui::Config.set_str("Font", hui::Fontname);
 		for (SourceView *sv: sgribthmaker->source_view)
@@ -89,15 +84,13 @@ void SettingsDialog::onFont()
 	}
 }
 
-void SettingsDialog::onTabWidth()
-{
+void SettingsDialog::onTabWidth() {
 	hui::Config.set_int("TabWidth", get_int("tab_width"));
 	for (SourceView *sv: sgribthmaker->source_view)
 		sv->UpdateTabSize();
 }
 
-void SettingsDialog::onContextListSelect()
-{
+void SettingsDialog::onContextListSelect() {
 	int n = get_int("context_list");
 	HighlightScheme *s = HighlightScheme::default_scheme;
 	set_color("scheme_background", s->bg);
@@ -117,8 +110,7 @@ void SettingsDialog::onContextListSelect()
 	enable("italic", !s->is_default);
 }
 
-void SettingsDialog::onSchemeChange()
-{
+void SettingsDialog::onSchemeChange() {
 	int n = get_int("context_list");
 	HighlightScheme *s = HighlightScheme::default_scheme;
 	HighlightContext &c = s->context[n];
@@ -134,8 +126,7 @@ void SettingsDialog::onSchemeChange()
 	fillSchemeList();
 }
 
-void SettingsDialog::onSchemes()
-{
+void SettingsDialog::onSchemes() {
 	int n = get_int("");
 	HighlightScheme *s = HighlightScheme::get_all()[n];
 	HighlightScheme::default_scheme = s;
@@ -144,8 +135,7 @@ void SettingsDialog::onSchemes()
 	onContextListSelect();
 }
 
-void SettingsDialog::onCopyScheme()
-{
+void SettingsDialog::onCopyScheme() {
 	HighlightScheme *s = HighlightScheme::default_scheme->copy(_("new scheme"));
 	for (SourceView *sv: sgribthmaker->source_view)
 		sv->ApplyScheme(s);

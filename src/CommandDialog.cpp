@@ -19,7 +19,7 @@ CommandDialog::CommandDialog(SgribthMaker *_sgribthmaker) :
 	set_string("command", prev_command);
 	set_string("substitude", prev_subsitude);
 	event("ok", [=]{ on_ok(); });
-	event("cancel", [=]{ destroy(); });
+	event("cancel", [=]{ request_destroy(); });
 	event("replace", [=]{ hide_control("substitude", !is_checked("replace")); });
 }
 
