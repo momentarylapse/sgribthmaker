@@ -20,6 +20,8 @@ ParserShader::ParserShader() : Parser("Shader") {
 	special_words.add("in");
 	special_words.add("out");
 	special_words.add("layout");
+	special_words.add("readonly");
+	special_words.add("require");
 	special_words.add("push_constant");
 	special_words.add("buffer");
 	special_words.add("sampler");
@@ -64,6 +66,9 @@ ParserShader::ParserShader() : Parser("Shader") {
 	types.add("ivec2");
 	types.add("ivec3");
 	types.add("ivec4");
+	types.add("uvec2");
+	types.add("uvec3");
+	types.add("uvec4");
 	types.add("bool");
 	types.add("mat2");
 	types.add("mat3");
@@ -121,6 +126,7 @@ ParserShader::ParserShader() : Parser("Shader") {
 	globals.add("location");
 	globals.add("binding");
 	globals.add("set");
+	globals.add("std430");
 
 	globals.add("gl_TexCoord");
 	globals.add("gl_Vertex");
@@ -148,17 +154,49 @@ ParserShader::ParserShader() : Parser("Shader") {
 	globals.add("gl_WorkGroupID");
 	globals.add("gl_WorkGroupSize");
 	globals.add("gl_LocalInvocationID");
+	globals.add("gl_PrimitiveID");
+	globals.add("gl_InstanceID");
 
 	// rtx
 	special_words.add("GL_NV_ray_tracing");
-	special_words.add("accelerationStructureNV");
+	special_words.add("GL_GOOGLE_include_directive");
+	special_words.add("GL_EXT_nonuniform_qualifier");
+	types.add("accelerationStructureNV");
+	special_words.add("callableDataNV");
+	special_words.add("callableDataInNV");
 	special_words.add("rayPayloadNV");
 	special_words.add("rayPayloadInNV");
 	special_words.add("hitAttributeNV");
 	globals.add("gl_LaunchIDNV");
 	globals.add("gl_LaunchSizeNV");
 	globals.add("gl_RayFlagsNoneNV");
+	globals.add("gl_InstanceCustomIndexNV");
+	globals.add("gl_HitTNV");
+	globals.add("gl_RayFlagsNoneNV");
+	globals.add("gl_RayFlagsOpaqueNV");
+	globals.add("gl_RayFlagsNoOpaqueNV");
+	globals.add("gl_RayFlagsTerminateOnFirstHitNV");
+	globals.add("gl_RayFlagsSkipClosestHitShaderNV");
+	globals.add("gl_RayFlagsCullBackFacingTrianglesNV");
+	globals.add("gl_RayFlagsCullFrontFacingTrianglesNV");
+	globals.add("gl_RayFlagsCullOpaqueNV");
+	globals.add("gl_RayFlagsCullNoOpaqueNV");
+	globals.add("gl_WorldRayOriginNV");
+	globals.add("gl_WorldRayDirectionNV");
+	globals.add("gl_ObjectRayOriginNV");
+	globals.add("gl_ObjectRayDirectionNV");
+	globals.add("gl_RayTminNV");
+	globals.add("gl_RayTmaxNV");
+	globals.add("gl_IncomingRayFlagsNV");
+	globals.add("gl_HitKindNV");
+	globals.add("gl_WorldToObjectNV");
+	globals.add("gl_ObjectToWorldNV");
 	compiler_functions.add("traceNV");
+	compiler_functions.add("reportIntersectionNV");
+	compiler_functions.add("ignoreIntersectionNV");
+	compiler_functions.add("terminateRayNV");
+	compiler_functions.add("executeCallableNV");
+	compiler_functions.add("nonuniformEXT");
 }
 
 void ParserShader::CreateTextColors(SourceView *sv, int first_line, int last_line) {
