@@ -10,7 +10,7 @@
 #include "../lib/kaba/kaba.h"
 #include "../SourceView.h"
 
-void add_class(ParserKaba *p, const Kaba::Class *c, const string &ns);
+void add_class(ParserKaba *p, const kaba::Class *c, const string &ns);
 
 bool allowed(const string &s) {
 	if (s == "filename" or s == "config")
@@ -18,7 +18,7 @@ bool allowed(const string &s) {
 	return true;
 }
 
-void add_class_content(ParserKaba *p, const Kaba::Class *c, const string &ns) {
+void add_class_content(ParserKaba *p, const kaba::Class *c, const string &ns) {
 	for (auto v: c->static_variables)
 		if (allowed(ns + v->name))
 			p->globals.add(ns + v->name);
@@ -30,7 +30,7 @@ void add_class_content(ParserKaba *p, const Kaba::Class *c, const string &ns) {
 		add_class(p, cc, ns);
 }
 
-void add_class(ParserKaba *p, const Kaba::Class *c, const string &ns) {
+void add_class(ParserKaba *p, const kaba::Class *c, const string &ns) {
 	p->types.add(ns + c->name);
 	add_class_content(p, c, ns + c->name + ".");
 }
@@ -40,58 +40,58 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 	line_comment_begin = "#";
 	string_sub_begin = "{{";
 	string_sub_end = "}}";
-	special_words.add(Kaba::IDENTIFIER_ENUM);
-	special_words.add(Kaba::IDENTIFIER_CLASS);
-	special_words.add(Kaba::IDENTIFIER_EXTENDS);
-	special_words.add(Kaba::IDENTIFIER_USE);
-	special_words.add(Kaba::IDENTIFIER_ASM);
-	special_words.add(Kaba::IDENTIFIER_IMPORT);
-	special_words.add(Kaba::IDENTIFIER_IF);
-	special_words.add(Kaba::IDENTIFIER_ELSE);
-	special_words.add(Kaba::IDENTIFIER_WHILE);
-	special_words.add(Kaba::IDENTIFIER_FOR);
-	special_words.add(Kaba::IDENTIFIER_IN);
-	special_words.add(Kaba::IDENTIFIER_RETURN);
-	special_words.add(Kaba::IDENTIFIER_BREAK);
-	special_words.add(Kaba::IDENTIFIER_CONTINUE);
-	special_words.add(Kaba::IDENTIFIER_NOT);
-	special_words.add(Kaba::IDENTIFIER_AND);
-	special_words.add(Kaba::IDENTIFIER_OR);
-	special_words.add(Kaba::IDENTIFIER_NEW);
-	special_words.add(Kaba::IDENTIFIER_DELETE);
-	special_words.add(Kaba::IDENTIFIER_EXTERN);
-	special_words.add(Kaba::IDENTIFIER_VIRTUAL);
-	special_words.add(Kaba::IDENTIFIER_OVERRIDE);
-	special_words.add(Kaba::IDENTIFIER_STATIC);
-	special_words.add(Kaba::IDENTIFIER_CONST);
-	special_words.add(Kaba::IDENTIFIER_SELFREF);
-	special_words.add(Kaba::IDENTIFIER_OUT);
-	special_words.add(Kaba::IDENTIFIER_SHARED);
-	special_words.add(Kaba::IDENTIFIER_SELF);
-	special_words.add(Kaba::IDENTIFIER_SUPER);
-	special_words.add(Kaba::IDENTIFIER_NAMESPACE);
-	special_words.add(Kaba::IDENTIFIER_RAISE);
-	special_words.add(Kaba::IDENTIFIER_TRY);
-	special_words.add(Kaba::IDENTIFIER_EXCEPT);
-	special_words.add(Kaba::IDENTIFIER_PASS);
-	special_words.add(Kaba::IDENTIFIER_LET);
-	special_words.add(Kaba::IDENTIFIER_LAMBDA);
-	special_words.add(Kaba::IDENTIFIER_CALL);
-	special_words.add(Kaba::IDENTIFIER_DYN);
-	special_words.add(Kaba::IDENTIFIER_WEAK);
-	compiler_functions.add(Kaba::IDENTIFIER_LEN);
-	compiler_functions.add(Kaba::IDENTIFIER_SIZEOF);
-	compiler_functions.add(Kaba::IDENTIFIER_STR);
-	compiler_functions.add(Kaba::IDENTIFIER_TYPE);
-	compiler_functions.add(Kaba::IDENTIFIER_MAP);
-	compiler_functions.add(Kaba::IDENTIFIER_SORTED);
+	special_words.add(kaba::IDENTIFIER_ENUM);
+	special_words.add(kaba::IDENTIFIER_CLASS);
+	special_words.add(kaba::IDENTIFIER_EXTENDS);
+	special_words.add(kaba::IDENTIFIER_USE);
+	special_words.add(kaba::IDENTIFIER_ASM);
+	special_words.add(kaba::IDENTIFIER_IMPORT);
+	special_words.add(kaba::IDENTIFIER_IF);
+	special_words.add(kaba::IDENTIFIER_ELSE);
+	special_words.add(kaba::IDENTIFIER_WHILE);
+	special_words.add(kaba::IDENTIFIER_FOR);
+	special_words.add(kaba::IDENTIFIER_IN);
+	special_words.add(kaba::IDENTIFIER_RETURN);
+	special_words.add(kaba::IDENTIFIER_BREAK);
+	special_words.add(kaba::IDENTIFIER_CONTINUE);
+	special_words.add(kaba::IDENTIFIER_NOT);
+	special_words.add(kaba::IDENTIFIER_AND);
+	special_words.add(kaba::IDENTIFIER_OR);
+	special_words.add(kaba::IDENTIFIER_NEW);
+	special_words.add(kaba::IDENTIFIER_DELETE);
+	special_words.add(kaba::IDENTIFIER_EXTERN);
+	special_words.add(kaba::IDENTIFIER_VIRTUAL);
+	special_words.add(kaba::IDENTIFIER_OVERRIDE);
+	special_words.add(kaba::IDENTIFIER_STATIC);
+	special_words.add(kaba::IDENTIFIER_CONST);
+	special_words.add(kaba::IDENTIFIER_SELFREF);
+	special_words.add(kaba::IDENTIFIER_OUT);
+	special_words.add(kaba::IDENTIFIER_SHARED);
+	special_words.add(kaba::IDENTIFIER_SELF);
+	special_words.add(kaba::IDENTIFIER_SUPER);
+	special_words.add(kaba::IDENTIFIER_NAMESPACE);
+	special_words.add(kaba::IDENTIFIER_RAISE);
+	special_words.add(kaba::IDENTIFIER_TRY);
+	special_words.add(kaba::IDENTIFIER_EXCEPT);
+	special_words.add(kaba::IDENTIFIER_PASS);
+	special_words.add(kaba::IDENTIFIER_LET);
+	special_words.add(kaba::IDENTIFIER_LAMBDA);
+	special_words.add(kaba::IDENTIFIER_CALL);
+	special_words.add(kaba::IDENTIFIER_DYN);
+	special_words.add(kaba::IDENTIFIER_WEAK);
+	compiler_functions.add(kaba::IDENTIFIER_LEN);
+	compiler_functions.add(kaba::IDENTIFIER_SIZEOF);
+	compiler_functions.add(kaba::IDENTIFIER_STR);
+	compiler_functions.add(kaba::IDENTIFIER_TYPE);
+	compiler_functions.add(kaba::IDENTIFIER_MAP);
+	compiler_functions.add(kaba::IDENTIFIER_SORTED);
 	special_words.add("as");
-	for (auto p: Kaba::packages){
+	for (auto p: kaba::packages){
 		add_class(this, p->base_class(), "");
 		//if (p->used_by_default)
 			add_class_content(this, p->base_class(), "");
 	}
-	//for (auto &s: Kaba::Statements)
+	//for (auto &s: kaba::Statements)
 	//	special_words.add(s.name);
 }
 
@@ -112,13 +112,13 @@ Array<Parser::Label> ParserKaba::FindLabels(SourceView *sv) {
 				last_class = "";
 			}else
 				continue;
-			if (s.find(Kaba::IDENTIFIER_EXTERN) >= 0)
+			if (s.find(kaba::IDENTIFIER_EXTERN) >= 0)
 				continue;
 			labels.add(Label(s, l, 0));
 		}else if ((last_class.num > 0) && (s[0] == '\t') && (char_type(s[1]) == CHAR_LETTER)){
 			if (s.find("(") < 0)
 				continue;
-			s = s.replace(Kaba::IDENTIFIER_VIRTUAL + " ", "").replace(Kaba::IDENTIFIER_OVERRIDE + " ", "").trim();
+			s = s.replace(kaba::IDENTIFIER_VIRTUAL + " ", "").replace(kaba::IDENTIFIER_OVERRIDE + " ", "").trim();
 			labels.add(Label(s, l, 1));
 		}
 	}

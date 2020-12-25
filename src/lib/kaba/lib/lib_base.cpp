@@ -8,7 +8,7 @@
 #include <cstdio>
 
 
-namespace Kaba {
+namespace kaba {
 
 extern const Class *TypeDynamicArray;
 extern const Class *TypeSharedPointer;
@@ -121,7 +121,7 @@ string kaba_float_format(float f, const string &fmt) {
 	}
 }
 
-string kaba_float642str(float f) {
+string kaba_float642str(double f) {
 	return f642s(f, 6);
 }
 

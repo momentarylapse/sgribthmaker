@@ -283,11 +283,11 @@ void SgribthMaker::CompileKaba() {
 
 	hui::Timer CompileTimer;
 
-	Kaba::config.compile_silently = true;
-	//Kaba::config.verbose = true;
+	kaba::config.compile_silently = true;
+	//kaba::config.verbose = true;
 
 	try {
-		auto compile_script = Kaba::load(cur_doc->filename, true);
+		auto compile_script = kaba::load(cur_doc->filename, true);
 
 		float dt = CompileTimer.get();
 
@@ -295,7 +295,7 @@ void SgribthMaker::CompileKaba() {
 
 		SetMessage(format(_("Script compilable without errors!         (in %s)"), get_time_str(dt).c_str()));
 
-	} catch (const Kaba::Exception &e) {
+	} catch (const kaba::Exception &e) {
 		e.print();
 		//ErrorBox(MainWin, _("Error"), e.message());
 		SetError(e.message());
@@ -303,7 +303,7 @@ void SgribthMaker::CompileKaba() {
 	}
 
 	//RemoveScript(compile_script);
-	Kaba::delete_all_scripts(true, true);
+	kaba::delete_all_scripts(true, true);
 
 	//msg_set_verbose(ALLOW_LOGGING);
 }
@@ -366,11 +366,11 @@ void SgribthMaker::CompileAndRun(bool verbose) {
 
 	// compile
 	hui::Timer CompileTimer;
-	Kaba::config.compile_silently = true;
-	//Kaba::config.verbose = true;
+	kaba::config.compile_silently = true;
+	//kaba::config.verbose = true;
 
 	try {
-		auto compile_script = Kaba::load(cur_doc->filename);
+		auto compile_script = kaba::load(cur_doc->filename);
 		float dt_compile = CompileTimer.get();
 
 		if (!verbose)
@@ -406,7 +406,7 @@ void SgribthMaker::CompileAndRun(bool verbose) {
 		if (msg_size > msg_size0)
 			console->set(msg_get_buffer(msg_size - msg_size0));
 
-	} catch(const Kaba::Exception &e) {
+	} catch(const kaba::Exception &e) {
 		e.print();
 
 		SetError(e.message());
@@ -416,7 +416,7 @@ void SgribthMaker::CompileAndRun(bool verbose) {
 	
 
 	//RemoveScript(compile_script);
-	Kaba::delete_all_scripts(true, true);
+	kaba::delete_all_scripts(true, true);
 
 	//msg_set_verbose(ALLOW_LOGGING);
 }
@@ -538,7 +538,7 @@ SgribthMaker::SgribthMaker() :
 
 //	hui::RegisterFileType("kaba","MichiSoft Script Datei", directory + "Data/kaba.ico", filename,"open",true);
 
-	Kaba::init();
+	kaba::init();
 
 	console = NULL;
 	MainWin = NULL;

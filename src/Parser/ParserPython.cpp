@@ -10,6 +10,8 @@
 
 ParserPython::ParserPython() : Parser("Python") {
 	line_comment_begin = "#";
+	string_sub_begin = "{";
+	string_sub_end = "}";
 	special_words.add("enum");
 	special_words.add("class");
 	special_words.add("import");
@@ -35,8 +37,10 @@ ParserPython::ParserPython() : Parser("Python") {
 	special_words.add("self");
 	special_words.add("namespace");
 	types.add("set");
-	types.add("map");
+	types.add("dict");
 	types.add("str");
+	types.add("int");
+	types.add("float");
 	types.add("list");
 	types.add("tuple");
 	types.add("Exception");
@@ -47,8 +51,18 @@ ParserPython::ParserPython() : Parser("Python") {
 	compiler_functions.add("enumerate");
 	compiler_functions.add("dir");
 	compiler_functions.add("zip");
+	compiler_functions.add("map");
 	compiler_functions.add("max");
 	compiler_functions.add("min");
+	compiler_functions.add("sum");
+	compiler_functions.add("sorted");
+	compiler_functions.add("open");
+	compiler_functions.add("sin");
+	compiler_functions.add("cos");
+	compiler_functions.add("sqrt");
+	compiler_functions.add("pow");
+	compiler_functions.add("exp");
+	compiler_functions.add("log");
 	globals.add("True");
 	globals.add("False");
 	globals.add("nil");

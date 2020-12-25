@@ -24,16 +24,16 @@ void AutoComplete::Data::append(const AutoComplete::Data &d) {
 }
 
 
-namespace Kaba {
+namespace kaba {
 
 
-const Kaba::Class *simplify_type(const Kaba::Class *c) {
+const kaba::Class *simplify_type(const kaba::Class *c) {
 	if (c->is_pointer())
 		return c->param[0];
 	return c;
 }
 
-const Kaba::Class *node_namespace(shared<Kaba::Node> n) {
+const kaba::Class *node_namespace(shared<kaba::Node> n) {
 	if (n->kind == NodeKind::CLASS)
 		return n->as_class();
 	return simplify_type(n->type);
@@ -209,7 +209,7 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 
 
 AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos) {
-	auto *s = new Kaba::Script;
+	auto *s = new kaba::Script;
 	auto ll = _code.explode("\n");
 	auto lines_pre = ll.sub(0, line);//+1);
 	auto lines_post = ll.sub(line+1, -1);
@@ -221,8 +221,8 @@ AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos) {
 	//printf("---->>  %s\n", cur_line.c_str());
 	s->just_analyse = true;
 	Data data;
-	Kaba::Function *ff = nullptr;
-	s->syntax->parser = new Kaba::Parser(s->syntax);
+	kaba::Function *ff = nullptr;
+	s->syntax->parser = new kaba::Parser(s->syntax);
 
 	try {
 		//s->syntax->ParseBuffer(code, true);
@@ -251,14 +251,14 @@ AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos) {
 
 
 
-	} catch (const Kaba::Exception &e) {
+	} catch (const kaba::Exception &e) {
 		printf("err: %s\n", e.message().c_str());
 		//if (e.line)
 		//throw e;
 		data = simple_parse(s->syntax, ff, cur_line);
 	}
 	//delete(s);
-	Kaba::delete_all_scripts(true, true);
+	kaba::delete_all_scripts(true, true);
 
 	for (int i=0; i<data.suggestions.num; i++)
 		for (int j=i+1; j<data.suggestions.num; j++) {

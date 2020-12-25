@@ -13,7 +13,7 @@
 
 //#include "lexical.h"
 
-namespace Kaba {
+namespace kaba {
 
 class Class;
 class Function;
@@ -56,7 +56,7 @@ public:
 
 	void link_most_important_operator(shared_array<Node> &operand, shared_array<Node> &_operator, Array<int> &op_exp);
 	shared_array<Node> make_class_node_callable(const Class *t, Block *block, shared_array<Node> &params);
-	void make_func_node_callable(shared<Node> l);
+	shared<Node> make_func_node_callable(const shared<Node> l);
 	shared<Node> link_unary_operator(PrimitiveOperator *op, shared<Node> operand, Block *block);
 	//void FindFunctionSingleParameter(int p, Array<Type*> &wanted_type, Block *block, shared<Node> cmd);
 
@@ -171,6 +171,6 @@ public:
 	bool found_dynamic_param;
 };
 
-} /* namespace Kaba */
+} /* namespace kaba */
 
 #endif /* SRC_LIB_KABA_SYNTAX_PARSER_H_ */
