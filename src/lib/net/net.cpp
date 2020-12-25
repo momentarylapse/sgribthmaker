@@ -95,12 +95,12 @@ void BinaryBuffer::clear() {
 
 void Socket::start_block() {
 	buffer.data.resize(buffer.data.num + 4);
-	buffer.pos += 4;
-	block_pos = buffer.pos;
+	//buffer.pos += 4;
+	block_pos = buffer.data.num;//buffer.pos;
 }
 
 void Socket::end_block() {
-	*(int*)&buffer.data[block_pos] = buffer.pos - block_pos; // pure content
+	*(int*)&buffer.data[block_pos-4] = buffer.data.num - block_pos; // pure content
 }
 
 

@@ -45,8 +45,9 @@ const Class *TypeSocketPList;
 #pragma GCC optimize("0")
 
 
-void __socket_listen__(int port, bool block) {
-	KABA_EXCEPTION_WRAPPER( Socket::listen(port, block); );
+Socket* __socket_listen__(int port, bool block) {
+	KABA_EXCEPTION_WRAPPER( return Socket::listen(port, block); );
+	return nullptr;
 }
 
 Socket* __socket_connect__(const string &host, int port) {
@@ -77,7 +78,8 @@ void SIAddPackageNet() {
 		class_add_func(IDENTIFIER_FUNC_DELETE, TypeVoid, net_p(mf(&NetAddress::__delete__)));
 
 	add_class(TypeSocket);
-		class_add_element("uid", TypeInt,0);
+		class_add_elementx("uid", TypeInt, &Socket::uid);
+		class_add_elementx("_buffer", TypeString, &Socket::buffer);
 		class_add_func(IDENTIFIER_FUNC_INIT, TypeVoid, net_p(mf(&Socket::__init__)));
 		class_add_func(IDENTIFIER_FUNC_DELETE, TypeVoid, net_p(mf(&Socket::__delete__)));
 		class_add_func("accept", TypeSocketP, net_p(mf(&Socket::accept)));
