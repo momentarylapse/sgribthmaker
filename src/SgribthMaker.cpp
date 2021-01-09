@@ -325,7 +325,7 @@ void SgribthMaker::CompileShader() {
 			SetError(nix::shader_error);
 		} else {
 			SetMessage(_("Shader compiles without error!"));
-			shader->unref();
+			//shader->unref();
 		}
 	});
 
