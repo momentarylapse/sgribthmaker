@@ -42,6 +42,7 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 	string_sub_end = "}}";
 	special_words.add(kaba::IDENTIFIER_ENUM);
 	special_words.add(kaba::IDENTIFIER_CLASS);
+	special_words.add(kaba::IDENTIFIER_FUNC);
 	special_words.add(kaba::IDENTIFIER_EXTENDS);
 	special_words.add(kaba::IDENTIFIER_USE);
 	special_words.add(kaba::IDENTIFIER_ASM);
