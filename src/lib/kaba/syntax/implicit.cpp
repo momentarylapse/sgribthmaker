@@ -9,6 +9,8 @@
 namespace kaba {
 
 
+const int FULL_CONSTRUCTOR_MAX_PARAMS = 4;
+
 
 void Parser::do_error_implicit(Function *f, const string &str) {
 	int line = max(f->_logical_line_no, f->name_space->_logical_line_no);
@@ -39,6 +41,18 @@ void Parser::auto_implement_add_child_constructors(shared<Node> n_self, Function
 			continue;
 		f->block->add(tree->add_node_member_call(ff,
 				n_self->shift(e.offset, e.type)));
+	}
+
+	// auto initializers
+	for (auto &init: t->initializers) {
+		auto &e = t->elements[init.element];
+		auto n_assign = link_operator_id(OperatorID::ASSIGN,
+				n_self->shift(e.offset, e.type),
+				tree->add_node_const(init.value.get()));
+		if (!n_assign)
+			do_error_implicit(f, format("no %s.__assign__() found", e.type->long_name()));
+		f->block->add(n_assign);
+
 	}
 
 	if (flags_has(t->flags, Flags::SHARED)) {
@@ -646,7 +660,7 @@ void add_full_constructor(Class *t, SyntaxTree *tree) {
 bool can_fully_construct(Class *t) {
 	if (t->vtable.num > 0)
 		return false;
-	if (t->elements.num > 8)
+	if (t->elements.num > FULL_CONSTRUCTOR_MAX_PARAMS)
 		return false;
 	for (auto &e: t->elements)
 		if (!e.type->get_assign() and e.type->uses_call_by_reference()) {
@@ -700,8 +714,11 @@ void SyntaxTree::add_missing_function_headers_for_class(Class *t) {
 	} else { // regular classes
 		if (t->can_memcpy()) {
 			if (has_user_constructors(t)) {
-			} else if (can_fully_construct(t)){
-				add_full_constructor(t, this);
+			} else {
+				if (t->needs_constructor())
+					add_func_header(t, IDENTIFIER_FUNC_INIT, TypeVoid, {}, {}, t->get_default_constructor());
+				if (can_fully_construct(t))
+					add_full_constructor(t, this);
 			}
 		} else {
 			if (t->parent) {
@@ -713,8 +730,9 @@ void SyntaxTree::add_missing_function_headers_for_class(Class *t) {
 					redefine_inherited_constructors(t, this);
 				}
 			}
-			if (t->needs_constructor() and t->get_constructors().num == 0) {
-				add_func_header(t, IDENTIFIER_FUNC_INIT, TypeVoid, {}, {}, t->get_default_constructor());
+			if (t->get_constructors().num == 0) {
+				if (t->needs_constructor())
+					add_func_header(t, IDENTIFIER_FUNC_INIT, TypeVoid, {}, {}, t->get_default_constructor());
 				if (can_fully_construct(t))
 					add_full_constructor(t, this);
 			}
