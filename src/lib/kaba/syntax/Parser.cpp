@@ -387,9 +387,10 @@ shared<Node> SyntaxTree::make_fake_constructor(const Class *t, Block *block, con
 	if (param_type->is_pointer())
 		param_type = param_type->param[0];
 		
-	auto *cf = param_type->get_func("__" + t->name + "__", t, {});
+	string fname = "__" + t->name + "__";
+	auto *cf = param_type->get_func(fname, t, {});
 	if (!cf)
-		do_error(format("illegal fake constructor... requires '%s.%s()'", param_type->long_name(), t->long_name()));
+		do_error(format("illegal fake constructor... requires '%s.%s()'", param_type->long_name(), fname));
 	return add_node_member_call(cf, nullptr); // temp var added later...
 		
 	auto *dummy = new Node(NodeKind::PLACEHOLDER, 0, TypeVoid);
@@ -2287,7 +2288,7 @@ shared<Node> Parser::add_converter_str(shared<Node> sub, bool repr) {
 		return tree->add_node_member_call(cf, sub);
 
 	// "universal" var2str() or var_repr()
-	auto *c = tree->add_constant_pointer(TypeClassP, sub->type);
+	auto *c = tree->add_constant_pointer(TypeClassP, t);
 
 	shared_array<Node> links = tree->get_existence(repr ? "@var_repr" : "@var2str", nullptr, nullptr, false);
 	Function *f = links[0]->as_func();
@@ -2556,7 +2557,7 @@ shared<Node> Parser::parse_statement_weak(Block *block) {
 
 	auto t = params[0]->type;
 	while (true) {
-		if (t->is_pointer_shared()) {
+		if (t->is_pointer_shared() or t->is_pointer_owned()) {
 			auto tt = t->param[0]->get_pointer();
 			return params[0]->shift(0, tt);
 		} else if (t->is_super_array() and t->get_array_element()->is_pointer_shared()) {
@@ -2568,7 +2569,7 @@ shared<Node> Parser::parse_statement_weak(Block *block) {
 		else
 			break;
 	}
-	do_error("weak() expects either a shared pointer, or a shared pointer array");
+	do_error("weak() expects either a shared pointer, an owned pointer, or a shared pointer array");
 	return nullptr;
 }
 
@@ -2593,7 +2594,7 @@ shared<Node> Parser::parse_statement(Block *block) {
 		return parse_statement_pass(block);
 	} else if (Exp.cur == IDENTIFIER_NEW) {
 		return parse_statement_new(block);
-	} else if (Exp.cur == IDENTIFIER_DELETE or Exp.cur == "delete") {
+	} else if (Exp.cur == IDENTIFIER_DELETE) {
 		return parse_statement_delete(block);
 	} else if (Exp.cur == IDENTIFIER_SIZEOF) {
 		return parse_statement_sizeof(block);
@@ -2620,7 +2621,7 @@ shared<Node> Parser::parse_statement(Block *block) {
 	} else if (Exp.cur == IDENTIFIER_WEAK) {
 		return parse_statement_weak(block);
 	}
-	do_error("unhandled statement..." + Exp.cur);
+	do_error("unhandled statement: " + Exp.cur);
 	return nullptr;
 }
 
@@ -2633,7 +2634,7 @@ shared<Node> Parser::parse_block(Block *parent, Block *block) {
 		block = new Block(parent->function, parent);
 
 	for (int i=0;true;i++) {
-		if (((i > 0) and (Exp.cur_line->indent < last_indent)) or (Exp.end_of_file()))
+		if (((i > 0) and (Exp.cur_line->indent < last_indent)) or Exp.end_of_file())
 			break;
 
 
@@ -2655,6 +2656,12 @@ void Parser::parse_local_definition(Block *block, const Class *type) {
 	// type of variable
 	if (!type)
 		type = parse_type(block->name_space());
+
+	if (flags_has(flags, Flags::OWNED))
+		type = make_pointer_owned(tree, type);
+	else if (flags_has(flags, Flags::SHARED))
+		type = make_pointer_shared(tree, type);
+
 
 	if (type->needs_constructor() and !type->get_default_constructor())
 		do_error(format("declaring a variable of type '%s' requires a constructor but no default constructor exists", type->long_name()));
@@ -3080,6 +3087,9 @@ void Parser::post_process_newly_parsed_class(Class *_class, int size) {
 			auto el = ClassElement(IDENTIFIER_VTABLE_VAR, TypePointer, 0);
 			_class->elements.insert(el, 0);
 			size += config.pointer_size;
+
+			for (auto &i: _class->initializers)
+				i.element ++;
 		}
 	}
 
