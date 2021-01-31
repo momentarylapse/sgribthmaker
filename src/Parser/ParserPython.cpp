@@ -24,6 +24,7 @@ ParserPython::ParserPython() : Parser("Python") {
 	special_words.add("while");
 	special_words.add("for");
 	special_words.add("in");
+	special_words.add("is");
 	special_words.add("return");
 	special_words.add("break");
 	special_words.add("continue");
@@ -35,6 +36,8 @@ ParserPython::ParserPython() : Parser("Python") {
 	special_words.add("except");
 	special_words.add("const");
 	special_words.add("self");
+	special_words.add("with");
+	special_words.add("global");
 	special_words.add("namespace");
 	types.add("set");
 	types.add("dict");
