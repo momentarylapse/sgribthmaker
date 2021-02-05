@@ -80,14 +80,14 @@ void SettingsDialog::onFont() {
 		set_string("font", hui::Fontname);
 		hui::Config.set_str("Font", hui::Fontname);
 		for (SourceView *sv: sgribthmaker->source_view)
-			sv->UpdateFont();
+			sv->update_font();
 	}
 }
 
 void SettingsDialog::onTabWidth() {
 	hui::Config.set_int("TabWidth", get_int("tab_width"));
 	for (SourceView *sv: sgribthmaker->source_view)
-		sv->UpdateTabSize();
+		sv->update_tab_size();
 }
 
 void SettingsDialog::onContextListSelect() {
@@ -122,7 +122,7 @@ void SettingsDialog::onSchemeChange() {
 	c.italic = is_checked("italic");
 	s->changed = true;
 	for (SourceView *sv: sgribthmaker->source_view)
-		sv->ApplyScheme(s);
+		sv->apply_scheme(s);
 	fillSchemeList();
 }
 
@@ -131,14 +131,14 @@ void SettingsDialog::onSchemes() {
 	HighlightScheme *s = HighlightScheme::get_all()[n];
 	HighlightScheme::default_scheme = s;
 	for (SourceView *sv: sgribthmaker->source_view)
-		sv->ApplyScheme(s);
+		sv->apply_scheme(s);
 	onContextListSelect();
 }
 
 void SettingsDialog::onCopyScheme() {
 	HighlightScheme *s = HighlightScheme::default_scheme->copy(_("new scheme"));
 	for (SourceView *sv: sgribthmaker->source_view)
-		sv->ApplyScheme(s);
+		sv->apply_scheme(s);
 	fillSchemeList();
 	onContextListSelect();
 }

@@ -17,6 +17,11 @@ Menu menu ""
 		Item /copy "Copy" image=hui:copy
 		Item /paste "Paste" image=hui:paste
 		Separator
+		Item /comment "Comment"
+		Item /uncomment "Uncomment"
+		Item /indent "Indent"
+		Item /unindent "Unindent"
+		Separator
 		Item /find "Find..." image=hui:find
 		Item /execute_command "Execute command..." image=hui:execute
 		Separator

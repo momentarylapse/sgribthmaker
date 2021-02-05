@@ -48,12 +48,12 @@ string Document::name(bool long_name) const {
 bool Document::load(const Path &_filename) {
 	try {
 		string temp = FileReadText(_filename);
-		if (!source_view->Fill(temp))
+		if (!source_view->fill(temp))
 			sgribthmaker->SetMessage(_("File is not UTF-8 compatible"));
 
 		filename = _filename;
 
-		source_view->SetParser(filename);
+		source_view->set_parser(filename);
 
 		sgribthmaker->UpdateMenu();
 	} catch(...) {
@@ -65,7 +65,7 @@ bool Document::load(const Path &_filename) {
 
 bool Document::save(const Path &_filename) {
 	try {
-		FileWriteText(_filename, source_view->GetAll());
+		FileWriteText(_filename, source_view->get_all());
 		filename = _filename;
 		history->DefineAsSaved();
 		//SetMessage(_("saved"));
@@ -75,6 +75,6 @@ bool Document::save(const Path &_filename) {
 		return false;
 	}
 
-	source_view->SetParser(filename);
+	source_view->set_parser(filename);
 	return true;
 }

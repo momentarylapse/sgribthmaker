@@ -20,43 +20,51 @@ public:
 	SourceView(hui::Window *win, const string &id, Document *d);
 	virtual ~SourceView();
 
-	void Clear();
-	bool Fill(const string &text);
-	string GetAll();
-	string GetSelection();
-	string GetLine(int line);
-	int GetNumLines();
-	void DeleteSelection();
-	void InsertAtCursor(const string &text);
+	void clear();
+	bool fill(const string &text);
+	string get_all();
+	string get_content(int pos0, int pos1);
+	int get_line_offset(int line);
+	void get_selection(int &pos0, int &pos1);
+	bool has_selection();
+	int get_line_no_at(int pos);
+	int get_line_offset_at(int pos);
+	string get_selection_content();
+	string get_line(int line);
+	int get_num_lines();
+	void delete_selection();
+	void delete_content(int pos0, int pos1);
+	void insert_at(int pos, const string &text);
+	void insert_at_cursor(const string &text);
 
-	void ApplyScheme(HighlightScheme *s);
-	void SetTag(int i, const char *fg_color, const char *bg_color, bool bold, bool italic);
-	void UpdateFont();
-	void UpdateTabSize();
+	void apply_scheme(HighlightScheme *s);
+	void set_tag(int i, const char *fg_color, const char *bg_color, bool bold, bool italic);
+	void update_font();
+	void update_tab_size();
 
-	void ClearMarkings(int first_line, int last_line);
-	void MarkWord(int line, int start, int end, int type, char *p0, char *p);
-	void CreateColorsIfNotBusy();
-	void CreateTextColors(int first_line = -1, int last_line = -1);
+	void clear_markings(int first_line, int last_line);
+	void mark_word(int line, int start, int end, int type, char *p0, char *p);
+	void create_colors_if_not_busy();
+	void create_text_colors(int first_line = -1, int last_line = -1);
 
 	void undo_insert_text(int pos, char *text, int length);
 	void undo_remove_text(int pos, char *text, int length);
 
 
-	bool Undoable();
-	bool Redoable();
-	void Undo();
-	void Redo();
+	bool is_undoable();
+	bool is_redoable();
+	void undo();
+	void redo();
 
-	void JumpToStartOfLine(bool shift);
-	void JumpToEndOfLine(bool shift);
-	void MoveCursorTo(int line, int pos);
-	void ShowLineOnScreen(int line);
-	void InsertReturn();
+	void jump_to_start_of_line(bool shift);
+	void jump_to_end_of_line(bool shift);
+	void move_cursor_to(int line, int pos);
+	void show_line_on_screen(int line);
+	void insert_return();
 
-	void GetCurLinePos(int &line, int &pos);
+	void get_cur_line_pos(int &line, int &pos);
 
-	bool Find(const string &str);
+	bool find(const string &str);
 
 	string id;
 	GtkTextBuffer *tb;
@@ -70,7 +78,7 @@ public:
 	Document *doc;
 	History *history;
 
-	int NeedsUpdateStart, NeedsUpdateEnd;
+	int needs_update_start, needs_update_end;
 	int color_busy_level;
 	bool change_return;
 
@@ -82,7 +90,7 @@ public:
 	};
 	Array<JumpData> jump_data;
 
-	void SetParser(const Path &filename);
+	void set_parser(const Path &filename);
 	Parser *parser;
 	HighlightScheme *scheme;
 };

@@ -77,7 +77,7 @@ void Parser::CreateTextColors(SourceView *sv, int first_line, int last_line) {
 
 
 #define next_char()	p=g_utf8_next_char(p);pos++
-#define set_mark()	sv->MarkWord(l, pos0, pos, in_type, p0, p);p0=p;pos0=pos
+#define set_mark()	sv->mark_word(l, pos0, pos, in_type, p0, p);p0=p;pos0=pos
 #define begin_token(t) (string(p, t.num) == t)
 #define skip_token_almost(t) p+=(t.num-1);pos+=(t.num-1)
 #define skip_token(t) p+=t.num;pos+=t.num
@@ -87,7 +87,7 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 		return;
 
 	int comment_level = 0;
-	int num_lines = sv->GetNumLines();
+	int num_lines = sv->get_num_lines();
 	if (first_line < 0)
 		first_line = 0;
 	if (last_line < 0)
@@ -95,11 +95,11 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 	bool in_ml_string = false; // ".."
 	bool in_alt_string = false; // '..'
 
-	sv->ClearMarkings(first_line, last_line);
+	sv->clear_markings(first_line, last_line);
 
 
 	for (int l=first_line; l<=last_line; l++) {
-		string s = sv->GetLine(l);
+		string s = sv->get_line(l);
 
 		char *p = (char*)&s[0];
 		char *p0 = p;
@@ -209,7 +209,7 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 			next_char();
 		}
 		if (s.num > 0)
-			sv->MarkWord(l, pos0, num_uchars, in_type, p0, (char*)&s[s.num]);
+			sv->mark_word(l, pos0, num_uchars, in_type, p0, (char*)&s[s.num]);
 	}
 }
 

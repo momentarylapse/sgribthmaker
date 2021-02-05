@@ -177,7 +177,7 @@ menu_edit
 
 1
 0
-11
+16
 Item
 undo
 image=hui:undo
@@ -221,27 +221,57 @@ Separator
 0
 0
 Item
-find
-image=hui:find
+comment
+
 7
 0
 0
 Item
-execute_command
-image=hui:execute
+uncomment
+
 8
 0
 0
-Separator
-
+Item
+indent
 
 9
 0
 0
 Item
+unindent
+
+10
+0
+0
+Separator
+
+
+11
+0
+0
+Item
+find
+image=hui:find
+12
+0
+0
+Item
+execute_command
+image=hui:execute
+13
+0
+0
+Separator
+
+
+14
+0
+0
+Item
 settings
 image=hui:preferences
-10
+15
 0
 0
 Menu
@@ -527,7 +557,7 @@ image=hui:media-play,important
 # Language
 English
 # Number Of IDs
-45
+49
 # Text
 /about
 Info...
@@ -537,6 +567,9 @@ Close
 
 /close
 Close
+
+/comment
+Comment
 
 /compile
 Compile
@@ -565,6 +598,9 @@ Find...
 /follow
 Follow
 
+/indent
+Indent
+
 /new
 New
 new file
@@ -589,8 +625,14 @@ Save as...
 /settings
 Settings
 
+/uncomment
+Uncomment
+
 /undo
 Undo
+
+/unindent
+Unindent
 
 command_dialog/command_dialog
 Command

@@ -100,10 +100,10 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 
 Array<Parser::Label> ParserKaba::FindLabels(SourceView *sv) {
 	Array<Parser::Label> labels;
-	int num_lines = sv->GetNumLines();
+	int num_lines = sv->get_num_lines();
 	string last_class;
 	for (int l=0;l<num_lines;l++){
-		string s = sv->GetLine(l);
+		string s = sv->get_line(l);
 		if (s.num < 4)
 			continue;
 		if (char_type(s[0]) == CHAR_LETTER){

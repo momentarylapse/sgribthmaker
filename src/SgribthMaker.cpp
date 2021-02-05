@@ -18,7 +18,7 @@
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.9.0";
+string AppVersion = "0.4.10.0";
 
 //#define ALLOW_LOGGING			true
 #define ALLOW_LOGGING			false
@@ -159,7 +159,7 @@ void SgribthMaker::New() {
 	documents.add(new Document(this));
 	SourceView *sv = new SourceView(MainWin, id, documents.back());
 
-	sv->ApplyScheme(HighlightScheme::default_scheme);
+	sv->apply_scheme(HighlightScheme::default_scheme);
 	source_view.add(sv);
 
 	SetActiveDocument(documents.back());
@@ -243,30 +243,75 @@ bool SgribthMaker::Reload() {
 void SgribthMaker::OnReload()
 {	Reload();	}
 
-void SgribthMaker::OnUndo()
+void SgribthMaker::on_undo()
 {	cur_doc->history->Undo();	}
 
-void SgribthMaker::OnRedo()
+void SgribthMaker::on_redo()
 {	cur_doc->history->Redo();	}
 
-void SgribthMaker::OnCopy() {
-	hui::Clipboard::Copy(cur_doc->source_view->GetSelection());
+void SgribthMaker::on_copy() {
+	hui::Clipboard::Copy(cur_doc->source_view->get_selection_content());
 	SetMessage(_("copied"));
 }
 
-void SgribthMaker::OnPaste() {
-	cur_doc->source_view->DeleteSelection();
-	cur_doc->source_view->InsertAtCursor(hui::Clipboard::Paste());
+void SgribthMaker::on_paste() {
+	cur_doc->source_view->delete_selection();
+	cur_doc->source_view->insert_at_cursor(hui::Clipboard::Paste());
 	SetMessage(_("pasted"));
 }
 
-void SgribthMaker::OnDelete() {
-	cur_doc->source_view->DeleteSelection();
+void SgribthMaker::prepend_selected_lines(const string &s) {
+	auto sv = cur_doc->source_view;
+	int pos0, pos1;
+	sv->get_selection(pos0, pos1);
+	int l0 = sv->get_line_no_at(pos0);
+	int l1 = sv->get_line_no_at(pos1);
+	for (int l = l0; l<=l1; l++) {
+		sv->insert_at(sv->get_line_offset(l), s);
+	}
 }
 
-void SgribthMaker::OnCut() {
-	OnCopy();
-	OnDelete();
+void SgribthMaker::unprepend_selected_lines(const string &s) {
+	auto sv = cur_doc->source_view;
+	int pos0, pos1;
+	sv->get_selection(pos0, pos1);
+	int l0 = sv->get_line_no_at(pos0);
+	int l1 = sv->get_line_no_at(pos1);
+	for (int l = l0; l<=l1; l++) {
+		int offset = sv->get_line_offset(l);
+		string ss = sv->get_content(offset, offset + 1);
+		if (s == ss)
+			sv->delete_content(offset, offset + 1);
+	}
+}
+
+void SgribthMaker::on_comment() {
+	prepend_selected_lines(cur_doc->parser->line_comment_begin);
+}
+
+void SgribthMaker::on_uncomment() {
+	unprepend_selected_lines(cur_doc->parser->line_comment_begin);
+}
+
+void SgribthMaker::on_indent() {
+	auto sv = cur_doc->source_view;
+	if (sv->has_selection())
+		prepend_selected_lines("\t");
+	else
+		sv->insert_at_cursor("\t");
+}
+
+void SgribthMaker::on_unindent() {
+	unprepend_selected_lines("\t");
+}
+
+void SgribthMaker::on_delete() {
+	cur_doc->source_view->delete_selection();
+}
+
+void SgribthMaker::on_cut() {
+	on_copy();
+	on_delete();
 }
 
 string get_time_str(float t) {
@@ -299,7 +344,7 @@ void SgribthMaker::CompileKaba() {
 		e.print();
 		//ErrorBox(MainWin, _("Error"), e.message());
 		SetError(e.message());
-		cur_doc->source_view->MoveCursorTo(e.line, e.column);
+		cur_doc->source_view->move_cursor_to(e.line, e.column);
 	}
 
 	//RemoveScript(compile_script);
@@ -411,7 +456,7 @@ void SgribthMaker::CompileAndRun(bool verbose) {
 
 		SetError(e.message());
 		//ErrorBox(MainWin, _("Error"), e.message());
-		cur_doc->source_view->MoveCursorTo(e.line, e.column);
+		cur_doc->source_view->move_cursor_to(e.line, e.column);
 	}
 	
 
@@ -432,7 +477,7 @@ static AutoComplete::Data _auto_complete_data_;
 
 void SgribthMaker::OnInsertAutoComplete(int n) {
 	if ((n >= 0) and (n < _auto_complete_data_.suggestions.num))
-		cur_doc->source_view->InsertAtCursor(_auto_complete_data_.suggestions[n].name.substr(_auto_complete_data_.offset, -1));
+		cur_doc->source_view->insert_at_cursor(_auto_complete_data_.suggestions[n].name.substr(_auto_complete_data_.offset, -1));
 }
 
 void SgribthMaker::OnAutoComplete() {
@@ -444,12 +489,12 @@ void SgribthMaker::OnAutoComplete() {
 	hui::SetDirectory(cur_doc->filename.parent());
 
 	int line, pos;
-	cur_doc->source_view->GetCurLinePos(line, pos);
-	auto data = AutoComplete::run(cur_doc->source_view->GetAll(), line, pos);
+	cur_doc->source_view->get_cur_line_pos(line, pos);
+	auto data = AutoComplete::run(cur_doc->source_view->get_all(), line, pos);
 	_auto_complete_data_ = data;
 
 	if (data.suggestions.num == 1) {
-		cur_doc->source_view->InsertAtCursor(data.suggestions[0].name.substr(data.offset, -1));
+		cur_doc->source_view->insert_at_cursor(data.suggestions[0].name.substr(data.offset, -1));
 		SetMessage(data.suggestions[0].context);
 
 	} else if (data.suggestions.num > 1) {
@@ -465,12 +510,12 @@ void SgribthMaker::OnAutoComplete() {
 
 void SgribthMaker::ShowCurLine() {
 	int line, off;
-	cur_doc->source_view->GetCurLinePos(line, off);
+	cur_doc->source_view->get_cur_line_pos(line, off);
 	SetMessage(format(_("Line  %d : %d"), line + 1, off + 1));
 }
 
 void SgribthMaker::ExecuteCommand(const string &cmd) {
-	bool found = cur_doc->source_view->Find(cmd);
+	bool found = cur_doc->source_view->find(cmd);
 	if (!found)
 		SetError(format(_("\"%s\" not found"), cmd.c_str()));
 }
@@ -493,7 +538,7 @@ void SgribthMaker::OnFunctionList() {
 	int n = MainWin->get_int("");
 	auto labels = cur_doc->parser->FindLabels(cur_doc->source_view);
 	if ((n >= 0) and (n < labels.num)) {
-		cur_doc->source_view->ShowLineOnScreen(labels[n].line);
+		cur_doc->source_view->show_line_on_screen(labels[n].line);
 		MainWin->activate(cur_doc->source_view->id);
 	}
 }
@@ -575,17 +620,25 @@ bool SgribthMaker::on_startup(const Array<string> &arg) {
 	MainWin->set_key_code("execute_command", hui::KEY_E + hui::KEY_CONTROL, "");
 	MainWin->event("find", [=]{ ExecuteCommandDialog(); });
 	MainWin->set_key_code("find", hui::KEY_F + hui::KEY_CONTROL, "");
-	MainWin->event("cut", [=]{ OnCut(); });
+	MainWin->event("cut", [=]{ on_cut(); });
 	MainWin->set_key_code("cut", hui::KEY_X + hui::KEY_CONTROL, "hui:cut");
-	MainWin->event("copy", [=]{ OnCopy(); });
+	MainWin->event("copy", [=]{ on_copy(); });
 	MainWin->set_key_code("copy", hui::KEY_C + hui::KEY_CONTROL, "hui:copy");
-	MainWin->event("paste", [=]{ OnPaste(); });
+	MainWin->event("paste", [=]{ on_paste(); });
 	MainWin->set_key_code("paste", hui::KEY_V + hui::KEY_CONTROL, "hui:paste");
+	MainWin->event("comment", [=]{ on_comment(); });
+	MainWin->set_key_code("comment", hui::KEY_D + hui::KEY_CONTROL, "");
+	MainWin->event("uncomment", [=]{ on_uncomment(); });
+	MainWin->set_key_code("uncomment", hui::KEY_D + hui::KEY_CONTROL + hui::KEY_SHIFT, "");
+	MainWin->event("indent", [=]{ on_indent(); });
+	MainWin->set_key_code("indent", hui::KEY_TAB + hui::KEY_CONTROL, "");
+	MainWin->event("unindent", [=]{ on_unindent(); });
+	MainWin->set_key_code("unindent", hui::KEY_TAB + hui::KEY_CONTROL + hui::KEY_SHIFT, "");
 	MainWin->event("reload", [=]{ OnReload(); });
 	MainWin->set_key_code("reload", hui::KEY_R + hui::KEY_CONTROL, "hui:reload");
-	MainWin->event("undo", [=]{ OnUndo(); });
+	MainWin->event("undo", [=]{ on_undo(); });
 	MainWin->set_key_code("undo", hui::KEY_Z + hui::KEY_CONTROL, "hui:undo");
-	MainWin->event("redo", [=]{ OnRedo(); });
+	MainWin->event("redo", [=]{ on_redo(); });
 	MainWin->set_key_code("redo", hui::KEY_Z + hui::KEY_SHIFT + hui::KEY_CONTROL, "hui:redo");
 	MainWin->event("compile", [=]{ Compile(); });
 	MainWin->set_key_code("compile", hui::KEY_F7);
