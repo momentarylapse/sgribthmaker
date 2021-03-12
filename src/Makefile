@@ -1,8 +1,8 @@
 BIN = ../sgribthmaker
 CPP = g++
-GLOBALFLAGS =  -O2 -g -std=c++14  -DHAS_LIB_GTK3=1 -DHAS_LIB_ZLIB=1 -DHAS_LIB_GL=1 -DHAS_LIB_XLIB=1 -DHAS_LIB_UNWIND=1 -DHAS_LIB_DL=1
-CXXFLAGS =   `pkg-config --cflags gtk+-3.0` $(GLOBALFLAGS)
-CXXFLAGSLINKING =   `pkg-config --cflags --libs gtk+-3.0` -lz -lGL -lX11 -lunwind -ldl $(GLOBALFLAGS)
+GLOBALFLAGS = -O2 -g -std=c++14 -DHAS_LIB_GTK3=1 -DHAS_LIB_ZLIB=1 -DHAS_LIB_GL=1 -DHAS_LIB_XLIB=1 -DHAS_LIB_UNWIND=1 -DHAS_LIB_DL=1
+CXXFLAGS =  `pkg-config --cflags gtk+-3.0 zlib gl x11` $(GLOBALFLAGS)
+CXXFLAGSLINKING = -lunwind -ldl `pkg-config --cflags --libs gtk+-3.0 zlib gl x11` $(GLOBALFLAGS)
 prefix = /usr/local
 
 OBJ = lib/algebra/crypto.o \
