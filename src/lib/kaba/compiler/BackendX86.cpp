@@ -47,6 +47,8 @@ void BackendX86::process(Function *f, int index) {
 	stack_max_size = f->_var_size;
 
 	correct();
+
+	do_mapping();
 }
 
 static int trafo_inst_float(int inst, const Class *t) {
@@ -103,7 +105,7 @@ void BackendX86::correct_parameters() {
 				auto v = (Variable*)p.p;
 				p.p = (int_p)v->memory;
 				if (!p.p)
-					script->do_error_link("variable is not linkable: " + ((Variable*)p.p)->name);
+					script->do_error_link("variable is not linkable: " + v->name);
 				p.kind = NodeKind::MEMORY;
 			} else if (p.kind == NodeKind::CONSTANT) {
 				auto cc = (Constant*)p.p;
