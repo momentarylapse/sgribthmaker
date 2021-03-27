@@ -11,6 +11,7 @@
 #include "ParserC.h"
 #include "ParserShader.h"
 #include "ParserPython.h"
+#include "ParserHui.h"
 #include "../SourceView.h"
 #include "../HighlightScheme.h"
 
@@ -226,6 +227,7 @@ void InitParser() {
 	ParserAssociations.add(ParserAssociation(new ParserShader, "glsl"));
 	ParserAssociations.add(ParserAssociation(new ParserShader, "shader"));
 	ParserAssociations.add(ParserAssociation(new ParserPython, "py"));
+	ParserAssociations.add(ParserAssociation(new ParserHui, "hui"));
 }
 
 Parser *GetParser(const Path &filename) {
