@@ -690,14 +690,14 @@ install :
 	mkdir -p $(prefix)/share/sgribthmaker
 	xdg-desktop-menu install ../static/michisoft-sgribthmaker.desktop
 	xdg-mime install ../static/michisoft-sgribthmaker.xml
-	cp -rf '../static/Icon' $(prefix)/share/sgribthmaker
-	cp -f '../static/hui_resources.txt' $(prefix)/share/sgribthmaker
-	cp -f '../static/icon.ico' $(prefix)/share/sgribthmaker
-	cp -f '../static/icon.png' $(prefix)/share/sgribthmaker
-	cp -f '../static/kaba.ico' $(prefix)/share/sgribthmaker
-	cp -f '../static/kaba.png' $(prefix)/share/sgribthmaker
-	cp -f '../static/license.txt' $(prefix)/share/sgribthmaker
-	cp -f '../static/license_small.txt' $(prefix)/share/sgribthmaker
+	cp -ruf '../static/Icon' $(prefix)/share/sgribthmaker
+	cp -uf '../static/hui_resources.txt' $(prefix)/share/sgribthmaker
+	cp -uf '../static/icon.ico' $(prefix)/share/sgribthmaker
+	cp -uf '../static/icon.png' $(prefix)/share/sgribthmaker
+	cp -uf '../static/kaba.ico' $(prefix)/share/sgribthmaker
+	cp -uf '../static/kaba.png' $(prefix)/share/sgribthmaker
+	cp -uf '../static/license.txt' $(prefix)/share/sgribthmaker
+	cp -uf '../static/license_small.txt' $(prefix)/share/sgribthmaker
 	cp $(BIN) $(prefix)/bin
 
 clean :
