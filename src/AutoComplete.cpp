@@ -211,11 +211,11 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos) {
 	auto *s = new kaba::Script;
 	auto ll = _code.explode("\n");
-	auto lines_pre = ll.sub(0, line);//+1);
-	auto lines_post = ll.sub(line+1, -1);
+	auto lines_pre = ll.sub_ref(0, line);//+1);
+	auto lines_post = ll.sub_ref(line+1);
 
-	string cur_line = ll[line].substr(0, pos);
-	//ll2.back() = ll2.back().substr(0, pos);
+	string cur_line = ll[line].sub(0, pos);
+	//ll2.back() = ll2.back().sub(0, pos);
 	string code = implode(lines_pre, "\n") + "\n" + implode(lines_post, "\n");
 	//printf("%s\n", code.c_str());
 	//printf("---->>  %s\n", cur_line.c_str());

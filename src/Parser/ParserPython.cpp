@@ -32,6 +32,7 @@ ParserPython::ParserPython() : Parser("Python") {
 	special_words.add("or");
 	special_words.add("not");
 	special_words.add("pass");
+	special_words.add("try");
 	special_words.add("raise");
 	special_words.add("except");
 	special_words.add("const");

@@ -477,7 +477,7 @@ static AutoComplete::Data _auto_complete_data_;
 
 void SgribthMaker::OnInsertAutoComplete(int n) {
 	if ((n >= 0) and (n < _auto_complete_data_.suggestions.num))
-		cur_doc->source_view->insert_at_cursor(_auto_complete_data_.suggestions[n].name.substr(_auto_complete_data_.offset, -1));
+		cur_doc->source_view->insert_at_cursor(_auto_complete_data_.suggestions[n].name.sub(_auto_complete_data_.offset));
 }
 
 void SgribthMaker::OnAutoComplete() {
@@ -494,7 +494,7 @@ void SgribthMaker::OnAutoComplete() {
 	_auto_complete_data_ = data;
 
 	if (data.suggestions.num == 1) {
-		cur_doc->source_view->insert_at_cursor(data.suggestions[0].name.substr(data.offset, -1));
+		cur_doc->source_view->insert_at_cursor(data.suggestions[0].name.sub(data.offset));
 		SetMessage(data.suggestions[0].context);
 
 	} else if (data.suggestions.num > 1) {
@@ -572,7 +572,7 @@ void SgribthMaker::OnPreviousDocument() {
 }
 
 SgribthMaker::SgribthMaker() :
-	hui::Application("sgribthmaker", "English", hui::FLAG_LOAD_RESOURCE | hui::FLAG_SILENT)
+	hui::Application("sgribthmaker", "English", hui::FLAG_SILENT)
 {
 	set_property("name", AppTitle);
 	set_property("version", AppVersion);

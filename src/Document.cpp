@@ -29,7 +29,7 @@ Document::~Document() {
 string simplify_path(const Path &filename) {
 	string home = getenv("HOME");
 	if (filename.str().head(home.num) == home)
-		return "~" + filename.str().substr(home.num, -1);
+		return "~" + filename.str().sub(home.num);
 	return filename.str();
 }
 
