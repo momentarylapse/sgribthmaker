@@ -298,28 +298,25 @@
     <ClCompile Include="src\lib\kaba\compiler\serializer.cpp">
       <Filter>src\lib\kaba\compiler</Filter>
     </ClCompile>
-    <ClCompile Include="src\lib\kaba\compiler\serializer_amd64.cpp">
-      <Filter>src\lib\kaba\compiler</Filter>
-    </ClCompile>
-    <ClCompile Include="src\lib\kaba\compiler\serializer_arm.cpp">
-      <Filter>src\lib\kaba\compiler</Filter>
-    </ClCompile>
-    <ClCompile Include="src\lib\kaba\compiler\serializer_x86.cpp">
-      <Filter>src\lib\kaba\compiler</Filter>
-    </ClCompile>
     <ClCompile Include="src\lib\kaba\compiler\SerializerX.cpp">
       <Filter>src\lib\kaba\compiler</Filter>
     </ClCompile>
     <ClCompile Include="src\lib\kaba\compiler\SerialNode.cpp">
       <Filter>src\lib\kaba\compiler</Filter>
     </ClCompile>
+    <ClCompile Include="src\lib\kaba\dynamic\call.cpp">
+      <Filter>src\lib\kaba\dynamic</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lib\kaba\dynamic\dynamic.cpp">
+      <Filter>src\lib\kaba\dynamic</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lib\kaba\dynamic\exception.cpp">
+      <Filter>src\lib\kaba\dynamic</Filter>
+    </ClCompile>
     <ClCompile Include="src\lib\kaba\lib\dict.cpp">
       <Filter>src\lib\kaba\lib</Filter>
     </ClCompile>
-    <ClCompile Include="src\lib\kaba\lib\dynamic.cpp">
-      <Filter>src\lib\kaba\lib</Filter>
-    </ClCompile>
-    <ClCompile Include="src\lib\kaba\lib\exception.cpp">
+    <ClCompile Include="src\lib\kaba\lib\extern.cpp">
       <Filter>src\lib\kaba\lib</Filter>
     </ClCompile>
     <ClCompile Include="src\lib\kaba\lib\lib.cpp">
@@ -361,6 +358,9 @@
     <ClCompile Include="src\lib\kaba\lib\lib_vulkan.cpp">
       <Filter>src\lib\kaba\lib</Filter>
     </ClCompile>
+    <ClCompile Include="src\lib\kaba\syntax\Block.cpp">
+      <Filter>src\lib\kaba\syntax</Filter>
+    </ClCompile>
     <ClCompile Include="src\lib\kaba\syntax\Class.cpp">
       <Filter>src\lib\kaba\syntax</Filter>
     </ClCompile>
@@ -368,6 +368,9 @@
       <Filter>src\lib\kaba\syntax</Filter>
     </ClCompile>
     <ClCompile Include="src\lib\kaba\syntax\Function.cpp">
+      <Filter>src\lib\kaba\syntax</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lib\kaba\syntax\Identifier.cpp">
       <Filter>src\lib\kaba\syntax</Filter>
     </ClCompile>
     <ClCompile Include="src\lib\kaba\syntax\implicit.cpp">
@@ -379,6 +382,9 @@
     <ClCompile Include="src\lib\kaba\syntax\Node.cpp">
       <Filter>src\lib\kaba\syntax</Filter>
     </ClCompile>
+    <ClCompile Include="src\lib\kaba\syntax\Operator.cpp">
+      <Filter>src\lib\kaba\syntax</Filter>
+    </ClCompile>
     <ClCompile Include="src\lib\kaba\syntax\Parser.cpp">
       <Filter>src\lib\kaba\syntax</Filter>
     </ClCompile>
@@ -388,8 +394,17 @@
     <ClCompile Include="src\lib\kaba\syntax\preprocessor.cpp">
       <Filter>src\lib\kaba\syntax</Filter>
     </ClCompile>
+    <ClCompile Include="src\lib\kaba\syntax\Statement.cpp">
+      <Filter>src\lib\kaba\syntax</Filter>
+    </ClCompile>
     <ClCompile Include="src\lib\kaba\syntax\SyntaxTree.cpp">
       <Filter>src\lib\kaba\syntax</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lib\kaba\syntax\Variable.cpp">
+      <Filter>src\lib\kaba\syntax</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lib\kaba\CompilerConfiguration.cpp">
+      <Filter>src\lib\kaba</Filter>
     </ClCompile>
     <ClCompile Include="src\lib\kaba\Interpreter.cpp">
       <Filter>src\lib\kaba</Filter>
@@ -762,35 +777,32 @@
     <ClInclude Include="src\lib\kaba\compiler\serializer.h">
       <Filter>src\lib\kaba\compiler</Filter>
     </ClInclude>
-    <ClInclude Include="src\lib\kaba\compiler\serializer_amd64.h">
-      <Filter>src\lib\kaba\compiler</Filter>
-    </ClInclude>
-    <ClInclude Include="src\lib\kaba\compiler\serializer_arm.h">
-      <Filter>src\lib\kaba\compiler</Filter>
-    </ClInclude>
-    <ClInclude Include="src\lib\kaba\compiler\serializer_x86.h">
-      <Filter>src\lib\kaba\compiler</Filter>
-    </ClInclude>
     <ClInclude Include="src\lib\kaba\compiler\SerializerX.h">
       <Filter>src\lib\kaba\compiler</Filter>
     </ClInclude>
     <ClInclude Include="src\lib\kaba\compiler\SerialNode.h">
       <Filter>src\lib\kaba\compiler</Filter>
     </ClInclude>
-    <ClInclude Include="src\lib\kaba\lib\common.h">
-      <Filter>src\lib\kaba\lib</Filter>
+    <ClInclude Include="src\lib\kaba\dynamic\call.h">
+      <Filter>src\lib\kaba\dynamic</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lib\kaba\dynamic\dynamic.h">
+      <Filter>src\lib\kaba\dynamic</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lib\kaba\dynamic\exception.h">
+      <Filter>src\lib\kaba\dynamic</Filter>
     </ClInclude>
     <ClInclude Include="src\lib\kaba\lib\dict.h">
       <Filter>src\lib\kaba\lib</Filter>
     </ClInclude>
-    <ClInclude Include="src\lib\kaba\lib\dynamic.h">
-      <Filter>src\lib\kaba\lib</Filter>
-    </ClInclude>
-    <ClInclude Include="src\lib\kaba\lib\exception.h">
+    <ClInclude Include="src\lib\kaba\lib\extern.h">
       <Filter>src\lib\kaba\lib</Filter>
     </ClInclude>
     <ClInclude Include="src\lib\kaba\lib\lib.h">
       <Filter>src\lib\kaba\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lib\kaba\syntax\Block.h">
+      <Filter>src\lib\kaba\syntax</Filter>
     </ClInclude>
     <ClInclude Include="src\lib\kaba\syntax\Class.h">
       <Filter>src\lib\kaba\syntax</Filter>
@@ -798,7 +810,16 @@
     <ClInclude Include="src\lib\kaba\syntax\Constant.h">
       <Filter>src\lib\kaba\syntax</Filter>
     </ClInclude>
+    <ClInclude Include="src\lib\kaba\syntax\Flags.h">
+      <Filter>src\lib\kaba\syntax</Filter>
+    </ClInclude>
     <ClInclude Include="src\lib\kaba\syntax\Function.h">
+      <Filter>src\lib\kaba\syntax</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lib\kaba\syntax\Identifier.h">
+      <Filter>src\lib\kaba\syntax</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lib\kaba\syntax\Inline.h">
       <Filter>src\lib\kaba\syntax</Filter>
     </ClInclude>
     <ClInclude Include="src\lib\kaba\syntax\lexical.h">
@@ -807,11 +828,23 @@
     <ClInclude Include="src\lib\kaba\syntax\Node.h">
       <Filter>src\lib\kaba\syntax</Filter>
     </ClInclude>
+    <ClInclude Include="src\lib\kaba\syntax\Operator.h">
+      <Filter>src\lib\kaba\syntax</Filter>
+    </ClInclude>
     <ClInclude Include="src\lib\kaba\syntax\Parser.h">
+      <Filter>src\lib\kaba\syntax</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lib\kaba\syntax\Statement.h">
       <Filter>src\lib\kaba\syntax</Filter>
     </ClInclude>
     <ClInclude Include="src\lib\kaba\syntax\SyntaxTree.h">
       <Filter>src\lib\kaba\syntax</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lib\kaba\syntax\Variable.h">
+      <Filter>src\lib\kaba\syntax</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lib\kaba\CompilerConfiguration.h">
+      <Filter>src\lib\kaba</Filter>
     </ClInclude>
     <ClInclude Include="src\lib\kaba\Interpreter.h">
       <Filter>src\lib\kaba</Filter>
@@ -942,58 +975,61 @@
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
-      <UniqueIdentifier>{3381DBA8-3843-8F30-B304-18B924DF1424}</UniqueIdentifier>
+      <UniqueIdentifier>{F12EA729-9762-4175-D211-F4CA3BE60BD0}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\lib">
-      <UniqueIdentifier>{7B5560DA-92E1-112D-4316-BDFE1DE2217A}</UniqueIdentifier>
+      <UniqueIdentifier>{78C09F83-C1B9-0A6A-D375-DF41AB8FB723}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\lib\algebra">
-      <UniqueIdentifier>{CCF3DDD7-0B91-CBE1-F07B-E7A048379A16}</UniqueIdentifier>
+      <UniqueIdentifier>{797D6FF2-5E74-6CA6-ADD5-8EB42E780638}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\lib\any">
-      <UniqueIdentifier>{7094E7BE-24FF-0E00-F8CD-F6D4E1B8BCE2}</UniqueIdentifier>
+      <UniqueIdentifier>{079B46C0-D05E-DDC6-4C92-F5156BF31271}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\lib\base">
-      <UniqueIdentifier>{D77BF3A2-8919-8297-B55B-B3FA4B208026}</UniqueIdentifier>
+      <UniqueIdentifier>{3195EB06-4A31-4984-003C-A18F0D580394}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\lib\file">
-      <UniqueIdentifier>{8A18DBA6-5CFE-F86A-EB6A-E643273A8601}</UniqueIdentifier>
+      <UniqueIdentifier>{596C5346-3ACF-8974-B6F3-FC96F58AE493}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\lib\hui">
-      <UniqueIdentifier>{029EE454-042F-D9AB-4163-7B692A4A04C1}</UniqueIdentifier>
+      <UniqueIdentifier>{FDD61BAD-BC45-3E2C-366F-FF481FD83243}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\lib\hui\Controls">
-      <UniqueIdentifier>{750595AA-9DA7-653A-69EE-4587FC201E19}</UniqueIdentifier>
+      <UniqueIdentifier>{6DBC4648-72EE-600C-6EBF-AA8637356A9C}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\lib\image">
-      <UniqueIdentifier>{32FD7971-619D-6C8D-66BB-B42B04B22DC6}</UniqueIdentifier>
+      <UniqueIdentifier>{D16B202D-81A6-5766-C70A-40015CB0AF67}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\lib\kaba">
-      <UniqueIdentifier>{FB475B9C-D394-F225-8E04-23F37B6A8218}</UniqueIdentifier>
+      <UniqueIdentifier>{06B4C3FB-BAE3-C25A-153D-C8467EFAE23E}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\lib\kaba\asm">
-      <UniqueIdentifier>{E6032AFF-D94D-B624-4387-68AE419D3B51}</UniqueIdentifier>
+      <UniqueIdentifier>{50FFB05E-2DAE-B2F1-895C-BE7514537EBD}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\lib\kaba\compiler">
-      <UniqueIdentifier>{1653043E-E7B9-EEE3-17B8-0664701BB7DC}</UniqueIdentifier>
+      <UniqueIdentifier>{2795D202-161C-0419-D346-8569E4D95E57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\lib\kaba\dynamic">
+      <UniqueIdentifier>{57F01CD5-E9EB-9DD0-1F5D-1F9E9491573A}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\lib\kaba\lib">
-      <UniqueIdentifier>{D2FE73D6-B909-7ED8-5815-F7A68C133FF1}</UniqueIdentifier>
+      <UniqueIdentifier>{AEA39F5A-0E05-8B32-D482-BF3D1D6108BB}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\lib\kaba\syntax">
-      <UniqueIdentifier>{1F092EFD-7F7E-D573-E89D-0338F5C35C56}</UniqueIdentifier>
+      <UniqueIdentifier>{0B82F8E6-4772-9B6E-BB6D-E1D33F81BFBC}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\lib\math">
-      <UniqueIdentifier>{B60E4FCB-E4AC-9108-A95B-D94DF014C6B8}</UniqueIdentifier>
+      <UniqueIdentifier>{1F081DC5-6D76-2F90-38B0-1976FCE40371}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\lib\net">
-      <UniqueIdentifier>{CB71A4C9-8762-96A3-00FD-94B95CD239A0}</UniqueIdentifier>
+      <UniqueIdentifier>{789414E1-20C9-D031-336D-CA070FB00B98}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\lib\nix">
-      <UniqueIdentifier>{52106E9E-501F-6B26-C245-6FFBCDDF68FB}</UniqueIdentifier>
+      <UniqueIdentifier>{F2B28380-C7CD-DA9A-3F74-DD2903EC2A01}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\Parser">
-      <UniqueIdentifier>{A1B10505-614C-D739-A8F1-8ED4CA4234EE}</UniqueIdentifier>
+      <UniqueIdentifier>{8585DDCA-1431-0235-4E4C-C29576E3CB05}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
