@@ -404,7 +404,7 @@ Function* class_add_func_virtual(const string &name, const Class *return_type, v
 	string tname = cur_class->name;
 	int index = get_virtual_index(func, tname, name);
 	//msg_write("virtual: " + tname + "." + name);
-		//msg_write(index);
+	//msg_write(index);
 	Function *f = class_add_func(name, return_type, func, flag);
 	cur_func->virtual_index = index;
 	if (index >= cur_class->vtable.num)
@@ -655,6 +655,7 @@ void init(Abi abi, bool allow_std_lib) {
 	add_type_cast(20, TypeFloat32, TypeInt, "float.__int__");
 	add_type_cast(10, TypeInt, TypeChar, "int.__char__");
 	add_type_cast(20, TypeChar, TypeInt, "char.__int__");
+	add_type_cast(30, TypeBoolList, TypeBool, "bool[].__bool__");
 	add_type_cast(50, TypePointer, TypeBool, "p2b");
 	add_type_cast(50, TypePointer, TypeString, "p2s");
 	add_package("math");

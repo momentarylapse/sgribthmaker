@@ -42,9 +42,9 @@ const int TYPE_CAST_REFERENCE = -3;
 const int TYPE_CAST_OWN_STRING = -10;
 const int TYPE_CAST_ABSTRACT_LIST = -20;
 const int TYPE_CAST_ABSTRACT_TUPLE = -30;
-const int TYPE_CAST_CLASSIFY = -30;
+const int TYPE_CAST_CLASSIFY = -31;
 const int TYPE_CAST_MAKE_SHARED = -40;
-const int TYPE_CAST_MAKE_OWNED = -40;
+const int TYPE_CAST_MAKE_OWNED = -41;
 
 bool type_match(const Class *given, const Class *wanted);
 bool type_match_with_cast(shared<Node> node, bool is_modifiable, const Class *wanted, int &penalty, int &cast);
@@ -1321,6 +1321,19 @@ shared<Node> Parser::parse_primitive_operator(Block *block) {
 	return 0;
 }*/
 
+bool type_match_classify(shared<Node> node, Function *f_constructor, int &penalty) {
+	if (f_constructor->literal_param_type.num != node->params.num)
+		return false;
+
+	penalty = 20;
+	foreachi (auto *e, weak(node->params), i) {
+		int pen, c;
+		if (!type_match_with_cast(e, false, f_constructor->literal_param_type[i], pen, c))
+			return false;
+		penalty += pen;
+	}
+	return true;
+}
 
 bool type_match_with_cast(shared<Node> node, bool is_modifiable, const Class *wanted, int &penalty, int &cast) {
 	penalty = 0;
@@ -1369,9 +1382,11 @@ bool type_match_with_cast(shared<Node> node, bool is_modifiable, const Class *wa
 		if (wanted->is_super_array()) {
 			auto t = wanted->get_array_element();
 			int pen, c;
-			for (auto *e: weak(node->params))
+			for (auto *e: weak(node->params)) {
 				if (!type_match_with_cast(e, false, t, pen, c))
 					return false;
+				penalty += pen;
+			}
 			cast = TYPE_CAST_ABSTRACT_LIST;
 			return true;
 		}
@@ -1380,15 +1395,10 @@ bool type_match_with_cast(shared<Node> node, bool is_modifiable, const Class *wa
 			return true;
 		}
 		for (auto *f: wanted->get_constructors()) {
-			if (f->literal_param_type.num != node->params.num)
-				continue;
-
-			int pen, c;
-			foreachi (auto *e, weak(node->params), i)
-				if (!type_match_with_cast(e, false, f->literal_param_type[i], pen, c))
-					return false;
-			cast = TYPE_CAST_CLASSIFY;
-			return true;
+			if (type_match_classify(node, f, penalty)) {
+				cast = TYPE_CAST_CLASSIFY;
+				return true;
+			}
 		}
 	}
 	if ((node->kind == NodeKind::TUPLE) and (given == TypeAbstractTuple)) {
@@ -1526,6 +1536,7 @@ shared<Node> Parser::link_operator(PrimitiveOperator *primop, shared<Node> param
 	if (primop->id == OperatorID::IN)
 		return link_special_operator_in(param1, param2);
 
+
 	auto *p1 = param1->type;
 	auto *p2 = param2->type;
 
@@ -1585,11 +1596,13 @@ shared<Node> Parser::link_operator(PrimitiveOperator *primop, shared<Node> param
 		}
 
 	// exact (operator) match?
-	for (auto *op: tree->operators)
+	// FIXME don't auto cast into arbitrary crap...
+	/*for (auto *op: tree->operators)
 		if (primop == op->primitive)
 			if (type_match(p1, op->param_type_1) and type_match(p2, op->param_type_2)) {
-				return tree->add_node_operator(op, param1, param2);
-			}
+				// UNUSED ANYWAY???
+	//			return tree->add_node_operator(op, param1, param2);
+			}*/
 
 
 	// needs type casting?
@@ -1756,7 +1769,6 @@ shared<Node> Parser::parse_operand_greedy(Block *block, bool allow_tuples, share
 		}
 		operands.add(parse_operand(block, block->name_space()));
 	}
-
 
 	// in each step remove/link the most important operator
 	while (operators.num > 0)
@@ -2415,6 +2427,7 @@ shared<Node> Parser::parse_statement_repr(Block *block) {
 
 // local (variable) definitions...
 shared<Node> Parser::parse_statement_let(Block *block) {
+	do_error("'let' is deprecated, will change it's meaning soon...");
 	Exp.next(); // "let"
 	string name = Exp.cur;
 	Exp.next();
@@ -2430,6 +2443,49 @@ shared<Node> Parser::parse_statement_let(Block *block) {
 	if (!cmd)
 		do_error("let: no assignment operator for type " + rhs->type->long_name());
 	return cmd;
+}
+
+// local (variable) definitions...
+shared<Node> Parser::parse_statement_var(Block *block) {
+	Array<string> names;
+	const Class *type = nullptr;
+
+	do {
+		Exp.next(); // "var" or ","
+		names.add(Exp.cur);
+		Exp.next();
+	} while (Exp.cur == ",");
+
+	// explicit type?
+	if (Exp.cur == ":") {
+		Exp.next();
+		type = parse_type(block->name_space());
+	} else if (Exp.cur != "=") {
+		do_error("':' or '=' expected after 'var' declaration");
+	}
+
+	if (Exp.cur == "=") {
+		Exp.next();
+		if (names.num != 1)
+			do_error(format("'var' declaration with '=' only allowed with a single variable name, %d given", names.num));
+
+		auto rhs = parse_operand_super_greedy(block);
+		if (!type) {
+			rhs = force_concrete_type(rhs);
+			type = rhs->type;
+		}
+		auto *var = block->add_var(names[0], type);
+		auto cmd = link_operator_id(OperatorID::ASSIGN, tree->add_node_local(var), rhs);
+		if (!cmd)
+			do_error(format("var: no operator '%s' = '%s'", type->long_name(), rhs->type->long_name()));
+		return cmd;
+	}
+
+	expect_new_line();
+
+	for (auto &n: names)
+		block->add_var(n, type);
+	return tree->add_node_statement(StatementID::PASS);
 }
 
 Array<const Class*> func_effective_params(const Function *f) {
@@ -2705,6 +2761,8 @@ shared<Node> Parser::parse_statement(Block *block) {
 		return parse_statement_len(block);
 	} else if (Exp.cur == IDENTIFIER_LET) {
 		return parse_statement_let(block);
+	} else if (Exp.cur == IDENTIFIER_VAR) {
+		return parse_statement_var(block);
 	} else if (Exp.cur == IDENTIFIER_MAP) {
 		return parse_statement_map(block);
 	} else if (Exp.cur == IDENTIFIER_LAMBDA) {
@@ -3443,7 +3501,6 @@ Function *Parser::parse_function_header(Class *name_space, Flags flags) {
 Function *Parser::parse_function_header_new(Class *name_space, Flags flags) {
 	Exp.next(); // "func"
 
-	// TODO better to split/mask flags into return- and function-flags...
 	flags = parse_flags(flags);
 
 	string name = Exp.cur;
@@ -3470,15 +3527,21 @@ Function *Parser::parse_function_header_new(Class *name_space, Flags flags) {
 		for (int k=0;;k++) {
 			// like variable definitions
 
-			auto pflags = parse_flags();
+			auto param_flags = parse_flags();
+
+			string param_name = Exp.cur;
+			Exp.next();
+
+			if (Exp.cur != ":")
+				do_error("':' expected after parameter name");
+			Exp.next();
 
 			// type of parameter variable
 			const Class *param_type = parse_type(name_space); // force
-			auto v = f->block->add_var(Exp.cur, param_type);
-			if (!flags_has(pflags, Flags::OUT))
+			auto v = f->block->add_var(param_name, param_type);
+			if (!flags_has(param_flags, Flags::OUT))
 				flags_set(v->flags, Flags::CONST);
 			f->literal_param_type.add(param_type);
-			Exp.next();
 			f->num_params ++;
 
 			if (Exp.cur == ")")
