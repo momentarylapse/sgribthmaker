@@ -1977,6 +1977,8 @@ shared<Node> Parser::parse_statement_return(Block *block) {
 	Exp.next();
 	auto cmd = tree->add_node_statement(StatementID::RETURN);
 	if (block->function->literal_return_type == TypeVoid) {
+		if (!Exp.end_of_line())
+			do_error("current function has type 'void', can not return a value");
 		cmd->set_num_params(0);
 	} else {
 		auto cmd_value = check_param_link(parse_operand_super_greedy(block), block->function->literal_return_type, IDENTIFIER_RETURN);
@@ -3179,6 +3181,14 @@ bool Parser::parse_class(Class *_namespace) {
 			auto f = parse_function_header_new(_class, _class->is_interface() ? Flags::VIRTUAL : Flags::NONE);
 			skip_parsing_function_body(f);
 			continue;
+		} else if (Exp.cur == IDENTIFIER_CONST) {
+			parse_named_const_new(_class, tree->root_of_all_evil->block.get());
+			continue;
+		} else if (Exp.cur == IDENTIFIER_VAR) {
+			if (_class->is_interface())
+				do_error("interfaces can not have data elements");
+			parse_class_variable_declaration(_class, tree->root_of_all_evil->block.get(), _offset);
+			continue;
 		}
 
 		Flags flags = parse_flags();
@@ -3198,18 +3208,19 @@ bool Parser::parse_class(Class *_namespace) {
 				Exp.set(ie);
 				if (_class->is_interface())
 					flags_set(flags, Flags::VIRTUAL);
-				auto f = parse_function_header(_class, flags);
+				auto f = parse_function_header_old(_class, flags);
 				skip_parsing_function_body(f);
 				break;
 			}
 
 			if (flags_has(flags, Flags::CONST)) {
-				parse_named_const(name, type, _class, tree->root_of_all_evil->block.get());
+				parse_named_const_old(name, type, _class, tree->root_of_all_evil->block.get());
 				break;
 			}
 
 			if (_class->is_interface())
 				do_error("interfaces can not have data elements");
+			do_error("deprecated class element declaration");
 
 			parser_class_add_element(this, _class, name, type, flags, _offset);
 
@@ -3316,13 +3327,17 @@ shared<Node> Parser::parse_and_eval_const(Block *block, const Class *type) {
 	// find const value
 	auto cv = parse_operand_super_greedy(block);
 
-	int pen, tc;
-	if (type_match_with_cast(cv, false, type, pen, tc)) {
-		cv = apply_type_cast(tc, cv, type);
+	if (type) {
+		int pen, tc;
+		if (type_match_with_cast(cv, false, type, pen, tc)) {
+			cv = apply_type_cast(tc, cv, type);
+		} else {
+			do_error(format("constant value of type '%s' expected", type->long_name()));
+		}
 	} else {
-		do_error(format("constant value of type '%s' expected", type->long_name()));
+		cv = force_concrete_type(cv);
+		type = cv->type;
 	}
-	//cv = force_concrete_type(cv);
 
 	cv = tree->transform_node(cv, [&](shared<Node> n) { return tree->conv_eval_const_func(n); });
 
@@ -3331,7 +3346,7 @@ shared<Node> Parser::parse_and_eval_const(Block *block, const Class *type) {
 	return cv;
 }
 
-void Parser::parse_named_const(const string &name, const Class *type, Class *name_space, Block *block) {
+void Parser::parse_named_const_old(const string &name, const Class *type, Class *name_space, Block *block) {
 	if (Exp.cur != "=")
 		do_error("'=' expected after const name");
 	Exp.next();
@@ -3345,7 +3360,97 @@ void Parser::parse_named_const(const string &name, const Class *type, Class *nam
 	c->name = name;
 }
 
-void Parser::parse_global_variable_def(bool single, Block *block, Flags flags0) {
+void Parser::parse_named_const_new(Class *name_space, Block *block) {
+	Exp.next(); // 'const'
+	string name = Exp.cur;
+	Exp.next();
+
+	const Class *type = nullptr;
+	if (Exp.cur == ":") {
+		Exp.next();
+		type = parse_type(name_space);
+	}
+
+	if (Exp.cur != "=")
+		do_error("'=' expected after const name");
+	Exp.next();
+
+	// find const value
+	auto cv = parse_and_eval_const(block, type);
+	Constant *c_value = cv->as_const();
+
+	auto *c = tree->add_constant(c_value->type.get(), name_space);
+	c->set(*c_value);
+	c->name = name;
+}
+
+void Parser::parse_class_variable_declaration(const Class *ns, Block *block, int &_offset, Flags flags0) {
+	Exp.next(); // "var"
+
+	Flags flags = parse_flags(flags0);
+
+	Array<string> names;
+	const Class *type = nullptr;
+
+	names.add(Exp.cur);
+	Exp.next();
+
+	while (Exp.cur == ",") {
+		Exp.next(); // ","
+		names.add(Exp.cur);
+		Exp.next();
+	}
+
+	// explicit type?
+	if (Exp.cur == ":") {
+		Exp.next();
+		type = parse_type(ns);
+	} else if (Exp.cur != "=") {
+		do_error("':' or '=' expected after 'var' declaration");
+	}
+
+	Constant *c_value = nullptr;
+	if (Exp.cur == "=") {
+		Exp.next();
+
+		//if (names.num != 1)
+		//	do_error(format("'var' declaration with '=' only allowed with a single variable name, %d given", names.num));
+
+		auto cv = parse_and_eval_const(block, type);
+		c_value = cv->as_const();
+		type = cv->type;
+
+		/*auto rhs = parse_operand_super_greedy(block);
+		if (!type) {
+			rhs = force_concrete_type(rhs);
+			type = rhs->type;
+		}
+		auto *var = block->add_var(names[0], type);
+		auto cmd = link_operator_id(OperatorID::ASSIGN, tree->add_node_local(var), rhs);
+		if (!cmd)
+			do_error(format("var: no operator '%s' = '%s'", type->long_name(), rhs->type->long_name()));
+		return cmd;*/
+	}
+
+	expect_new_line();
+
+	for (auto &n: names) {
+		auto cc = const_cast<Class*>(ns);
+		//block->add_var(n, type);
+		parser_class_add_element(this, cc, n, type, flags, _offset);
+		/*auto *v = new Variable(n, type);
+		flags_set(v->flags, flags);
+		tree->base_class->static_variables.add(v);*/
+
+		if (c_value) {
+			ClassInitializers init = {ns->elements.num - 1, c_value};
+			cc->initializers.add(init);
+		}
+	}
+}
+
+void Parser::parse_global_variable_def_old(Block *block, Flags flags0) {
+	do_error("deprecated class variable declaration");
 	Flags flags = parse_flags(flags0);
 
 	const Class *type = parse_type(block->name_space()); // force
@@ -3358,7 +3463,7 @@ void Parser::parse_global_variable_def(bool single, Block *block, Flags flags0) 
 		Exp.next();
 
 		if (flags_has(flags, Flags::CONST)) {
-			parse_named_const(name, type, tree->base_class, block);
+			parse_named_const_old(name, type, tree->base_class, block);
 		} else {
 			auto *v = new Variable(name, type);
 			flags_set(v->flags, flags);
@@ -3443,7 +3548,7 @@ const Class *Parser::parse_type(const Class *ns) {
 	return cc->as_class();
 }
 
-Function *Parser::parse_function_header(Class *name_space, Flags flags) {
+Function *Parser::parse_function_header_old(Class *name_space, Flags flags) {
 	// TODO better to split/mask flags into return- and function-flags...
 	flags = parse_flags(flags);
 	
@@ -3710,6 +3815,13 @@ void Parser::parse_top_level() {
 			auto f = parse_function_header_new(tree->base_class, Flags::STATIC);
 			skip_parsing_function_body(f);
 
+		} else if (Exp.cur == IDENTIFIER_CONST) {
+			parse_named_const_new(tree->base_class, tree->root_of_all_evil->block.get());
+
+		} else if (Exp.cur == IDENTIFIER_VAR) {
+			int offset = 0;
+			parse_class_variable_declaration(tree->base_class, tree->root_of_all_evil->block.get(), offset, Flags::STATIC);
+
 		} else {
 
 			// type of definition
@@ -3720,12 +3832,12 @@ void Parser::parse_top_level() {
 
 			// function?
 			if (is_function) {
-				auto f = parse_function_header(tree->base_class, Flags::STATIC);
+				auto f = parse_function_header_old(tree->base_class, Flags::STATIC);
 				skip_parsing_function_body(f);
 
 			// global variables/consts
 			} else {
-				parse_global_variable_def(false, tree->root_of_all_evil->block.get(), Flags::STATIC);
+				parse_global_variable_def_old(tree->root_of_all_evil->block.get(), Flags::STATIC);
 			}
 		}
 		if (!Exp.end_of_file())
