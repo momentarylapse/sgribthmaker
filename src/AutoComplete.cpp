@@ -166,7 +166,7 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 
 		// base layer
 		Array<const Class*> types;
-		auto nodes = syntax->get_existence(yy[0], guess_block(syntax, f), syntax->base_class, false);
+		auto nodes = syntax->get_existence(yy[0], guess_block(syntax, f), syntax->base_class);
 		//printf("res: %d\n", nodes.num);
 		for (auto n: nodes){
 			//printf("%s\n", n.type->name.c_str());
