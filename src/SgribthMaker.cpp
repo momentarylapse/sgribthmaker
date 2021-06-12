@@ -362,7 +362,7 @@ void SgribthMaker::CompileShader() {
 	auto *w = new hui::NixWindow("nix", 640, 480);
 	//w->add_drawing_area("!opengl", 0, 0, "nix-area");
 	w->event_x("nix-area", "realize", [=] {
-		nix::Init();
+		nix::init();
 	//	nix::init("OpenGL", w, "nix-area");
 
 		auto *shader = nix::Shader::load(cur_doc->filename);
