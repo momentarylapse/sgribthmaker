@@ -100,7 +100,6 @@ int mip_levels(int width, int height) {
 
 
 void Texture::_create_2d(int w, int h, const string &_format) {
-	msg_write(format("creating texture [%d x %d: %s] ", w, h, _format));
 	width = w;
 	height = h;
 	type = Type::DEFAULT;
@@ -108,7 +107,7 @@ void Texture::_create_2d(int w, int h, const string &_format) {
 
 	glCreateTextures(GL_TEXTURE_2D, 1, &texture);
 	glTextureStorage2D(texture, mip_levels(width, height), internal_format, width, height);
-	glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //GL_NEAREST);
 	glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTextureParameteri(texture, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -116,6 +115,7 @@ void Texture::_create_2d(int w, int h, const string &_format) {
 }
 
 Texture::Texture(int w, int h, const string &_format) : Texture() {
+	msg_write(format("creating texture [%d x %d: %s] ", w, h, _format));
 	_create_2d(w, h, _format);
 }
 
