@@ -22,6 +22,7 @@ ParserShader::ParserShader() : Parser("Shader") {
 	special_words.add("layout");
 	special_words.add("readonly");
 	special_words.add("require");
+	special_words.add("shared");
 	special_words.add("push_constant");
 	special_words.add("buffer");
 	special_words.add("sampler");
@@ -56,6 +57,7 @@ ParserShader::ParserShader() : Parser("Shader") {
 	special_words.add("RayMissShader");
 	special_words.add("RayClosestHitShader");
 	special_words.add("RayAnyHitShader");
+	special_words.add("Module");
 	types.add("void");
 	types.add("int");
 	types.add("uint");
@@ -98,6 +100,7 @@ ParserShader::ParserShader() : Parser("Shader") {
 	compiler_functions.add("cos");
 	compiler_functions.add("tan");
 	compiler_functions.add("step");
+	compiler_functions.add("clamp");
 	compiler_functions.add("smoothstep");
 	compiler_functions.add("texture");
 	compiler_functions.add("texture2D");
@@ -108,6 +111,7 @@ ParserShader::ParserShader() : Parser("Shader") {
 	compiler_functions.add("texelFetch");
 	compiler_functions.add("imageStore");
 	compiler_functions.add("imageLoad");
+	compiler_functions.add("imageSize");
 	compiler_functions.add("reflect");
 	compiler_functions.add("refract");
 	compiler_functions.add("normalize");
@@ -115,6 +119,20 @@ ParserShader::ParserShader() : Parser("Shader") {
 	compiler_functions.add("transpose");
 	compiler_functions.add("EmitVertex");
 	compiler_functions.add("EndPrimitive");
+	compiler_functions.add("atomicAdd");
+	compiler_functions.add("atomicAnd");
+	compiler_functions.add("atomicOr");
+	compiler_functions.add("atomicMin");
+	compiler_functions.add("atomicMax");
+	compiler_functions.add("atomicSwap");
+	compiler_functions.add("atomicExchange");
+	compiler_functions.add("barrier");
+	compiler_functions.add("memoryBarrier");
+	compiler_functions.add("groupMemoryBarrier");
+	compiler_functions.add("memoryBarrierBuffer");
+	compiler_functions.add("memoryBarrierImage");
+	compiler_functions.add("memoryBarrierShared");
+	compiler_functions.add("memoryBarrierAtomicCounter");
 	globals.add("gl_Position");
 	globals.add("gl_in");
 	// <Layout>...
@@ -122,11 +140,14 @@ ParserShader::ParserShader() : Parser("Shader") {
 	globals.add("pushsize");
 	globals.add("input");
 	globals.add("topology");
+	globals.add("version");
+	globals.add("name");
 	// layout(x=y...)
 	globals.add("location");
 	globals.add("binding");
 	globals.add("set");
 	globals.add("std430");
+	globals.add("std140");
 
 	globals.add("gl_TexCoord");
 	globals.add("gl_Vertex");
@@ -156,6 +177,8 @@ ParserShader::ParserShader() : Parser("Shader") {
 	globals.add("gl_LocalInvocationID");
 	globals.add("gl_PrimitiveID");
 	globals.add("gl_InstanceID");
+	globals.add("gl_LocalInvocationID");
+	globals.add("gl_LocalInvocationIndex");
 
 	// rtx
 	special_words.add("GL_NV_ray_tracing");
