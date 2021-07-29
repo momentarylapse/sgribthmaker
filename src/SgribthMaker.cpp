@@ -18,7 +18,7 @@
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.10.1";
+string AppVersion = "0.4.10.2";
 
 //#define ALLOW_LOGGING			true
 #define ALLOW_LOGGING			false
@@ -490,7 +490,7 @@ void SgribthMaker::OnAutoComplete() {
 
 	int line, pos;
 	cur_doc->source_view->get_cur_line_pos(line, pos);
-	auto data = AutoComplete::run(cur_doc->source_view->get_all(), line, pos);
+	auto data = AutoComplete::run(cur_doc->source_view->get_all(), cur_doc->filename, line, pos);
 	_auto_complete_data_ = data;
 
 	if (data.suggestions.num == 1) {

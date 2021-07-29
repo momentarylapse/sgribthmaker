@@ -111,6 +111,7 @@ ParserHui::ParserHui() : Parser("Hui") {
 	types.add("MultilineEdit");
 	types.add("ColorButton");
 	types.add("CheckBox");
+	types.add("RadioButton");
 	types.add("DrawingArea");
 	types.add("ComboBox");
 	types.add("SpinButton");

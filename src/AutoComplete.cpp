@@ -10,6 +10,8 @@
 #include "lib/kaba/syntax/Parser.h"
 #include <stdio.h>
 
+static bool verbose = false;
+
 
 void AutoComplete::Data::add(const string &name, const string &context) {
 	AutoComplete::Item i;
@@ -49,9 +51,11 @@ void _ParseFunctionBody(SyntaxTree *syntax, Function *f) {
 	syntax->parser->parser_loop_depth = 0;
 
 // instructions
-	while (more_to_parse) {
-		more_to_parse = syntax->parser->parse_function_command(f, indent0);
-	}
+	try {
+		while (more_to_parse) {
+			more_to_parse = syntax->parser->parse_function_command(f, indent0);
+		}
+	} catch (...) {}
 }
 
 
@@ -72,7 +76,7 @@ AutoComplete::Data find_top_level_from_class(const Class *t, const string &yyy) 
 	AutoComplete::Data suggestions;
 	for (auto &e: t->elements)
 		if (e.name.head(yyy.num) == yyy and allow(e.name))
-			suggestions.add(e.name, e.type->name + " " + t->name + "." + e.name);
+			suggestions.add(e.name, format("%s.%s: %s", t->name, e.name, e.type->name));
 	for (auto f: t->functions)
 		if (f->name.head(yyy.num) == yyy and allow(f->name))
 			suggestions.add(f->name, f->signature());
@@ -81,7 +85,7 @@ AutoComplete::Data find_top_level_from_class(const Class *t, const string &yyy) 
 				suggestions.add(c->name, "class " + c->long_name());
 	for (auto c: t->constants)
 		if (c->name.head(yyy.num) == yyy and allow(c->name))
-			suggestions.add(c->name, "const " + c->type->long_name() + " " + c->name);
+			suggestions.add(c->name, format("const %s: %s", c->name, c->type->long_name()));
 	return suggestions;
 }
 
@@ -89,7 +93,7 @@ AutoComplete::Data find_top_level(SyntaxTree *syntax, Function *f, const string 
 	AutoComplete::Data suggestions;
 	
 	// general expressions
-	Array<string> expressions = {"class", "extends", "while", "virtual", "extern", "override", "enum", "and", "or", "while", "for", "if", "else", "const", "selfref", "new", "delete", "break", "continue", "return", "pass" "use", "import", "in", "is"};
+	Array<string> expressions = {"class", "func", "extends", "while", "virtual", "extern", "override", "enum", "and", "or", "while", "for", "if", "else", "const", "selfref", "new", "delete", "break", "continue", "return", "pass" "use", "import", "in", "is"};
 	for (string &e: expressions)
 		if (yyy == e.head(yyy.num))
 			suggestions.add(e, e);
@@ -147,11 +151,13 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 	for (string &o: ops)
 		xx = xx.replace(o, " ");
 	xx = xx.explode(" ").back();
-	//printf("-->>>>>  %s\n", xx.c_str());
+	if (verbose)
+		printf("-->>>>>  %s\n", xx.c_str());
 	if (xx.num == 0)
 		return data;
 	auto yy = xx.explode(".");
-	//printf("yy=%s\n", sa2s(yy).c_str());
+	if (verbose)
+		printf("yy=%s\n", sa2s(yy).c_str());
 	data.offset = yy.back().num;
 	if (yy.num == 1) {
 		data.append(find_top_level(syntax, f, yy[0]));
@@ -159,7 +165,8 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 		if (!f)
 			f = syntax->root_of_all_evil.get();
 
-		//printf("first:  %s\n", yy[0].c_str());
+		if (verbose)
+			printf("first:  %s\n", yy[0].c_str());
 	//	if (syntax->blocks.num == 0)
 	//		return data;
 		// FIXME?
@@ -167,9 +174,11 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 		// base layer
 		Array<const Class*> types;
 		auto nodes = syntax->get_existence(yy[0], guess_block(syntax, f), syntax->base_class);
-		//printf("res: %d\n", nodes.num);
-		for (auto n: nodes){
-			//printf("%s\n", n.type->name.c_str());
+		if (verbose)
+			printf("res: %d\n", nodes.num);
+		for (auto n: nodes) {
+			if (verbose)
+				printf("%s\n", n->type->name.c_str());
 			types.add(node_namespace(n));
 		}
 
@@ -196,7 +205,8 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 		// top layer
 		string yyy = yy.back();
 		for (auto *t: types) {
-			//printf("type %s\n", t->name.c_str());
+			if (verbose)
+				printf("type %s\n", t->name.c_str());
 			data.append(find_top_level_from_class(t, yyy));
 		}
 	}
@@ -208,8 +218,9 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 
 
 
-AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos) {
+AutoComplete::Data AutoComplete::run(const string& _code, const Path &filename, int line, int pos) {
 	auto *s = new kaba::Script;
+	s->filename = filename;
 	auto ll = _code.explode("\n");
 	auto lines_pre = ll.sub_ref(0, line);//+1);
 	auto lines_post = ll.sub_ref(line+1);
@@ -237,26 +248,34 @@ AutoComplete::Data AutoComplete::run(const string& _code, int line, int pos) {
 		//printf("--c\n");
 		s->syntax->parser->parse_top_level();
 
-		//printf("--d\n");
-		for (auto *f: s->syntax->functions) {
-			if (!f->is_extern() and (f->_logical_line_no >= 0) and (f->_logical_line_no < line))
-				ff = f;
-		}
-		if (ff) {
-	//		printf("func: %s\n", ff->name.c_str());
-			_ParseFunctionBody(s->syntax, ff);
-		}
-
-		data = simple_parse(s->syntax, ff, cur_line);
-
 
 
 	} catch (const kaba::Exception &e) {
 		printf("err: %s\n", e.message().c_str());
 		//if (e.line)
 		//throw e;
-		data = simple_parse(s->syntax, ff, cur_line);
+		//data = simple_parse(s->syntax, ff, cur_line);
 	}
+
+
+
+
+
+	//printf("--d\n");
+	for (auto *f: s->syntax->functions) {
+		if (!f->is_extern() and (f->_logical_line_no >= 0) and (f->_logical_line_no < line))
+			ff = f;
+	}
+	if (ff) {
+//		printf("func: %s\n", ff->name.c_str());
+		_ParseFunctionBody(s->syntax, ff);
+	}
+
+	data = simple_parse(s->syntax, ff, cur_line);
+
+
+
+
 	//delete(s);
 	kaba::delete_all_scripts(true, true);
 
