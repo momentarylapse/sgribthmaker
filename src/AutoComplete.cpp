@@ -243,7 +243,7 @@ AutoComplete::Data AutoComplete::run(const string& _code, const Path &filename, 
 		s->syntax->parser->Exp.analyse(s->syntax, code + string("\0", 1)); // compatibility... expected by lexical
 
 		//printf("--b\n");
-		s->syntax->parser->pre_compiler(true);
+		s->syntax->parser->parse_macros(true);
 
 		//printf("--c\n");
 		s->syntax->parser->parse_top_level();
