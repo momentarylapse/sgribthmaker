@@ -79,7 +79,7 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 	special_words.add(kaba::IDENTIFIER_LET);
 	special_words.add(kaba::IDENTIFIER_VAR);
 	special_words.add(kaba::IDENTIFIER_LAMBDA);
-	special_words.add(kaba::IDENTIFIER_CALL);
+	special_words.add(kaba::IDENTIFIER_RAW_FUNCTION_POINTER);
 	special_words.add(kaba::IDENTIFIER_DYN);
 	special_words.add(kaba::IDENTIFIER_WEAK);
 	compiler_functions.add(kaba::IDENTIFIER_LEN);

@@ -345,7 +345,7 @@ shared<Node> Parser::make_func_node_callable(const shared<Node> l) {
 	Function *f = l->as_func();
 	//auto r = tree->add_node_call(f);
 	auto r = l->shallow_copy();
-	r->kind = NodeKind::FUNCTION_CALL;
+	r->kind = NodeKind::CALL_FUNCTION;
 	r->type = f->literal_return_type;
 	if (f->is_static())
 		r->set_num_params(f->num_params);
@@ -354,7 +354,7 @@ shared<Node> Parser::make_func_node_callable(const shared<Node> l) {
 
 	// virtual?
 	if (f->virtual_index >= 0)
-		r->kind = NodeKind::VIRTUAL_CALL;
+		r->kind = NodeKind::CALL_VIRTUAL;
 	return r;
 }
 
@@ -363,10 +363,10 @@ shared<Node> Parser::make_func_pointer_node_callable(const shared<Node> l) {
 
 	shared<Node> c;
 	if (f->virtual_index >= 0) {
-		c = new Node(NodeKind::VIRTUAL_CALL, (int_p)f, f->literal_return_type, true);
+		c = new Node(NodeKind::CALL_VIRTUAL, (int_p)f, f->literal_return_type, true);
 	} else {
 		do_error("function pointer call should be virtual???");
-		c = new Node(NodeKind::FUNCTION_CALL, (int_p)f, f->literal_return_type, true);
+		c = new Node(NodeKind::CALL_FUNCTION, (int_p)f, f->literal_return_type, true);
 	}
 	c->set_num_params(f->num_params + 1);
 	c->set_instance(l->deref());
@@ -432,7 +432,7 @@ string type_list_to_str(const Array<const Class*> &tt) {
 }
 
 shared<Node> check_const_params(SyntaxTree *tree, shared<Node> n) {
-	if ((n->kind == NodeKind::FUNCTION_CALL) or (n->kind == NodeKind::VIRTUAL_CALL)) {
+	if ((n->kind == NodeKind::CALL_FUNCTION) or (n->kind == NodeKind::CALL_VIRTUAL)) {
 		auto f = n->as_func();
 		int offset = 0;
 		if (!f->is_static()) {
@@ -708,7 +708,7 @@ shared<Node> Parser::parse_operand_extension(const shared_array<Node> &operands,
 
 // when calling ...(...)
 Array<const Class*> Parser::get_wanted_param_types(shared<Node> link) {
-	if ((link->kind == NodeKind::FUNCTION_CALL) or (link->kind == NodeKind::FUNCTION) or (link->kind == NodeKind::VIRTUAL_CALL) or (link->kind == NodeKind::CONSTRUCTOR_AS_FUNCTION)) {
+	if ((link->kind == NodeKind::CALL_FUNCTION) or (link->kind == NodeKind::FUNCTION) or (link->kind == NodeKind::CALL_VIRTUAL) or (link->kind == NodeKind::CONSTRUCTOR_AS_FUNCTION)) {
 		auto f = link->as_func();
 		auto p = f->literal_param_type;
 		if (!f->is_static() and (link->kind != NodeKind::CONSTRUCTOR_AS_FUNCTION))
@@ -720,8 +720,8 @@ Array<const Class*> Parser::get_wanted_param_types(shared<Node> link) {
 		const Class *t = link->as_class();
 		for (auto *c: t->get_constructors())
 			return c->literal_param_type;
-	} else if (link->kind == NodeKind::POINTER_CALL) {
-		return get_callable_param_types(link->params[0]->type);
+	/*} else if (link->kind == NodeKind::CALL_RAW_POINTER) {
+		return get_callable_param_types(link->params[0]->type);*/
 	} else {
 		do_error("evil function...kind: "+kind2str(link->kind));
 	}
@@ -842,7 +842,7 @@ string Parser::param_match_with_cast_error(const shared_array<Node> &params, con
 }
 
 bool node_is_function(shared<Node> n) {
-	return n->kind == NodeKind::FUNCTION_CALL or n->kind == NodeKind::VIRTUAL_CALL or n->kind == NodeKind::INLINE_CALL or n->kind == NodeKind::CONSTRUCTOR_AS_FUNCTION;
+	return n->kind == NodeKind::CALL_FUNCTION or n->kind == NodeKind::CALL_VIRTUAL or n->kind == NodeKind::CALL_INLINE or n->kind == NodeKind::CONSTRUCTOR_AS_FUNCTION;
 }
 
 bool node_is_member_function_with_instance(shared<Node> n) {
@@ -858,7 +858,7 @@ int node_param_offset(shared<Node> operand) {
 	int offset = 0;
 	if (node_is_member_function_with_instance(operand))
 		offset ++;
-	if (operand->kind == NodeKind::POINTER_CALL)
+	if ((operand->kind == NodeKind::CALL_RAW_POINTER))
 		offset ++;
 	return offset;
 }
@@ -1152,10 +1152,14 @@ shared<Node> Parser::parse_dict(Block *block) {
 }
 
 const Class *make_pointer_shared(SyntaxTree *tree, const Class *parent) {
+	if (!parent->name_space)
+		tree->do_error("shared not allowed for: " + parent->long_name());
 	return tree->make_class(IDENTIFIER_SHARED + " " + parent->name, Class::Type::POINTER_SHARED, config.pointer_size, 0, nullptr, {parent}, parent->name_space);
 }
 
 const Class *make_pointer_owned(SyntaxTree *tree, const Class *parent) {
+	if (!parent->name_space)
+		tree->do_error("owned not allowed for: " + parent->long_name());
 	return tree->make_class(IDENTIFIER_OWNED + " " + parent->name, Class::Type::POINTER_OWNED, config.pointer_size, 0, nullptr, {parent}, parent->name_space);
 }
 
@@ -1186,6 +1190,21 @@ shared<Node> digest_type(SyntaxTree *tree, shared<Node> n) {
 		return n;
 	auto classes = class_tuple_extract_classes(n);
 	return tree->add_node_class(merge_type_tuple_into_product(tree, classes));
+}
+
+const Class *parse_root_type_with_dots(Parser *p, const Class *ns) {
+	string pre = p->Exp.cur;
+	p->Exp.next();
+	//auto t = parse_type(ns);
+	auto t = p->tree->find_root_type_by_name(p->Exp.cur, ns, true);
+	if (!t)
+		p->do_error(format("type expected after '%s'", pre));
+
+	p->Exp.next();
+	while (p->Exp.cur == ".") {
+		t = p->parse_type_extension_child(t);
+	}
+	return t;
 }
 
 // minimal operand
@@ -1232,11 +1251,7 @@ shared<Node> Parser::parse_operand(Block *block, const Class *ns, bool prefer_cl
 		operands = {tree->add_node_func_name(f)};
 	} else if (Exp.cur == IDENTIFIER_SHARED or Exp.cur == IDENTIFIER_OWNED) {
 		string pre = Exp.cur;
-		Exp.next();
-		auto t = tree->find_root_type_by_name(Exp.cur, ns, true);
-		if (!t)
-			do_error(format("type expected after '%s'", pre));
-		Exp.next();
+		auto t = parse_root_type_with_dots(this, ns);
 		if (pre == IDENTIFIER_SHARED)
 			t = make_pointer_shared(tree, t);
 		else //if (pre == IDENTIFIER_OWNED)
@@ -1576,7 +1591,7 @@ shared<Node> Parser::link_operator(PrimitiveOperator *primop, shared<Node> param
 
 	if (primop->id == OperatorID::ASSIGN) {
 		//param1->show();
-		if (param1->kind == NodeKind::FUNCTION_CALL) {
+		if (param1->kind == NodeKind::CALL_FUNCTION) {
 			auto f = param1->as_func();
 			if (f->name == IDENTIFIER_FUNC_GET) {
 				auto inst = param1->params[0];
@@ -2212,7 +2227,7 @@ shared<Node> Parser::parse_statement_new(Block *block) {
 		auto constr = parse_operand(block, block->name_space(), false);
 		if (constr->kind != NodeKind::CONSTRUCTOR_AS_FUNCTION)
 			do_error("constructor call expected after 'new'");
-		constr->kind = NodeKind::FUNCTION_CALL;
+		constr->kind = NodeKind::CALL_FUNCTION;
 		constr->type = TypeVoid;
 
 		auto ff = constr->as_func();
@@ -2362,7 +2377,7 @@ shared<Node> Parser::wrap_function_into_callable(Function *f) {
 			auto fp = tree->add_constant(TypeFunctionP);
 			fp->as_int64() = (int_p)f;
 			con = apply_params_direct(con, {tree->add_node_const(fp)});
-			con->kind = NodeKind::FUNCTION_CALL;
+			con->kind = NodeKind::CALL_FUNCTION;
 			con->type = TypeVoid;
 
 			cmd->type = t;
@@ -2749,7 +2764,7 @@ shared<Node> Parser::parse_statement_lambda(Block *block) {
 			for (auto &c: captures)
 				params.add(tree->add_node_local(c));
 			con = apply_params_direct(con, params);
-			con->kind = NodeKind::FUNCTION_CALL;
+			con->kind = NodeKind::CALL_FUNCTION;
 			con->type = TypeVoid;
 
 			cmd->type = tree->make_class_callable_fp(param_types, f->literal_return_type);
@@ -2827,49 +2842,22 @@ shared<Node> Parser::parse_statement_dyn(Block *block) {
 	return make_dynamical(sub);
 }
 
-shared<Node> Parser::parse_statement_call(Block *block) {
-#if 0
-	Exp.next(); // "call"
-	string name = Exp.cur;
+shared<Node> Parser::parse_statement_raw_function_pointer(Block *block) {
+	Exp.next(); // "raw_function_pointer"
 
-	auto params = parse_call_parameters(block);
-	if (params.num == 0)
-		do_error("call() expects at least 1 parameter");
-	params[0] = force_concrete_type(params[0]);
-	if (!is_function_pointer(params[0]->type))
-		do_error("call(): first parameter must be a function pointer ..." + params[0]->type->long_name());
+	auto sub = parse_single_func_param(block);
+	if (sub->kind == NodeKind::FUNCTION) {
+		auto func = tree->add_node_const(tree->add_constant(TypeFunctionP));
+		func->as_const()->as_int64() = (int_p)sub->as_func();
 
-	auto ft = params[0]->type;
-	if (ft == TypeFunctionP) {
-
-		int np = params.num-1;
-		for (int i=0; i<np; i++)
-			params[i+1] = force_concrete_type(params[i+1]);
-
-		auto f = tree->required_func_global("@call" + i2s(np));
-
-		auto cmd = tree->add_node_call(f);
-		cmd->set_param(0, params[0]);
-		for (int i=0; i<np; i++)
-			cmd->set_param(i+1, params[i+1]->ref());
+		auto cmd = tree->add_node_statement(StatementID::RAW_FUNCTION_POINTER);
+		cmd->type = TypeFunctionCodeP;
+		cmd->set_param(0, func);
 		return cmd;
 	} else {
-		auto pp = ft->param[0]->param;
-
-		auto cmd = new Node(NodeKind::POINTER_CALL, 0, pp.back());
-		cmd->set_num_params(pp.num);
-		cmd->set_param(0, params[0]);
-
-		if (pp.num != params.num)
-			do_error(format("call(p,...): %d additional parameters given, but the function pointer expects %d", params.num-1, pp.num-1));
-
-		int np = params.num-1;
-		for (int i=0; i<np; i++)
-			cmd->set_param(i+1, check_param_link(params[i+1], pp[i], IDENTIFIER_CALL, i+1, np+1));
-		return cmd;
-
+		do_error("raw_function_pointer() expects a function name");
 	}
-#endif
+
 	return nullptr;
 }
 
@@ -2944,8 +2932,8 @@ shared<Node> Parser::parse_statement(Block *block) {
 		return parse_statement_sorted(block);
 	} else if (Exp.cur == IDENTIFIER_DYN) {
 		return parse_statement_dyn(block);
-	} else if (Exp.cur == IDENTIFIER_CALL) {
-		return parse_statement_call(block);
+	} else if (Exp.cur == IDENTIFIER_RAW_FUNCTION_POINTER) {
+		return parse_statement_raw_function_pointer(block);
 	} else if (Exp.cur == IDENTIFIER_WEAK) {
 		return parse_statement_weak(block);
 	}
