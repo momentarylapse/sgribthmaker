@@ -268,7 +268,7 @@ shared<Node> Parser::parse_operand_extension_array(shared<Node> operand, Block *
 	if (Exp.cur == ":") {
 		Exp.next();
 		if (Exp.cur == "]") {
-			index2 = tree->add_node_const(tree->add_constant_int(0x81234567));
+			index2 = tree->add_node_const(tree->add_constant_int(DynamicArray::MAGIC_END_INDEX));
 			// magic value (-_-)'
 		} else {
 			index2 = parse_operand_greedy(block);
@@ -407,10 +407,15 @@ shared_array<Node> Parser::turn_class_into_constructor(const Class *t, const sha
 	//shared<Node> dummy = add_node_local(vv);
 	shared_array<Node> links;
 	for (auto *cf: t->get_constructors())
-		if (cf->num_params == params.num)
+		if ((params.num >= cf->mandatory_params) and (params.num <= cf->num_params))
 			links.add(tree->add_node_constructor(cf));
-	if (links.num == 0)
+	if (links.num == 0) {
+		for (auto *cf: t->get_constructors()) {
+			msg_write(cf->signature(TypeVoid));
+			msg_write(cf->mandatory_params);
+		}
 		do_error(format("class %s does not have a constructor with %d parameters", t->long_name(), params.num));
+	}
 	return links;
 }
 
@@ -707,9 +712,10 @@ shared<Node> Parser::parse_operand_extension(const shared_array<Node> &operands,
 
 
 // when calling ...(...)
-Array<const Class*> Parser::get_wanted_param_types(shared<Node> link) {
-	if ((link->kind == NodeKind::CALL_FUNCTION) or (link->kind == NodeKind::FUNCTION) or (link->kind == NodeKind::CALL_VIRTUAL) or (link->kind == NodeKind::CONSTRUCTOR_AS_FUNCTION)) {
+Array<const Class*> Parser::get_wanted_param_types(shared<Node> link, int &mandatory_params) {
+	if (link->is_function()) {
 		auto f = link->as_func();
+		mandatory_params = f->mandatory_params;
 		auto p = f->literal_param_type;
 		if (!f->is_static() and (link->kind != NodeKind::CONSTRUCTOR_AS_FUNCTION))
 			if (link->params.num == 0 or !link->params[0])
@@ -718,8 +724,10 @@ Array<const Class*> Parser::get_wanted_param_types(shared<Node> link) {
 	} else if (link->kind == NodeKind::CLASS) {
 		// should be caught earlier and turned to func...
 		const Class *t = link->as_class();
-		for (auto *c: t->get_constructors())
+		for (auto *c: t->get_constructors()) {
+			mandatory_params = c->num_params;
 			return c->literal_param_type;
+		}
 	/*} else if (link->kind == NodeKind::CALL_RAW_POINTER) {
 		return get_callable_param_types(link->params[0]->type);*/
 	} else {
@@ -767,38 +775,22 @@ shared<Node> Parser::check_param_link(shared<Node> link, const Class *wanted, co
 	if (type_match(given, wanted))
 		return link;
 
-	if (wanted->is_pointer_silent()) {
-		// "silent" pointer (&)?
-		if (type_match(given, wanted->param[0])) {
+	int pen, tc;
 
-			return link->ref();
-		} else if ((given->is_pointer()) and (type_match(given->param[0], wanted->param[0]))) {
-			// silent reference & of *
+	if (type_match_with_cast(link, false, wanted, pen, tc))
+		return apply_type_cast(tc, link, wanted);
 
-			return link;
-		} else {
-			Exp.rewind();
-			do_error(format("(c) parameter %d in command '%s' has type '%s', '%s' expected", param_no + 1, f_name, given->long_name(), wanted->long_name()));
-		}
-
-	} else {
-		// normal type cast
-		int pen, tc;
-
-		if (type_match_with_cast(link, false, wanted, pen, tc))
-			return apply_type_cast(tc, link, wanted);
-
-		Exp.rewind();
-		if (num_params > 1)
-			do_error(format("command '%s': type '%s' given, '%s' expected for parameter #%d", f_name, given->long_name(), wanted->long_name(), param_no + 1));
-		else
-			do_error(format("command '%s': type '%s' given, '%s' expected", f_name, given->long_name(), wanted->long_name()));
-	}
+	Exp.rewind();
+	if (num_params > 1)
+		do_error(format("command '%s': type '%s' given, '%s' expected for parameter #%d", f_name, given->long_name(), wanted->long_name(), param_no + 1));
+	else
+		do_error(format("command '%s': type '%s' given, '%s' expected", f_name, given->long_name(), wanted->long_name()));
 	return link;
 }
 
 bool Parser::direct_param_match(const shared<Node> operand, const shared_array<Node> &params) {
-	auto wanted_types = get_wanted_param_types(operand);
+	int mandatory_params;
+	auto wanted_types = get_wanted_param_types(operand, mandatory_params);
 	if (wanted_types.num != params.num)
 		return false;
 	for (auto c: wanted_types)
@@ -811,8 +803,9 @@ bool Parser::direct_param_match(const shared<Node> operand, const shared_array<N
 }
 
 bool Parser::param_match_with_cast(const shared<Node> operand, const shared_array<Node> &params, Array<int> &casts, Array<const Class*> &wanted, int *max_penalty) {
-	wanted = get_wanted_param_types(operand);
-	if (wanted.num != params.num)
+	int mandatory_params;
+	wanted = get_wanted_param_types(operand, mandatory_params);
+	if ((params.num < mandatory_params) or (params.num > wanted.num))
 		return false;
 	casts.resize(params.num);
 	*max_penalty = 0;
@@ -841,12 +834,8 @@ string Parser::param_match_with_cast_error(const shared_array<Node> &params, con
 	return "";
 }
 
-bool node_is_function(shared<Node> n) {
-	return n->kind == NodeKind::CALL_FUNCTION or n->kind == NodeKind::CALL_VIRTUAL or n->kind == NodeKind::CALL_INLINE or n->kind == NodeKind::CONSTRUCTOR_AS_FUNCTION;
-}
-
 bool node_is_member_function_with_instance(shared<Node> n) {
-	if (!node_is_function(n))
+	if (!n->is_function())
 		return false;
 	auto *f = n->as_func();
 	if (f->is_static())
@@ -877,6 +866,14 @@ shared<Node> Parser::apply_params_with_cast(shared<Node> operand, const shared_a
 	for (int p=0; p<params.num; p++) {
 		auto pp = apply_type_cast(casts[p], params[p], wanted[p]);
 		r->set_param(p + offset, pp);
+	}
+
+	// default values
+	if (operand->is_function()) {
+		auto f = operand->as_func();
+		for (int p=params.num; p<f->num_params; p++) {
+			r->set_param(p + offset, f->default_parameters[p]);
+		}
 	}
 	return r;
 }
@@ -1241,7 +1238,7 @@ shared<Node> Parser::parse_operand(Block *block, const Class *ns, bool prefer_cl
 		operands = {parse_dict(block)};
 	} else if (Exp.cur == IDENTIFIER_FUNC) {
 		// local function definition
-		auto f = parse_function_header_new(tree->_base_class.get(), Flags::STATIC);
+		auto f = parse_function_header(tree->_base_class.get(), Flags::STATIC);
 		skip_parsing_function_body(f); // we're still working through the list of all functions and parsing!
 
 		// not sure why, but is necessary:
@@ -1375,16 +1372,6 @@ bool type_match_with_cast(shared<Node> node, bool is_modifiable, const Class *wa
 			return true;
 		}
 	}*/
-	if (wanted->is_pointer_silent()) {
-		// "silent" pointer (&)?
-		if (type_match(given, wanted->param[0])) {
-			cast = TYPE_CAST_REFERENCE;
-			return true;
-		} else if (given->is_pointer() and type_match(given->param[0], wanted->param[0])) {
-			// silent reference & of *
-			return true;
-		}
-	}
 	if (node->kind == NodeKind::ARRAY_BUILDER and given == TypeUnknown) {
 		if (wanted->is_super_array()) {
 			auto t = wanted->get_array_element();
@@ -1658,17 +1645,7 @@ shared<Node> Parser::link_operator(PrimitiveOperator *primop, shared<Node> param
 		if ((f->name == op_func_name) and !f->is_static()) {
 			// exact match as class function but missing a "&"?
 			auto type1 = f->literal_param_type[0];
-			if (type1->is_pointer_silent()) {
-				if (type_match(p2, type1->param[0])) {
-					auto inst = param1;
-					if (p1 == pp1)
-						op = tree->add_node_member_call(f, inst);
-					else
-						op = tree->add_node_member_call(f, inst->deref());
-					op->set_param(1, param2->ref());
-					return op;
-				}
-			} else if (type_match(p2, type1)) {
+			if (type_match(p2, type1)) {
 				auto inst = param1;
 				if (p1 == pp1)
 					op = tree->add_node_member_call(f, inst);
@@ -3380,7 +3357,7 @@ bool Parser::parse_class(Class *_namespace) {
 			}
 			//msg_write(">>");
 		} else if (Exp.cur == IDENTIFIER_FUNC) {
-			auto f = parse_function_header_new(_class, _class->is_interface() ? Flags::VIRTUAL : Flags::NONE);
+			auto f = parse_function_header(_class, _class->is_interface() ? Flags::VIRTUAL : Flags::NONE);
 			skip_parsing_function_body(f);
 		} else if (Exp.cur == IDENTIFIER_CONST) {
 			parse_named_const(_class, tree->root_of_all_evil->block.get());
@@ -3668,59 +3645,7 @@ const Class *Parser::parse_type(const Class *ns) {
 	return cc->as_class();
 }
 
-Function *Parser::parse_function_header_old(Class *name_space, Flags flags) {
-	// TODO better to split/mask flags into return- and function-flags...
-	flags = parse_flags(flags);
-	
-// return type
-	auto return_type = parse_type(name_space); // force...
-
-	Function *f = tree->add_function(Exp.cur, return_type, name_space, flags);
-	if (config.verbose)
-		msg_write("PARSE HEAD  " + f->signature());
-	f->_logical_line_no = Exp.get_line_no();
-	f->_exp_no = Exp.cur_exp;
-	cur_func = f;
-
-	Exp.next();
-	Exp.next(); // '('
-
-// parameter list
-
-	if (Exp.cur != ")")
-		for (int k=0;;k++) {
-			// like variable definitions
-
-			auto pflags = parse_flags();
-
-			// type of parameter variable
-			auto param_type = parse_type(name_space); // force
-			auto v = f->add_param(Exp.cur, param_type, pflags);
-			Exp.next();
-			f->num_params ++;
-
-			if (Exp.cur == ")")
-				break;
-
-			if (Exp.cur != ",")
-				do_error("',' or ')' expected after parameter");
-			Exp.next(); // ','
-		}
-	Exp.next(); // ')'
-
-	if (!Exp.end_of_line())
-		do_error("newline expected after parameter list");
-
-	f->update_parameters_after_parsing();
-
-	cur_func = nullptr;
-
-	name_space->add_function(tree, f, flags_has(flags, Flags::VIRTUAL), flags_has(flags, Flags::OVERRIDE));
-
-	return f;
-}
-
-Function *Parser::parse_function_header_new(Class *name_space, Flags flags) {
+Function *Parser::parse_function_header(Class *name_space, Flags flags) {
 	Exp.next(); // "func"
 
 	flags = parse_flags(flags);
@@ -3761,6 +3686,17 @@ Function *Parser::parse_function_header_new(Class *name_space, Flags flags) {
 			// type of parameter variable
 			auto param_type = parse_type(name_space); // force
 			auto v = f->add_param(param_name, param_type, param_flags);
+
+
+			// default parameter?
+			if (Exp.cur == "=") {
+				Exp.next();
+				f->default_parameters.resize(f->num_params - 1);
+				auto dp = parse_operand(tree->root_of_all_evil->block.get(), name_space, false);
+				if (dp->type != param_type)
+					do_error(format("trying to set a default value of type '%s' for a parameter of type '%s'", dp->type->name, param_type->name));
+				f->default_parameters.add(dp);
+			}
 
 			if (Exp.cur == ")")
 				break;
@@ -3922,7 +3858,7 @@ void Parser::parse_top_level() {
 
 		// func
 		} else if (Exp.cur == IDENTIFIER_FUNC) {
-			auto f = parse_function_header_new(tree->base_class, Flags::STATIC);
+			auto f = parse_function_header(tree->base_class, Flags::STATIC);
 			skip_parsing_function_body(f);
 
 		} else if (Exp.cur == IDENTIFIER_CONST) {
