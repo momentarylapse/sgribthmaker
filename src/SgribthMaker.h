@@ -34,19 +34,20 @@ public:
 	void UpdateMenu();
 	void UpdateFunctionList();
 	void SetActiveDocument(Document *d);
-	bool AllowTermination();
-	bool AllowDocTermination(Document *d);
+	void AllowTermination(const hui::Callback &on_success = nullptr, const hui::Callback &on_fail = nullptr);
+	void AllowDocTermination(Document *d, const hui::Callback &on_success = nullptr, const hui::Callback &on_fail = nullptr);
 	void New();
 	void OnCloseDocument();
 	bool LoadFromFile(const Path &filename);
 	bool WriteToFile(Document *doc, const Path &filename);
-	bool Open();
-	bool SaveAs(Document *doc);
-	bool Save(Document *doc);
+	void Open();
+
+	void SaveAs(Document *doc, const hui::Callback &on_success = nullptr, const hui::Callback &on_fail = nullptr);
+	void Save(Document *doc, const hui::Callback &on_success = nullptr, const hui::Callback &on_fail = nullptr);
 	void OnOpen();
 	void OnSave();
 	void OnSaveAs();
-	bool Reload();
+	void Reload();
 	void OnReload();
 	void on_undo();
 	void on_redo();

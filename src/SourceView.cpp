@@ -125,7 +125,9 @@ void on_gtk_changed(GtkTextBuffer *textbuffer, gpointer user_data) {
 	SourceView *sv = (SourceView*)user_data;
 	//printf("change\n");
 	sv->create_text_colors(sv->needs_update_start, sv->needs_update_end);
-	RunLater(1, std::bind(&SourceView::create_colors_if_not_busy, sv));
+	hui::run_later(1, [sv] {
+		sv->create_colors_if_not_busy();
+	});
 	sv->color_busy_level ++;
 }
 
@@ -205,10 +207,10 @@ SourceView::SourceView(hui::Window *win, const string &_id, Document *d) {
 	update_font();
 	//g_object_set(tv, "wrap-mode", GTK_WRAP_WORD_CHAR, NULL);
 
-	hui::RunLater(0.05f, [=]{ update_tab_size(); });
+	hui::run_later(0.05f, [this]{ update_tab_size(); });
 
 	if (line_no_tv)
-		hui::RunRepeated(1.0f, [=]{ source_callback(this); });
+		hui::run_repeated(1.0f, [this]{ source_callback(this); });
 }
 
 SourceView::~SourceView() {
@@ -585,11 +587,11 @@ void SourceView::apply_scheme(HighlightScheme *s) {
 	gtk_widget_override_cursor(tv, &_color, &_color);
 	}
 	scheme = s;
-	hui::Config.set_str("HighlightScheme", s->name);
+	hui::config.set_str("HighlightScheme", s->name);
 }
 
 void SourceView::update_tab_size() {
-	int tab_size = hui::Config.get_int("TabWidth", 8);
+	int tab_size = hui::config.get_int("TabWidth", 8);
 	PangoLayout *layout = gtk_widget_create_pango_layout(tv, "W");
 	int width, height;
 	pango_layout_get_pixel_size(layout, &width, &height);
@@ -599,14 +601,14 @@ void SourceView::update_tab_size() {
 }
 
 void SourceView::update_font() {
-	string font_name = hui::Config.get_str("Font", "Monospace 10");
+	string font_name = hui::config.get_str("Font", "Monospace 10");
 	PangoFontDescription *font_desc = pango_font_description_from_string(font_name.c_str());
 	gtk_widget_override_font(tv, font_desc);
 	if (line_no_tv)
 		gtk_widget_override_font(line_no_tv, font_desc);
 	pango_font_description_free(font_desc);
 
-	RunLater(0.010f, std::bind(&SourceView::update_tab_size, this));
+	hui::run_later(0.010f, [this] { update_tab_size(); });
 }
 
 

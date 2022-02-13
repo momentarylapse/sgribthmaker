@@ -51,6 +51,7 @@ void SgribthMaker::SetMessage(const string &str) {
 }
 
 void SgribthMaker::SetError(const string &str) {
+	//hui::error_box(MainWin, "error", str);
 	MainWin->set_info_text(str, {"error", "allow-close"});
 	status_count = -1;
 }
@@ -58,7 +59,7 @@ void SgribthMaker::SetError(const string &str) {
 void SgribthMaker::SetInfo(const string &str) {
 	MainWin->set_info_text(str, {"info", "allow-close"});
 	status_count = max(0, status_count) + 1;
-	hui::RunLater(5, [=]{ UpdateStatusBar(); });
+	hui::run_later(5, [=]{ UpdateStatusBar(); });
 }
 
 void SgribthMaker::SetWindowTitle() {
@@ -79,7 +80,7 @@ void SgribthMaker::UpdateDocList() {
 void SgribthMaker::UpdateMenu() {
 	MainWin->enable("undo", cur_doc->history->Undoable());
 	MainWin->enable("redo", cur_doc->history->Redoable());
-	MainWin->enable("save", cur_doc->history->changed);
+	//MainWin->enable("save", cur_doc->history->changed);
 	UpdateDocList();
 	SetWindowTitle();
 }
@@ -112,31 +113,49 @@ void SgribthMaker::SetActiveDocument(Document *d) {
 	UpdateFunctionList();
 }
 
-bool SgribthMaker::AllowTermination() {
-	for (Document *d: documents)
-	if (d->history->changed) {
-		SetActiveDocument(d);
-		string answer = QuestionBox(MainWin, _("respectful question"), _("You increased entropy. Do you wish to save your work?"), true);
-		if (answer == "hui:cancel")
-			return false;
-		if (answer == "hui:yes")
-			return Save(d);
-		return true;
+void SgribthMaker::AllowTermination(const hui::Callback &on_success, const hui::Callback &on_fail) {
+	Array<Document*> unsaved;
+	for (auto d: documents)
+		if (d->history->changed)
+			unsaved.add(d);
+	if (unsaved.num == 0) {
+		on_success();
+	} else if (unsaved.num == 1) {
+		SetActiveDocument(unsaved[0]);
+		hui::question_box(MainWin, _("respectful question"), _("You increased entropy. Do you wish to save your work?"), [this,unsaved,on_success,on_fail] (const string &answer) {
+			if (answer == "hui:cancel")
+				on_fail();
+			else if (answer == "hui:yes")
+				Save(unsaved[0], on_success, on_fail);
+			else
+				on_success();
+		}, true);
+	} else {
+		hui::question_box(MainWin, _("respectful question"), _("Several unsaved documents. Do you want to save before quitting?"), [this,unsaved,on_success,on_fail] (const string &answer) {
+			if (answer == "hui:cancel")
+				on_fail();
+			else if (answer == "hui:yes")
+				on_fail();
+			else
+				on_success();
+		}, true);
 	}
-	return true;
 }
 
-bool SgribthMaker::AllowDocTermination(Document *d) {
+void SgribthMaker::AllowDocTermination(Document *d, const hui::Callback &on_success, const hui::Callback &on_fail) {
 	if (d->history->changed) {
 		SetActiveDocument(d);
-		string answer = QuestionBox(MainWin, _("respectful question"), _("You increased entropy. Do you wish to save your work?"), true);
-		if (answer == "hui:cancel")
-			return false;
-		if (answer == "hui:yes")
-			return Save(d);
-		return true;
+		hui::question_box(MainWin, _("respectful question"), _("You increased entropy. Do you wish to save your work?"), [this,d,on_success,on_fail] (const string &answer) {
+			if (answer == "hui:cancel")
+				on_fail();
+			else if (answer == "hui:yes")
+				Save(d, on_success, on_fail);
+			else
+				on_success();
+		}, true);
+	} else {
+		on_success();
 	}
-	return true;
 }
 
 void SgribthMaker::New() {
@@ -150,7 +169,7 @@ void SgribthMaker::New() {
 	MainWin->set_target("tab");
 	MainWin->add_grid("", documents.num, 0, id + "-grid");
 	MainWin->set_target(id + "-grid");
-	if (hui::Config.get_bool("ShowLineNumbers", false)) {
+	if (hui::config.get_bool("ShowLineNumbers", false)) {
 		MainWin->add_multiline_edit("!noframe,disabled,width=70,noexpandx", 0, 0, id + "-lines");
 		MainWin->enable(id + "-lines", false);
 	}
@@ -167,25 +186,24 @@ void SgribthMaker::New() {
 }
 
 void SgribthMaker::OnCloseDocument() {
-	if (!AllowDocTermination(cur_doc))
-		return;
+	AllowDocTermination(cur_doc, [this] {
+		if (documents.num <= 1) {
+			OnExit();
+			return;
+		}
 
-	if (documents.num <= 1) {
-		OnExit();
-		return;
-	}
+		int n = MainWin->get_int("tab");
+		hui::run_later(0.001f, [=] {
+			MainWin->remove_string("tab", n);
+			delete documents[n];
+			documents.erase(n);
+			delete source_view[n];
+			source_view.erase(n);
 
-	int n = MainWin->get_int("tab");
-	hui::RunLater(0.001f, [=]{
-		MainWin->remove_string("tab", n);
-		delete documents[n];
-		documents.erase(n);
-		delete source_view[n];
-		source_view.erase(n);
-
-		SetActiveDocument(documents.back());
-		UpdateMenu();
-	});
+			SetActiveDocument(documents.back());
+			UpdateMenu();
+		});
+	}, [] {});
 }
 
 bool SgribthMaker::LoadFromFile(const Path &filename) {
@@ -200,44 +218,58 @@ bool SgribthMaker::WriteToFile(Document *doc, const Path &filename) {
 	return ok;
 }
 
-bool SgribthMaker::Open() {
-	if (hui::FileDialogOpen(MainWin, _("Open file"), cur_doc->filename.parent(), _("All (*.*)"), "*"))
-		return LoadFromFile(hui::Filename);
-	return false;
+Path working_dir_from_doc(Document *d) {
+	if (d->filename.is_empty())
+		return get_current_dir();
+	return d->filename.parent();
 }
 
-bool SgribthMaker::SaveAs(Document *doc) {
-	if (hui::FileDialogSave(MainWin, _("Save file"), doc->filename.parent(), _("All (*.*)"), "*"))
-		return WriteToFile(doc, hui::Filename);
-	return false;
+void SgribthMaker::Open() {
+	hui::file_dialog_open(MainWin, _("Open file"), working_dir_from_doc(cur_doc), {"showfilter="+_("All (*.*)"), "filter=*"}, [this] (const Path &filename) {
+		if (filename)
+			LoadFromFile(filename);
+	});
 }
 
-bool SgribthMaker::Save(Document *doc) {
-	if (!doc->filename.is_empty())
-		return WriteToFile(doc, doc->filename);
-	else
-		return SaveAs(doc);
+void SgribthMaker::SaveAs(Document *doc, const hui::Callback &on_success, const hui::Callback &on_fail) {
+	hui::file_dialog_save(MainWin, _("Save file"), working_dir_from_doc(doc), {"showfilter=" + _("All (*.*)"), "filter=*"}, [this,doc,on_success,on_fail] (const Path &filename) {
+		if (!filename.is_empty()) {
+			if (WriteToFile(doc, filename))
+				on_success();
+			else
+				on_fail();
+		}
+	});
+}
+
+void SgribthMaker::Save(Document *doc, const hui::Callback &on_success, const hui::Callback &on_fail) {
+	if (!doc->filename.is_empty()) {
+		if (WriteToFile(doc, doc->filename))
+			on_success();
+		else
+			on_fail();
+	} else {
+		SaveAs(doc, on_success, on_fail);
+	}
 }
 
 void SgribthMaker::OnOpen()
 {	Open();	}
 
 void SgribthMaker::OnSave()
-{	Save(cur_doc);	}
+{	Save(cur_doc, []{}, []{});	}
 
 void SgribthMaker::OnSaveAs()
-{	SaveAs(cur_doc);	}
+{	SaveAs(cur_doc, []{}, []{});	}
 
-bool SgribthMaker::Reload() {
-	if (!AllowTermination())
-		return false;
-	if (!cur_doc->filename.is_empty()) {
-		bool r = cur_doc->load(cur_doc->filename);
-		if (r)
-			SetMessage(_("reloaded"));
-		return r;
-	}
-	return true;
+void SgribthMaker::Reload() {
+	AllowDocTermination(cur_doc, [this] {
+		if (!cur_doc->filename.is_empty()) {
+			bool r = cur_doc->load(cur_doc->filename);
+			if (r)
+				SetMessage(_("reloaded"));
+		}
+	}, []{});
 }
 
 void SgribthMaker::OnReload()
@@ -250,13 +282,13 @@ void SgribthMaker::on_redo()
 {	cur_doc->history->Redo();	}
 
 void SgribthMaker::on_copy() {
-	hui::Clipboard::Copy(cur_doc->source_view->get_selection_content());
+	hui::Clipboard::copy(cur_doc->source_view->get_selection_content());
 	SetMessage(_("copied"));
 }
 
 void SgribthMaker::on_paste() {
 	cur_doc->source_view->delete_selection();
-	cur_doc->source_view->insert_at_cursor(hui::Clipboard::Paste());
+	cur_doc->source_view->insert_at_cursor(hui::Clipboard::paste());
 	SetMessage(_("pasted"));
 }
 
@@ -357,7 +389,7 @@ void SgribthMaker::CompileShader() {
 	return;
 
 	// NOPE, not working
-	hui::RunLater(0.01f, [=]{
+	hui::run_later(0.01f, [=] {
 
 	auto *w = new hui::NixWindow("nix", 640, 480);
 	//w->add_drawing_area("!opengl", 0, 0, "nix-area");
@@ -383,17 +415,15 @@ void SgribthMaker::CompileShader() {
 }
 
 void SgribthMaker::Compile() {
-	string ext = cur_doc->filename.extension();
-
-	if (!Save(cur_doc))
-		return;
-
-	if (ext == "kaba")
-		CompileKaba();
-	else if (ext == "shader")
-		CompileShader();
-	else
-		SetError(_("only *.kaba and *.shader files can be compiled!"));
+	Save(cur_doc, [this] {
+		string ext = cur_doc->filename.extension();
+		if (ext == "kaba")
+			CompileKaba();
+		else if (ext == "shader")
+			CompileShader();
+		else
+			SetError(_("only *.kaba and *.shader files can be compiled!"));
+	}, []{});
 }
 
 void SgribthMaker::CompileAndRun(bool verbose) {
@@ -402,68 +432,68 @@ void SgribthMaker::CompileAndRun(bool verbose) {
 		return;
 	}
 
-	if (!Save(cur_doc))
-		return;
+	Save(cur_doc, [this,verbose]{
 
-	hui::SetDirectory(cur_doc->filename.parent());
-	//if (verbose)
-	//	msg_set_verbose(true);
-
-	// compile
-	hui::Timer CompileTimer;
-	kaba::config.compile_silently = true;
-	//kaba::config.verbose = true;
-
-	try {
-		auto compile_script = kaba::load(cur_doc->filename);
-		float dt_compile = CompileTimer.get();
-
-		if (!verbose)
-			msg_set_verbose(true);
-
-		int msg_size0 = msg_get_buffer_size();
-
-
-		float dt_execute = 0;
-		CompileTimer.reset();
-		typedef void void_func();
-		typedef void strings_func(const Array<string>);
-		auto f = (void_func*)compile_script->match_function("main", "void", {});
-		auto fsa = (strings_func*)compile_script->match_function("main", "void", {"string[]"});
-		if (f) {
-			f();
-		} else if (fsa) {
-			fsa({});
-		}
-		//compile_script->ShowVars(false);
-		dt_execute = CompileTimer.get();
-		
-		if (f or fsa) {
-			SetMessage(format(_("Compiling: %s         opcode: %db         execution: %s"), get_time_str(dt_compile).c_str(), compile_script->opcode_size, get_time_str(dt_execute).c_str()));
-		} else {
-			SetError(_("no 'void main()' or 'void main(string[])' found"));
-		}
+		hui::SetDirectory(cur_doc->filename.parent());
 		//if (verbose)
-		//	HuiInfoBox(MainWin,"Speicher",string("nicht freigegebener Speicher des Scriptes: ",i2s(script->MemoryUsed),"b"));}
+		//	msg_set_verbose(true);
 
-		// messages? (not working anymore, since kaba is not writing to log)
-		int msg_size = msg_get_buffer_size();
-		if (msg_size > msg_size0)
-			console->set(msg_get_buffer(msg_size - msg_size0));
+		// compile
+		hui::Timer CompileTimer;
+		kaba::config.compile_silently = true;
+		//kaba::config.verbose = true;
 
-	} catch(const kaba::Exception &e) {
-		e.print();
+		try {
+			auto compile_script = kaba::load(cur_doc->filename);
+			float dt_compile = CompileTimer.get();
 
-		SetError(e.message());
-		//ErrorBox(MainWin, _("Error"), e.message());
-		cur_doc->source_view->move_cursor_to(e.line, e.column);
-	}
+			if (!verbose)
+				msg_set_verbose(true);
+
+			int msg_size0 = msg_get_buffer_size();
+
+
+			float dt_execute = 0;
+			CompileTimer.reset();
+			typedef void void_func();
+			typedef void strings_func(const Array<string>);
+			auto f = (void_func*)compile_script->match_function("main", "void", {});
+			auto fsa = (strings_func*)compile_script->match_function("main", "void", {"string[]"});
+			if (f) {
+				f();
+			} else if (fsa) {
+				fsa({});
+			}
+			//compile_script->ShowVars(false);
+			dt_execute = CompileTimer.get();
+
+			if (f or fsa) {
+				SetMessage(format(_("Compiling: %s         opcode: %db         execution: %s"), get_time_str(dt_compile).c_str(), compile_script->opcode_size, get_time_str(dt_execute).c_str()));
+			} else {
+				SetError(_("no 'void main()' or 'void main(string[])' found"));
+			}
+			//if (verbose)
+			//	HuiInfoBox(MainWin,"Speicher",string("nicht freigegebener Speicher des Scriptes: ",i2s(script->MemoryUsed),"b"));}
+
+			// messages? (not working anymore, since kaba is not writing to log)
+			int msg_size = msg_get_buffer_size();
+			if (msg_size > msg_size0)
+				console->set(msg_get_buffer(msg_size - msg_size0));
+
+		} catch(const kaba::Exception &e) {
+			e.print();
+
+			SetError(e.message());
+			//ErrorBox(MainWin, _("Error"), e.message());
+			cur_doc->source_view->move_cursor_to(e.line, e.column);
+		}
+		
 	
+		//RemoveScript(compile_script);
+		kaba::delete_all_scripts(true, true);
 
-	//RemoveScript(compile_script);
-	kaba::delete_all_scripts(true, true);
-
-	//msg_set_verbose(ALLOW_LOGGING);
+		//msg_set_verbose(ALLOW_LOGGING);
+	}, []{});
 }
 
 void SgribthMaker::OnCompileAndRunVerbose()
@@ -498,7 +528,7 @@ void SgribthMaker::OnAutoComplete() {
 		SetMessage(data.suggestions[0].context);
 
 	} else if (data.suggestions.num > 1) {
-		auto *m = new hui::Menu;
+		auto *m = new hui::Menu(MainWin);
 		foreachi (auto &s, data.suggestions, i)
 			m->add(s.name, "auto-complete-" + i2s(i));
 		m->open_popup(MainWin);
@@ -521,15 +551,11 @@ void SgribthMaker::ExecuteCommand(const string &cmd) {
 }
 
 void SgribthMaker::ExecuteCommandDialog() {
-	auto dlg = new CommandDialog(this);
-	dlg->run();
-	delete dlg;
+	hui::fly(new CommandDialog(this));
 }
 
 void SgribthMaker::ExecuteSettingsDialog() {
-	auto dlg = new SettingsDialog(this);
-	dlg->run();
-	delete dlg;
+	hui::fly(new SettingsDialog(this));
 }
 
 
@@ -591,12 +617,17 @@ SgribthMaker::SgribthMaker() :
 
 
 bool SgribthMaker::on_startup(const Array<string> &arg) {
-	int width = hui::Config.get_int("Window.Width", 800);
-	int height = hui::Config.get_int("Window.Height", 600);
-	bool maximized = hui::Config.get_bool("Window.Maximized", false);
+	int width = hui::config.get_int("Window.Width", 800);
+	int height = hui::config.get_int("Window.Height", 600);
+	bool maximized = hui::config.get_bool("Window.Maximized", false);
+
+
 
 	MainWin = new hui::Window(AppTitle, width, height);
 	MainWin->from_resource("main-window");
+	MainWin->set_menu(hui::create_resource_menu("menu", MainWin));
+	MainWin->toolbar[0]->set_by_id("toolbar");
+
 
 	MainWin->event("about", [=]{ OnAbout(); });
 	MainWin->event("hui:close", [=]{ OnExit(); });
@@ -661,23 +692,18 @@ bool SgribthMaker::on_startup(const Array<string> &arg) {
 	for (int i=0; i<100; i++)
 		MainWin->event("auto-complete-" + i2s(i), [this,i]{ OnInsertAutoComplete(i); });
 
-
-	console = new Console;
-	MainWin->embed(console, "table_main", 0, 1);
-	console->show(false);
-
-	MainWin->toolbar[0]->set_by_id("toolbar");
+	//console = new Console;
+	//MainWin->embed(console, "table_main", 0, 1);
+	//console->show(false);
 
 	InitParser();
-	HighlightScheme::default_scheme = HighlightScheme::get(hui::Config.get_str("HighlightScheme", "default"));
+	HighlightScheme::default_scheme = HighlightScheme::get(hui::config.get_str("HighlightScheme", "default"));
 
-	MainWin->set_menu(hui::CreateResourceMenu("menu"));
 	MainWin->set_maximized(maximized);
 	MainWin->show();
 
 	MainWin->event_x("file_list", "hui:select", [=]{ OnFileList(); });
 	MainWin->event_x("function_list", "hui:select", [=]{ OnFunctionList(); });
-
 
 
 	if (arg.num > 1) {
@@ -690,19 +716,20 @@ bool SgribthMaker::on_startup(const Array<string> &arg) {
 }
 
 
-void SgribthMaker::OnAbout()
-{	AboutBox(MainWin);	}
+void SgribthMaker::OnAbout() {
+	about_box(MainWin);
+}
 
 void SgribthMaker::OnExit() {
-	if (AllowTermination()) {
+	AllowTermination([this] {
 		int w, h;
 		MainWin->get_size_desired(w, h);
-		hui::Config.set_int("Window.Width", w);
-		hui::Config.set_int("Window.Height", h);
-		hui::Config.set_bool("Window.Maximized", MainWin->is_maximized());
+		hui::config.set_int("Window.Width", w);
+		hui::config.set_int("Window.Height", h);
+		hui::config.set_bool("Window.Maximized", MainWin->is_maximized());
 		delete MainWin;
 		end();
-	}
+	}, []{});
 }
 
 HUI_EXECUTE(SgribthMaker)

@@ -13,8 +13,8 @@ SettingsDialog::SettingsDialog(SgribthMaker *_sgribthmaker) :
 	hui::Window("settings_dialog", _sgribthmaker->MainWin)
 {
 	sgribthmaker = _sgribthmaker;
-	set_int("tab_width", hui::Config.get_int("TabWidth", 8));
-	set_string("font", hui::Config.get_str("Font", "Monospace 10"));
+	set_int("tab_width", hui::config.get_int("TabWidth", 8));
+	set_string("font", hui::config.get_str("Font", "Monospace 10"));
 	add_string("context_list", _("Text"));
 	add_string("context_list", _("reserved word"));
 	add_string("context_list", _("Api function"));
@@ -76,16 +76,18 @@ void SettingsDialog::fillSchemeList() {
 }
 
 void SettingsDialog::onFont() {
-	if (hui::SelectFont(this, _("Select font"))) {
-		set_string("font", hui::Fontname);
-		hui::Config.set_str("Font", hui::Fontname);
-		for (SourceView *sv: sgribthmaker->source_view)
-			sv->update_font();
-	}
+	hui::select_font(this, _("Select font"), {}, [this] (const string &font) {
+		if (font.num > 0) {
+			set_string("font", font);
+			hui::config.set_str("Font", font);
+			for (SourceView *sv: sgribthmaker->source_view)
+				sv->update_font();
+		}
+	});
 }
 
 void SettingsDialog::onTabWidth() {
-	hui::Config.set_int("TabWidth", get_int("tab_width"));
+	hui::config.set_int("TabWidth", get_int("tab_width"));
 	for (SourceView *sv: sgribthmaker->source_view)
 		sv->update_tab_size();
 }
