@@ -85,6 +85,7 @@ gboolean CallbackJumpLine(GtkWidget *widget, gpointer user_data) {
 	return FALSE;
 }
 
+#if !GTK_CHECK_VERSION(4,0,0)
 void on_gtk_populate_popup(GtkTextView *text_view, GtkMenu *menu, gpointer user_data) {
 	SourceView *sv = (SourceView*)user_data;
 	auto labels = sv->parser->FindLabels(sv);
@@ -110,6 +111,7 @@ void on_gtk_populate_popup(GtkTextView *text_view, GtkMenu *menu, gpointer user_
 		g_signal_connect(G_OBJECT(m), "activate", G_CALLBACK(CallbackJumpLine), (void*)&sv->jump_data[i]);
 	}
 }
+#endif
 
 void SourceView::create_text_colors(int first_line, int last_line) {
 	parser->CreateTextColors(this, first_line, last_line);
@@ -158,7 +160,8 @@ SourceView::SourceView(hui::Window *win, const string &_id, Document *d) {
 	doc = d;
 	id = _id;
 
-	tv = win->_get_control_(id)->widget;
+	control = win->_get_control_(id);
+	tv = control->widget;
 	tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tv));
 
 	line_no_tv = NULL;
@@ -196,7 +199,9 @@ SourceView::SourceView(hui::Window *win, const string &_id, Document *d) {
 	g_signal_connect(G_OBJECT(tv),"paste-clipboard",G_CALLBACK(on_gtk_paste_clipboard),this);
 	g_signal_connect(G_OBJECT(tv),"cut-clipboard",G_CALLBACK(on_gtk_cut_clipboard),this);
 	g_signal_connect(G_OBJECT(tv),"toggle-cursor-visible",G_CALLBACK(on_gtk_toggle_cursor_visible),this);
+#if !GTK_CHECK_VERSION(4,0,0)
 	g_signal_connect(G_OBJECT(tv),"populate-popup",G_CALLBACK(on_gtk_populate_popup),this);
+#endif
 
 	//gtk_text_view_set_accepts_tab(GTK_TEXT_VIEW(tv), false);
 
@@ -574,6 +579,7 @@ void SourceView::apply_scheme(HighlightScheme *s) {
 		else
 			set_tag(i, color_to_hex(s->context[i].fg).c_str(), NULL, s->context[i].bold, s->context[i].italic);
 	}
+#if !GTK_CHECK_VERSION(4,0,0)
 	if (false){
 	GdkRGBA _color;
 	color2gdkrgba(s->bg, _color);
@@ -586,6 +592,7 @@ void SourceView::apply_scheme(HighlightScheme *s) {
 	gtk_widget_override_color(tv, GTK_STATE_FLAG_NORMAL, &_color);
 	gtk_widget_override_cursor(tv, &_color, &_color);
 	}
+#endif
 	scheme = s;
 	hui::config.set_str("HighlightScheme", s->name);
 }
@@ -603,12 +610,20 @@ void SourceView::update_tab_size() {
 void SourceView::update_font() {
 	string font_name = hui::config.get_str("Font", "Monospace 10");
 	PangoFontDescription *font_desc = pango_font_description_from_string(font_name.c_str());
+
+#if GTK_CHECK_VERSION(4,0,0)
+	float size = (float)pango_font_description_get_size(font_desc) / 1024.0f;
+	string family = pango_font_description_get_family(font_desc);
+
+	control->_set_css(format("* { font-family: %s; font-size: %.1fpt; }", family, size));
+#else
 	gtk_widget_override_font(tv, font_desc);
 	if (line_no_tv)
 		gtk_widget_override_font(line_no_tv, font_desc);
 	pango_font_description_free(font_desc);
 
 	hui::run_later(0.010f, [this] { update_tab_size(); });
+#endif
 }
 
 

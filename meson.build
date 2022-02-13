@@ -239,4 +239,6 @@ install_data('static/kaba.ico', install_dir : join_paths(get_option('datadir'), 
 install_data('static/kaba.png', install_dir : join_paths(get_option('datadir'), 'sgribthmaker'))
 install_data('static/license.txt', install_dir : join_paths(get_option('datadir'), 'sgribthmaker'))
 install_data('static/license_small.txt', install_dir : join_paths(get_option('datadir'), 'sgribthmaker'))
+install_data('static/michisoft-sgribthmaker.desktop', install_dir : join_paths(get_option('datadir'), 'sgribthmaker'))
+install_data('static/michisoft-sgribthmaker.xml', install_dir : join_paths(get_option('datadir'), 'sgribthmaker'))
 install_data('static/michisoft-sgribthmaker.desktop', install_dir : join_paths(get_option('datadir'), 'applications'))

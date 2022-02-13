@@ -67,6 +67,7 @@ public:
 	bool find(const string &str);
 
 	string id;
+	hui::Control *control;
 	GtkTextBuffer *tb;
 	GtkWidget *tv;
 	GtkTextBuffer *line_no_tb;
