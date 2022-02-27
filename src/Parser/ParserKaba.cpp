@@ -85,7 +85,7 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 	compiler_functions.add(kaba::IDENTIFIER_LEN);
 	compiler_functions.add(kaba::IDENTIFIER_SIZEOF);
 	compiler_functions.add(kaba::IDENTIFIER_STR);
-	compiler_functions.add(kaba::IDENTIFIER_TYPE);
+	compiler_functions.add(kaba::IDENTIFIER_TYPEOF);
 	compiler_functions.add(kaba::IDENTIFIER_MAP);
 	compiler_functions.add(kaba::IDENTIFIER_SORTED);
 	special_words.add("as");
