@@ -43,7 +43,7 @@ const kaba::Class *node_namespace(shared<kaba::Node> n) {
 
 
 void _ParseFunctionBody(SyntaxTree *syntax, Function *f) {
-	syntax->parser->Exp.cur_line = syntax->parser->Exp.token_logical_line(f->_token_id);
+	syntax->parser->Exp.cur_line = syntax->parser->Exp.token_logical_line(f->token_id);
 
 	int indent0 = syntax->parser->Exp.cur_line->indent;
 	bool more_to_parse = true;
@@ -263,7 +263,7 @@ AutoComplete::Data AutoComplete::run(const string& _code, const Path &filename, 
 
 	//printf("--d\n");
 	for (auto *f: s->syntax->functions) {
-		int f_line_no = s->syntax->parser->Exp.token_logical_line(f->_token_id)->physical_line;
+		int f_line_no = s->syntax->parser->Exp.token_logical_line(f->token_id)->physical_line;
 		if (!f->is_extern() and (f_line_no >= 0) and (f_line_no < line))
 			ff = f;
 	}
