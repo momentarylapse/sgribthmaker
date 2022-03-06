@@ -364,11 +364,11 @@ void SgribthMaker::CompileKaba() {
 	//kaba::config.verbose = true;
 
 	try {
-		auto compile_script = kaba::load(cur_doc->filename, true);
+		auto compile_module = kaba::load(cur_doc->filename, true);
 
 		float dt = CompileTimer.get();
 
-		//compile_script->Show();
+		//compile_module->Show();
 
 		SetMessage(format(_("Script compilable without errors!         (in %s)"), get_time_str(dt).c_str()));
 
@@ -379,8 +379,8 @@ void SgribthMaker::CompileKaba() {
 		cur_doc->source_view->move_cursor_to(e.line, e.column);
 	}
 
-	//RemoveScript(compile_script);
-	kaba::delete_all_scripts(true, true);
+	//RemoveModule(compile_module);
+	kaba::delete_all_modules(true, true);
 
 	//msg_set_verbose(ALLOW_LOGGING);
 }
@@ -444,7 +444,7 @@ void SgribthMaker::CompileAndRun(bool verbose) {
 		//kaba::config.verbose = true;
 
 		try {
-			auto compile_script = kaba::load(cur_doc->filename);
+			auto compile_module = kaba::load(cur_doc->filename);
 			float dt_compile = CompileTimer.get();
 
 			if (!verbose)
@@ -457,18 +457,18 @@ void SgribthMaker::CompileAndRun(bool verbose) {
 			CompileTimer.reset();
 			typedef void void_func();
 			typedef void strings_func(const Array<string>);
-			auto f = (void_func*)compile_script->match_function("main", "void", {});
-			auto fsa = (strings_func*)compile_script->match_function("main", "void", {"string[]"});
+			auto f = (void_func*)compile_module->match_function("main", "void", {});
+			auto fsa = (strings_func*)compile_module->match_function("main", "void", {"string[]"});
 			if (f) {
 				f();
 			} else if (fsa) {
 				fsa({});
 			}
-			//compile_script->ShowVars(false);
+			//compile_module->ShowVars(false);
 			dt_execute = CompileTimer.get();
 
 			if (f or fsa) {
-				SetMessage(format(_("Compiling: %s         opcode: %db         execution: %s"), get_time_str(dt_compile).c_str(), compile_script->opcode_size, get_time_str(dt_execute).c_str()));
+				SetMessage(format(_("Compiling: %s         opcode: %db         execution: %s"), get_time_str(dt_compile).c_str(), compile_module->opcode_size, get_time_str(dt_execute).c_str()));
 			} else {
 				SetError(_("no 'void main()' or 'void main(string[])' found"));
 			}
@@ -490,7 +490,7 @@ void SgribthMaker::CompileAndRun(bool verbose) {
 		
 	
 		//RemoveScript(compile_script);
-		kaba::delete_all_scripts(true, true);
+		kaba::delete_all_modules(true, true);
 
 		//msg_set_verbose(ALLOW_LOGGING);
 	}, []{});

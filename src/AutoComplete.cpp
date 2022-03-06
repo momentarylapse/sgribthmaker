@@ -219,7 +219,7 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 
 
 AutoComplete::Data AutoComplete::run(const string& _code, const Path &filename, int line, int pos) {
-	auto *s = new kaba::Script;
+	auto *s = new kaba::Module;
 	s->filename = filename;
 	auto ll = _code.explode("\n");
 	auto lines_pre = ll.sub_ref(0, line);//+1);
@@ -278,7 +278,7 @@ AutoComplete::Data AutoComplete::run(const string& _code, const Path &filename, 
 
 
 	//delete(s);
-	kaba::delete_all_scripts(true, true);
+	kaba::delete_all_modules(true, true);
 
 	for (int i=0; i<data.suggestions.num; i++)
 		for (int j=i+1; j<data.suggestions.num; j++) {
