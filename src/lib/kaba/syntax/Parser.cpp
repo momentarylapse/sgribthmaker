@@ -1,20 +1,10 @@
 #include "../kaba.h"
 #include "../asm/asm.h"
 #include "../../file/file.h"
+#include "../../base/set.h"
 #include "Parser.h"
 #include <stdio.h>
 
-#include "../../config.h"
-
-#ifdef _X_USE_HUI_
-#include "../../hui/Application.h"
-#elif defined(_X_USE_HUI_MINIMAL_)
-#include "../../hui_minimal/Application.h"
-#endif
-
-
-
-const int MAX_IMPORT_DIRECTORY_PARENTS = 5;
 
 namespace kaba {
 
@@ -24,6 +14,8 @@ shared<Node> create_node_token(Parser *p);
 Array<const Class*> func_effective_params(const Function *f);
 Array<const Class*> node_call_effective_params(shared<Node> node);
 const Class *node_call_return_type(shared<Node> node);
+
+shared<Module> get_import(Parser *parser, const string &name);
 
 ExpressionBuffer *cur_exp_buf = nullptr;
 
@@ -841,13 +833,15 @@ shared<Node> build_abstract_tuple(const Array<shared<Node>> &el) {
 	return c;
 }
 
+extern Array<Operator*> global_operators;
+
 shared<Node> Parser::link_unary_operator(AbstractOperator *po, shared<Node> operand, Block *block, int token_id) {
 	Operator *op = nullptr;
 	const Class *p1 = operand->type;
 
 	// exact match?
 	bool ok=false;
-	for (auto *_op: tree->operators)
+	for (auto *_op: global_operators)
 		if (po == _op->abstract)
 			if ((!_op->param_type_2) and (type_match(p1, _op->param_type_1))) {
 				op = _op;
@@ -861,7 +855,7 @@ shared<Node> Parser::link_unary_operator(AbstractOperator *po, shared<Node> oper
 		CastingData current;
 		CastingData best = {-1, 10000};
 		const Class *t_best = nullptr;
-		for (auto *_op: tree->operators)
+		for (auto *_op: global_operators)
 			if (po == _op->abstract)
 				if ((!_op->param_type_2) and (type_match_with_cast(operand, false, _op->param_type_1, current))) {
 					ok = true;
@@ -1517,7 +1511,7 @@ shared<Node> Parser::link_operator(AbstractOperator *primop, shared<Node> param1
 	const Class *t1_best = nullptr, *t2_best = nullptr;
 	Operator *op_found = nullptr;
 	Function *op_cf_found = nullptr;
-	for (auto *op: tree->operators)
+	for (auto *op: global_operators)
 		if (primop == op->abstract)
 			if (type_match_with_cast(param1, left_modifiable, op->param_type_1,  c1) and type_match_with_cast(param2, false, op->param_type_2, c2))
 				if (c1.penalty + c2.penalty < c1_best.penalty + c2_best.penalty) {
@@ -1773,8 +1767,8 @@ shared<Node> Parser::concretify_array(shared<Node> node, Block *block, const Cla
 	if (node->params.num >= 3)
 		index2 = concretify_node(node->params[2], block, ns);
 
+	// int[3]
 	if (operand->kind == NodeKind::CLASS) {
-		// int[3]
 		// find array index
 		index = tree->transform_node(index, [&](shared<Node> n) { return tree->conv_eval_const_func(n); });
 
@@ -1786,6 +1780,7 @@ shared<Node> Parser::concretify_array(shared<Node> node, Block *block, const Cla
 
 	}
 
+	// min[float]()
 	if (operand->kind == NodeKind::FUNCTION) {
 		auto links = concretify_node_multi(node->params[0], block, ns);
 		if (index->kind != NodeKind::CLASS)
@@ -1807,6 +1802,12 @@ shared<Node> Parser::concretify_array(shared<Node> node, Block *block, const Cla
 	}
 
 
+	// auto deref?
+	if (operand->type->is_pointer()) {
+		if (!operand->type->param[0]->is_array() and !operand->type->param[0]->usable_as_super_array())
+			do_error(format("using pointer type '%s' as an array (like in C) is deprecated", operand->type->long_name()), index);
+		operand = operand->deref();
+	}
 
 
 	// subarray() ?
@@ -1833,17 +1834,8 @@ shared<Node> Parser::concretify_array(shared<Node> node, Block *block, const Cla
 	}
 
 	// allowed?
-	bool allowed = (operand->type->is_array() or operand->type->usable_as_super_array());
-	bool pparray = false;
-	if (!allowed)
-		if (operand->type->is_pointer()) {
-			if (!operand->type->param[0]->is_array() and !operand->type->param[0]->usable_as_super_array())
-				do_error(format("using pointer type '%s' as an array (like in C) is deprecated", operand->type->long_name()), index);
-			allowed = true;
-			pparray = (operand->type->param[0]->usable_as_super_array());
-		}
-	if (!allowed)
-		do_error(format("type '%s' is neither an array nor a pointer to an array nor does it have a function __get__(%s)", operand->type->long_name(), index->type->long_name()), index);
+	if (!operand->type->is_array() and !operand->type->usable_as_super_array())
+		do_error(format("type '%s' is neither an array nor does it have a function __get__(%s)", operand->type->long_name(), index->type->long_name()), index);
 
 
 	if (index->type != TypeInt) {
@@ -1851,25 +1843,18 @@ shared<Node> Parser::concretify_array(shared<Node> node, Block *block, const Cla
 		do_error(format("array index needs to be of type 'int', not '%s'", index->type->long_name()), index);
 	}
 
-	shared<Node> array;
+	shared<Node> array_element;
 
 	// pointer?
-	if (pparray) {
-		do_error("test... anscheinend gibt es [] auf * super array", index);
-		//array = cp_command(this, Operand);
-/*		Operand->kind = KindPointerAsArray;
-		Operand->type = t->type->parent;
-		deref_command_old(this, Operand);
-		array = Operand->param[0];*/
-	} else if (operand->type->usable_as_super_array()) {
-		array = tree->add_node_dyn_array(operand, index);
+	if (operand->type->usable_as_super_array()) {
+		array_element = tree->add_node_dyn_array(operand, index);
 	} else if (operand->type->is_pointer()) {
-		array = tree->add_node_parray(operand, index, operand->type->param[0]->param[0]);
+		array_element = tree->add_node_parray(operand, index, operand->type->param[0]->param[0]);
 	} else {
-		array = tree->add_node_array(operand, index);
+		array_element = tree->add_node_array(operand, index);
 	}
-	array->is_const = operand->is_const;
-	return array;
+	array_element->is_const = operand->is_const;
+	return array_element;
 
 }
 
@@ -3745,68 +3730,6 @@ void Parser::parse_abstract_complete_command(Block *block) {
 	expect_new_line();
 }
 
-extern Array<shared<Module>> loading_module_stack;
-
-string canonical_import_name(const string &s) {
-	return s.lower().replace(" ", "").replace("_", "");
-}
-
-string dir_has(const Path &dir, const string &name) {
-	auto list = dir_search(dir, "*", "fd");
-	for (auto &e: list)
-		if (canonical_import_name(e.str()) == name)
-			return e.str();
-	return "";
-}
-
-Path import_dir_match(const Path &dir0, const string &name) {
-	auto xx = name.explode("/");
-	Path filename = dir0;
-
-	for (int i=0; i<xx.num; i++) {
-		string e = dir_has(filename, canonical_import_name(xx[i]));
-		if (e == "")
-			return Path::EMPTY;
-		filename <<= e;
-	}
-	return filename;
-
-	if (file_exists(dir0 << name))
-		return dir0 << name;
-	return Path::EMPTY;
-}
-
-Path find_installed_lib_import(const string &name) {
-	Path kaba_dir = hui::Application::directory.parent() << "kaba";
-	if (hui::Application::directory.basename()[0] == '.')
-		kaba_dir = hui::Application::directory.parent() << ".kaba";
-	Path kaba_dir_static = hui::Application::directory_static.parent() << "kaba";
-	for (auto &dir: Array<Path>({kaba_dir, kaba_dir_static})) {
-		auto path = (dir << "lib" << name).canonical();
-		if (file_exists(path))
-			return path;
-	}
-	return Path::EMPTY;
-}
-
-Path find_import(Module *s, const string &_name) {
-	string name = _name.replace(".kaba", "");
-	name = name.replace(".", "/") + ".kaba";
-
-	if (name.head(2) == "@/")
-		return find_installed_lib_import(name.sub(2));
-
-	for (int i=0; i<MAX_IMPORT_DIRECTORY_PARENTS; i++) {
-		Path filename = import_dir_match((s->filename.parent() << string("../").repeat(i)).canonical(), name);
-		if (!filename.is_empty())
-			return filename;
-	}
-
-	return find_installed_lib_import(name);
-
-	return Path::EMPTY;
-}
-
 void Parser::parse_import() {
 	string command = Exp.cur; // 'use' / 'import'
 	bool indirect = (command == IDENTIFIER_IMPORT);
@@ -3814,10 +3737,18 @@ void Parser::parse_import() {
 
 	// parse import name
 	string name = Exp.cur;
+	string as_name;
 	Exp.next();
 	while (!Exp.end_of_line()) {
-		if (Exp.cur != ".")
+		if (Exp.cur == IDENTIFIER_AS) {
+			Exp.next();
+			if (Exp.end_of_line())
+				do_error_exp("name expected after 'as'");
+			as_name = Exp.cur;
+			break;
+		} else if (Exp.cur != ".") {
 			do_error_exp("'.' expected in import name");
+		}
 		name += ".";
 		expect_no_new_line();
 		Exp.next();
@@ -3825,49 +3756,15 @@ void Parser::parse_import() {
 		Exp.next();
 	}
 	
+	// "old/style.kaba" -> old.style
 	if (name.match("\"*\""))
-		name = name.sub(1, -1); // remove ""
+		name = name.sub(1, -1).replace(".kaba", "").replace("/", ".");
 		
-	
-	// internal packages?
-	for (auto p: packages)
-		if (p->filename.str() == name) {
-			tree->add_include_data(p, indirect);
-			return;
-		}
+	auto import = get_import(this, name);
 
-	Path filename = find_import(tree->module, name);
-	if (filename.is_empty())
-		do_error_exp(format("can not find import '%s'", name));
-
-	for (auto ss: weak(loading_module_stack))
-		if (ss->filename == filename)
-			do_error_exp("recursive include");
-
-	msg_right();
-	shared<Module> include;
-	try {
-		include = load(filename, tree->module->just_analyse or config.compile_os);
-		// os-includes will be appended to syntax_tree... so don't compile yet
-	} catch (Exception &e) {
-		msg_left();
-
-		int token_id = Exp.cur_token();
-		string expr = Exp.get_token(token_id);
-		e.line = Exp.token_physical_line_no(token_id);
-		e.column = Exp.token_line_offset(token_id);
-		e.text += format("\n...imported from:\nline %d, %s", e.line+1, tree->module->filename);
-		throw e;
-		//msg_write(e.message);
-		//msg_write("...");
-		string msg = e.message() + "\nimported file:";
-		//string msg = "in imported file:\n\"" + e.message + "\"";
-		do_error_exp(msg);
-	}
-	cur_exp_buf = &Exp;
-
-	msg_left();
-	tree->add_include_data(include, indirect);
+	if (as_name == "")
+		as_name = name;
+	tree->import_data(import, indirect, as_name);
 }
 
 

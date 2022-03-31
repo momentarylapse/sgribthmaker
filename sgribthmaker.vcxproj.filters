@@ -376,6 +376,9 @@
     <ClCompile Include="src\lib\kaba\syntax\implicit.cpp">
       <Filter>src\lib\kaba\syntax</Filter>
     </ClCompile>
+    <ClCompile Include="src\lib\kaba\syntax\import.cpp">
+      <Filter>src\lib\kaba\syntax</Filter>
+    </ClCompile>
     <ClCompile Include="src\lib\kaba\syntax\lexical.cpp">
       <Filter>src\lib\kaba\syntax</Filter>
     </ClCompile>
@@ -537,6 +540,456 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\algebra\crypto.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\algebra</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\algebra\vli.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\algebra</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\any\any.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\any</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\base\array.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\base</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\base\base.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\base</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\base\callable.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\base</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\base\macros.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\base</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\base\map.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\base</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\base\pointer.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\base</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\base\set.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\base</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\base\strings.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\base</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\file\file.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\file</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\file\file_op.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\file</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\file\msg.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\file</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\file\path.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\file</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\Control.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlButton.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlCheckBox.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlColorButton.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlComboBox.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlDrawingArea.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlEdit.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlExpander.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlGrid.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlGroup.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlHeaderBar.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlLabel.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlListView.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlMenuButton.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlMultilineEdit.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlPaned.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlProgressBar.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlRadioButton.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlScroller.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlSeparator.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlSlider.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlSpinButton.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlTabControl.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlToggleButton.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ControlTreeView.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\MenuItem.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\MenuItemSeparator.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\MenuItemSubmenu.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\MenuItemToggle.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ToolItemButton.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ToolItemMenuButton.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ToolItemSeparator.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls\ToolItemToggleButton.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Application.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Callback.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Clipboard.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\common.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\common_dlg.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Config.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\error.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Event.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\hui.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\internal.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\language.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\main.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Menu.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Painter.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Panel.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Resource.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Timer.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Toolbar.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\utility.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\hui\Window.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\hui</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\image\color.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\image</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\image\image.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\image</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\image\image_bmp.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\image</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\image\image_jpg.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\image</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\image\image_png.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\image</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\image\image_tga.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\image</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\image\ImagePainter.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\image</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\image\Painter.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\image</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\asm\asm.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\asm</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\asm\internal.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\asm</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\compiler\Backend.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\compiler\BackendAmd64.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\compiler\BackendARM.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\compiler\BackendX86.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\compiler\CommandList.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\compiler\serializer.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\compiler\SerialNode.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\dynamic\call.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\dynamic</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\dynamic\dynamic.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\dynamic</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\dynamic\exception.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\dynamic</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\lib\dict.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\lib\extern.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\lib\lib.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax\Block.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax\Class.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax\Constant.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax\Flags.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax\Function.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax\Identifier.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax\lexical.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax\Node.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax\Operator.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax\Parser.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax\Statement.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax\SyntaxTree.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax\Variable.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\syntax</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\CompilerConfiguration.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\Interpreter.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba\kaba.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\kaba</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\math\complex.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\math</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\math\interpolation.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\math</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\math\math.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\math</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\math\matrix.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\math</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\math\matrix3.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\math</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\math\plane.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\math</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\math\quaternion.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\math</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\math\random.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\math</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\math\ray.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\math</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\math\rect.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\math</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\math\vec2.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\math</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\math\vec4.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\math</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\math\vector.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\math</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\net\BinaryBuffer.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\net\net.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\net\Socket.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\net</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\nix\nix.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\nix</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\nix\nix_buffer.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\nix</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\nix\nix_common.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\nix</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\nix\nix_config.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\nix</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\nix\nix_draw.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\nix</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\nix\nix_framebuffer.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\nix</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\nix\nix_light.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\nix</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\nix\nix_shader.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\nix</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\nix\nix_textures.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\nix</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\nix\nix_vertexbuffer.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\nix</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\nix\nix_view.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\nix</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\Parser\BaseParser.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\Parser\ParserC.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\Parser\ParserHui.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\Parser\ParserKaba.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\Parser\ParserPython.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\Parser\ParserShader.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\Parser\ParserText.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\AutoComplete.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\CommandDialog.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\Console.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\Document.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\HighlightScheme.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\History.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\SettingsDialog.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\SgribthMaker.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src</Filter>
+    </ClInclude>
+    <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\SourceView.h">
+      <Filter>appdir\files\lib\debug\source\sgribthmaker\src</Filter>
+    </ClInclude>
     <ClInclude Include="src\lib\algebra\algebra.h">
       <Filter>src\lib\algebra</Filter>
     </ClInclude>
