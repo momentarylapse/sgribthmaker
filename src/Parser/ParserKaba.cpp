@@ -65,6 +65,7 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 	special_words.add(kaba::IDENTIFIER_OVERRIDE);
 	special_words.add(kaba::IDENTIFIER_STATIC);
 	special_words.add(kaba::IDENTIFIER_CONST);
+	special_words.add(kaba::IDENTIFIER_MUTABLE);
 	special_words.add(kaba::IDENTIFIER_SELFREF);
 	special_words.add(kaba::IDENTIFIER_OUT);
 	special_words.add(kaba::IDENTIFIER_SHARED);

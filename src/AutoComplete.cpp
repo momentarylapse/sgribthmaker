@@ -7,7 +7,7 @@
 
 #include "AutoComplete.h"
 #include "lib/kaba/kaba.h"
-#include "lib/kaba/syntax/Parser.h"
+#include "lib/kaba/parser/Parser.h"
 #include <stdio.h>
 
 static bool verbose = false;
