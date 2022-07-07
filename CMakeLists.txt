@@ -1,8 +1,8 @@
 # created by xmake
 
 project(sgribthmaker)
-cmake_minimum_required(VERSION 3.22)
-set(CMAKE_CXX_STANDARD 14)
+cmake_minimum_required(VERSION 3.21)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_BUILD_TYPE Debug)
 set(SOURCE 
@@ -14,6 +14,7 @@ set(SOURCE
 	src/lib/base/strings.cpp
 	src/lib/file/file.cpp
 	src/lib/file/file_op.cpp
+	src/lib/file/formatter.cpp
 	src/lib/file/msg.cpp
 	src/lib/file/path.cpp
 	src/lib/hui/Controls/Control.cpp

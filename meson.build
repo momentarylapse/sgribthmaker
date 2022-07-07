@@ -1,4 +1,4 @@
-project('sgribthmaker', 'cpp', default_options : ['cpp_std=c++14', 'warning_level=1', 'optimization=2', 'debug=true'])
+project('sgribthmaker', 'cpp', default_options : ['cpp_std=c++17', 'warning_level=1', 'optimization=2', 'debug=true'])
 add_project_arguments('-Wno-unused', '-Wstrict-aliasing=0', '-fno-omit-frame-pointer', language : ['cpp'])
 
 #install_data
@@ -55,6 +55,7 @@ sources = [
 	'src/lib/base/strings.cpp',
 	'src/lib/file/file.cpp',
 	'src/lib/file/file_op.cpp',
+	'src/lib/file/formatter.cpp',
 	'src/lib/file/msg.cpp',
 	'src/lib/file/path.cpp',
 	'src/lib/hui/Controls/Control.cpp',

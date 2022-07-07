@@ -47,7 +47,7 @@ string Document::name(bool long_name) const {
 
 bool Document::load(const Path &_filename) {
 	try {
-		string temp = FileReadText(_filename);
+		string temp = file_read_text(_filename);
 		if (!source_view->fill(temp))
 			sgribthmaker->SetMessage(_("File is not UTF-8 compatible"));
 
@@ -65,7 +65,7 @@ bool Document::load(const Path &_filename) {
 
 bool Document::save(const Path &_filename) {
 	try {
-		FileWriteText(_filename, source_view->get_all());
+		file_write_text(_filename, source_view->get_all());
 		filename = _filename;
 		history->DefineAsSaved();
 		//SetMessage(_("saved"));

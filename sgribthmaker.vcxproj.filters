@@ -25,6 +25,9 @@
     <ClCompile Include="src\lib\file\file_op.cpp">
       <Filter>src\lib\file</Filter>
     </ClCompile>
+    <ClCompile Include="src\lib\file\formatter.cpp">
+      <Filter>src\lib\file</Filter>
+    </ClCompile>
     <ClCompile Include="src\lib\file\msg.cpp">
       <Filter>src\lib\file</Filter>
     </ClCompile>
@@ -1011,6 +1014,9 @@
     <ClInclude Include="src\lib\any\any.h">
       <Filter>src\lib\any</Filter>
     </ClInclude>
+    <ClInclude Include="src\lib\base\algo.h">
+      <Filter>src\lib\base</Filter>
+    </ClInclude>
     <ClInclude Include="src\lib\base\array.h">
       <Filter>src\lib\base</Filter>
     </ClInclude>
@@ -1039,6 +1045,9 @@
       <Filter>src\lib\file</Filter>
     </ClInclude>
     <ClInclude Include="src\lib\file\file_op.h">
+      <Filter>src\lib\file</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lib\file\formatter.h">
       <Filter>src\lib\file</Filter>
     </ClInclude>
     <ClInclude Include="src\lib\file\msg.h">

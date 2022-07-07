@@ -76,7 +76,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <ObjectFileName>$(IntDir)\%(RelativeDir)\%(Filename).obj</ObjectFileName>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <TargetMachine>MachineX86</TargetMachine>
@@ -91,7 +91,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <ObjectFileName>$(IntDir)\%(RelativeDir)\%(Filename).obj</ObjectFileName>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <TargetMachine>MachineX86</TargetMachine>
@@ -105,14 +105,14 @@
     <ClCompile>
       <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;%(PreprocessorDefinitions);HAS_LIB_GTK3=1;HAS_LIB_ZLIB=1;HAS_LIB_GL=1;HAS_LIB_XLIB=0;HAS_LIB_UNWIND=0;HAS_LIB_DL=0</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)\%(RelativeDir)\%(Filename).obj</ObjectFileName>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;%(PreprocessorDefinitions);HAS_LIB_GTK3=1;HAS_LIB_ZLIB=1;HAS_LIB_GL=1;HAS_LIB_XLIB=0;HAS_LIB_UNWIND=0;HAS_LIB_DL=0</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)\%(RelativeDir)\%(Filename).obj</ObjectFileName>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -124,6 +124,7 @@
     <ClCompile Include="src\lib\base\strings.cpp" />
     <ClCompile Include="src\lib\file\file.cpp" />
     <ClCompile Include="src\lib\file\file_op.cpp" />
+    <ClCompile Include="src\lib\file\formatter.cpp" />
     <ClCompile Include="src\lib\file\msg.cpp" />
     <ClCompile Include="src\lib\file\path.cpp" />
     <ClCompile Include="src\lib\hui\Controls\Control.cpp" />
@@ -454,6 +455,7 @@
     <ClInclude Include="src\lib\algebra\crypto.h" />
     <ClInclude Include="src\lib\algebra\vli.h" />
     <ClInclude Include="src\lib\any\any.h" />
+    <ClInclude Include="src\lib\base\algo.h" />
     <ClInclude Include="src\lib\base\array.h" />
     <ClInclude Include="src\lib\base\base.h" />
     <ClInclude Include="src\lib\base\callable.h" />
@@ -464,6 +466,7 @@
     <ClInclude Include="src\lib\base\strings.h" />
     <ClInclude Include="src\lib\file\file.h" />
     <ClInclude Include="src\lib\file\file_op.h" />
+    <ClInclude Include="src\lib\file\formatter.h" />
     <ClInclude Include="src\lib\file\msg.h" />
     <ClInclude Include="src\lib\file\path.h" />
     <ClInclude Include="src\lib\hui\Controls\Control.h" />
