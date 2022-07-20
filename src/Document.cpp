@@ -9,7 +9,7 @@
 #include "History.h"
 #include "SourceView.h"
 #include "SgribthMaker.h"
-#include "lib/file/file.h"
+#include "lib/os/file.h"
 #include "lib/hui/hui.h"
 
 Document::Document(SgribthMaker *_sgribthmaker) {

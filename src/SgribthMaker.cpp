@@ -3,7 +3,9 @@
 #include "lib/base/base.h"
 #include "lib/hui/hui.h"
 #include "lib/nix/nix.h"
-#include "lib/file/file.h"
+#include "lib/os/filesystem.h"
+#include "lib/os/msg.h"
+#include "lib/os/time.h"
 #include "SettingsDialog.h"
 #include "CommandDialog.h"
 #include "Console.h"
@@ -358,7 +360,7 @@ void SgribthMaker::CompileKaba() {
 	//HuiSetDirectory(SgribthDir);
 	//msg_set_verbose(true);
 
-	hui::Timer CompileTimer;
+	Timer CompileTimer;
 
 	kaba::config.compile_silently = true;
 	//kaba::config.verbose = true;
@@ -439,7 +441,7 @@ void SgribthMaker::CompileAndRun(bool verbose) {
 		//	msg_set_verbose(true);
 
 		// compile
-		hui::Timer CompileTimer;
+		Timer CompileTimer;
 		kaba::config.compile_silently = true;
 		//kaba::config.verbose = true;
 

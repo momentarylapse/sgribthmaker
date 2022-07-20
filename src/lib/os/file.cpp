@@ -16,14 +16,12 @@
 | last update: 2010.06.01 (c) by MichiSoft TM                                  |
 \*----------------------------------------------------------------------------*/
 #include "file.h"
+#include "date.h"
 
 
 
 //#define StructuredShifts
 //#define FILE_COMMENTS_DEBUG
-
-#include <chrono>
-#include <ctime>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -61,43 +59,7 @@
 	#define _unlink	::unlink
 #endif
 
-
-Date time2date(time_t t) {
-	Date d;
-	d.time = (int64)t;
-	tm *tm = localtime(&t);
-	d.milli_second = 0;
-	return d;
-}
-
-Date Date::now() {
-	auto now = std::chrono::system_clock::now();
-	auto t = std::chrono::system_clock::to_time_t(now);
-	auto d = time2date(t);
-
-	auto dtn = now.time_since_epoch();
-	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(dtn);
-	d.milli_second = ms.count() % 1000;
-	return d;
-}
-
-string Date::format(const string &f) const {
-	char buffer [80];
-	time_t rawtime = (time_t)this->time;
-	tm * timeinfo = localtime (&rawtime);
-	strftime(buffer, sizeof(buffer), f.c_str(), timeinfo);
-	return buffer;
-}
-
-string Date::str() const {
-	return this->format("%c");
-}
-
-void Date::__assign__(const Date &d) {
-	*this = d;
-}
-
-t_file_try_again_func *FileTryAgainFunc;
+Date time2date(time_t t);
 
 
 FileStream::FileStream(int h) {
@@ -268,7 +230,7 @@ bytes Stream::read_complete() {
 }
 
 // read a part of the file into the buffer
-int FileStream::read(void *buffer, int size) {
+int FileStream::read_basic(void *buffer, int size) {
 	int r = _read(handle, buffer, size);
 	if (r < 0)
 		throw FileError(format("failed reading file '%s'", filename));
@@ -276,7 +238,7 @@ int FileStream::read(void *buffer, int size) {
 }
 
 // insert the buffer into the file
-int FileStream::write(const void *buffer, int size) {
+int FileStream::write_basic(const void *buffer, int size) {
 	if (size == 0)
 		return 0;
 	int r = _write(handle,buffer,size);
@@ -285,18 +247,26 @@ int FileStream::write(const void *buffer, int size) {
 	return r;
 }
 
+int Stream::read(void *data, int size) {
+	return read_basic(data, size);
+}
+
+int Stream::write(const void *data, int size) {
+	return write_basic(data, size);
+}
+
 int Stream::read(bytes &data) {
-	return read(data.data, data.num);
+	return read_basic(data.data, data.num);
+}
+
+bytes Stream::read(int size) {
+	bytes data;
+	data.resize(size);
+	int r = read(data);
+	data.resize(max(r, 0));
+	return data;
 }
 
 int Stream::write(const bytes &data) {
-	return write(data.data, data.num);
-}
-
-int FileStream::read(bytes &data) {
-	return read(data.data, data.num);
-}
-
-int FileStream::write(const bytes &data) {
-	return write(data.data, data.num);
+	return write_basic(data.data, data.num);
 }

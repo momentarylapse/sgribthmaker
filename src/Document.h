@@ -9,7 +9,7 @@
 #define DOCUMENT_H_
 
 #include "lib/base/base.h"
-#include "lib/file/path.h"
+#include "lib/os/path.h"
 
 class History;
 class Parser;

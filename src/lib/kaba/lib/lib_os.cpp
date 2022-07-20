@@ -1,8 +1,12 @@
-#include "../../file/file.h"
+#include "../../os/file.h"
+#include "../../os/filesystem.h"
+#include "../../os/msg.h"
+#include "../../os/CommandLineParser.h"
 #include "../kaba.h"
 #include "../../config.h"
 #include "lib.h"
 #include "../dynamic/exception.h"
+#include "../../base/callable.h"
 
 class vector;
 
@@ -11,10 +15,14 @@ namespace kaba {
 
 
 extern const Class *TypeDate;
+extern const Class *TypeStringList;
 const Class *TypePath;
 const Class *TypePathList;
 const Class *TypeStreamP;
 //const Class *TypeStreamSP;
+
+const Class* TypeCallback;
+const Class* TypeCallbackString;
 
 
 static FileStream *_kaba_stdin = nullptr;
@@ -341,6 +349,29 @@ public:
 	}
 };
 
+class KabaCommandLineParser : CommandLineParser {
+public:
+	void __init__() {
+		new(this) CommandLineParser;
+	}
+	void __delete__() {
+		CommandLineParser::~CommandLineParser();
+	}
+	void option1(const string &name, const string &comment, Callable<void()> &cb) {
+		option(name, comment, [&cb] { cb(); });
+	}
+	void option2(const string &name, const string &p, const string &comment, Callable<void(const string&)> &cb) {
+		option(name, p, comment, [&cb] (const string &s) { cb(s); });
+	}
+	void cmd1(const string &name, const string &p, const string &comment, Callable<void(const Array<string>&)> &cb) {
+		cmd(name, p, comment, [&cb] (const Array<string> &s) { cb(s); });
+	}
+	void parse1(const Array<string> &arg) {
+		Array<string> a = {"?"};
+		parse(a + arg);
+	}
+};
+
 void SIAddPackageOS() {
 	add_package("os");
 
@@ -355,6 +386,11 @@ void SIAddPackageOS() {
 	const Class *TypeFileError = add_type("FileError", sizeof(KabaFileError));
 	//Class *TypeFileNotFoundError= add_type  ("FileError", sizeof(KabaFileNotFoundError));
 	//Class *TypeFileNotWritableError= add_type  ("FileError", sizeof(KabaFileNotWritableError));
+	auto TypeCommandLineParser = add_type("CommandLineParser", sizeof(CommandLineParser));
+
+	TypeCallback = add_type_f(TypeVoid, {});
+	TypeCallbackString = add_type_f(TypeVoid, {TypeString});
+	auto TypeCallbackStringList = add_type_f(TypeVoid, {TypeStringList});
 
 	add_class(TypeStream);
 		class_add_element(IDENTIFIER_SHARED_COUNT, TypeInt, evil_member_offset(FileStream, _pointer_ref_counter));
@@ -400,6 +436,31 @@ void SIAddPackageOS() {
 		class_add_func(IDENTIFIER_FUNC_INIT, TypeVoid, &KabaFileError::__init__, Flags::OVERRIDE);
 		class_add_func_virtual(IDENTIFIER_FUNC_DELETE, TypeVoid, &KabaFileError::__delete__, Flags::OVERRIDE);
 		class_set_vtable(KabaFileError);
+
+
+	add_class(TypeCommandLineParser);
+		class_add_func(IDENTIFIER_FUNC_INIT, TypeVoid, &KabaCommandLineParser::__init__);
+		class_add_func(IDENTIFIER_FUNC_DELETE, TypeVoid, &KabaCommandLineParser::__delete__);
+		class_add_func("info", TypeVoid, &CommandLineParser::info);
+			func_add_param("cmd", TypeString);
+			func_add_param("i", TypeString);
+		class_add_func("show", TypeVoid, &CommandLineParser::show);
+		class_add_func("parse", TypeVoid, &KabaCommandLineParser::parse1);
+			func_add_param("arg", TypeStringList);
+		class_add_func("option", TypeVoid, &KabaCommandLineParser::option1);
+			func_add_param("name", TypeString);
+			func_add_param("comment", TypeString);
+			func_add_param("f", TypeCallback);
+		class_add_func("option", TypeVoid, &KabaCommandLineParser::option2);
+			func_add_param("name", TypeString);
+			func_add_param("p", TypeString);
+			func_add_param("comment", TypeString);
+			func_add_param("f", TypeCallbackString);
+		class_add_func("cmd", TypeVoid, &KabaCommandLineParser::cmd1);
+			func_add_param("name", TypeString);
+			func_add_param("p", TypeString);
+			func_add_param("comment", TypeString);
+			func_add_param("f", TypeCallbackStringList);
 
 
 	// file access
