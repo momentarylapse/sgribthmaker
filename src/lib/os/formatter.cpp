@@ -7,14 +7,15 @@
 
 #include "file.h"
 #include "formatter.h"
+#include "msg.h"
 
 
 
 static void read_buffer_asserted(Stream *s, void *buf, int size) {
-	if (auto f = dynamic_cast<FileStream*>(s)) {
+	if (auto f = dynamic_cast<os::fs::FileStream*>(s)) {
 		int r = f->read_basic(buf, size);
 		if (r < size)
-			throw FileError(format("end of file '%s'", f->filename));
+			throw os::fs::FileError(format("end of file '%s'", f->filename));
 	}
 }
 
@@ -40,18 +41,18 @@ char TextLinesFormatter::read_char() {
 	return c;
 }
 
-// read a single character (1 byte)
 unsigned char TextLinesFormatter::read_byte() {
-	return read_char();
-}
-
-unsigned char BinaryFormatter::read_byte() {
 	return read_str()._int();
 }
 
+// read a single character (1 byte)
+unsigned char BinaryFormatter::read_byte() {
+	return read_char();
+}
+
 // read the rest of the line (only text mode)
-void BinaryFormatter::read_comment()
-{}
+void BinaryFormatter::read_comment() {
+}
 
 void TextLinesFormatter::read_comment() {
 #ifdef FILE_COMMENTS_DEBUG

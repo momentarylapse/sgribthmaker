@@ -222,7 +222,7 @@ bool SgribthMaker::WriteToFile(Document *doc, const Path &filename) {
 
 Path working_dir_from_doc(Document *d) {
 	if (d->filename.is_empty())
-		return get_current_dir();
+		return os::fs::current_directory();
 	return d->filename.parent();
 }
 
@@ -360,7 +360,7 @@ void SgribthMaker::CompileKaba() {
 	//HuiSetDirectory(SgribthDir);
 	//msg_set_verbose(true);
 
-	Timer CompileTimer;
+	os::Timer CompileTimer;
 
 	kaba::config.compile_silently = true;
 	//kaba::config.verbose = true;
@@ -441,7 +441,7 @@ void SgribthMaker::CompileAndRun(bool verbose) {
 		//	msg_set_verbose(true);
 
 		// compile
-		Timer CompileTimer;
+		os::Timer CompileTimer;
 		kaba::config.compile_silently = true;
 		//kaba::config.verbose = true;
 

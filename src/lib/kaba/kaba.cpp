@@ -170,14 +170,14 @@ void Module::load(const Path &_filename, bool _just_analyse) {
 		syntax->default_import();
 
 	// read file
-		string buffer = file_read_text(filename);
+		string buffer = os::fs::read_text(filename);
 		parser->parse_buffer(buffer, just_analyse);
 
 
 		if (!just_analyse)
 			compile();
 
-	} catch (FileError &e) {
+	} catch (os::fs::FileError &e) {
 		loading_module_stack.pop();
 		do_error("module file not loadable: " + filename.str());
 	} catch (Exception &e) {
@@ -268,8 +268,6 @@ void execute_single_command(const string &cmd) {
 	auto parser = new Parser(tree);
 	tree->parser = parser;
 
-	try {
-
 // find expressions
 	parser->Exp.analyse(tree, cmd);
 	if (parser->Exp.empty()) {
@@ -331,10 +329,6 @@ void execute_single_command(const string &cmd) {
 		void_func *f = (void_func*)func->address;
 		if (f)
 			f();
-	}
-
-	} catch(const Exception &e) {
-		e.print();
 	}
 }
 
