@@ -52,7 +52,9 @@ void HighlightScheme::init() {
 	schema->context[IN_WORD_TYPE] = HighlightContext(color(1, 0.125f, 0, 0.875f), Black, false, true, false);
 	schema->context[IN_WORD_GLOBAL_VARIABLE] = HighlightContext(color(1, 0.625f, 0.625f, 0), Black, false, false, false);
 	schema->context[IN_WORD_COMPILER_FUNCTION] = HighlightContext(color(1, 0.065f, 0, 0.625f), Black, false, false, false);
+	schema->context[IN_WORD_OPERATOR_FUNCTION] = HighlightContext(color(1, 0.4f, 0.7f, 0.6f), Black, false, false, false);
 	schema->context[IN_WORD_SPECIAL] = HighlightContext(color(1, 0.625f, 0, 0.625f), Black, false, true, false);
+	schema->context[IN_WORD_MODIFIER] = HighlightContext(color(1, 0.25f, 0.5f, 0.625f), Black, false, false, false);
 	schema->context[IN_NUMBER] = HighlightContext(color(1, 0, 0.5f, 0), Black, false, false, false);
 	schema->context[IN_OPERATOR] = HighlightContext(color(1, 0.25f, 0.25f, 0), Black, false, false, false);
 	schema->context[IN_STRING] = HighlightContext(color(1, 1, 0, 0), Black, false, false, false);
@@ -73,6 +75,7 @@ void HighlightScheme::init() {
 	schema->context[IN_WORD_TYPE] = HighlightContext(color(1, 0.125f, 0, 0.875f), Black, false, true, false);
 	schema->context[IN_WORD_GLOBAL_VARIABLE] = HighlightContext(color(1, 0.625f, 0.625f, 0), Black, false, false, false);
 	schema->context[IN_WORD_COMPILER_FUNCTION] = HighlightContext(color(1, 0.3f, 0.2f, 1), Black, false, false, false);
+	schema->context[IN_WORD_OPERATOR_FUNCTION] = HighlightContext(color(1, 0.4f, 0.7f, 0.6f), Black, false, false, false);
 	schema->context[IN_WORD_SPECIAL] = HighlightContext(color(1, 0.625f, 0, 0.625f), Black, false, true, false);
 	schema->context[IN_NUMBER] = HighlightContext(color(1, 0.3f, 1, 0.3f), Black, false, false, false);
 	schema->context[IN_OPERATOR] = HighlightContext(color(1, 1, 1, 0.75f), Black, false, false, false);
@@ -93,7 +96,9 @@ void HighlightScheme::init() {
 	schema->context[IN_WORD_TYPE] = HighlightContext(color(1, 0.4f, 0.4f, 1), Black, false, true, false);
 	schema->context[IN_WORD_GLOBAL_VARIABLE] = HighlightContext(color(1, 1, 0.7f, 0.0f), Black, false, false, false);
 	schema->context[IN_WORD_COMPILER_FUNCTION] = HighlightContext(color(1, 0.4f, 0.4f, 1), Black, false, false, false);
+	schema->context[IN_WORD_OPERATOR_FUNCTION] = HighlightContext(color(1, 0.4f, 0.7f, 0.6f), Black, false, false, false);
 	schema->context[IN_WORD_SPECIAL] = HighlightContext(color(1, 0.625f, 0, 0.625f), Black, false, true, false);
+	schema->context[IN_WORD_MODIFIER] = HighlightContext(color(1, 0.525f, 0.4f, 0.85f), Black, false, false, false);
 	schema->context[IN_NUMBER] = HighlightContext(color(1, 0.2f, 0.7f, 0.2f), Black, false, false, false);
 	schema->context[IN_OPERATOR] = HighlightContext(color(1, 1, 1, 0.3f), Black, false, false, false);
 	schema->context[IN_STRING] = HighlightContext(color(1, 1, 0, 0), Black, false, false, false);

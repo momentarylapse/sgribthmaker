@@ -58,15 +58,21 @@ Array<Parser::Label> Parser::FindLabels(SourceView *sv) {
 int Parser::WordType(const string &name) {
 	if (name.head(macro_begin.num) == macro_begin)
 		return IN_MACRO;
-	for (string &n : special_words)
+	for (string &n : keywords)
 		if (name == n)
 			return IN_WORD_SPECIAL;
+	for (string &n : modifiers)
+		if (name == n)
+			return IN_WORD_MODIFIER;
 	for (string &n : types)
 		if (name == n)
 			return IN_WORD_TYPE;
 	for (string &n : compiler_functions)
 		if (name == n)
 			return IN_WORD_COMPILER_FUNCTION;
+	for (string &n : operator_functions)
+		if (name == n)
+			return IN_WORD_OPERATOR_FUNCTION;
 	for (string &n : globals)
 		if (name == n)
 			return IN_WORD_GLOBAL_VARIABLE;

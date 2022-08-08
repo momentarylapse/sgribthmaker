@@ -25,9 +25,11 @@ public:
 	string multi_comment_end;
 	string string_sub_begin;
 	string string_sub_end;
-	Array<string> special_words;
+	Array<string> keywords;
+	Array<string> modifiers;
 	Array<string> types;
 	Array<string> compiler_functions;
+	Array<string> operator_functions;
 	Array<string> globals;
 
 
