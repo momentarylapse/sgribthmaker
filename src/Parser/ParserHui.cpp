@@ -100,6 +100,7 @@ ParserHui::ParserHui() : Parser("Hui") {
 	special_words.add("bar");
 	special_words.add("nobar");
 	special_words.add("buttonbar");
+	special_words.add("switch");
 	types.add("Dialog");
 	types.add("Window");
 	types.add("Menu");
@@ -127,6 +128,7 @@ ParserHui::ParserHui() : Parser("Hui") {
 	types.add("Paned");
 	types.add("Revealer");
 	types.add("Expander");
+	types.add("MenuButton");
 }
 
 void ParserHui::CreateTextColors(SourceView *sv, int first_line, int last_line) {
