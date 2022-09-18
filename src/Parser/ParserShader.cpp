@@ -101,6 +101,7 @@ ParserShader::ParserShader() : Parser("Shader") {
 	compiler_functions.add("tan");
 	compiler_functions.add("step");
 	compiler_functions.add("clamp");
+	compiler_functions.add("length");
 	compiler_functions.add("smoothstep");
 	compiler_functions.add("texture");
 	compiler_functions.add("texture2D");
