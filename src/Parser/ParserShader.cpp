@@ -147,8 +147,19 @@ ParserShader::ParserShader() : Parser("Shader") {
 	globals.add("location");
 	globals.add("binding");
 	globals.add("set");
+	globals.add("component");
 	globals.add("std430");
 	globals.add("std140");
+	globals.add("rgba8");
+	globals.add("rgba8i");
+	globals.add("rgba8ui");
+	globals.add("rgba16f");
+	globals.add("rgba32f");
+	globals.add("r8");
+	globals.add("r8i");
+	globals.add("r8ui");
+	globals.add("r16f");
+	globals.add("r32f");
 
 	globals.add("gl_TexCoord");
 	globals.add("gl_Vertex");
