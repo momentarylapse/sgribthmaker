@@ -289,8 +289,13 @@ void SgribthMaker::on_copy() {
 }
 
 void SgribthMaker::on_paste() {
+	msg_write("SM.on paste");
 	cur_doc->source_view->delete_selection();
-	cur_doc->source_view->insert_at_cursor(hui::Clipboard::paste());
+	msg_write("x");
+	auto p = hui::Clipboard::paste();
+	msg_write("y " + i2s(p.num));
+	cur_doc->source_view->insert_at_cursor(p);//hui::Clipboard::paste());
+	msg_write("/SM.on paste");
 	SetMessage(_("pasted"));
 }
 

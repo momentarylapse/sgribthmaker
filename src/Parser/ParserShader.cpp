@@ -23,16 +23,11 @@ ParserShader::ParserShader() : Parser("Shader") {
 	keywords.add("readonly");
 	keywords.add("require");
 	keywords.add("shared");
-	keywords.add("push_constant");
-	keywords.add("buffer");
-	keywords.add("sampler");
 	keywords.add("triangles");
 	keywords.add("lines");
 	keywords.add("points");
 	keywords.add("triangle_strip");
 	keywords.add("max_vertices");
-	keywords.add("local_size_x");
-	keywords.add("local_size_y");
 	keywords.add("struct");
 	keywords.add("if");
 	keywords.add("else");
@@ -87,6 +82,8 @@ ParserShader::ParserShader() : Parser("Shader") {
 	types.add("sampler2DShadow");
 	types.add("samplerCube");
 	types.add("image2D");
+	globals.add("true");
+	globals.add("false");
 	compiler_functions.add("max");
 	compiler_functions.add("min");
 	compiler_functions.add("dot");
@@ -143,11 +140,17 @@ ParserShader::ParserShader() : Parser("Shader") {
 	globals.add("topology");
 	globals.add("version");
 	globals.add("name");
+	globals.add("buffer");
+	globals.add("image");
+	globals.add("sampler");
 	// layout(x=y...)
 	globals.add("location");
 	globals.add("binding");
 	globals.add("set");
 	globals.add("component");
+	globals.add("push_constant");
+	globals.add("local_size_x");
+	globals.add("local_size_y");
 	globals.add("std430");
 	globals.add("std140");
 	globals.add("rgba8");

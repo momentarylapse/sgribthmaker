@@ -109,7 +109,7 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 	operator_functions.add("__idiv__");
 	operator_functions.add("__and__");
 	keywords.add("as");
-	for (auto p: kaba::packages){
+	for (auto p: kaba::packages) {
 		add_class(this, p->base_class(), "");
 		//if (p->used_by_default)
 			add_class_content(this, p->base_class(), "");
@@ -121,24 +121,33 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 
 Array<Parser::Label> ParserKaba::FindLabels(SourceView *sv) {
 	Array<Parser::Label> labels;
+
+	try {
+		auto m = kaba::create_for_source(sv->get_all());
+		msg_write("ok");
+	} catch (Exception &e) {
+		msg_error(e.message());
+	}
+
 	int num_lines = sv->get_num_lines();
 	string last_class;
-	for (int l=0;l<num_lines;l++){
+	for (int l=0;l<num_lines;l++) {
 		string s = sv->get_line(l);
 		if (s.num < 4)
 			continue;
-		if (char_type(s[0]) == CHAR_LETTER){
-			if (s.find("class ") >= 0){
+		if (char_type(s[0]) == CHAR_LETTER) {
+			if (s.find("class ") >= 0) {
 				last_class = s.replace("\t", " ").replace(":", " ").explode(" ")[1];
 				s = "class " + last_class;
-			}else if (s.find("(") >= 0){
+			} else if (s.find("(") >= 0) {
 				last_class = "";
-			}else
+			} else {
 				continue;
+			}
 			if (s.find(kaba::IDENTIFIER_EXTERN) >= 0)
 				continue;
 			labels.add(Label(s, l, 0));
-		}else if ((last_class.num > 0) && (s[0] == '\t') && (char_type(s[1]) == CHAR_LETTER)){
+		} else if ((last_class.num > 0) && (s[0] == '\t') && (char_type(s[1]) == CHAR_LETTER)) {
 			if (s.find("(") < 0)
 				continue;
 			s = s.replace(kaba::IDENTIFIER_VIRTUAL + " ", "").replace(kaba::IDENTIFIER_OVERRIDE + " ", "").trim();
@@ -150,6 +159,16 @@ Array<Parser::Label> ParserKaba::FindLabels(SourceView *sv) {
 
 
 void ParserKaba::CreateTextColors(SourceView *sv, int first_line, int last_line) {
+
+	/*try {
+		auto m = kaba::create_for_source(sv->get_all());
+		msg_write("ok");
+	} catch (Exception &e) {
+		msg_error(e.message());
+	}*/
+
+
+
 	CreateTextColorsDefault(sv, first_line, last_line);
 }
 
