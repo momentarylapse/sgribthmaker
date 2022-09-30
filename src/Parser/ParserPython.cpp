@@ -67,10 +67,10 @@ ParserPython::ParserPython() : Parser("Python") {
 	compiler_functions.add("pow");
 	compiler_functions.add("exp");
 	compiler_functions.add("log");
-	globals.add("True");
-	globals.add("False");
-	globals.add("nil");
-	globals.add("None");
+	constants.add("True");
+	constants.add("False");
+	constants.add("nil");
+	constants.add("None");
 }
 
 void ParserPython::CreateTextColors(SourceView *sv, int first_line, int last_line) {

@@ -16,6 +16,9 @@ public:
 
 	Array<Label> FindLabels(SourceView *sv) override;
 	void CreateTextColors(SourceView *sv, int first_line = -1, int last_line = -1) override;
+
+	void clear_symbols() override;
+	void update_symbols(SourceView *sv) override;
 };
 
 #endif /* PARSERKABA_H_ */

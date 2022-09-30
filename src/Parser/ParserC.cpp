@@ -50,9 +50,9 @@ ParserC::ParserC() : Parser("C/C++") {
 	compiler_functions.add("printf");
 	compiler_functions.add("sin");
 	compiler_functions.add("cos");
-	globals.add("null");
-	globals.add("true");
-	globals.add("false");
+	constants.add("NULL");
+	constants.add("true");
+	constants.add("false");
 }
 
 void ParserC::CreateTextColors(SourceView *sv, int first_line, int last_line) {

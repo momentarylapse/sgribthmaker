@@ -9,6 +9,7 @@
 #include "../HighlightScheme.h"
 #include "../lib/kaba/kaba.h"
 #include "../SourceView.h"
+#include "../Document.h"
 
 void add_class(ParserKaba *p, const kaba::Class *c, const string &ns);
 
@@ -21,11 +22,11 @@ bool allowed(const string &s) {
 void add_class_content(ParserKaba *p, const kaba::Class *c, const string &ns) {
 	for (auto v: c->static_variables)
 		if (allowed(ns + v->name))
-			p->globals.add(ns + v->name);
+			p->global_variables.add(ns + v->name);
 	for (auto cc: c->constants)
-		p->globals.add(ns + cc->name);
+		p->constants.add(ns + cc->name);
 	for (auto f: c->functions)
-		p->compiler_functions.add(ns + f->name);
+		p->functions.add(ns + f->name);
 	for (auto cc: weak(c->classes))
 		add_class(p, cc, ns);
 }
@@ -109,25 +110,52 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 	operator_functions.add("__idiv__");
 	operator_functions.add("__and__");
 	keywords.add("as");
-	for (auto p: kaba::packages) {
+	//for (auto &s: kaba::Statements)
+	//	special_words.add(s.name);
+}
+
+void ParserKaba::clear_symbols() {
+	types.clear();
+	global_variables.clear();
+	functions.clear();
+	constants.clear();
+}
+
+void ParserKaba::update_symbols(SourceView *sv) {
+
+	try {
+		kaba::config.default_filename = sv->doc->filename;
+		//msg_write(kaba::config.directory.str());
+		auto m = kaba::create_for_source(sv->get_all(), true);
+
+		clear_symbols();
+
+		//m->syntax->
+
+		/*for (auto c: weak(m->syntax->imported_symbols->classes)) {
+			if (c->name.tail(1) == "*" or c->name.tail(2) == "[]")
+				continue;
+			add_class(this, c, "");
+			add_class_content(this, c, "");
+		}*/
+
+		add_class_content(this, m->syntax->imported_symbols.get(), "");
+		add_class_content(this, m->syntax->base_class, "");
+
+	} catch (Exception &e) {
+		//msg_error(e.message());
+	}
+
+	/*for (auto p: kaba::packages) {
 		add_class(this, p->base_class(), "");
 		//if (p->used_by_default)
 			add_class_content(this, p->base_class(), "");
-	}
-	//for (auto &s: kaba::Statements)
-	//	special_words.add(s.name);
+	}*/
 }
 
 
 Array<Parser::Label> ParserKaba::FindLabels(SourceView *sv) {
 	Array<Parser::Label> labels;
-
-	try {
-		auto m = kaba::create_for_source(sv->get_all());
-		msg_write("ok");
-	} catch (Exception &e) {
-		msg_error(e.message());
-	}
 
 	int num_lines = sv->get_num_lines();
 	string last_class;

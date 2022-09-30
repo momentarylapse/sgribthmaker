@@ -73,7 +73,13 @@ int Parser::WordType(const string &name) {
 	for (string &n : operator_functions)
 		if (name == n)
 			return IN_WORD_OPERATOR_FUNCTION;
-	for (string &n : globals)
+	for (string &n : functions)
+		if (name == n)
+			return IN_WORD_COMPILER_FUNCTION;
+	for (string &n : global_variables)
+		if (name == n)
+			return IN_WORD_GLOBAL_VARIABLE;
+	for (string &n : constants)
 		if (name == n)
 			return IN_WORD_GLOBAL_VARIABLE;
 	return IN_WORD;
@@ -92,6 +98,8 @@ void Parser::CreateTextColors(SourceView *sv, int first_line, int last_line) {
 void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_line) {
 	if (gtk_text_buffer_get_char_count(sv->tb) > MAX_HIGHLIGHTING_SIZE)
 		return;
+
+	update_symbols(sv);
 
 	int comment_level = 0;
 	int num_lines = sv->get_num_lines();

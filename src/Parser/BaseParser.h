@@ -27,10 +27,12 @@ public:
 	string string_sub_end;
 	Array<string> keywords;
 	Array<string> modifiers;
-	Array<string> types;
 	Array<string> compiler_functions;
 	Array<string> operator_functions;
-	Array<string> globals;
+	Array<string> types;
+	Array<string> global_variables;
+	Array<string> functions;
+	Array<string> constants;
 
 
 	struct Label {
@@ -45,6 +47,8 @@ public:
 	virtual int WordType(const string &name);
 	virtual void CreateTextColors(SourceView *sv, int first_line = -1, int last_line = -1);
 
+	virtual void clear_symbols() {};
+	virtual void update_symbols(SourceView *sv) {};
 
 	void CreateTextColorsDefault(SourceView *sv, int first_line, int last_line);
 };
