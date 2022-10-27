@@ -4,13 +4,12 @@
 #include "../dynamic/exception.h"
 #include "../dynamic/dynamic.h"
 #include "../../os/msg.h"
+#include "../../os/terminal.h"
 #include "../../base/callable.h"
+#include "../../base/map.h"
 #include <algorithm>
 #include <math.h>
 #include <cstdio>
-
-
-#include "../../base/map.h"
 
 
 namespace kaba {
@@ -42,13 +41,8 @@ extern const Class *TypeAny;
 int enum_parse(const string &label, const Class *type);
 
 
-static string kaba_print_postfix = "\n";
-void _cdecl kaba_print(const string &str) {
-	printf("%s%s", str.c_str(), kaba_print_postfix.c_str()); fflush(stdout);
-}
-
 void _cdecl kaba_cstringout(char *str) {
-	kaba_print(str);
+	os::terminal::print(str);
 }
 
 bytes _cdecl kaba_binary(char *p, int length) {
@@ -243,7 +237,7 @@ Array<int> enum_all(const Class *e) {
 
 void SIAddXCommands() {
 
-	add_func("@sorted", TypeDynamicArray, &kaba_array_sort, Flags::_STATIC__RAISES_EXCEPTIONS);
+	add_func("@sorted", TypeDynamicArray, &array_sort, Flags::_STATIC__RAISES_EXCEPTIONS);
 		func_add_param("list", TypePointer);
 		func_add_param("class", TypeClassP);
 		func_add_param("by", TypeString);
@@ -256,10 +250,10 @@ void SIAddXCommands() {
 //	add_func("@map", TypeDynamicArray, &kaba_map, Flags::_STATIC__RAISES_EXCEPTIONS);
 //		func_add_param("func", TypeFunctionP);
 //		func_add_param("array", TypePointer);
-	add_func("@dyn", TypeAny, &kaba_dyn, Flags::_STATIC__RAISES_EXCEPTIONS);
+	add_func("@dyn", TypeAny, &dynify, Flags::_STATIC__RAISES_EXCEPTIONS);
 		func_add_param("var", TypePointer);
 		func_add_param("class", TypeClassP);
-	add_func("@xmap", TypeDynamicArray, &kaba_xmap, Flags::_STATIC__RAISES_EXCEPTIONS);
+	add_func("@xmap", TypeDynamicArray, &array_map, Flags::_STATIC__RAISES_EXCEPTIONS);
 		func_add_param("f", TypeCallableBase);
 		func_add_param("array", TypeDynamic);
 		func_add_param("t1", TypeClassP);
@@ -766,9 +760,9 @@ void SIAddPackageBase() {
 	// debug output
 	/*add_func("cprint", TypeVoid, &_cstringout, Flags::STATIC);
 		func_add_param("str", TypeCString);*/
-	add_func("print", TypeVoid, &kaba_print, Flags::STATIC);
+	add_func("print", TypeVoid, &os::terminal::print, Flags::STATIC);
 		func_add_param("str", TypeStringAutoCast);//, (Flags)((int)Flags::CONST | (int)Flags::AUTO_CAST));
-	add_ext_var("_print_postfix", TypeString, &kaba_print_postfix);
+	add_ext_var("_print_postfix", TypeString, &os::terminal::_print_postfix_);
 	add_func("as_binary", TypeString, &kaba_binary, Flags::STATIC);
 		func_add_param("p", TypePointer, Flags::REF);
 		func_add_param("length", TypeInt);

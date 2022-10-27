@@ -289,6 +289,7 @@
     <ClCompile Include="src\lib\os\msg.cpp" />
     <ClCompile Include="src\lib\os\path.cpp" />
     <ClCompile Include="src\lib\os\stream.cpp" />
+    <ClCompile Include="src\lib\os\terminal.cpp" />
     <ClCompile Include="src\lib\os\time.cpp" />
     <ClCompile Include="src\Parser\BaseParser.cpp" />
     <ClCompile Include="src\Parser\ParserC.cpp" />
@@ -466,6 +467,7 @@
     <ClInclude Include="src\lib\base\array.h" />
     <ClInclude Include="src\lib\base\base.h" />
     <ClInclude Include="src\lib\base\callable.h" />
+    <ClInclude Include="src\lib\base\iter.h" />
     <ClInclude Include="src\lib\base\macros.h" />
     <ClInclude Include="src\lib\base\map.h" />
     <ClInclude Include="src\lib\base\optional.h" />
@@ -611,6 +613,7 @@
     <ClInclude Include="src\lib\os\msg.h" />
     <ClInclude Include="src\lib\os\path.h" />
     <ClInclude Include="src\lib\os\stream.h" />
+    <ClInclude Include="src\lib\os\terminal.h" />
     <ClInclude Include="src\lib\os\time.h" />
     <ClInclude Include="src\lib\config.h" />
     <ClInclude Include="src\Parser\BaseParser.h" />

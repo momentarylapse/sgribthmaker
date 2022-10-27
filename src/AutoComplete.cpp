@@ -157,7 +157,7 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 		return data;
 	auto yy = xx.explode(".");
 	if (verbose)
-		printf("yy=%s\n", sa2s(yy).c_str());
+		printf("yy=%s\n", str(yy).c_str());
 	data.offset = yy.back().num;
 	if (yy.num == 1) {
 		data.append(find_top_level(syntax, f, yy[0]));
