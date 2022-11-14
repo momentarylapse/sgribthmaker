@@ -55,6 +55,7 @@ sources = [
 	'src/lib/base/strings.cpp',
 	'src/lib/doc/chunked.cpp',
 	'src/lib/doc/pdf.cpp',
+	'src/lib/doc/ttf.cpp',
 	'src/lib/doc/xml.cpp',
 	'src/lib/hui/Controls/Control.cpp',
 	'src/lib/hui/Controls/ControlButtonGtk.cpp',
