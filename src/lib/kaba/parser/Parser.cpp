@@ -1586,7 +1586,7 @@ bool type_needs_alignment(const Class *t) {
 void parser_class_add_element(Parser *p, Class *_class, const string &name, const Class *type, Flags flags, int &_offset, int token_id) {
 
 	// override?
-	ClassElement *orig = find_by_element(_class->elements, &ClassElement::name, name);
+	ClassElement *orig = base::find_by_element(_class->elements, &ClassElement::name, name);
 
 	bool override = flags_has(flags, Flags::OVERRIDE);
 	if (override and ! orig)
