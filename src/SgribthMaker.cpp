@@ -365,19 +365,21 @@ void SgribthMaker::CompileKaba() {
 	//HuiSetDirectory(SgribthDir);
 	//msg_set_verbose(true);
 
-	os::Timer CompileTimer;
+	os::Timer timer;
 
 	kaba::config.compile_silently = true;
 	//kaba::config.verbose = true;
 
-	try {
-		auto compile_module = kaba::load(cur_doc->filename, true);
+	shared<kaba::Module> module;
 
-		float dt = CompileTimer.get();
+	try {
+		module = kaba::load(cur_doc->filename, true);
+
+		float dt = timer.get();
 
 		//compile_module->Show();
 
-		SetMessage(format(_("Script compilable without errors!         (in %s)"), get_time_str(dt).c_str()));
+		SetMessage(format(_("Script compilable without errors!         (in %s)"), get_time_str(dt)));
 
 	} catch (const kaba::Exception &e) {
 		e.print();
@@ -385,9 +387,7 @@ void SgribthMaker::CompileKaba() {
 		SetError(e.message());
 		cur_doc->source_view->move_cursor_to(e.line, e.column);
 	}
-
-	//RemoveModule(compile_module);
-	kaba::delete_all_modules(true, true);
+	kaba::remove_module(module.get());
 
 	//msg_set_verbose(ALLOW_LOGGING);
 }
@@ -439,20 +439,22 @@ void SgribthMaker::CompileAndRun(bool verbose) {
 		return;
 	}
 
-	Save(cur_doc, [this,verbose]{
+	Save(cur_doc, [this,verbose] {
 
 		hui::SetDirectory(cur_doc->filename.parent());
 		//if (verbose)
 		//	msg_set_verbose(true);
 
 		// compile
-		os::Timer CompileTimer;
+		os::Timer timer;
 		kaba::config.compile_silently = true;
 		//kaba::config.verbose = true;
 
+		shared<kaba::Module> module;
+
 		try {
-			auto compile_module = kaba::load(cur_doc->filename);
-			float dt_compile = CompileTimer.get();
+			module = kaba::load(cur_doc->filename);
+			float dt_compile = timer.get();
 
 			if (!verbose)
 				msg_set_verbose(true);
@@ -461,21 +463,21 @@ void SgribthMaker::CompileAndRun(bool verbose) {
 
 
 			float dt_execute = 0;
-			CompileTimer.reset();
+			timer.reset();
 			typedef void void_func();
 			typedef void strings_func(const Array<string>);
-			auto f = (void_func*)compile_module->match_function("main", "void", {});
-			auto fsa = (strings_func*)compile_module->match_function("main", "void", {"string[]"});
+			auto f = (void_func*)module->match_function("main", "void", {});
+			auto fsa = (strings_func*)module->match_function("main", "void", {"string[]"});
 			if (f) {
 				f();
 			} else if (fsa) {
 				fsa({});
 			}
 			//compile_module->ShowVars(false);
-			dt_execute = CompileTimer.get();
+			dt_execute = timer.get();
 
 			if (f or fsa) {
-				SetMessage(format(_("Compiling: %s         opcode: %db         execution: %s"), get_time_str(dt_compile).c_str(), compile_module->opcode_size, get_time_str(dt_execute).c_str()));
+				SetMessage(format(_("Compiling: %s         opcode: %db         execution: %s"), get_time_str(dt_compile), module->opcode_size, get_time_str(dt_execute)));
 			} else {
 				SetError(_("no 'void main()' or 'void main(string[])' found"));
 			}
@@ -497,7 +499,8 @@ void SgribthMaker::CompileAndRun(bool verbose) {
 		
 	
 		//RemoveScript(compile_script);
-		kaba::delete_all_modules(true, true);
+		kaba::remove_module(module.get());
+		//kaba::delete_all_modules(true, true);
 
 		//msg_set_verbose(ALLOW_LOGGING);
 	}, []{});

@@ -355,8 +355,10 @@ void SIAddPackageBase() {
 	TypeFloatP      = add_type_p(TypeFloat);
 	TypeFloatList   = add_type_l(TypeFloat);
 	TypeFloat64List = add_type_l(TypeFloat64);
-	TypeCString     = add_type_a(TypeChar, 256, "cstring");	// cstring := char[256]
-	TypeString      = add_type_l(TypeChar, "string");	// string := char[]
+	TypeCString     = add_type_a(TypeChar, 256);
+	capture_implicit_type(TypeCString, "cstring"); // cstring := char[256]
+	TypeString      = add_type_l(TypeChar);
+	capture_implicit_type(TypeString, "string"); // string := char[]
 	TypeStringAutoCast = add_type("<string-auto-cast>", config.super_array_size);	// string := char[]
 	TypeStringList  = add_type_l(TypeString);
 

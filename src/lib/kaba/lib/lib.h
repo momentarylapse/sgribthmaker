@@ -77,12 +77,13 @@ int element_offset(M C::* p) {
 
 void add_package(const string &name, Flags = Flags::NONE);
 const Class *add_type(const string &name, int size, Flags = Flags::NONE, const Class *_namespace = nullptr);
-const Class *add_type_p(const Class *sub_type, Flags = Flags::NONE, const string &name = "");
-const Class *add_type_a(const Class *sub_type, int array_length, const string &name = "");
-const Class *add_type_l(const Class *sub_type, const string &name = "");
-const Class *add_type_d(const Class *sub_type, const string &name = "");
+const Class *add_type_p(const Class *sub_type, Flags = Flags::NONE);
+const Class *add_type_a(const Class *sub_type, int array_length);
+const Class *add_type_l(const Class *sub_type);
+const Class *add_type_d(const Class *sub_type);
 const Class *add_type_f(const Class *ret_type, const Array<const Class*> &params);
 const Class *add_type_e(const string &name, const Class *_namespace = nullptr);
+void capture_implicit_type(const Class *t, const string &name);
 
 
 Function *add_func_x(const string &name, const Class *return_type, void *func, Flags flag = Flags::NONE);

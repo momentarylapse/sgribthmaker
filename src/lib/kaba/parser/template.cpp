@@ -222,7 +222,13 @@ Function *TemplateManager::instantiate(Parser *parser, Template &t, const Array<
 
 
 namespace implicit_class_registry {
+	Module *module = nullptr;
 	Array<const Class*> classes;
+
+	void init() {
+		module = new Module();
+		module->filename = "<implicit-class-owner>";
+	}
 
 	const Class *find(const string &name, Class::Type type, int array_size, const Array<const Class*> &params) {
 		for (auto t: classes) {
@@ -240,6 +246,9 @@ namespace implicit_class_registry {
 		return nullptr;
 	}
 	void add(const Class* t) {
+		//if (!module)
+		//	init();
+		//module->syntax->owned_classes.add(t);
 		classes.add(t);
 	}
 

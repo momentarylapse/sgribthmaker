@@ -8,6 +8,7 @@
 \*----------------------------------------------------------------------------*/
 #include "../os/file.h"
 #include "../os/msg.h"
+#include "../base/algo.h"
 #include "kaba.h"
 #include "parser/Parser.h"
 #include "parser/Concretifier.h"

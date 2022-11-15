@@ -158,14 +158,12 @@ const Class *add_type(const string &name, int size, Flags flag, const Class *nam
 	return t;
 }
 
-const Class *add_type_p(const Class *sub_type, Flags flag, const string &_name) {
-	string name = _name;
-	if (name == "") {
-		if (flags_has(flag, Flags::SHARED))
-			name = sub_type->name + " shared";
-		else
-			name = sub_type->name + "*";
-	}
+const Class *add_type_p(const Class *sub_type, Flags flag) {
+	string name;
+	if (flags_has(flag, Flags::SHARED))
+		name = sub_type->name + " shared";
+	else
+		name = sub_type->name + "*";
 	Class *t = new Class(Class::Type::POINTER, name, config.pointer_size, cur_package->syntax, nullptr, {sub_type});
 	if (flags_has(flag, Flags::SHARED))
 		t->type = Class::Type::POINTER_SHARED;
@@ -175,10 +173,8 @@ const Class *add_type_p(const Class *sub_type, Flags flag, const string &_name) 
 }
 
 // fixed array
-const Class *add_type_a(const Class *sub_type, int array_length, const string &_name) {
-	string name = _name;
-	if (name == "")
-		name = sub_type->name + "[" + i2s(array_length) + "]";
+const Class *add_type_a(const Class *sub_type, int array_length) {
+	string name = sub_type->name + "[" + i2s(array_length) + "]";
 	Class *t = new Class(Class::Type::ARRAY, name, sub_type->size * array_length, cur_package->syntax, nullptr, {sub_type});
 	t->array_length = array_length;
 	__add_class__(t, sub_type->name_space);
@@ -187,10 +183,8 @@ const Class *add_type_a(const Class *sub_type, int array_length, const string &_
 }
 
 // super array
-const Class *add_type_l(const Class *sub_type, const string &_name) {
-	string name = _name;
-	if (name == "")
-		name = sub_type->name + "[]";
+const Class *add_type_l(const Class *sub_type) {
+	string name = sub_type->name + "[]";
 	Class *t = new Class(Class::Type::SUPER_ARRAY, name, config.super_array_size, cur_package->syntax, nullptr, {sub_type});
 	kaba_make_super_array(t);
 	__add_class__(t, sub_type->name_space);
@@ -199,15 +193,19 @@ const Class *add_type_l(const Class *sub_type, const string &_name) {
 }
 
 // dict
-const Class *add_type_d(const Class *sub_type, const string &_name) {
-	string name = _name;
-	if (name == "")
-		name = sub_type->name + "{}";
+const Class *add_type_d(const Class *sub_type) {
+	string name = sub_type->name + "{}";
 	Class *t = new Class(Class::Type::DICT, name, config.super_array_size, cur_package->syntax, nullptr, {sub_type});
 	kaba_make_dict(t);
 	__add_class__(t, sub_type->name_space);
 	implicit_class_registry::add(t);
 	return t;
+}
+
+void capture_implicit_type(const Class *_t, const string &name) {
+	auto t = const_cast<Class*>(_t);
+	t->name = name;
+	//__add_class__(t, t->param[0]->name_space);
 }
 
 // enum
