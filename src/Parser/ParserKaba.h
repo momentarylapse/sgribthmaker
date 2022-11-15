@@ -9,6 +9,11 @@
 #define PARSERKABA_H_
 
 #include "BaseParser.h"
+/*#include "../lib/base/pointer.h"
+
+namespace kaba {
+	class Context;
+}*/
 
 class ParserKaba : public Parser {
 public:
@@ -19,6 +24,8 @@ public:
 
 	void clear_symbols() override;
 	void update_symbols(SourceView *sv) override;
+
+	//owned<kaba::Context> context;
 };
 
 #endif /* PARSERKABA_H_ */

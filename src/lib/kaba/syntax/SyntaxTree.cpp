@@ -112,18 +112,16 @@ const Class *SyntaxTree::request_implicit_class_callable_bind(const Array<const 
 }
 
 SyntaxTree::SyntaxTree(Module *_module) {
-	base_class = new Class(Class::Type::REGULAR, "-base-", 0, this);
-	_base_class = base_class;
-	imported_symbols = new Class(Class::Type::REGULAR, "-imported-", 0, this);
-	root_of_all_evil = new Function("-root-", TypeVoid, base_class, Flags::STATIC);
-
-
 	flag_string_const_as_cstring = false;
 	flag_function_pointer_as_code = false;
 	flag_immortal = false;
 	module = _module;
 	asm_meta_info = new Asm::MetaInfo(config.pointer_size);
-	parser = nullptr;
+
+	base_class = new Class(Class::Type::REGULAR, "-base-", 0, this);
+	_base_class = base_class;
+	imported_symbols = new Class(Class::Type::REGULAR, "-imported-", 0, this);
+	root_of_all_evil = new Function("-root-", TypeVoid, base_class, Flags::STATIC);
 }
 
 void SyntaxTree::default_import() {
@@ -506,7 +504,7 @@ Array<int> enum_all(const Class*);
 Class *SyntaxTree::create_new_class(const string &name, Class::Type type, int size, int array_size, const Class *parent, const Array<const Class*> &params, const Class *ns, int token_id) {
 	//msg_write("CREATE " + name);
 	if (find_root_type_by_name(name, ns, false))
-		do_error(format("class '%s' already exists", name), token_id);
+		do_error(format("class '%s' already exists...", name), token_id);
 
 	Class *t = new Class(type, name, size, this, parent, params);
 	t->token_id = token_id;
@@ -606,12 +604,12 @@ const Class *SyntaxTree::request_implicit_class(const string &name, Class::Type 
 	//msg_write("make class " + name + " ns=" + ns->long_name());// + " params=" + param->long_name());
 
 	// check if it already exists
-	if (auto *tt = implicit_class_registry::find(name, type, array_size, params))
+	if (auto *tt = module->context->implicit_class_registry->find(name, type, array_size, params))
 		return tt;
 
 	// add new class
 	auto t = create_new_class(name, type, size, array_size, parent, params, ns, token_id);
-	implicit_class_registry::add(t);
+	module->context->implicit_class_registry->add(t);
 	return t;
 }
 
@@ -1389,8 +1387,8 @@ void SyntaxTree::map_local_variables_to_stack() {
 SyntaxTree::~SyntaxTree() {
 	// delete all classes, functions etc created by this module
 
-	TemplateManager::clear_from_module(module);
-	implicit_class_registry::clear_from_module(module);
+	module->context->template_manager->clear_from_module(module);
+	module->context->implicit_class_registry->clear_from_module(module);
 }
 
 void SyntaxTree::show(const string &stage) {

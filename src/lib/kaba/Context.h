@@ -17,6 +17,9 @@ namespace kaba {
 class Module;
 class Function;
 class Class;
+class TemplateManager;
+class ImplicitClassRegistry;
+class ExternalLinkData;
 
 class Exception : public Asm::Exception {
 public:
@@ -34,7 +37,11 @@ class Context {
 public:
     shared_array<Module> public_modules;
     shared_array<Module> packages;
+    owned<TemplateManager> template_manager;
+    owned<ImplicitClassRegistry> implicit_class_registry;
+    owned<ExternalLinkData> external;
 
+    Context();
     ~Context();
 
     void clean_up();
@@ -42,14 +49,16 @@ public:
 
     shared<Module> load(const Path &filename, bool just_analyse = false);
     shared<Module> create_for_source(const string &buffer, bool just_analyse = false);
-    shared<Module> create_empty();
+    shared<Module> create_empty(const Path &filename);
     void remove_module(Module *s);
     
     void execute_single_command(const string &cmd);
 
     const Class *get_dynamic_type(const VirtualBase *p) const;
+
+    static Context *create();
 };
 
-extern Context default_context;
+extern Context *default_context;
 
 }

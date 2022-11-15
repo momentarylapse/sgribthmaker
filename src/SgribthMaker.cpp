@@ -370,10 +370,10 @@ void SgribthMaker::CompileKaba() {
 	kaba::config.compile_silently = true;
 	//kaba::config.verbose = true;
 
-	kaba::Context context;
+	auto context = ownify(kaba::Context::create());
 
 	try {
-		auto module = context.load(cur_doc->filename, true);
+		auto module = context->load(cur_doc->filename, true);
 
 		float dt = timer.get();
 
@@ -449,10 +449,10 @@ void SgribthMaker::CompileAndRun(bool verbose) {
 		kaba::config.compile_silently = true;
 		//kaba::config.verbose = true;
 
-		kaba::Context context;
+		auto context = ownify(kaba::Context::create());
 
 		try {
-			auto module = context.load(cur_doc->filename);
+			auto module = context->load(cur_doc->filename);
 			float dt_compile = timer.get();
 
 			if (!verbose)

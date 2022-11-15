@@ -54,9 +54,10 @@ int64 s2i2(const string &str) {
 
 Parser::Parser(SyntaxTree *t) :
 	Exp(t->expressions),
-	con(this, t),
+	con(t->module->context, this, t),
 	auto_implementer(this, t)
 {
+	context = t->module->context;
 	tree = t;
 	cur_func = nullptr;
 	Exp.cur_line = nullptr;
@@ -1614,7 +1615,7 @@ void parser_class_add_element(Parser *p, Class *_class, const string &name, cons
 	} else {
 		if (type_needs_alignment(type))
 			_offset = mem_align(_offset, 4);
-		_offset = process_class_offset(_class->cname(p->tree->base_class), name, _offset);
+		_offset = p->context->external->process_class_offset(_class->cname(p->tree->base_class), name, _offset);
 		auto el = ClassElement(name, type, _offset);
 		_offset += type->size;
 		_class->elements.add(el);
@@ -1736,6 +1737,7 @@ bool Parser::parse_class(Class *_namespace) {
 }
 
 void Parser::post_process_newly_parsed_class(Class *_class, int size) {
+	auto external = context->external.get();
 
 	// virtual functions?     (derived -> _class->num_virtual)
 //	_class->vtable = cur_virtual_index;
@@ -1748,7 +1750,7 @@ void Parser::post_process_newly_parsed_class(Class *_class, int size) {
 			// element "-vtable-" being derived
 		} else {
 			for (ClassElement &e: _class->elements)
-				e.offset = process_class_offset(_class->cname(tree->base_class), e.name, e.offset + config.pointer_size);
+				e.offset = external->process_class_offset(_class->cname(tree->base_class), e.name, e.offset + config.pointer_size);
 
 			auto el = ClassElement(IDENTIFIER_VTABLE_VAR, TypePointer, 0);
 			_class->elements.insert(el, 0);
@@ -1762,7 +1764,7 @@ void Parser::post_process_newly_parsed_class(Class *_class, int size) {
 	for (auto &e: _class->elements)
 		if (type_needs_alignment(e.type))
 			size = mem_align(size, 4);
-	_class->size = process_class_size(_class->cname(tree->base_class), size);
+	_class->size = external->process_class_size(_class->cname(tree->base_class), size);
 
 
 	tree->add_missing_function_headers_for_class(_class);
@@ -2072,7 +2074,7 @@ Function *Parser::parse_function_header(Class *name_space, Flags flags) {
 	expect_new_line("newline expected after parameter list");
 
 	if (f->is_template()) {
-		TemplateManager::add_template(f, template_param_names);
+		context->template_manager->add_template(f, template_param_names);
 		name_space->add_template_function(tree, f, flags_has(flags, Flags::VIRTUAL), flags_has(flags, Flags::OVERRIDE));
 	} else {
 		con.concretify_function_header(f);
