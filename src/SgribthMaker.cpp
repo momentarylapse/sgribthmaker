@@ -20,7 +20,7 @@
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.10.2";
+string AppVersion = "0.4.10.3";
 
 //#define ALLOW_LOGGING			true
 #define ALLOW_LOGGING			false
@@ -364,6 +364,7 @@ void SgribthMaker::CompileKaba() {
 
 	//HuiSetDirectory(SgribthDir);
 	//msg_set_verbose(true);
+	printf("COMPILE\n");
 
 	os::Timer timer;
 
@@ -389,6 +390,7 @@ void SgribthMaker::CompileKaba() {
 	}
 
 	//msg_set_verbose(ALLOW_LOGGING);
+	printf("/COMPILE\n");
 }
 
 void SgribthMaker::CompileShader() {
@@ -608,7 +610,7 @@ SgribthMaker::SgribthMaker() :
 	set_property("version", AppVersion);
 	set_property("comment", _("Text editor and kaba compiler"));
 	set_property("website", "http://michi.is-a-geek.org/michisoft");
-	set_property("copyright", "© 2006-2018 by MichiSoft TM");
+	set_property("copyright", "© 2006-2022 by MichiSoft TM");
 	set_property("author", "Michael Ankele <michi@lupina.de>");
 
 //	hui::RegisterFileType("kaba","MichiSoft Script Datei", directory + "Data/kaba.ico", filename,"open",true);

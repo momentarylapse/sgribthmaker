@@ -122,14 +122,12 @@ void ParserKaba::clear_symbols() {
 }
 
 void ParserKaba::update_symbols(SourceView *sv) {
-	auto context = kaba::Context::create();
+	auto context = ownify(kaba::Context::create());
 
 	try {
 		kaba::config.default_filename = sv->doc->filename;
 		//msg_write(kaba::config.directory.str());
-		msg_write("update...");
 		auto m = context->create_for_source(sv->get_all(), true);
-		msg_write(p2s(m.get()));
 
 		clear_symbols();
 
@@ -146,7 +144,7 @@ void ParserKaba::update_symbols(SourceView *sv) {
 		add_class_content(this, m->syntax->base_class, "");
 
 	} catch (Exception &e) {
-		msg_error(e.message());
+		//msg_error(e.message());
 	}
 
 	/*for (auto p: kaba::packages) {

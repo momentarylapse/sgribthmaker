@@ -219,8 +219,8 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 
 
 AutoComplete::Data AutoComplete::run(const string& _code, const Path &filename, int line, int pos) {
-	kaba::Context context;
-	auto s = context.create_empty("<auto-complete>");
+	auto context = ownify(kaba::Context::create());
+	auto s = context->create_empty("<auto-complete>");
 	s->filename = filename;
 	auto ll = _code.explode("\n");
 	auto lines_pre = ll.sub_ref(0, line);//+1);
@@ -239,9 +239,10 @@ AutoComplete::Data AutoComplete::run(const string& _code, const Path &filename, 
 	try {
 		//s->syntax->ParseBuffer(code, true);
 
+		s->syntax->default_import();
 
 		//printf("--a\n");
-		s->syntax->parser->Exp.analyse(s->syntax, code + string("\0", 1)); // compatibility... expected by lexical
+		s->syntax->parser->Exp.analyse(s->syntax, code);
 
 		//printf("--b\n");
 		s->syntax->parser->parse_macros(true);

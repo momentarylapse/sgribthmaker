@@ -788,7 +788,7 @@ void SIAddPackageBase(Context *c) {
 		func_add_param("h", TypeInt);
 	add_ext_var("_extern_variable", TypeInt, &extern_variable1);
 
-	c->external->link("xxx_delete", (void*)&xxx_delete);
+	//c->external->link("xxx_delete", (void*)&xxx_delete);
 
 
 	add_type_cast(10, TypeInt, TypeFloat32, "int.__float__");
