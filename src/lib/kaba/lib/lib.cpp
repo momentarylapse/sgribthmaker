@@ -99,8 +99,6 @@ const Class *TypeFunctionCodeP;
 
 extern const Class *TypePath;
 
-
-shared_array<Module> packages;
 Module *cur_package = nullptr;
 
 
@@ -126,17 +124,17 @@ Flags flags_mix(const Array<Flags> &f) {
 	return r;
 }
 
-void add_package(const string &name, Flags flags) {
-	for (auto &p: packages)
+void add_package(Context *c, const string &name, Flags flags) {
+	for (auto &p: c->packages)
 		if (p->filename.str() == name) {
 			cur_package = p.get();
 			return;
 		}
-	shared<Module> s = new Module;
+	auto s = c->create_empty();
 	s->used_by_default = flags_has(flags, Flags::AUTO_IMPORT);
 	s->syntax->base_class->name = name;
 	s->filename = name;
-	packages.add(s);
+	c->packages.add(s);
 	cur_package = s.get();
 }
 
@@ -605,21 +603,46 @@ void add_type_cast(int penalty, const Class *source, const Class *dest, const st
 
 void SIAddStatements();
 
-void SIAddXCommands();
-void SIAddPackageBase();
-void SIAddPackageKaba();
-void SIAddPackageTime();
-void SIAddPackageOS();
-void SIAddPackageOSPath();
-void SIAddPackageMath();
-void SIAddPackageThread();
-void SIAddPackageHui();
-void SIAddPackageGl();
-void SIAddPackageNet();
-void SIAddPackageImage();
-void SIAddPackageDoc();
-void SIAddPackageVulkan();
+void SIAddXCommands(Context *c);
+void SIAddPackageBase(Context *c);
+void SIAddPackageKaba(Context *c);
+void SIAddPackageTime(Context *c);
+void SIAddPackageOS(Context *c);
+void SIAddPackageOSPath(Context *c);
+void SIAddPackageMath(Context *c);
+void SIAddPackageThread(Context *c);
+void SIAddPackageHui(Context *c);
+void SIAddPackageGl(Context *c);
+void SIAddPackageNet(Context *c);
+void SIAddPackageImage(Context *c);
+void SIAddPackageDoc(Context *c);
+void SIAddPackageVulkan(Context *c);
 
+
+void init_lib(Context *c) {
+
+
+	SIAddPackageBase(c);
+	SIAddPackageOSPath(c);
+	SIAddPackageKaba(c);
+	SIAddPackageMath(c);
+	SIAddPackageTime(c);
+	SIAddPackageOS(c);
+	SIAddPackageImage(c);
+	SIAddPackageDoc(c);
+	SIAddPackageHui(c); // depends on doc
+	SIAddPackageGl(c);
+	SIAddPackageNet(c);
+	SIAddPackageThread(c);
+	SIAddPackageVulkan(c);
+
+	add_package(c, "base");
+	SIAddXCommands(c);
+
+
+	// consistency checks
+	// -> now done by regression tests!
+}
 
 
 void init(Abi abi, bool allow_std_lib) {
@@ -640,36 +663,9 @@ void init(Abi abi, bool allow_std_lib) {
 	config.function_align = 2 * config.pointer_size;
 	config.stack_frame_align = 2 * config.pointer_size;
 
-
 	SIAddStatements();
 
-	SIAddPackageBase();
-	SIAddPackageOSPath();
-	SIAddPackageKaba();
-	SIAddPackageMath();
-	SIAddPackageTime();
-	SIAddPackageOS();
-	SIAddPackageImage();
-	SIAddPackageDoc();
-	SIAddPackageHui(); // depends on doc
-	SIAddPackageGl();
-	SIAddPackageNet();
-	SIAddPackageThread();
-	SIAddPackageVulkan();
-
-	add_package("base");
-	SIAddXCommands();
-
-
-	// consistency checks
-	// -> now done by regression tests!
+	init_lib(&default_context);
 }
 
-void clean_up() {
-	delete_all_modules(true, true);
-
-	packages.clear();
-
-	reset_external_data();
-}
 };

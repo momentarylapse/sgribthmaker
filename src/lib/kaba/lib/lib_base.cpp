@@ -232,7 +232,7 @@ Array<int> enum_all(const Class *e) {
 	return r;
 }
 
-void SIAddXCommands() {
+void SIAddXCommands(Context *c) {
 
 	add_func("@sorted", TypeDynamicArray, &array_sort, Flags::_STATIC__RAISES_EXCEPTIONS);
 		func_add_param("list", TypePointer);
@@ -273,8 +273,8 @@ void SIAddXCommands() {
 }
 
 
-void SIAddPackageBase() {
-	add_package("base", Flags::AUTO_IMPORT);
+void SIAddPackageBase(Context *c) {
+	add_package(c, "base", Flags::AUTO_IMPORT);
 
 	// internal
 	TypeUnknown			= add_type  ("@unknown", 0); // should not appear anywhere....or else we're screwed up!

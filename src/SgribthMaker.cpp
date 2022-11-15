@@ -370,10 +370,10 @@ void SgribthMaker::CompileKaba() {
 	kaba::config.compile_silently = true;
 	//kaba::config.verbose = true;
 
-	shared<kaba::Module> module;
+	kaba::Context context;
 
 	try {
-		module = kaba::load(cur_doc->filename, true);
+		auto module = context.load(cur_doc->filename, true);
 
 		float dt = timer.get();
 
@@ -387,7 +387,6 @@ void SgribthMaker::CompileKaba() {
 		SetError(e.message());
 		cur_doc->source_view->move_cursor_to(e.line, e.column);
 	}
-	kaba::remove_module(module.get());
 
 	//msg_set_verbose(ALLOW_LOGGING);
 }
@@ -450,10 +449,10 @@ void SgribthMaker::CompileAndRun(bool verbose) {
 		kaba::config.compile_silently = true;
 		//kaba::config.verbose = true;
 
-		shared<kaba::Module> module;
+		kaba::Context context;
 
 		try {
-			module = kaba::load(cur_doc->filename);
+			auto module = context.load(cur_doc->filename);
 			float dt_compile = timer.get();
 
 			if (!verbose)
@@ -496,12 +495,7 @@ void SgribthMaker::CompileAndRun(bool verbose) {
 			//ErrorBox(MainWin, _("Error"), e.message());
 			cur_doc->source_view->move_cursor_to(e.line, e.column);
 		}
-		
 	
-		//RemoveScript(compile_script);
-		kaba::remove_module(module.get());
-		//kaba::delete_all_modules(true, true);
-
 		//msg_set_verbose(ALLOW_LOGGING);
 	}, []{});
 }

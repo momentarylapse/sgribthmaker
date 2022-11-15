@@ -20,13 +20,14 @@ class Variable;
 class Constant;
 class SyntaxTree;
 class Interpreter;
+class Context;
 
 
 // executable (compiled) data
 class Module : public Sharable<base::Empty> {
 public:
 	// don't call yourself.... better use LoadScript(...)
-	Module();
+	Module(Context *c);
 	~Module();
 
 	void load(const Path &filename, bool just_analyse = false);
@@ -64,6 +65,7 @@ public:
 
 	Path filename;
 	SyntaxTree *syntax;
+    Context *context;
 
 	char *opcode; // executable code
 	int opcode_size;

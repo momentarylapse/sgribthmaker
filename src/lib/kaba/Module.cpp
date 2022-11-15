@@ -83,7 +83,8 @@ void Module::set_variable(const string &name, void *data) {
 	msg_error("Module.set_variable: variable " + name + " not found");
 }
 
-Module::Module() {
+Module::Module(Context *c) {
+    context = c;
 	filename = "-empty module-";
 	used_by_default = false;
 

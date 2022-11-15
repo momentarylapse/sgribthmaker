@@ -28,8 +28,6 @@ extern string Version;
 
 shared<Module> load(const Path &filename, bool just_analyse = false);
 shared<Module> create_for_source(const string &source, bool just_analyse = false);
-void remove_module(Module *s);
-void delete_all_modules(bool even_immortal = false, bool force = false);
 void execute_single_command(const string &cmd);
 
 const Class *get_dynamic_type(const VirtualBase *p);

@@ -32,6 +32,7 @@ class Value;
 class Function;
 class Variable;
 class Constant;
+class Context;
 
 
 void kaba_make_super_array(Class *t, SyntaxTree *ps = nullptr);
@@ -64,9 +65,6 @@ void clean_up();
 
 
 
-extern shared_array<Module> packages;
-
-
 template<class C, class M>
 int element_offset(M C::* p) {
 	extern char _el_off_data[];
@@ -75,7 +73,7 @@ int element_offset(M C::* p) {
 	//return *(int*)(void*)&p;
 }
 
-void add_package(const string &name, Flags = Flags::NONE);
+void add_package(Context *c, const string &name, Flags = Flags::NONE);
 const Class *add_type(const string &name, int size, Flags = Flags::NONE, const Class *_namespace = nullptr);
 const Class *add_type_p(const Class *sub_type, Flags = Flags::NONE);
 const Class *add_type_a(const Class *sub_type, int array_length);

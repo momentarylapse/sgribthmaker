@@ -226,7 +226,7 @@ namespace implicit_class_registry {
 	Array<const Class*> classes;
 
 	void init() {
-		module = new Module();
+		module = new Module(&default_context);
 		module->filename = "<implicit-class-owner>";
 	}
 
