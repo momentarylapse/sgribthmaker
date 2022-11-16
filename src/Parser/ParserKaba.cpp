@@ -127,7 +127,7 @@ void ParserKaba::update_symbols(SourceView *sv) {
 	try {
 		kaba::config.default_filename = sv->doc->filename;
 		//msg_write(kaba::config.directory.str());
-		auto m = context->create_for_source(sv->get_all(), true);
+		auto m = context->create_module_for_source(sv->get_all(), true);
 
 		clear_symbols();
 

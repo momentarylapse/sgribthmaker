@@ -177,11 +177,11 @@ bool Concretifier::type_match_tuple_as_contructor(shared<Node> node, Function *f
 	return true;
 }
 
-const Class *make_effective_class_callable(shared<Node> node) {
+const Class *Concretifier::make_effective_class_callable(shared<Node> node) {
 	auto f = node->as_func();
 	if (f->is_member() and node->params.num > 0 and node->params[0])
-		return f->owner()->request_implicit_class_callable_fp(f->literal_param_type.sub_ref(1), f->literal_return_type, node->token_id);
-	return f->owner()->request_implicit_class_callable_fp(f, node->token_id);
+		return tree->request_implicit_class_callable_fp(f->literal_param_type.sub_ref(1), f->literal_return_type, node->token_id);
+	return tree->request_implicit_class_callable_fp(f, node->token_id);
 }
 
 bool Concretifier::type_match_with_cast(shared<Node> node, bool is_modifiable, const Class *wanted, CastingData &cd) {

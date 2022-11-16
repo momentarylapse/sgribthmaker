@@ -220,7 +220,7 @@ AutoComplete::Data simple_parse(SyntaxTree *syntax, Function *f, const string &c
 
 AutoComplete::Data AutoComplete::run(const string& _code, const Path &filename, int line, int pos) {
 	auto context = ownify(kaba::Context::create());
-	auto s = context->create_empty("<auto-complete>");
+	auto s = context->create_empty_module("<auto-complete>");
 	s->filename = filename;
 	auto ll = _code.explode("\n");
 	auto lines_pre = ll.sub_ref(0, line);//+1);

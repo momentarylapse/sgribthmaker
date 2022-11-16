@@ -130,7 +130,7 @@ void add_package(Context *c, const string &name, Flags flags) {
 			cur_package = p.get();
 			return;
 		}
-	auto s = c->create_empty(name);
+	auto s = c->create_empty_module(name);
 	s->used_by_default = flags_has(flags, Flags::AUTO_IMPORT);
 	s->syntax->base_class->name = name;
 	c->packages.add(s);
@@ -643,7 +643,6 @@ void init_lib(Context *c) {
 }
 
 
-//owned<Context> _secret_lib_context_;
 Context *_secret_lib_context_ = nullptr;
 
 void init(Abi abi, bool allow_std_lib) {

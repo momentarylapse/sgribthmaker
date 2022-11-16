@@ -374,7 +374,7 @@ void SgribthMaker::CompileKaba() {
 	auto context = ownify(kaba::Context::create());
 
 	try {
-		auto module = context->load(cur_doc->filename, true);
+		auto module = context->load_module(cur_doc->filename, true);
 
 		float dt = timer.get();
 
@@ -454,7 +454,7 @@ void SgribthMaker::CompileAndRun(bool verbose) {
 		auto context = ownify(kaba::Context::create());
 
 		try {
-			auto module = context->load(cur_doc->filename);
+			auto module = context->load_module(cur_doc->filename);
 			float dt_compile = timer.get();
 
 			if (!verbose)

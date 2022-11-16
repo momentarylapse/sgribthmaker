@@ -77,6 +77,7 @@ public:
 	shared<Node> make_func_pointer_node_callable(const shared<Node> l);
 	shared<Node> link_unary_operator(AbstractOperator *op, shared<Node> operand, Block *block, int token_id);
 	//void FindFunctionSingleParameter(int p, Array<Type*> &wanted_type, Block *block, shared<Node> cmd);
+	const Class *make_effective_class_callable(shared<Node> node);
 
 	shared<Node> wrap_function_into_callable(Function *f, int token_id);
 	shared<Node> wrap_node_into_callable(shared<Node> node);
