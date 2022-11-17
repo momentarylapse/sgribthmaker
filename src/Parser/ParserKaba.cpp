@@ -91,6 +91,7 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 	compiler_functions.add(kaba::IDENTIFIER_TYPEOF);
 	compiler_functions.add(kaba::IDENTIFIER_MAP);
 	compiler_functions.add(kaba::IDENTIFIER_SORTED);
+	compiler_functions.add(kaba::IDENTIFIER_FILTER);
 	operator_functions.add(kaba::IDENTIFIER_FUNC_INIT);
 	operator_functions.add(kaba::IDENTIFIER_FUNC_DELETE);
 	operator_functions.add(kaba::IDENTIFIER_FUNC_DELETE_OVERRIDE);
