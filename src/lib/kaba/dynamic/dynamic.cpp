@@ -350,6 +350,8 @@ string _cdecl var_repr(const void *p, const Class *type) {
 	} else if (type == TypeFunction or type->type == Class::Type::FUNCTION) {
 		// probably not...
 		return func_repr((Function*)p);
+	} else if (type == TypeSpecialFunctionP) {
+		return format("<special function %s>", (*(SpecialFunction**)p)->name);
 	} else if (type == TypeAny) {
 		return ((Any*)p)->repr();
 	} else if (type->is_some_pointer()) {
@@ -473,6 +475,7 @@ Any _cdecl dynify(const void *var, const Class *type) {
 
 Array<const Class*> func_effective_params(const Function *f);
 
+// deprecated, but who knows...
 DynamicArray array_map(void *fff, DynamicArray *a, const Class *ti, const Class *to) {
 	//msg_write("map " + ti->long_name() + " -> " + to->long_name());
 

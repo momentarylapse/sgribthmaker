@@ -35,6 +35,10 @@ string kind2str(NodeKind kind) {
 		return "virtual call";
 	if (kind == NodeKind::STATEMENT)
 		return "statement";
+	if (kind == NodeKind::CALL_SPECIAL_FUNCTION)
+		return "special function call";
+	if (kind == NodeKind::SPECIAL_FUNCTION_NAME)
+		return "special function name";
 	if (kind == NodeKind::OPERATOR)
 		return "operator";
 	if (kind == NodeKind::ABSTRACT_TOKEN)
@@ -150,6 +154,10 @@ string Node::signature(const Class *ns) const {
 		return as_func()->signature(ns);
 	if (kind == NodeKind::STATEMENT)
 		return as_statement()->name + t;
+	if (kind == NodeKind::CALL_SPECIAL_FUNCTION)
+		return as_special_function()->name + t;
+	if (kind == NodeKind::SPECIAL_FUNCTION_NAME)
+		return as_special_function()->name + t;
 	if (kind == NodeKind::OPERATOR)
 		return as_op()->sig(ns);
 	if (kind == NodeKind::ABSTRACT_TOKEN)
@@ -286,6 +294,10 @@ Statement *Node::as_statement() const {
 	return (Statement*)link_no;
 }
 
+SpecialFunction *Node::as_special_function() const {
+	return (SpecialFunction*)link_no;
+}
+
 AbstractOperator *Node::as_abstract_op() const {
 	return (AbstractOperator*)link_no;
 }
@@ -419,8 +431,21 @@ shared<Node> add_node_const(Constant *c, int token_id) {
 
 shared<Node> add_node_statement(StatementID id, int token_id, const Class *type) {
 	auto *s = statement_from_id(id);
-	auto c = new Node(NodeKind::STATEMENT, (int64)s, type, false, token_id);
+	auto c = new Node(NodeKind::STATEMENT, (int_p)s, type, false, token_id);
 	c->set_num_params(s->num_params);
+	return c;
+}
+
+shared<Node> add_node_special_function_call(SpecialFunctionID id, int token_id, const Class *type) {
+	auto *s = special_function_from_id(id);
+	auto c = new Node(NodeKind::CALL_SPECIAL_FUNCTION, (int_p)s, type, false, token_id);
+	c->set_num_params(s->max_params);
+	return c;
+}
+
+shared<Node> add_node_special_function_name(SpecialFunctionID id, int token_id, const Class *type) {
+	auto *s = special_function_from_id(id);
+	auto c = new Node(NodeKind::SPECIAL_FUNCTION_NAME, (int_p)s, type, false, token_id);
 	return c;
 }
 
