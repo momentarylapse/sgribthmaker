@@ -307,6 +307,9 @@
     <ClCompile Include="src\lib\kaba\dynamic\exception.cpp">
       <Filter>src\lib\kaba\dynamic</Filter>
     </ClCompile>
+    <ClCompile Include="src\lib\kaba\dynamic\sorting.cpp">
+      <Filter>src\lib\kaba\dynamic</Filter>
+    </ClCompile>
     <ClCompile Include="src\lib\kaba\lib\dict.cpp">
       <Filter>src\lib\kaba\lib</Filter>
     </ClCompile>
@@ -1312,6 +1315,9 @@
       <Filter>src\lib\kaba\dynamic</Filter>
     </ClInclude>
     <ClInclude Include="src\lib\kaba\dynamic\exception.h">
+      <Filter>src\lib\kaba\dynamic</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lib\kaba\dynamic\sorting.h">
       <Filter>src\lib\kaba\dynamic</Filter>
     </ClInclude>
     <ClInclude Include="src\lib\kaba\lib\dict.h">
