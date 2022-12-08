@@ -37,6 +37,7 @@ ParserShader::ParserShader() : Parser("Shader") {
 	keywords.add("break");
 	keywords.add("continue");
 	keywords.add("const");
+	keywords.add("discard");
 	/*keywords.add("<VertexShader>");
 	keywords.add("</VertexShader>");
 	keywords.add("<FragmentShader>");
@@ -192,6 +193,7 @@ ParserShader::ParserShader() : Parser("Shader") {
 	global_variables.add("gl_LocalInvocationID");
 	global_variables.add("gl_PrimitiveID");
 	global_variables.add("gl_InstanceID");
+	global_variables.add("gl_InstanceIndex");
 	global_variables.add("gl_LocalInvocationID");
 	global_variables.add("gl_LocalInvocationIndex");
 
