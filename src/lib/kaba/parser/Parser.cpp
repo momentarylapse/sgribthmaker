@@ -1397,6 +1397,8 @@ void Parser::parse_enum(Class *_namespace) {
 	if (try_consume(IDENTIFIER_AS))
 		_class->flags = parse_flags(_class->flags);
 
+	tree->add_missing_function_headers_for_class(_class);
+
 	expect_new_line_with_indent();
 	Exp.next_line();
 	int indent0 = Exp.cur_line->indent;
