@@ -55,6 +55,7 @@ public:
 	void implement_super_array_resize(Function *f, const Class *t);
 	void implement_super_array_add(Function *f, const Class *t);
 	void implement_super_array_remove(Function *f, const Class *t);
+	void implement_super_array_equal(Function *f, const Class *t);
 	void implement_dict_constructor(Function *f, const Class *t);
 	void implement_shared_constructor(Function *f, const Class *t);
 	void implement_shared_destructor(Function *f, const Class *t);
@@ -78,23 +79,37 @@ public:
 	void implement_optional_equal_raw(Function *f, const Class *t);
 	void implement_product_equal(Function *f, const Class *t);
 	void implement_functions(const Class *t);
+	void _implement_functions_for_array(const Class *t);
+	void _implement_functions_for_super_array(const Class *t);
+	void _implement_functions_for_dict(const Class *t);
+	void _implement_functions_for_optional(const Class *t);
+	void _implement_functions_for_enum(const Class *t);
+	void _implement_functions_for_product(const Class *t);
+	void _implement_functions_for_shared(const Class *t);
+	void _implement_functions_for_owned(const Class *t);
+	void _implement_functions_for_callable_fp(const Class *t);
+	void _implement_functions_for_callable_bind(const Class *t);
+	void _implement_functions_for_regular(const Class *t);
 
 	shared<Node> node_false();
 	shared<Node> node_true();
+	shared<Node> const_int(int i);
 
 	void db_add_print_node(shared<Block> block, shared<Node> node);
 	void db_add_print_label(shared<Block> block, const string &s);
 	void db_add_print_label_node(shared<Block> block, const string &s, shared<Node> node);
 
 
-	bool needs_new(Function *f);
-	Array<string> class_func_param_names(Function *cf);
-	bool has_user_constructors(const Class *t);
+	static bool needs_new(Function *f);
+	static Array<string> class_func_param_names(Function *cf);
+	static bool has_user_constructors(const Class *t);
 	void remove_inherited_constructors(Class *t);
 	void redefine_inherited_constructors(Class *t);
 	void add_full_constructor(Class *t);
 	bool can_fully_construct(const Class *t);
-	bool class_can_assign(const Class *t);
+	static bool class_can_assign(const Class *t);
+
+	static Function* prepare_auto_impl(const Class *t, Function *f);
 
 
 	SyntaxTree *tree;
