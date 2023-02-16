@@ -113,7 +113,7 @@ MAKE_OP_FOR(double)
 static int op_int_mod(int a, int b) { return a % b; }
 static int op_int_shr(int a, int b) { return a >> b; }
 static int op_int_shl(int a, int b) { return a << b; }
-static int op_int_passthrough(int i) { return i; }
+//static int op_int_passthrough(int i) { return i; }
 static int64 op_int64_mod(int64 a, int64 b) { return a % b; }
 static int64 op_int64_shr(int64 a, int64 b) { return a >> b; }
 static int64 op_int64_shl(int64 a, int64 b) { return a << b; }
@@ -244,29 +244,39 @@ void SIAddXCommands(Context *c) {
 		func_add_param("class", TypeClassP);
 }
 
+int& kaba_x_array_ref(Array<int>& a) {
+	msg_write("_x_array_ref... ");
+	msg_write(p2s(a.data));
+	return a[0];
+};
+void kaba_x_ref_set(int& r, int i) {
+	msg_write(r);
+	r = i;
+	msg_write(r);
+};
 
 void SIAddPackageBase(Context *c) {
 	add_package(c, "base", Flags::AUTO_IMPORT);
 
 	// internal
 	TypeUnknown			= add_type  ("@unknown", 0); // should not appear anywhere....or else we're screwed up!
-	TypeReg128			= add_type  ("@reg128", 16, Flags::CALL_BY_VALUE);
-	TypeReg64			= add_type  ("@reg64", 8, Flags::CALL_BY_VALUE);
-	TypeReg32			= add_type  ("@reg32", 4, Flags::CALL_BY_VALUE);
-	TypeReg16			= add_type  ("@reg16", 2, Flags::CALL_BY_VALUE);
-	TypeReg8			= add_type  ("@reg8", 1, Flags::CALL_BY_VALUE);
+	TypeReg128			= add_type  ("@reg128", 16, Flags::FORCE_CALL_BY_VALUE);
+	TypeReg64			= add_type  ("@reg64", 8, Flags::FORCE_CALL_BY_VALUE);
+	TypeReg32			= add_type  ("@reg32", 4, Flags::FORCE_CALL_BY_VALUE);
+	TypeReg16			= add_type  ("@reg16", 2, Flags::FORCE_CALL_BY_VALUE);
+	TypeReg8			= add_type  ("@reg8", 1, Flags::FORCE_CALL_BY_VALUE);
 	TypeObject			= add_type  ("Object", sizeof(VirtualBase)); // base for most virtual classes
 	TypeObjectP			= add_type_p(TypeObject);
 	TypeDynamic			= add_type  ("@dynamic", 0);
 
 	// "real"
-	TypeVoid			= add_type  ("void", 0, Flags::CALL_BY_VALUE);
-	TypeBool			= add_type  ("bool", sizeof(bool), Flags::CALL_BY_VALUE);
-	TypeInt				= add_type  ("int", sizeof(int), Flags::CALL_BY_VALUE);
-	TypeInt64			= add_type  ("int64", sizeof(int64), Flags::CALL_BY_VALUE);
-	TypeFloat32			= add_type  ("float32", sizeof(float), Flags::CALL_BY_VALUE);
-	TypeFloat64			= add_type  ("float64", sizeof(double), Flags::CALL_BY_VALUE);
-	TypeChar			= add_type  ("char", sizeof(char), Flags::CALL_BY_VALUE);
+	TypeVoid			= add_type  ("void", 0, Flags::FORCE_CALL_BY_VALUE);
+	TypeBool			= add_type  ("bool", sizeof(bool), Flags::FORCE_CALL_BY_VALUE);
+	TypeInt				= add_type  ("int", sizeof(int), Flags::FORCE_CALL_BY_VALUE);
+	TypeInt64			= add_type  ("int64", sizeof(int64), Flags::FORCE_CALL_BY_VALUE);
+	TypeFloat32			= add_type  ("float32", sizeof(float), Flags::FORCE_CALL_BY_VALUE);
+	TypeFloat64			= add_type  ("float64", sizeof(double), Flags::FORCE_CALL_BY_VALUE);
+	TypeChar			= add_type  ("char", sizeof(char), Flags::FORCE_CALL_BY_VALUE);
 	TypeDynamicArray	= add_type  ("@DynamicArray", config.super_array_size);
 	TypeDictBase		= add_type  ("@DictBase",   config.super_array_size);
 	TypeSharedPointer	= add_type  ("@SharedPointer", config.pointer_size);
@@ -320,7 +330,7 @@ void SIAddPackageBase(Context *c) {
 			func_set_inline(InlineID::SHARED_POINTER_INIT);
 
 	// derived   (must be defined after the primitive types and the bases!)
-	TypePointer     = add_type_p(TypeVoid, Flags::CALL_BY_VALUE); // substitute for all pointer types
+	TypePointer     = add_type_p(TypeVoid, Flags::FORCE_CALL_BY_VALUE); // substitute for all pointer types
 	TypePointerList = add_type_l(TypePointer);
 	TypeBoolList    = add_type_l(TypeBool);
 	TypeIntP        = add_type_p(TypeInt);
@@ -780,6 +790,21 @@ void SIAddPackageBase(Context *c) {
 	//add_type_cast(30, TypeBoolList, TypeBool, "bool[].__bool__");
 	add_type_cast(50, TypePointer, TypeBool, "p2b");
 	//add_type_cast(50, TypePointer, TypeString, "p2s");
+
+
+
+	//---------------------------------------------
+	// experiments
+	auto TypeIntRef = add_type_ref(TypeInt);
+
+	add_class(TypeIntRef);
+		add_operator(OperatorID::ASSIGN, TypeVoid, TypeIntRef,  TypeIntRef, InlineID::POINTER_ASSIGN);
+
+	add_func("_x_array_ref", TypeIntRef, &kaba_x_array_ref, Flags::STATIC);
+		func_add_param("a", TypeIntList);
+	add_func("_x_ref_set", TypeVoid, &kaba_x_ref_set, Flags::STATIC);
+		func_add_param("r", TypeIntRef);
+		func_add_param("i", TypeInt);
 }
 
 

@@ -221,6 +221,14 @@ shared<Node> Parser::parse_abstract_operand_extension_pointer(shared<Node> opera
 	return node;
 }
 
+shared<Node> Parser::parse_abstract_operand_extension_reference(shared<Node> operand) {
+	auto node = new Node(NodeKind::ABSTRACT_TYPE_REFERENCE, 0, TypeUnknown);
+	node->token_id = Exp.consume_token(); // "&"
+	node->set_num_params(1);
+	node->set_param(0, operand);
+	return node;
+}
+
 shared<Node> Parser::parse_abstract_operand_extension_array(shared<Node> operand, Block *block) {
 	int token0 = Exp.consume_token();
 	// array index...
@@ -306,14 +314,14 @@ shared<Node> Parser::parse_abstract_operand_extension(shared<Node> operand, Bloc
 			return true;
 		return false;
 	};
-	auto might_declare_pointer_variable = [this] {
+	/*auto might_declare_pointer_variable = [this] {
 		// a line of "int *p = ..."
 		if (Exp._cur_exp != 1)
 			return false;
 		if (is_number(Exp.cur_line->tokens[0].name[0]))
 			return false;
 		return true;
-	};
+	};*/
 
 	if (Exp.cur == ".") {
 		// element?
@@ -350,9 +358,12 @@ shared<Node> Parser::parse_abstract_operand_extension(shared<Node> operand, Bloc
 			// FIXME: false positives for "{{pi * 10}}"
 			return parse_abstract_operand_extension(parse_abstract_operand_extension_pointer(operand), block, true);
 		}
+		if ((Exp.cur == "&" and (prefer_class or no_identifier_after())) or Exp.cur == "ref") {
+			return parse_abstract_operand_extension(parse_abstract_operand_extension_reference(operand), block, true);
+		}
 		// unary operator? (++,--)
 
-		if (auto op = parse_abstract_operator(1)) {
+		if (auto op = parse_abstract_operator(OperatorFlags::UNARY_LEFT)) {
 			op->set_num_params(1);
 			op->set_param(0, operand);
 			return parse_abstract_operand_extension(op, block, prefer_class);
@@ -587,9 +598,13 @@ shared<Node> Parser::parse_abstract_operand(Block *block, bool prefer_class) {
 	if (try_consume("(")) {
 		operand = parse_abstract_operand_greedy(block, true);
 		expect_identifier(")", "')' expected");
-	} else if (try_consume("&")) { // & -> address operator
+	} else if (try_consume("&!")) { // &! -> new address operator
 		int token = Exp.cur_token();
-		operand = parse_abstract_operand(block)->ref(TypeUnknown);
+		operand = parse_abstract_operand(block)->ref_new(TypeUnknown);
+		operand->token_id = token;
+	} else if (try_consume("&")) { // & -> legacy address operator
+		int token = Exp.cur_token();
+		operand = parse_abstract_operand(block)->ref_legacy(TypeUnknown);
 		operand->token_id = token;
 	} else if (try_consume("*")) { // * -> dereference
 		int token = Exp.cur_token();
@@ -603,11 +618,11 @@ shared<Node> Parser::parse_abstract_operand(Block *block, bool prefer_class) {
 		}
 	} else if (Exp.cur == "{") {
 		operand = parse_abstract_dict(block);
-	} else if (auto s = which_statement(Exp.cur)) {
+	} else if ([[maybe_unused]] auto s = which_statement(Exp.cur)) {
 		operand = parse_abstract_statement(block);
 	//} else if (auto s = which_special_function(Exp.cur)) {
 	//	operand = parse_abstract_special_function(block, s);
-	} else if (auto w = which_abstract_operator(Exp.cur, 2)) { // negate/not...
+	} else if (auto w = which_abstract_operator(Exp.cur, OperatorFlags::UNARY_RIGHT)) { // negate/not...
 		operand = new Node(NodeKind::ABSTRACT_OPERATOR, (int_p)w, TypeUnknown);
 		Exp.next();
 		operand->set_num_params(1);
@@ -625,7 +640,7 @@ shared<Node> Parser::parse_abstract_operand(Block *block, bool prefer_class) {
 }
 
 // no type information
-shared<Node> Parser::parse_abstract_operator(int param_flags) {
+shared<Node> Parser::parse_abstract_operator(OperatorFlags param_flags) {
 	auto op = which_abstract_operator(Exp.cur, param_flags);
 	if (!op)
 		return nullptr;
@@ -743,7 +758,7 @@ shared<Node> Parser::parse_abstract_operand_greedy(Block *block, bool allow_tupl
 	while (true) {
 		if (!allow_tuples and Exp.cur == ",")
 			break;
-		if (auto op = parse_abstract_operator(3)) {
+		if (auto op = parse_abstract_operator(OperatorFlags::BINARY)) {
 			operators.add(op);
 			expect_no_new_line("unexpected end of line after operator");
 			operands.add(parse_abstract_operand(block));
@@ -1150,7 +1165,7 @@ shared<Node> Parser::parse_abstract_statement_var(Block *block) {
 
 		auto tuple = build_abstract_tuple(names);
 
-		auto assign = parse_abstract_operator(3);
+		auto assign = parse_abstract_operator(OperatorFlags::BINARY);
 
 		auto rhs = parse_abstract_operand_greedy(block, true);
 
@@ -1181,7 +1196,7 @@ shared<Node> Parser::parse_abstract_statement_var(Block *block) {
 		if (names.num != 1)
 			do_error_exp(format("'var' declaration with '=' only allowed with a single variable name, %d given", names.num));
 
-		auto assign = parse_abstract_operator(3);
+		auto assign = parse_abstract_operator(OperatorFlags::BINARY);
 
 		auto rhs = parse_abstract_operand_greedy(block, true);
 
@@ -1901,7 +1916,7 @@ Function *Parser::parse_function_header(const Class *default_type, Class *name_s
 
 			// type of parameter variable
 			f->abstract_param_types.add(parse_abstract_operand(block, true));
-			auto v = f->add_param(param_name, TypeUnknown, param_flags);
+			[[maybe_unused]] auto v = f->add_param(param_name, TypeUnknown, param_flags);
 
 			// default parameter?
 			if (try_consume("=")) {

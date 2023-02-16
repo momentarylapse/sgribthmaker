@@ -62,7 +62,10 @@ public:
 	void implement_shared_assign(Function *f, const Class *t);
 	void implement_shared_clear(Function *f, const Class *t);
 	void implement_shared_create(Function *f, const Class *t);
+	void implement_owned_constructor(Function *f, const Class *t);
+	void implement_owned_destructor(Function *f, const Class *t);
 	void implement_owned_clear(Function *f, const Class *t);
+	void implement_owned_assign_raw(Function *f, const Class *t);
 	void implement_owned_assign(Function *f, const Class *t);
 	void implement_callable_constructor(Function *f, const Class *t);
 	void implement_callable_fp_call(Function *f, const Class *t);
@@ -93,6 +96,7 @@ public:
 
 	shared<Node> node_false();
 	shared<Node> node_true();
+	shared<Node> node_nil();
 	shared<Node> const_int(int i);
 
 	void db_add_print_node(shared<Block> block, shared<Node> node);
@@ -108,6 +112,7 @@ public:
 	void add_full_constructor(Class *t);
 	bool can_fully_construct(const Class *t);
 	static bool class_can_assign(const Class *t);
+	static bool class_can_equal(const Class *t);
 
 	static Function* prepare_auto_impl(const Class *t, Function *f);
 

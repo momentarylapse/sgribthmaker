@@ -29,7 +29,7 @@ Serializer::~Serializer() {
 
 void Serializer::add_function_call(Function *f, const Array<SerialNodeParam> &params, const SerialNodeParam &ret) {
 	call_used = true;
-	int push_size = function_call_push_params(f, params, ret);
+	[[maybe_unused]] int push_size = function_call_push_params(f, params, ret);
 
 	SerialNodeParam fp = {NodeKind::FUNCTION, (int_p)f, -1, TypeFunctionP, 0};
 	cmd.add_cmd(Asm::InstID::CALL, ret, fp); // the actual call
@@ -37,7 +37,7 @@ void Serializer::add_function_call(Function *f, const Array<SerialNodeParam> &pa
 
 void Serializer::add_virtual_function_call(Function *f, const Array<SerialNodeParam> &params, const SerialNodeParam &ret) {
 	call_used = true;
-	int push_size = function_call_push_params(f, params, ret);
+	[[maybe_unused]] int push_size = function_call_push_params(f, params, ret);
 
 	auto t1 = add_temp(TypePointer);
 	auto t2 = add_temp(TypePointer);
@@ -56,7 +56,7 @@ int Serializer::function_call_push_params(Function *f, const Array<SerialNodePar
 
 void Serializer::add_pointer_call(const SerialNodeParam &pointer, const Array<SerialNodeParam> &params, const SerialNodeParam &ret) {
 	call_used = true;
-	int push_size = function_call_push_params(nullptr, params, ret);
+	[[maybe_unused]] int push_size = function_call_push_params(nullptr, params, ret);
 
 	cmd.add_cmd(Asm::InstID::CALL, ret, pointer); // the actual call
 }
@@ -108,7 +108,7 @@ SerialNodeParam Serializer::serialize_parameter(Node *link, Block *block, int in
 		}*/
 	} else if ((link->kind == NodeKind::OPERATOR) or (link->kind == NodeKind::CALL_FUNCTION) or (link->kind == NodeKind::CALL_INLINE) or (link->kind == NodeKind::CALL_VIRTUAL) or (link->kind == NodeKind::CALL_RAW_POINTER) or (link->kind == NodeKind::STATEMENT)) {
 		p = serialize_node(link, block, index);
-	} else if (link->kind == NodeKind::REFERENCE) {
+	} else if ((link->kind == NodeKind::REFERENCE_LEGACY) or (link->kind == NodeKind::REFERENCE_NEW)) {
 		auto param = serialize_parameter(link->params[0].get(), block, index);
 		//printf("%d  -  %s\n",pk,Kind2Str(pk));
 		return add_reference(param, link->type);

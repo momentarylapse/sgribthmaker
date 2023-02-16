@@ -55,6 +55,8 @@ string kind2str(NodeKind kind) {
 		return "owned";
 	if (kind == NodeKind::ABSTRACT_TYPE_POINTER)
 		return "pointer";
+	if (kind == NodeKind::ABSTRACT_TYPE_REFERENCE)
+		return "reference";
 	if (kind == NodeKind::ABSTRACT_TYPE_LIST)
 		return "list";
 	if (kind == NodeKind::ABSTRACT_TYPE_DICT)
@@ -75,8 +77,10 @@ string kind2str(NodeKind kind) {
 		return "dynamic array element";
 	if (kind == NodeKind::POINTER_AS_ARRAY)
 		return "pointer as array element";
-	if (kind == NodeKind::REFERENCE)
+	if (kind == NodeKind::REFERENCE_LEGACY)
 		return "address operator";
+	if (kind == NodeKind::REFERENCE_NEW)
+		return "reference operator";
 	if (kind == NodeKind::DEREFERENCE)
 		return "dereferencing";
 	if (kind == NodeKind::DEREF_ADDRESS_SHIFT)
@@ -174,7 +178,9 @@ string Node::signature(const Class *ns) const {
 		return t;
 	if (kind == NodeKind::POINTER_AS_ARRAY)
 		return t;
-	if (kind == NodeKind::REFERENCE)
+	if (kind == NodeKind::REFERENCE_LEGACY)
+		return t;
+	if (kind == NodeKind::REFERENCE_NEW)
 		return t;
 	if (kind == NodeKind::DEREFERENCE)
 		return t;
@@ -356,15 +362,26 @@ shared<Node> Node::shallow_copy() const {
 	return r;
 }
 
-shared<Node> Node::ref(const Class *t) const {
-	shared<Node> c = new Node(NodeKind::REFERENCE, 0, t, false, token_id);
+shared<Node> Node::ref_new(const Class *t) const {
+	shared<Node> c = new Node(NodeKind::REFERENCE_NEW, 0, t, false, token_id);
 	c->set_num_params(1);
 	c->set_param(0, const_cast<Node*>(this));
 	return c;
 }
 
-shared<Node> Node::ref(SyntaxTree *tree) const {
-	return ref(tree->get_pointer(type));
+shared<Node> Node::ref_new(SyntaxTree *tree) const {
+	return ref_legacy(tree->request_implicit_class_reference(type, token_id));
+}
+
+shared<Node> Node::ref_legacy(const Class *t) const {
+	shared<Node> c = new Node(NodeKind::REFERENCE_LEGACY, 0, t, false, token_id);
+	c->set_num_params(1);
+	c->set_param(0, const_cast<Node*>(this));
+	return c;
+}
+
+shared<Node> Node::ref_legacy(SyntaxTree *tree) const {
+	return ref_new(tree->get_pointer(type, token_id));
 }
 
 shared<Node> Node::deref(const Class *override_type) const {
@@ -485,7 +502,7 @@ shared<Node> add_node_operator(Operator *op, const shared<Node> p1, const shared
 	if (!override_type)
 		override_type = op->return_type;
 	shared<Node> cmd = new Node(NodeKind::OPERATOR, (int_p)op, override_type, true, token_id);
-	if (op->abstract->param_flags == 3) {
+	if (op->abstract->is_binary()) {
 		cmd->set_num_params(2); // binary
 		cmd->set_param(0, p1);
 		cmd->set_param(1, p2);
