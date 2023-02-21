@@ -238,10 +238,10 @@ string _cdecl kaba_shell_execute(const string &cmd) {
 
 class KabaPath : public Path {
 public:
-	Path lshift_p(const Path &p) const {
+	Path cat_p(const Path &p) const {
 		return *this | p;
 	}
-	Path lshift_s(const string &p) const {
+	Path cat_s(const string &p) const {
 		return *this | p;
 	}
 	bool __contains__(const Path &p) const {
@@ -274,7 +274,7 @@ public:
 void SIAddPackageOSPath(Context *c) {
 	add_package(c, "os");
 
-	TypePath = add_type("Path", config.super_array_size);
+	TypePath = add_type("Path", config.target.super_array_size);
 
 	add_class(TypePath);
 		class_add_element_x("_s", TypeString, 0);
@@ -289,6 +289,7 @@ void SIAddPackageOSPath(Context *c) {
 		class_add_func("extension", TypeString, &Path::extension, Flags::PURE);
 		class_add_func("canonical", TypePath, &Path::canonical, Flags::PURE);
 		class_add_func(Identifier::Func::STR, TypeString, &Path::str, Flags::PURE);
+		class_add_func(Identifier::Func::REPR, TypeString, &Path::repr, Flags::PURE);
 		class_add_func("is_empty", TypeBool, &Path::is_empty, Flags::PURE);
 		class_add_func("is_relative", TypeBool, &Path::is_relative, Flags::PURE);
 		class_add_func("is_absolute", TypeBool, &Path::is_absolute, Flags::PURE);
@@ -306,10 +307,8 @@ void SIAddPackageOSPath(Context *c) {
 		add_operator(OperatorID::NOT_EQUAL, TypeBool, TypePath, TypePath, InlineID::NONE, &Path::operator !=);
 		add_operator(OperatorID::SMALLER, TypeBool, TypePath, TypePath, InlineID::NONE, &Path::operator <);
 		add_operator(OperatorID::GREATER, TypeBool, TypePath, TypePath, InlineID::NONE, &Path::operator >);
-		add_operator(OperatorID::SHIFT_LEFT, TypePath, TypePath, TypePath, InlineID::NONE, &KabaPath::lshift_p);
-		add_operator(OperatorID::SHIFT_LEFT, TypePath, TypePath, TypeString, InlineID::NONE, &KabaPath::lshift_s);
-		add_operator(OperatorID::BIT_OR, TypePath, TypePath, TypePath, InlineID::NONE, &KabaPath::lshift_p);
-		add_operator(OperatorID::BIT_OR, TypePath, TypePath, TypeString, InlineID::NONE, &KabaPath::lshift_s);
+		add_operator(OperatorID::BIT_OR, TypePath, TypePath, TypePath, InlineID::NONE, &KabaPath::cat_p);
+		add_operator(OperatorID::BIT_OR, TypePath, TypePath, TypeString, InlineID::NONE, &KabaPath::cat_s);
 		add_operator(OperatorID::IN, TypeBool, TypePath, TypePath, InlineID::NONE, &KabaPath::__contains__);
 
 
@@ -438,7 +437,7 @@ void SIAddPackageOS(Context *c) {
 	//KabaSharedPointer<FileStream>::declare(TypeStreamSP);
 
 	add_class(TypeFileStream);
-		class_derive_from(TypeStream, false, false);
+		class_derive_from(TypeStream);
 		class_add_func(Identifier::Func::DELETE, TypeVoid, &KabaFileStream::__delete__);
 		//class_add_func("getCDate", TypeDate, &File::GetDateCreation);
 		class_add_func("mtime", TypeDate, &os::fs::FileStream::mtime);
@@ -465,8 +464,8 @@ void SIAddPackageOS(Context *c) {
 
 
 	add_class(TypeFileError);
-		class_derive_from(TypeException, false, false);
-		class_add_func(Identifier::Func::INIT, TypeVoid, &KabaFileError::__init__, Flags::OVERRIDE);
+		class_derive_from(TypeException);
+		class_add_func(Identifier::Func::INIT, TypeVoid, &KabaFileError::__init__);
 		class_add_func_virtual(Identifier::Func::DELETE, TypeVoid, &KabaFileError::__delete__, Flags::OVERRIDE);
 		class_set_vtable(KabaFileError);
 

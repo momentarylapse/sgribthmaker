@@ -35,6 +35,7 @@ public:
 	void _add_missing_function_headers_for_product(Class *t);
 	void _add_missing_function_headers_for_shared(Class *t);
 	void _add_missing_function_headers_for_owned(Class *t);
+	void _add_missing_function_headers_for_xfer(Class *t);
 	void _add_missing_function_headers_for_callable_fp(Class *t);
 	void _add_missing_function_headers_for_callable_bind(Class *t);
 
@@ -56,6 +57,7 @@ public:
 	void implement_super_array_add(Function *f, const Class *t);
 	void implement_super_array_remove(Function *f, const Class *t);
 	void implement_super_array_equal(Function *f, const Class *t);
+	void implement_super_array_give(Function *f, const Class *t);
 	void implement_dict_constructor(Function *f, const Class *t);
 	void implement_shared_constructor(Function *f, const Class *t);
 	void implement_shared_destructor(Function *f, const Class *t);
@@ -67,6 +69,7 @@ public:
 	void implement_owned_clear(Function *f, const Class *t);
 	void implement_owned_assign_raw(Function *f, const Class *t);
 	void implement_owned_assign(Function *f, const Class *t);
+	void implement_owned_give(Function *f, const Class *t);
 	void implement_callable_constructor(Function *f, const Class *t);
 	void implement_callable_fp_call(Function *f, const Class *t);
 	void implement_callable_bind_call(Function *f, const Class *t);
@@ -90,6 +93,7 @@ public:
 	void _implement_functions_for_product(const Class *t);
 	void _implement_functions_for_shared(const Class *t);
 	void _implement_functions_for_owned(const Class *t);
+	void _implement_functions_for_xfer(const Class *t);
 	void _implement_functions_for_callable_fp(const Class *t);
 	void _implement_functions_for_callable_bind(const Class *t);
 	void _implement_functions_for_regular(const Class *t);
@@ -112,6 +116,7 @@ public:
 	void add_full_constructor(Class *t);
 	bool can_fully_construct(const Class *t);
 	static bool class_can_assign(const Class *t);
+	static bool class_can_elements_assign(const Class *t);
 	static bool class_can_equal(const Class *t);
 
 	static Function* prepare_auto_impl(const Class *t, Function *f);

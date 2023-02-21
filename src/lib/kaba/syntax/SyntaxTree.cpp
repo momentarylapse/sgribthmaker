@@ -61,7 +61,7 @@ const Class *SyntaxTree::request_implicit_class_callable_fp(const Array<const Cl
 	params_ret.add(ret);
 
 	auto ff = request_implicit_class("Callable[" + name + "]", Class::Type::CALLABLE_FUNCTION_POINTER, TypeCallableBase->size, 0, nullptr, params_ret, token_id);
-	return request_implicit_class(name, Class::Type::POINTER, config.pointer_size, 0, nullptr, {ff}, token_id);
+	return request_implicit_class(name, Class::Type::POINTER, config.target.pointer_size, 0, nullptr, {ff}, token_id);
 	//return make_class(name, Class::Type::CALLABLE_FUNCTION_POINTER, TypeCallableBase->size, 0, nullptr, params_ret, base_class);
 }
 
@@ -115,7 +115,7 @@ SyntaxTree::SyntaxTree(Module *_module) {
 	flag_function_pointer_as_code = false;
 	flag_immortal = false;
 	module = _module;
-	asm_meta_info = new Asm::MetaInfo(config.pointer_size);
+	asm_meta_info = new Asm::MetaInfo(config.target.pointer_size);
 
 	base_class = new Class(Class::Type::REGULAR, "-base-", 0, this);
 	_base_class = base_class;
@@ -528,7 +528,7 @@ Class *SyntaxTree::create_new_class_no_check(const string &name, Class::Type typ
 
 	t->array_length = max(array_size, 0);
 	if (t->is_super_array() or t->is_dict()) {
-		t->derive_from(TypeDynamicArray, false); // we already set its size!
+		t->derive_from(TypeDynamicArray); // we already set its size!
 		if (params[0]->needs_constructor() and !params[0]->get_default_constructor())
 			do_error(format("can not create a dynamic array from type '%s', missing default constructor", params[0]->long_name()), token_id);
 		t->param = params;
@@ -542,8 +542,10 @@ Class *SyntaxTree::create_new_class_no_check(const string &name, Class::Type typ
 		flags_set(t->flags, Flags::FORCE_CALL_BY_VALUE);
 	} else if (t->is_reference()) {
 		flags_set(t->flags, Flags::FORCE_CALL_BY_VALUE);
+	} else if (t->is_pointer_xfer()) {
+		flags_set(t->flags, Flags::FORCE_CALL_BY_VALUE);
 	} else if (t->is_pointer_shared() or t->is_pointer_owned()) {
-		//t->derive_from(TypeSharedPointer, true);
+		//t->derive_from(TypeSharedPointer);
 		//flags_set(t->flags, Flags::FORCE_CALL_BY_VALUE);
 		t->param = params;
 		add_missing_function_headers_for_class(t);
@@ -552,15 +554,15 @@ Class *SyntaxTree::create_new_class_no_check(const string &name, Class::Type typ
 			do_error(format("can not create an optional from type '%s', missing default constructor", params[0]->long_name()), token_id);
 		add_missing_function_headers_for_class(t);
 	} else if (t->type == Class::Type::FUNCTION) {
-		t->derive_from(TypeFunction, true);
+		t->derive_from(TypeFunction);
 		t->param = params;
 	} else if (t->is_callable_fp()) {
-		t->derive_from(TypeCallableBase, true);
+		t->derive_from(TypeCallableBase);
 		t->functions.clear(); // don't inherit call() with specific types!
 		t->param = params;
 		add_missing_function_headers_for_class(t);
 	} else if (t->is_callable_bind()) {
-		t->derive_from(TypeCallableBase, true);
+		t->derive_from(TypeCallableBase);
 		t->functions.clear(); // don't inherit call() with specific types!
 		t->param = params;
 		//add_missing_function_headers_for_class(t); // later... depending on the bind variables
@@ -594,16 +596,34 @@ const Class *SyntaxTree::request_implicit_class(const string &name, Class::Type 
 }
 
 const Class *SyntaxTree::get_pointer(const Class *base, int token_id) {
-	return request_implicit_class(class_name_might_need_parantheses(base) + "*", Class::Type::POINTER, config.pointer_size, 0, nullptr, {base}, token_id);
+	return request_implicit_class(class_name_might_need_parantheses(base) + "*", Class::Type::POINTER, config.target.pointer_size, 0, nullptr, {base}, token_id);
+}
+
+const Class *SyntaxTree::request_implicit_class_shared(const Class *parent, int token_id) {
+	if (!parent->name_space)
+		do_error("shared[..] not allowed for: " + parent->long_name(), token_id); // TODO
+	return request_implicit_class(format("%s[%s]", Identifier::SHARED, parent->name), Class::Type::POINTER_SHARED, config.target.pointer_size, 0, nullptr, {parent}, token_id);
+}
+
+const Class *SyntaxTree::request_implicit_class_owned(const Class *parent, int token_id) {
+	if (!parent->name_space)
+		do_error("owned[..] not allowed for: " + parent->long_name(), token_id);
+	return request_implicit_class(format("%s[%s]", Identifier::OWNED, parent->name), Class::Type::POINTER_OWNED, config.target.pointer_size, 0, nullptr, {parent}, token_id);
+}
+
+const Class *SyntaxTree::request_implicit_class_xfer(const Class *parent, int token_id) {
+	if (!parent->name_space)
+		do_error("xfer[..] not allowed for: " + parent->long_name(), token_id);
+	return request_implicit_class(format("%s[%s]", Identifier::XFER, parent->name), Class::Type::POINTER_XFER, config.target.pointer_size, 0, nullptr, {parent}, token_id);
 }
 
 const Class *SyntaxTree::request_implicit_class_reference(const Class *base, int token_id) {
-	return request_implicit_class(class_name_might_need_parantheses(base) + "&", Class::Type::REFERENCE, config.pointer_size, 0, nullptr, {base}, token_id);
+	return request_implicit_class(class_name_might_need_parantheses(base) + "&", Class::Type::REFERENCE, config.target.pointer_size, 0, nullptr, {base}, token_id);
 }
 
 const Class *SyntaxTree::request_implicit_class_super_array(const Class *element_type, int token_id) {
 	string name = class_name_might_need_parantheses(element_type) + "[]";
-	return request_implicit_class(name, Class::Type::SUPER_ARRAY, config.super_array_size, -1, TypeDynamicArray, {element_type}, token_id);
+	return request_implicit_class(name, Class::Type::SUPER_ARRAY, config.target.super_array_size, -1, TypeDynamicArray, {element_type}, token_id);
 }
 
 const Class *SyntaxTree::request_implicit_class_array(const Class *element_type, int num_elements, int token_id) {
@@ -613,7 +633,7 @@ const Class *SyntaxTree::request_implicit_class_array(const Class *element_type,
 
 const Class *SyntaxTree::request_implicit_class_dict(const Class *element_type, int token_id) {
 	string name = class_name_might_need_parantheses(element_type) + "{}";
-	return request_implicit_class(name, Class::Type::DICT, config.super_array_size, 0, TypeDictBase, {element_type}, token_id);
+	return request_implicit_class(name, Class::Type::DICT, config.target.super_array_size, 0, TypeDictBase, {element_type}, token_id);
 }
 
 const Class *SyntaxTree::request_implicit_class_optional(const Class *param, int token_id) {
@@ -752,7 +772,7 @@ shared<Node> SyntaxTree::conv_return_by_memory(shared<Node> n, Function *f) {
 	auto ret = p_ret->deref();
 	auto cmd_assign = parser->con.link_operator_id(OperatorID::ASSIGN, ret, n->params[0]);
 	if (!cmd_assign)
-		do_error(format("no '=' operator for return from function found: '%s'", f->long_name()));
+		do_error(format("no operator '%s = %s' for return from function found: '%s'", ret->type->long_name(), n->params[0]->type->long_name(), f->long_name()));
 	_transform_insert_before_.add(cmd_assign);
 
 	return add_node_statement(StatementID::RETURN);
@@ -793,16 +813,20 @@ void SyntaxTree::convert_call_by_reference() {
 
 void SyntaxTree::simplify_ref_deref() {
 	// remove &*
-	transform([&](shared<Node> n){ return conv_easyfy_ref_deref(n, 0); });
+	transform([this] (shared<Node> n) {
+		return conv_easyfy_ref_deref(n, 0);
+	});
 }
 
 void SyntaxTree::simplify_shift_deref() {
 	// remove &*
-	transform([&](shared<Node> n){ return conv_easyfy_shift_deref(n, 0); });
+	transform([this] (shared<Node> n) {
+		return conv_easyfy_shift_deref(n, 0);
+	});
 }
 
 InlineID __get_pointer_add_int() {
-	if (config.instruction_set == Asm::InstructionSet::AMD64)
+	if (config.target.instruction_set == Asm::InstructionSet::AMD64)
 		return InlineID::INT64_ADD_INT;
 	return InlineID::INT_ADD;
 }
@@ -1162,7 +1186,7 @@ shared<Node> SyntaxTree::conv_break_down_high_level(shared<Node> n, Block *b) {
 		shared<Node> val1;
 		if (array->type->usable_as_super_array()) {
 			// array.num
-			val1 = array->shift(config.pointer_size, TypeInt, array->token_id);
+			val1 = array->shift(config.target.pointer_size, TypeInt, array->token_id);
 		} else {
 			// array.size
 			val1 = add_node_const(add_constant_int(array->type->array_length));
@@ -1276,7 +1300,7 @@ void MapLVSX86Return(Function *f, int64 &stack_offset) {
 	for (auto &v: f->var)
 		if (v->name == Identifier::RETURN_VAR) {
 			v->_offset = stack_offset;
-			stack_offset += config.pointer_size;
+			stack_offset += config.target.pointer_size;
 		}
 }
 
@@ -1284,19 +1308,19 @@ void MapLVSX86Self(Function *f, int64 &stack_offset) {
 	for (auto &v: f->var)
 		if (v->name == Identifier::SELF) {
 			v->_offset = stack_offset;
-			stack_offset += config.pointer_size;
+			stack_offset += config.target.pointer_size;
 		}
 }
 
 void SyntaxTree::map_local_variables_to_stack() {
 	for (Function *f: functions) {
 
-		if (config.instruction_set == Asm::InstructionSet::X86) {
+		if (config.target.instruction_set == Asm::InstructionSet::X86) {
 			f->_var_size = 0;
-			int64 stack_offset = 2 * config.pointer_size; // space for eIP and eBP
+			int64 stack_offset = 2 * config.target.pointer_size; // space for eIP and eBP
 			// offsets to stack pointer (for push parameters)
 
-			if (config.abi == Abi::X86_WINDOWS) {
+			if (config.target.abi == Abi::X86_WINDOWS) {
 				// map "self" to the VERY first parameter
 				if (f->is_member())
 					MapLVSX86Self(f, stack_offset);
@@ -1330,12 +1354,12 @@ void SyntaxTree::map_local_variables_to_stack() {
 					f->_var_size += s;
 				}
 			}
-		} else if (config.instruction_set == Asm::InstructionSet::AMD64) {
+		} else if (config.target.instruction_set == Asm::InstructionSet::AMD64) {
 			f->_var_size = 0;
-			int64 stack_offset = 2 * config.pointer_size; // space for rIP and rBP
+			int64 stack_offset = 2 * config.target.pointer_size; // space for rIP and rBP
 			// offsets to stack pointer (for push parameters)
 
-			if (config.abi == Abi::AMD64_WINDOWS) {
+			if (config.target.abi == Abi::AMD64_WINDOWS) {
 
 				// map "self" to the VERY first parameter
 				if (f->is_member())
@@ -1370,7 +1394,7 @@ void SyntaxTree::map_local_variables_to_stack() {
 					v->_offset = -f->_var_size;
 				}
 			}
-		} else if (config.instruction_set == Asm::InstructionSet::ARM) {
+		} else if (config.target.is_arm()) {
 			f->_var_size = 0;
 
 			for (auto v: weak(f->var)) {

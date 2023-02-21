@@ -341,7 +341,7 @@ shared<Node> Parser::parse_abstract_operand_extension(shared<Node> operand, Bloc
 	} else if (Exp.cur == "?") {
 		// optional?
 		return parse_abstract_operand_extension(parse_abstract_operand_extension_optional(operand), block, true);
-	} else if (Exp.cur == Identifier::SHARED or Exp.cur == Identifier::OWNED) {
+	/*} else if (Exp.cur == Identifier::SHARED or Exp.cur == Identifier::OWNED) {
 		auto sub = operand;
 		if (Exp.cur == Identifier::SHARED) {
 			operand = new Node(NodeKind::ABSTRACT_TYPE_SHARED, 0, TypeUnknown);
@@ -351,9 +351,10 @@ shared<Node> Parser::parse_abstract_operand_extension(shared<Node> operand, Bloc
 		operand->token_id = Exp.consume_token();
 		operand->set_num_params(1);
 		operand->set_param(0, sub);
-		return parse_abstract_operand_extension(operand, block, true);
+		return parse_abstract_operand_extension(operand, block, true);*/
 	} else {
 
+		// TODO ptr[X]
 		if ((Exp.cur == "*" and (prefer_class or no_identifier_after())) or Exp.cur == "ptr") {
 			// FIXME: false positives for "{{pi * 10}}"
 			return parse_abstract_operand_extension(parse_abstract_operand_extension_pointer(operand), block, true);
@@ -623,10 +624,16 @@ shared<Node> Parser::parse_abstract_operand(Block *block, bool prefer_class) {
 	//} else if (auto s = which_special_function(Exp.cur)) {
 	//	operand = parse_abstract_special_function(block, s);
 	} else if (auto w = which_abstract_operator(Exp.cur, OperatorFlags::UNARY_RIGHT)) { // negate/not...
-		operand = new Node(NodeKind::ABSTRACT_OPERATOR, (int_p)w, TypeUnknown);
+		operand = new Node(NodeKind::ABSTRACT_OPERATOR, (int_p)w, TypeUnknown, false, Exp.cur_token());
 		Exp.next();
 		operand->set_num_params(1);
 		operand->set_param(0, parse_abstract_operand(block));
+	} else if (try_consume(Identifier::SHARED)) {
+		operand = new Node(NodeKind::ABSTRACT_TYPE_SHARED, 0, TypeUnknown, false, Exp.cur_token());
+	} else if (try_consume(Identifier::OWNED)) {
+		operand = new Node(NodeKind::ABSTRACT_TYPE_OWNED, 0, TypeUnknown, false, Exp.cur_token());
+	} else if (try_consume(Identifier::XFER)) {
+		operand = new Node(NodeKind::ABSTRACT_TYPE_XFER, 0, TypeUnknown, false, Exp.cur_token());
 	} else {
 		operand = parse_abstract_token();
 	}
@@ -1496,9 +1503,17 @@ void parser_class_add_element(Parser *p, Class *_class, const string &name, cons
 	}
 }
 
+Class::Type parse_class_type(const string& e) {
+	if (e == Identifier::INTERFACE)
+		return Class::Type::INTERFACE;
+	if (e == Identifier::STRUCT)
+		return Class::Type::STRUCT;
+	return Class::Type::REGULAR;
+}
+
 Class *Parser::parse_class_header(Class *_namespace, int &offset0) {
 	offset0 = 0;
-	bool as_interface = (Exp.consume() == Identifier::INTERFACE); // class/struct/interface
+	auto class_type = parse_class_type(Exp.consume()); // class/struct/interface
 	string name = Exp.cur;
 	int token_id = Exp.consume_token();
 
@@ -1508,8 +1523,7 @@ Class *Parser::parse_class_header(Class *_namespace, int &offset0) {
 	if (!_class)
 		tree->module->do_error_internal("class declaration ...not found " + name);
 	_class->token_id = token_id;
-	if (as_interface)
-		_class->type = Class::Type::INTERFACE;
+	_class->type = class_type;
 
 	// parent class
 	if (try_consume(Identifier::EXTENDS)) {
@@ -1517,17 +1531,17 @@ Class *Parser::parse_class_header(Class *_namespace, int &offset0) {
 		if (!parent->fully_parsed())
 			return nullptr;
 			//do_error(format("parent class '%s' not fully parsed yet", parent->long_name()));
-		_class->derive_from(parent, true);
+		_class->derive_from(parent, DeriveFlags::SET_SIZE | DeriveFlags::KEEP_CONSTRUCTORS | DeriveFlags::COPY_VTABLE);
 		_class->flags = parent->flags;
-		offset0 = parent->size;
+		offset0 = _class->size;
 	}
 
 	if (try_consume(Identifier::IMPLEMENTS)) {
 		auto parent = parse_type(_namespace); // force
 		if (!parent->fully_parsed())
 			return nullptr;
-		_class->derive_from(parent, true);
-		offset0 = parent->size;
+		_class->derive_from(parent, DeriveFlags::SET_SIZE | DeriveFlags::KEEP_CONSTRUCTORS | DeriveFlags::COPY_VTABLE);
+		offset0 = _class->size;
 	}
 
 	// as shared|@noauto
@@ -1566,7 +1580,7 @@ bool Parser::parse_class(Class *_namespace) {
 
 		if (Exp.cur == Identifier::ENUM) {
 			parse_enum(_class);
-		} else if ((Exp.cur == Identifier::CLASS) or (Exp.cur == Identifier::INTERFACE)) {
+		} else if ((Exp.cur == Identifier::CLASS) or (Exp.cur == Identifier::STRUCT) or (Exp.cur == Identifier::INTERFACE)) {
 			int cur_token = Exp.cur_token();
 			if (!parse_class(_class)) {
 				sub_class_token_ids.add(cur_token);
@@ -1619,11 +1633,11 @@ void Parser::post_process_newly_parsed_class(Class *_class, int size) {
 			// element "-vtable-" being derived
 		} else {
 			for (ClassElement &e: _class->elements)
-				e.offset = external->process_class_offset(_class->cname(tree->base_class), e.name, e.offset + config.pointer_size);
+				e.offset = external->process_class_offset(_class->cname(tree->base_class), e.name, e.offset + config.target.pointer_size);
 
 			auto el = ClassElement(Identifier::VTABLE_VAR, TypePointer, 0);
 			_class->elements.insert(el, 0);
-			size += config.pointer_size;
+			size += config.target.pointer_size;
 
 			for (auto &i: _class->initializers)
 				i.element ++;

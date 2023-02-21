@@ -161,12 +161,24 @@ bool AutoImplementer::can_fully_construct(const Class *t) {
 	return num_el > 0;
 }
 
+// possible to assign _now_?
 bool AutoImplementer::class_can_assign(const Class *t) {
 	if (t->is_pointer() or t->is_reference())
 		return true;
 	if (t->get_assign())
 		return true;
+	if (t->is_struct() and !flags_has(t->flags, Flags::NOAUTO))
+		return true;
 	return false;
+}
+
+// _should_ we make it possible to assign?
+bool AutoImplementer::class_can_elements_assign(const Class *t) {
+	for (auto &e: t->elements)
+		if (!e.hidden())
+			if (!class_can_assign(e.type))
+				return false;
+	return true;
 }
 
 bool AutoImplementer::class_can_equal(const Class *t) {
@@ -193,6 +205,8 @@ void AutoImplementer::add_missing_function_headers_for_class(Class *t) {
 		_add_missing_function_headers_for_shared(t);
 	} else if (t->is_pointer_owned()) {
 		_add_missing_function_headers_for_owned(t);
+	} else if (t->is_pointer_xfer()) {
+		_add_missing_function_headers_for_xfer(t);
 	} else if (t->is_product()) {
 		_add_missing_function_headers_for_product(t);
 	} else if (t->is_callable_fp()) {
@@ -211,12 +225,9 @@ void AutoImplementer::add_missing_function_headers_for_class(Class *t) {
 Function* AutoImplementer::prepare_auto_impl(const Class *t, Function *f) {
 	if (!f)
 		return nullptr;
-	if (f->auto_declared) {
-		flags_clear(f->flags, Flags::NEEDS_OVERRIDE); // we're about to implement....
-		return f;
-	}
-	return nullptr;
-	t->owner->module->do_error_internal("prepare class func..." + f->signature());
+	if (!f->auto_declared)
+		return nullptr;
+	flags_clear(f->flags, Flags::NEEDS_OVERRIDE); // we're about to implement....
 	return f;
 }
 
@@ -239,6 +250,8 @@ void AutoImplementer::implement_functions(const Class *t) {
 		_implement_functions_for_shared(t);
 	} else if (t->is_pointer_owned()) {
 		_implement_functions_for_owned(t);
+	} else if (t->is_pointer_xfer()) {
+		_implement_functions_for_xfer(t);
 	} else if (t->is_enum()) {
 		_implement_functions_for_enum(t);
 	} else if (t->is_callable_fp()) {

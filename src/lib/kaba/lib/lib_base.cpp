@@ -277,13 +277,13 @@ void SIAddPackageBase(Context *c) {
 	TypeFloat32			= add_type  ("float32", sizeof(float), Flags::FORCE_CALL_BY_VALUE);
 	TypeFloat64			= add_type  ("float64", sizeof(double), Flags::FORCE_CALL_BY_VALUE);
 	TypeChar			= add_type  ("char", sizeof(char), Flags::FORCE_CALL_BY_VALUE);
-	TypeDynamicArray	= add_type  ("@DynamicArray", config.super_array_size);
-	TypeDictBase		= add_type  ("@DictBase",   config.super_array_size);
-	TypeSharedPointer	= add_type  ("@SharedPointer", config.pointer_size);
+	TypeDynamicArray	= add_type  ("@DynamicArray", config.target.super_array_size);
+	TypeDictBase		= add_type  ("@DictBase",   config.target.super_array_size);
+	TypeSharedPointer	= add_type  ("@SharedPointer", config.target.pointer_size);
 	TypeCallableBase	= add_type  ("@CallableBase", sizeof(Callable<void()>));
 
 	TypeException		= add_type  ("Exception", sizeof(KabaException));
-	TypeExceptionP		= add_type_p(TypeException);
+	TypeExceptionXfer	= add_type_xfer(TypeException);
 	TypeNoValueError    = add_type  ("NoValueError", sizeof(KabaException));
 
 
@@ -298,7 +298,7 @@ void SIAddPackageBase(Context *c) {
 		class_set_vtable(VirtualBase);
 
 	add_class(TypeDynamicArray);
-		class_add_element("num", TypeInt, config.pointer_size);
+		class_add_element("num", TypeInt, config.target.pointer_size);
 		class_add_func("swap", TypeVoid, &DynamicArray::simple_swap);
 			func_add_param("i1", TypeInt);
 			func_add_param("i2", TypeInt);
@@ -309,17 +309,19 @@ void SIAddPackageBase(Context *c) {
 		class_add_func("__mem_init__", TypeVoid, &DynamicArray::init);
 			func_add_param("element_size", TypeInt);
 		class_add_func("__mem_clear__", TypeVoid, &DynamicArray::simple_clear);
+		class_add_func("__mem_forget__", TypeVoid, &DynamicArray::forget);
 		class_add_func("__mem_resize__", TypeVoid, &DynamicArray::simple_resize);
 			func_add_param("size", TypeInt);
 		class_add_func("__mem_remove__", TypeVoid, &DynamicArray::delete_single);
 			func_add_param("index", TypeInt);
 
 	add_class(TypeDictBase);
-		class_add_element("num", TypeInt, config.pointer_size);
+		class_add_element("num", TypeInt, config.target.pointer_size);
 		// low level operations
 		class_add_func("__mem_init__", TypeVoid, &DynamicArray::init);
 			func_add_param("element_size", TypeInt);
 		class_add_func("__mem_clear__", TypeVoid, &DynamicArray::simple_clear);
+		class_add_func("__mem_forget__", TypeVoid, &DynamicArray::forget);
 		class_add_func("__mem_resize__", TypeVoid, &DynamicArray::simple_resize);
 			func_add_param("size", TypeInt);
 		class_add_func("__mem_remove__", TypeVoid, &DynamicArray::delete_single);
@@ -342,7 +344,7 @@ void SIAddPackageBase(Context *c) {
 	capture_implicit_type(TypeCString, "cstring"); // cstring := char[256]
 	TypeString      = add_type_l(TypeChar);
 	capture_implicit_type(TypeString, "string"); // string := char[]
-	TypeStringAutoCast = add_type("<string-auto-cast>", config.super_array_size);	// string := char[]
+	TypeStringAutoCast = add_type("<string-auto-cast>", config.target.super_array_size);	// string := char[]
 	TypeStringList  = add_type_l(TypeString);
 
 	TypeIntDict     = add_type_d(TypeInt);
@@ -728,16 +730,17 @@ void SIAddPackageBase(Context *c) {
 			func_add_param("message", TypeString);
 		class_add_func_virtual(Identifier::Func::DELETE, TypeVoid, &KabaException::__delete__);
 		class_add_func_virtual(Identifier::Func::STR, TypeString, &KabaException::message);
-		class_add_element("_text", TypeString, config.pointer_size);
+		class_add_element("_text", TypeString, config.target.pointer_size);
 		class_set_vtable(KabaException);
 
 	add_class(TypeNoValueError);
-		class_derive_from(TypeException, false, true);
+		class_derive_from(TypeException);
 		class_add_func(Identifier::Func::INIT, TypeVoid, &KabaNoValueError::__init__);
+		class_add_func(Identifier::Func::DELETE, TypeVoid, &KabaNoValueError::__delete__, Flags::OVERRIDE);
 		class_set_vtable(KabaNoValueError);
 
 	add_func(Identifier::RAISE, TypeVoid, &kaba_raise_exception, Flags::STATIC | Flags::RAISES_EXCEPTIONS);
-		func_add_param("e", TypeExceptionP);
+		func_add_param("e", TypeExceptionXfer);
 		
 		
 	// type casting
