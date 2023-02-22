@@ -28,7 +28,7 @@ void AutoImplementer::_add_missing_function_headers_for_regular(Class *t) {
 			if (t->get_constructors().num == 0) {
 				if (t->needs_constructor())
 					add_func_header(t, Identifier::Func::INIT, TypeVoid, {}, {}, t->get_default_constructor());
-				if (can_fully_construct(t))
+				if (class_can_fully_construct(t))
 					add_full_constructor(t);
 			}
 			if (needs_new(t->get_destructor()))

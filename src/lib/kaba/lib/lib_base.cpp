@@ -21,6 +21,7 @@ extern const Class *TypeStringAutoCast;
 extern const Class *TypeDictBase;
 extern const Class *TypeCallableBase;
 extern const Class *TypeFloat;
+extern const Class *TypeNone;
 extern const Class *TypePointerList;
 extern const Class *TypeObject;
 extern const Class *TypeObjectP;
@@ -283,7 +284,7 @@ void SIAddPackageBase(Context *c) {
 	TypeCallableBase	= add_type  ("@CallableBase", sizeof(Callable<void()>));
 
 	TypeException		= add_type  ("Exception", sizeof(KabaException));
-	TypeExceptionXfer	= add_type_xfer(TypeException);
+	TypeExceptionXfer	= add_type_p_xfer(TypeException);
 	TypeNoValueError    = add_type  ("NoValueError", sizeof(KabaException));
 
 
@@ -332,7 +333,9 @@ void SIAddPackageBase(Context *c) {
 			func_set_inline(InlineID::SHARED_POINTER_INIT);
 
 	// derived   (must be defined after the primitive types and the bases!)
-	TypePointer     = add_type_p(TypeVoid, Flags::FORCE_CALL_BY_VALUE); // substitute for all pointer types
+	TypePointer     = add_type_p(TypeVoid); // substitute for all pointer types
+	TypeNone        = add_type_p(TypeVoid); // type of <nil>
+	const_cast<Class*>(TypeNone)->name = "None";
 	TypePointerList = add_type_l(TypePointer);
 	TypeBoolList    = add_type_l(TypeBool);
 	TypeIntP        = add_type_p(TypeInt);
@@ -720,7 +723,7 @@ void SIAddPackageBase(Context *c) {
 	void *kaba_nil = nullptr;
 	bool kaba_true = true;
 	bool kaba_false = false;
-	add_const("nil", TypePointer, &kaba_nil);
+	add_const("nil", TypeNone, &kaba_nil);
 	add_const("false", TypeBool, &kaba_false);
 	add_const("true",  TypeBool, &kaba_true);
 
