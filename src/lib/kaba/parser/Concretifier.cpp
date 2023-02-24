@@ -17,9 +17,10 @@
 namespace kaba {
 
 extern Array<Operator*> global_operators;
+extern const Class *TypeSpecialFunctionRef;
 
 
-bool type_match(const Class *given, const Class *wanted);
+bool type_match_up(const Class *given, const Class *wanted);
 
 const Class *merge_type_tuple_into_product(SyntaxTree *tree, const Array<const Class*> &classes, int token_id);
 
@@ -47,7 +48,7 @@ const Class *get_user_friendly_type(shared<Node> operand) {
 	if (operand->kind == NodeKind::CLASS) {
 		// referencing class functions
 		return operand->as_class();
-	} else if (type->is_some_pointer()) {
+	} else if (type->is_reference()) {
 		return type->param[0];
 	}
 	return type;
@@ -63,19 +64,19 @@ const Class *give_useful_type(Concretifier *con, shared<Node> node) {
 
 // usable for pointer AND Callable class!
 Array<const Class*> get_callable_param_types(const Class *fp) {
-	if (fp->is_pointer())
+	if (fp->is_pointer_raw())
 		return fp->param[0]->param.sub_ref(0, -1); // skip return value
 	return fp->param.sub_ref(0, -1); // skip return value
 }
 
 const Class *get_callable_return_type(const Class *fp) {
-	if (fp->is_pointer())
+	if (fp->is_pointer_raw())
 		return fp->param[0]->param.back();
 	return fp->param.back();
 }
 
 Array<const Class*> get_callable_capture_types(const Class *fp) {
-	if (fp->is_pointer())
+	if (fp->is_pointer_raw())
 		return get_callable_capture_types(fp->param[0]);
 	Array<const Class*> binds;
 	for (auto &e: fp->elements)
@@ -119,6 +120,96 @@ extern const Class *TypeAnyDict;
 extern const Class *TypeDynamicArray;
 extern const Class *TypeIntDict;
 extern const Class *TypeStringAutoCast;
+extern const Class *TypeNone;
+
+
+bool func_pointer_match_up(const Class *given, const Class *wanted) {
+	auto g = given->param[0];
+	auto w = wanted->param[0];
+	//msg_write(format("%s   vs   %s", g->name, w->name));
+	if (g->param.num != w->param.num) {
+		//msg_error(format("%s   vs   %s     ###", g->name, w->name));
+		return false;
+	}
+	// hmmm, let's be pedantic for return values
+	if (g->param.back() != w->param.back()) {
+		//msg_error(format("%s   vs   %s     return", g->name, w->name));
+		return false;
+	}
+	// allow down-cast for parameters
+	// ACTUALLY, this is the wrong way!!!!
+	//    but we can't know user types when creating the standard library...
+	for (int i=0; i<g->param.num-1; i++)
+		if (!type_match_up(g->param[i], w->param[i])) {
+			//msg_error(format("%s   vs   %s     param", g->name, w->name, i));
+			return false;
+		}
+	return true;
+}
+
+bool is_same_kind_of_pointer(const Class *a, const Class *b) {
+	return (a->is_some_pointer() and (a->type == b->type));
+}
+
+// can be re-interpreted as...?
+bool type_match_up(const Class *given, const Class *wanted) {
+	// exact match?
+	if (given == wanted)
+		return true;
+
+	// allow any pointer?
+	// FIXME don't use raw pointer parameters...
+	// TODO also shared/owned
+	if ((given->is_pointer_raw() or given->is_reference() or given->is_pointer_xfer()) and (wanted == TypePointer))
+		return true;
+
+	if (given->is_reference() and (wanted == TypeReference))
+		return true;
+
+	// allow nil as parameter
+	if ((given == TypeNone) and wanted->is_pointer_raw())
+		return true;
+
+	/*if (given->is_() and wanted->is_pointer_xfer())
+		if (given->param[0] == wanted->param[0])
+			return true;*/
+
+	/*if (given->is_pointer_xfer() and wanted->is_pointer_owned())
+		if (given->param[0] == wanted->param[0])
+			return true;*/
+
+	// compatible pointers (of same or derived class)
+	if (is_same_kind_of_pointer(given, wanted)) {
+		// MAYBE: return type_match(given->param[0], wanted->param[0]);
+		if (given->param[0]->is_derived_from(wanted->param[0]))
+			return true;
+	}
+
+	//msg_write(given->long_name() + "  ->  " + wanted->long_name());
+	if (wanted->is_pointer_raw() and (given->is_reference() or given->is_pointer_shared() or given->is_pointer_owned() or given->is_pointer_owned_not_null()))
+		if (type_match_up(given->param[0], wanted->param[0])) {
+			//msg_error("XXXX");
+			return true;
+		}
+
+	if (given->is_callable() and wanted->is_callable())
+		return func_pointer_match_up(given, wanted);
+
+	if (wanted->is_super_array()) {
+		if (given->is_super_array()) {
+			if (type_match_up(given->param[0], wanted->param[0]) and (given->param[0]->size == wanted->param[0]->size))
+				return true;
+		}
+	}
+
+	if (wanted == TypeStringAutoCast and given == TypeString)
+		return true;
+
+	if (wanted == TypeDynamic)
+		return true;
+
+	return given->is_derived_from(wanted);
+}
 
 const int TYPE_CAST_NONE = -1;
 const int TYPE_CAST_DEREFERENCE = -2;
@@ -197,24 +288,46 @@ const Class *Concretifier::make_effective_class_callable(shared<Node> node) {
 
 bool Concretifier::type_match_with_cast(shared<Node> node, bool is_modifiable, const Class *wanted, CastingData &cd) {
 	cd.penalty = 0;
-	auto given = node->type;
 	cd.cast = TYPE_CAST_NONE;
-	if (type_match(given, wanted))
-		return true;
-	if (wanted == TypeStringAutoCast and given == TypeString)
-		return true;
-	if (is_modifiable) // is a variable getting assigned.... better not cast
+	cd.pre_deref = false;
+	auto given = node->type;
+
+
+	if (given->is_reference() or given->is_pointer_owned_not_null()) {
+		CastingData cd_sub;
+		if (type_match_with_cast(node->deref(), is_modifiable, wanted, cd_sub)) {
+			cd = cd_sub;
+			cd.pre_deref = true;
+			cd.penalty += 10;
+			return true;
+		}
+	}
+
+	if (is_modifiable) {
+		// is a variable getting assigned.... better not cast
+		if (given == wanted)
+			return true;
+
+		// allow any raw pointer
+		if (given->is_pointer_raw() and wanted == TypePointer)
+			return true;
+
 		return false;
-	if (given->is_some_pointer()) {
-		if (type_match(given->param[0], wanted)) {
+	}
+	if (type_match_up(given, wanted))
+		return true;
+	/*if (given->is_some_pointer()) {
+		if (type_match_up(given->param[0], wanted)) {
 			cd.penalty = 10;
 			cd.cast = TYPE_CAST_DEREFERENCE;
 			return true;
 		}
-	}
-	if (wanted->is_pointer_shared() and (given->is_pointer_xfer() or given->is_pointer())) {
+	}*/
+
+
+	if (wanted->is_pointer_shared() and (given->is_pointer_xfer() or given->is_pointer_raw() or given->is_reference())) {
 		// TODO really raw pointer?!?
-		if (type_match(given->param[0], wanted->param[0]) or (given == TypePointer /* nil etc */)) {
+		if (type_match_up(given->param[0], wanted->param[0]) or (given == TypeNone /* nil etc */)) {
 			auto t_xfer = tree->request_implicit_class_xfer(wanted->param[0], -1);
 			cd.penalty = 10;
 			cd.cast = TYPE_CAST_MAKE_SHARED;
@@ -269,7 +382,7 @@ bool Concretifier::type_match_with_cast(shared<Node> node, bool is_modifiable, c
 			if (wanted->param.num != node->params.num)
 				return false;
 			for (int i=0; i<node->params.num; i++)
-				if (!type_match(node->params[i]->type, wanted->param[i]))
+				if (!type_match_up(node->params[i]->type, wanted->param[i]))
 					return false;
 			msg_error("product");
 			cd.cast = TYPE_CAST_ABSTRACT_TUPLE;
@@ -294,7 +407,7 @@ bool Concretifier::type_match_with_cast(shared<Node> node, bool is_modifiable, c
 	if (wanted->is_callable() and (given == TypeUnknown)) {
 		if (node->kind == NodeKind::FUNCTION) {
 			auto ft = make_effective_class_callable(node);
-			if (type_match(ft, wanted)) {
+			if (type_match_up(ft, wanted)) {
 				cd.cast = TYPE_CAST_FUNCTION_AS_CALLABLE;
 				return true;
 			}
@@ -327,7 +440,7 @@ bool Concretifier::type_match_with_cast(shared<Node> node, bool is_modifiable, c
 		}
 
 	for (auto&& [i,c]: enumerate(context->type_casts))
-		if (type_match(given, c.source) and type_match(c.dest, wanted)) {
+		if (type_match_up(given, c.source) and type_match_up(c.dest, wanted)) {
 			cd.penalty = c.penalty;
 			cd.cast = i;
 			return true;
@@ -335,13 +448,13 @@ bool Concretifier::type_match_with_cast(shared<Node> node, bool is_modifiable, c
 	return false;
 }
 
-shared<Node> Concretifier::apply_type_cast(const CastingData &cast, shared<Node> node, const Class *wanted) {
+shared<Node> Concretifier::apply_type_cast_basic(const CastingData &cast, shared<Node> node, const Class *wanted) {
 	if (cast.cast == TYPE_CAST_NONE)
 		return node;
 	if (cast.cast == TYPE_CAST_DEREFERENCE)
 		return node->deref();
 	if (cast.cast == TYPE_CAST_REFERENCE_LEGACY)
-		return node->ref_legacy(tree);
+		return node->ref_raw(tree);
 	if (cast.cast == TYPE_CAST_REFERENCE_NEW)
 		return node->ref_new(tree);
 	if (cast.cast == TYPE_CAST_OWN_STRING)
@@ -425,6 +538,14 @@ shared<Node> Concretifier::apply_type_cast(const CastingData &cast, shared<Node>
 	return c;
 }
 
+shared<Node> Concretifier::apply_type_cast(const CastingData &cast, shared<Node> node, const Class *wanted) {
+	if (cast.pre_deref) {
+		return apply_type_cast_basic(cast, node->deref(), wanted);
+	} else {
+		return apply_type_cast_basic(cast, node, wanted);
+	}
+}
+
 shared<Node> Concretifier::link_special_operator_is(shared<Node> param1, shared<Node> param2, int token_id) {
 	const Class *t2 = try_digest_type(tree, param2);
 	if (!t2)
@@ -450,6 +571,7 @@ shared<Node> Concretifier::link_special_operator_is(shared<Node> param1, shared<
 
 shared<Node> Concretifier::link_special_operator_in(shared<Node> param1, shared<Node> param2, int token_id) {
 	param2 = force_concrete_type(param2);
+	param1 = deref_if_reference(param1);
 	auto *f = param2->type->get_member_func(Identifier::Func::CONTAINS, TypeBool, {param1->type});
 	if (!f)
 		do_error(format("no 'bool %s.%s(%s)' found", param2->type->long_name(), Identifier::Func::CONTAINS, param1->type->long_name()), token_id);
@@ -515,6 +637,13 @@ shared<Node> Concretifier::link_special_operator_tuple_extract(shared<Node> para
 	return node;
 }
 
+// TODO clean-up
+shared<Node> Concretifier::link_special_operator_ref_assign(shared<Node> param1, shared<Node> param2, int token_id) {
+	param1->show();
+	param2->show();
+	return add_node_operator_by_inline(InlineID::POINTER_ASSIGN, param1, param2, token_id);
+}
+
 shared<Node> Concretifier::link_operator(AbstractOperator *primop, shared<Node> param1, shared<Node> param2, int token_id) {
 	bool left_modifiable = primop->flags & OperatorFlags::LEFT_IS_MODIFIABLE;
 	[[maybe_unused]] bool order_inverted = primop->flags & OperatorFlags::ORDER_INVERTED;
@@ -524,6 +653,10 @@ shared<Node> Concretifier::link_operator(AbstractOperator *primop, shared<Node> 
 	// tuple extractor?
 	if ((primop->id == OperatorID::ASSIGN) and (param1->kind == NodeKind::TUPLE))
 		return link_special_operator_tuple_extract(param1, param2, token_id);
+
+	// &ref := &ref
+	if ((primop->id == OperatorID::REF_ASSIGN) and param1->type->is_reference() and param2->type->is_reference())
+		return link_special_operator_ref_assign(param1, param2, token_id);
 
 	if (left_modifiable and param1->is_const)
 		do_error("trying to modify a constant expression", token_id);
@@ -541,8 +674,8 @@ shared<Node> Concretifier::link_operator(AbstractOperator *primop, shared<Node> 
 	auto *p2 = param2->type;
 
 	const Class *pp1 = p1;
-	if (pp1->is_some_pointer())
-		pp1 = p1->param[0];
+//	if (pp1->is_some_pointer())
+//		pp1 = p1->param[0];
 
 	if (primop->id == OperatorID::ASSIGN) {
 		// x.get(..) = y   =>   x.set(.., y)
@@ -577,7 +710,7 @@ shared<Node> Concretifier::link_operator(AbstractOperator *primop, shared<Node> 
 				continue;
 
 			auto type2 = f->literal_param_type[1];
-			if (type_match(p2, type2)) {
+			if (type_match_up(p2, type2)) {
 				auto inst = param1;
 				if (p1 == pp1)
 					op = add_node_member_call(f, inst, token_id);
@@ -616,27 +749,35 @@ shared<Node> Concretifier::link_operator(AbstractOperator *primop, shared<Node> 
 					t1_best = op->param_type_1;
 					t2_best = op->param_type_2;
 				}
-	for (auto *cf: weak(p1->functions))
-		if (cf->name == op_func_name)
-			if (type_match_with_cast(param2, false, cf->literal_param_type[1], c2))
+	for (auto *cf: weak(pp1->functions))
+		if (cf->name == op_func_name) {
+			if (type_match_with_cast(param2, false, cf->literal_param_type[1], c2)) {
 				if (c2.penalty < c2_best.penalty) {
 					op_cf_found = cf;
 					c1_best.cast = TYPE_CAST_NONE;
 					c2_best = c2;
 					t2_best = cf->literal_param_type[1];
 				}
+			}
+		}
 	// cast
 	if (op_found or op_cf_found) {
 		param1 = apply_type_cast(c1_best, param1, t1_best);
 		param2 = apply_type_cast(c2_best, param2, t2_best);
 		if (op_cf_found) {
-			op = add_node_member_call(op_cf_found, param1, token_id);
+			if (p1 == pp1)
+				op = add_node_member_call(op_cf_found, param1, token_id);
+			else
+				op = add_node_member_call(op_cf_found, param1->deref(), token_id);
 			op->set_param(1, param2);
 		} else {
 			return add_node_operator(op_found, param1, param2, token_id);
 		}
 		return op;
 	}
+
+	if (p1->is_reference() or p1->is_pointer_owned_not_null())
+		return link_operator(primop, param1->deref(), param2, token_id);
 
 	return nullptr;
 }
@@ -722,6 +863,7 @@ shared_array<Node> Concretifier::concretify_element(shared<Node> node, Block *bl
 	auto el = parser->Exp.get_token(token_id);
 
 	base = force_concrete_type(base);
+	base = deref_if_reference(base);
 	auto links = tree->get_element_of(base, el, token_id);
 	if (links.num > 0)
 		return links;
@@ -733,9 +875,7 @@ shared_array<Node> Concretifier::concretify_element(shared<Node> node, Block *bl
 		auto links = tree->get_element_of(c, el, token_id);
 		if (links.num > 0)
 			return links;
-	}
-
-	if (base->kind == NodeKind::FUNCTION) {
+	} else if (base->kind == NodeKind::FUNCTION) {
 		msg_write("FFF");
 	}
 
@@ -759,6 +899,10 @@ shared<Node> Concretifier::concretify_array(shared<Node> node, Block *block, con
 		if (auto t = try_digest_type(tree, index))
 			return add_node_class(tree->request_implicit_class_owned(t, node->token_id), node->token_id);
 		do_error("type expected in 'owned[...]'", index);
+	} else if (operand->kind == NodeKind::ABSTRACT_TYPE_OWNED_NOT_NULL) {
+		if (auto t = try_digest_type(tree, index))
+			return add_node_class(tree->request_implicit_class_owned_not_null(t, node->token_id), node->token_id);
+		do_error("type expected in 'owned![...]'", index);
 	} else if (operand->kind == NodeKind::ABSTRACT_TYPE_XFER) {
 		if (auto t = try_digest_type(tree, index))
 			return add_node_class(tree->request_implicit_class_xfer(t, node->token_id), node->token_id);
@@ -802,9 +946,11 @@ shared<Node> Concretifier::concretify_array(shared<Node> node, Block *block, con
 
 	operand = force_concrete_type(operand);
 
+	operand = deref_if_reference(operand);
+	index = deref_if_reference(index);
 
 	// auto deref?
-	if (operand->type->is_pointer()) {
+	if (operand->type->is_pointer_raw()) {
 		if (!operand->type->param[0]->is_array() and !operand->type->param[0]->usable_as_super_array())
 			do_error(format("using pointer type '%s' as an array (like in C) is deprecated", operand->type->long_name()), index);
 		operand = operand->deref();
@@ -813,6 +959,7 @@ shared<Node> Concretifier::concretify_array(shared<Node> node, Block *block, con
 
 	// __subarray__() ?
 	if (index2) {
+		index2 = deref_if_reference(index2);
 		auto *cf = operand->type->get_member_func(Identifier::Func::SUBARRAY, operand->type, {index->type, index->type});
 		if (cf) {
 			auto f = add_node_member_call(cf, operand, operand->token_id);
@@ -863,7 +1010,7 @@ shared<Node> Concretifier::concretify_array(shared<Node> node, Block *block, con
 	// pointer?
 	if (operand->type->usable_as_super_array()) {
 		array_element = add_node_dyn_array(operand, index);
-	} else if (operand->type->is_pointer()) {
+	} else if (operand->type->is_pointer_raw()) {
 		array_element = add_node_parray(operand, index, operand->type->param[0]->param[0]);
 	} else {
 		array_element = add_node_array(operand, index);
@@ -916,7 +1063,7 @@ shared_array<Node> Concretifier::concretify_token(shared<Node> node, Block *bloc
 	// special function name
 	if (auto s = parser->which_special_function(token)) {
 		// no call, just the name
-		return {add_node_special_function_name(s->id, node->token_id, TypeSpecialFunctionP)};
+		return {add_node_special_function_name(s->id, node->token_id, TypeSpecialFunctionRef)};
 	}
 
 #if 0
@@ -950,12 +1097,69 @@ shared<Node> Concretifier::concretify_statement_return(shared<Node> node, Block 
 }
 
 shared<Node> Concretifier::concretify_statement_if(shared<Node> node, Block *block, const Class *ns) {
-	// [COND, TRUE-BLOCK, FALSE-BLOCK]
+	// [COND, TRUE-BLOCK, [FALSE-BLOCK]]
 	concretify_all_params(node, block, ns);
 	node->type = TypeVoid;
 	//node->set_param(0, check_param_link(node->params[0], TypeBool, Identifier::IF));
 	node->params[0] = check_param_link(node->params[0], TypeBool, Identifier::IF);
 	return node;
+}
+
+shared<Node> Concretifier::concretify_statement_for_unwrap_pointer(shared<Node> node, shared<Node> container, Block *block, const Class *ns) {
+	// [OUT-VAR, ---, EXPRESSION, TRUE-BLOCK, [FALSE-BLOCK]]
+	auto expr = container;//concretify_node(node->params[2], block, ns);
+	auto t0 = expr->type;
+	auto var_name = parser->Exp.get_token(node->params[0]->token_id);
+
+	auto block_x = new Block(block->function, block);
+
+	auto t_out = tree->request_implicit_class_reference(t0->param[0], node->token_id);
+
+	auto *var = block_x->add_var(var_name, t_out);
+	block_x->add(add_node_operator_by_inline(InlineID::POINTER_ASSIGN, add_node_local(var), expr->shift(0, t_out)));
+
+	auto n_if = add_node_statement(StatementID::IF, node->token_id);
+	n_if->set_num_params(node->params.num - 2);
+	Function *f_p2b = tree->required_func_global("p2b", node->token_id);
+	auto n_p2b = add_node_call(f_p2b);
+	n_p2b->set_num_params(1);
+	n_p2b->set_param(0, add_node_local(var));
+	n_if->set_param(0, n_p2b);
+	n_if->set_param(1, concretify_node(cp_node(node->params[3], block_x), block_x, ns));
+	if (node->params.num >= 5)
+		n_if->set_param(2, concretify_node(cp_node(node->params[4], block_x), block_x, ns));
+	block_x->add(n_if);
+
+	return block_x;
+}
+
+shared<Node> Concretifier::concretify_statement_for_unwrap_optional(shared<Node> node, shared<Node> container, Block *block, const Class *ns) {
+	// [OUT-VAR, ---, EXPRESSION, TRUE-BLOCK, [FALSE-BLOCK]]
+	auto expr = concretify_node(node->params[2], block, ns);
+	auto t0 = expr->type;
+	auto var_name = parser->Exp.get_token(node->params[0]->token_id);
+
+	auto block_x = new Block(block->function, block);
+
+	auto t_out = tree->request_implicit_class_reference(t0->param[0], node->token_id);
+
+	auto *var = block_x->add_var(var_name, t_out);
+	auto assign = add_node_operator_by_inline(InlineID::POINTER_ASSIGN, add_node_local(var), expr->ref_raw(t_out));
+
+	auto n_if = add_node_statement(StatementID::IF, node->token_id);
+	n_if->set_num_params(node->params.num - 2);
+	auto f_has_val = t0->get_member_func(Identifier::Func::OPTIONAL_HAS_VALUE, TypeBool, {});
+//	if (!f_has_val)
+//		do_error("")
+	n_if->set_param(0, add_node_member_call(f_has_val, expr));
+	n_if->set_param(1, concretify_node(cp_node(node->params[3], block_x), block_x, ns));
+	if (node->params.num >= 5)
+		n_if->set_param(2, concretify_node(cp_node(node->params[4], block_x), block_x, ns));
+	block_x->add(n_if);
+
+	n_if->params[1]->params.insert(assign, 0);
+
+	return block_x;
 }
 
 shared<Node> Concretifier::concretify_statement_while(shared<Node> node, Block *block, const Class *ns) {
@@ -1014,21 +1218,30 @@ shared<Node> Concretifier::concretify_statement_for_range(shared<Node> node, Blo
 	return node;
 }
 
-shared<Node> Concretifier::concretify_statement_for_array(shared<Node> node, Block *block, const Class *ns) {
+shared<Node> Concretifier::concretify_statement_for_container(shared<Node> node, Block *block, const Class *ns) {
 	// [VAR, INDEX, ARRAY, BLOCK]
 
-	auto array = force_concrete_type(concretify_node(node->params[2], block, ns));
-	array = deref_if_pointer(array);
-	if (!array->type->usable_as_super_array() and !array->type->is_array())
-		do_error("array or list expected as second parameter in 'for . in .'", array);
-	node->params[2] = array;
+	auto container = force_concrete_type(concretify_node(node->params[2], block, ns));
+	container = deref_if_reference(container);
+	auto t_c = container->type;
+	if (t_c->is_pointer_shared() or t_c->is_pointer_owned() or t_c->is_pointer_owned_not_null() or t_c->is_pointer_raw())
+		return concretify_statement_for_unwrap_pointer(node, container, block, ns);
+	else if (t_c->is_optional())
+		return concretify_statement_for_unwrap_optional(node, container, block, ns);
+	else if (t_c->usable_as_super_array() or t_c->is_array())
+		return concretify_statement_for_array(node, container, block, ns);
+	do_error("array/list/shared/owned/optional expected as second parameter in 'for . in .'", container);
+	return nullptr;
+}
 
-
+shared<Node> Concretifier::concretify_statement_for_array(shared<Node> node, shared<Node> container, Block *block, const Class *ns) {
 	// variable...
+	node->params[2] = container;
+
 	auto var_name = node->params[0]->as_token();
-	auto var_type = array->type->get_array_element();
+	auto var_type = tree->request_implicit_class_reference(container->type->get_array_element(), node->params[0]->token_id);
 	auto var = block->add_var(var_name, var_type);
-	if (array->is_const)
+	if (container->is_const)
 		flags_set(var->flags, Flags::CONST);
 	node->set_param(0, add_node_local(var));
 
@@ -1082,7 +1295,7 @@ shared<Node> Concretifier::concretify_special_function_typeof(shared<Node> node,
 shared<Node> Concretifier::concretify_special_function_len(shared<Node> node, Block *block, const Class *ns) {
 	auto sub = concretify_node(node->params[0], block, block->name_space());
 	sub = force_concrete_type(sub);
-	sub = deref_if_pointer(sub);
+	sub = deref_if_reference(sub);
 
 	// array?
 	if (sub->type->is_array())
@@ -1127,7 +1340,7 @@ shared<Node> Concretifier::concretify_statement_new(shared<Node> node, Block *bl
 
 shared<Node> Concretifier::concretify_statement_delete(shared<Node> node, Block *block, const Class *ns) {
 	auto p = concretify_node(node->params[0], block, block->name_space());
-	if (!p->type->is_pointer())
+	if (!p->type->is_pointer_raw())
 		do_error("pointer expected after 'del'", node->params[0]);
 
 	// override del operator?
@@ -1182,7 +1395,8 @@ shared<Node> Concretifier::concretify_special_function_weak(shared<Node> node, B
 
 	auto t = sub->type;
 	while (true) {
-		if (t->is_pointer_shared() or t->is_pointer_owned() or t->is_pointer_xfer()) {
+		//if (t->is_pointer() or t->is_pointer_shared() or t->is_pointer_owned() or t->is_reference()) {
+		if (t->is_some_pointer()) {
 			auto tt = tree->get_pointer(t->param[0], -1);
 			return sub->shift(0, tt, node->token_id);
 		} else if (t->is_super_array() and (t->get_array_element()->is_pointer_shared() or t->get_array_element()->is_pointer_owned())) {
@@ -1194,7 +1408,7 @@ shared<Node> Concretifier::concretify_special_function_weak(shared<Node> node, B
 		else
 			break;
 	}
-	do_error("weak() expects either a shared pointer, an owned pointer, or a shared pointer array", sub);
+	do_error(format("weak() expects either pointer (raw, shared, owned, ref), or a shared pointer array. Given: '%s'", t->long_name()), sub);
 	return nullptr;
 }
 
@@ -1202,12 +1416,12 @@ shared<Node> Concretifier::concretify_special_function_give(shared<Node> node, B
 	auto sub = concretify_node(node->params[0], block, block->name_space());
 
 	auto t = sub->type;
-	if (/*t->is_pointer_shared() or*/ t->is_pointer_owned()) {
+	if (/*t->is_pointer_shared() or*/ t->is_pointer_owned() or t->is_pointer_owned_not_null()) {
 		auto t_xfer = tree->request_implicit_class_xfer(t->param[0], -1);
 		if (auto f = t->get_member_func(Identifier::Func::OWNED_GIVE, t_xfer, {}))
 			return add_node_member_call(f, sub);
 		do_error("give...aaaa", sub);
-	} else if (t->is_super_array() and t->get_array_element()->is_pointer_owned()) {
+	} else if (t->is_super_array() and (t->get_array_element()->is_pointer_owned() or t->get_array_element()->is_pointer_owned_not_null())) {
 		auto t_xfer = tree->request_implicit_class_xfer(t->param[0]->param[0], -1);
 		auto t_xfer_list = tree->request_implicit_class_super_array(t_xfer, -1);
 		if (auto f = t->get_member_func(Identifier::Func::OWNED_GIVE, t_xfer_list, {}))
@@ -1442,7 +1656,7 @@ shared<Node> Concretifier::concretify_statement_lambda(shared<Node> node, Block 
 	shared_array<Node> capture_nodes;
 	for (auto&& [i,c]: enumerate(captures)) {
 		if (capture_via_ref[i])
-			capture_nodes.add(add_node_local(c)->ref_legacy(tree));
+			capture_nodes.add(add_node_local(c)->ref_raw(tree));
 		else
 			capture_nodes.add(add_node_local(c));
 	}
@@ -1458,14 +1672,14 @@ shared<Node> Concretifier::concretify_statement(shared<Node> node, Block *block,
 	auto s = node->as_statement();
 	if (s->id == StatementID::RETURN) {
 		return concretify_statement_return(node, block, ns);
-	} else if ((s->id == StatementID::IF) or (s->id == StatementID::IF_ELSE)) {
+	} else if (s->id == StatementID::IF) {
 		return concretify_statement_if(node, block, ns);
 	} else if (s->id == StatementID::WHILE) {
 		return concretify_statement_while(node, block, ns);
 	} else if (s->id == StatementID::FOR_RANGE) {
 		return concretify_statement_for_range(node, block, ns);
-	} else if (s->id == StatementID::FOR_ARRAY) {
-		return concretify_statement_for_array(node, block, ns);
+	} else if (s->id == StatementID::FOR_CONTAINER) {
+		return concretify_statement_for_container(node, block, ns);
 	} else if (s->id == StatementID::NEW) {
 		return concretify_statement_new(node, block, ns);
 	} else if (s->id == StatementID::DELETE) {
@@ -1547,13 +1761,14 @@ shared<Node> Concretifier::concretify_operator(shared<Node> node, Block *block, 
 
 const Class *type_ownify_xfer(SyntaxTree *tree, const Class *t) {
 	if (t->is_pointer_xfer())
-		return tree->request_implicit_class_owned(t->param[0], -1);
+		return tree->request_implicit_class_owned_not_null(t->param[0], -1);
 	if (t->is_super_array())
 		return tree->request_implicit_class_super_array(type_ownify_xfer(tree, t->param[0]), -1);
 	return t;
 }
 
 shared<Node> Concretifier::concretify_var_declaration(shared<Node> node, Block *block, const Class *ns) {
+	// [TYPE?, VAR, =[VAR,EXPR]]
 	bool as_const = (node->link_no == 1);
 
 	// type?
@@ -1564,7 +1779,7 @@ shared<Node> Concretifier::concretify_var_declaration(shared<Node> node, Block *
 		//auto t = digest_type(tree, force_concrete_type(concretify_node(node->params[0], block, ns)));
 		if (!type)
 			do_error("variable declaration requires a type", node->params[0]);
-		if (type->is_reference() and node->params.num < 3)
+		if ((type->is_reference() or type->is_pointer_owned_not_null()) and node->params.num < 3)
 			do_error("variables of reference type must be initialized", node->params[0]);
 		if (type->is_pointer_xfer())
 			do_error("no variables of type xfer[..] allowed", node->params[0]);
@@ -1594,8 +1809,16 @@ shared<Node> Concretifier::concretify_var_declaration(shared<Node> node, Block *
 	}
 
 	// assign?
-	if (node->params.num == 3)
-		node = concretify_node(node->params[2], block, ns);
+	if (node->params.num == 3) {
+		if (type->is_reference()) {
+			auto p = concretify_node(node->params[2]->params[1], block, ns);
+			if (p->type != vars[0]->type)
+				do_error("reference initialization type mismatch", p);
+			node = add_node_operator_by_inline(InlineID::POINTER_ASSIGN, add_node_local(vars[0]), p, node->token_id);
+		} else {
+			node = concretify_node(node->params[2], block, ns);
+		}
+	}
 	if (as_const)
 		for (auto v: vars)
 			flags_set(v->flags, Flags::CONST);
@@ -1681,18 +1904,26 @@ shared<Node> Concretifier::concretify_node(shared<Node> node, Block *block, cons
 		return concretify_operator(node, block, ns);
 	} else if (node->kind == NodeKind::DEREFERENCE) {
 		concretify_all_params(node, block, ns);
-		auto sub = node->params[0];
-		if (!sub->type->is_pointer() and !sub->type->is_reference())
-			do_error("only pointers can be dereferenced using '*'", node);
+		auto sub = deref_if_reference(node->params[0]);
+		if (!sub->type->is_pointer_raw()) // and !sub->type->is_reference())
+			do_error("only raw pointers can be dereferenced using '*'", node);
 		node->type = sub->type->param[0];
-	} else if (node->kind == NodeKind::REFERENCE_LEGACY) {
+	} else if (node->kind == NodeKind::REFERENCE_RAW) {
 		concretify_all_params(node, block, ns);
 		auto sub = node->params[0];
-		node->type = tree->get_pointer(sub->type, node->token_id);
+		if (sub->type->is_reference()) {
+			return sub->change_type(tree->get_pointer(sub->type->param[0], node->token_id));
+		} else {
+			node->type = tree->get_pointer(sub->type, node->token_id);
+		}
 	} else if (node->kind == NodeKind::REFERENCE_NEW) {
 		concretify_all_params(node, block, ns);
 		auto sub = node->params[0];
-		node->type = tree->request_implicit_class_reference(sub->type, node->token_id);
+		if (sub->type->is_reference() or sub->type->is_pointer_owned_not_null()) {
+			return sub->change_type(tree->request_implicit_class_reference(sub->type->param[0], node->token_id));
+		} else {
+			node->type = tree->request_implicit_class_reference(sub->type, node->token_id);
+		}
 	} else if (node->kind == NodeKind::ABSTRACT_CALL) {
 		return concretify_call(node, block, ns);
 	} else if (node->kind == NodeKind::ARRAY) {
@@ -1759,7 +1990,7 @@ shared<Node> Concretifier::concretify_node(shared<Node> node, Block *block, cons
 		if (!t1)
 			do_error("type expected before '->'", node->params[1]);
 		return add_node_class(tree->request_implicit_class_callable_fp({t0}, t1, node->token_id), node->token_id);
-	} else if ((node->kind == NodeKind::ABSTRACT_TYPE_SHARED) or (node->kind == NodeKind::ABSTRACT_TYPE_OWNED) or (node->kind == NodeKind::ABSTRACT_TYPE_XFER)) {
+	} else if ((node->kind == NodeKind::ABSTRACT_TYPE_SHARED) or (node->kind == NodeKind::ABSTRACT_TYPE_OWNED) or (node->kind == NodeKind::ABSTRACT_TYPE_OWNED_NOT_NULL) or (node->kind == NodeKind::ABSTRACT_TYPE_XFER)) {
 		return node;
 	/*} else if (node->kind == NodeKind::ABSTRACT_TYPE_SHARED) {
 		if (node->params.num == 0)
@@ -2006,7 +2237,7 @@ shared<Node> Concretifier::make_func_pointer_node_callable(const shared<Node> l)
 shared<Node> SyntaxTree::make_fake_constructor(const Class *t, const Class *param_type, int token_id) {
 	//if ((t == TypeInt) and (param_type == TypeFloat32))
 	//	return add_node_call(get_existence("f2i", nullptr, nullptr, false)[0]->as_func());
-	if (param_type->is_pointer())
+	if (param_type->is_pointer_raw())
 		param_type = param_type->param[0];
 
 	string fname = "__" + t->name + "__";
@@ -2049,7 +2280,7 @@ shared<Node> Concretifier::link_unary_operator(AbstractOperator *po, shared<Node
 	bool ok=false;
 	for (auto *_op: global_operators)
 		if (po == _op->abstract)
-			if ((!_op->param_type_2) and (type_match(p1, _op->param_type_1))) {
+			if ((!_op->param_type_2) and (type_match_up(p1, _op->param_type_1))) {
 				op = _op;
 				ok = true;
 				break;
@@ -2258,7 +2489,7 @@ shared<Node> Concretifier::build_pipe_filter(const shared<Node> &input, const sh
 		do_error("labmda expression '=>' expected inside 'filter()'", l);
 
 //  p = [VAR, KEY, ARRAY]
-	auto n_for = add_node_statement(StatementID::FOR_ARRAY, token_id, TypeUnknown);
+	auto n_for = add_node_statement(StatementID::FOR_CONTAINER, token_id, TypeUnknown);
 	n_for->set_param(0, l->params[0]); // token variable
 	//n_for->set_param(1, key);
 	n_for->set_param(2, input);
@@ -2302,14 +2533,14 @@ shared<Node> Concretifier::build_pipe_map(const shared<Node> &input, const share
 
 
 			// [VAR, INDEX, ARRAY, BLOCK]
-			auto n_for = add_node_statement(StatementID::FOR_ARRAY, token_id, TypeVoid);
+			auto n_for = add_node_statement(StatementID::FOR_CONTAINER, token_id, TypeVoid);
 			n_for->set_param(2, input);
 
 			auto el_type = input->type->get_array_element();
 			static int map_counter = 0;
 			string viname = format("<map-index-%d>", map_counter);
 			string vname = format("<map-var-%d>", map_counter++);
-			auto var = block->add_var(vname, el_type);
+			auto var = block->add_var(vname, tree->request_implicit_class_reference(el_type, token_id));
 			flags_set(var->flags, Flags::CONST);
 			n_for->set_param(0, add_node_local(var));
 			auto index = block->add_var(viname, TypeInt);
@@ -2440,7 +2671,7 @@ shared<Node> Concretifier::check_param_link(shared<Node> link, const Class *want
 	// type cast needed and possible?
 	const Class *given = link->type;
 
-	if (type_match(given, wanted))
+	if (type_match_up(given, wanted))
 		return link;
 
 	CastingData cast;
@@ -2464,7 +2695,7 @@ bool Concretifier::direct_param_match(const shared<Node> operand, const shared_a
 		if (c == TypeDynamic)
 			parser->found_dynamic_param = true;
 	for (int p=0; p<params.num; p++) {
-		if (!type_match(params[p]->type, wanted_types[p]))
+		if (!type_match_up(params[p]->type, wanted_types[p]))
 			return false;
 	}
 	return true;
@@ -2525,9 +2756,10 @@ shared<Node> Concretifier::apply_params_with_cast(shared<Node> operand, const sh
 	return r;
 }
 
-shared<Node> Concretifier::deref_if_pointer(shared<Node> node) {
-	if (node->type->is_some_pointer())
+shared<Node> Concretifier::deref_if_reference(shared<Node> node) {
+	if (node->type->is_reference() or node->type->is_pointer_owned_not_null()) {
 		return node->deref();
+	}
 	return node;
 }
 
@@ -2555,7 +2787,7 @@ shared<Node> Concretifier::add_converter_str(shared<Node> node, bool as_repr) {
 	Function *f = tree->required_func_global(as_repr ? "@var_repr" : "@var2str", node->token_id);
 
 	auto cmd = add_node_call(f, node->token_id);
-	cmd->set_param(0, node->ref_legacy(tree));
+	cmd->set_param(0, node->ref_raw(tree));
 	cmd->set_param(1, add_node_const(c));
 	return cmd;
 }
@@ -2581,7 +2813,7 @@ shared<Node> Concretifier::make_dynamical(shared<Node> node) {
 	Function *f = tree->required_func_global("@dyn", node->token_id);
 
 	auto cmd = add_node_call(f, node->token_id);
-	cmd->set_param(0, node->ref_legacy(tree));
+	cmd->set_param(0, node->ref_raw(tree));
 	cmd->set_param(1, add_node_const(c));
 	return cmd;
 }

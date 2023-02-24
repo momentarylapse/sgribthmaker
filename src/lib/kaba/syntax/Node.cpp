@@ -53,6 +53,8 @@ string kind2str(NodeKind kind) {
 		return "shared";
 	if (kind == NodeKind::ABSTRACT_TYPE_OWNED)
 		return "owned";
+	if (kind == NodeKind::ABSTRACT_TYPE_OWNED_NOT_NULL)
+		return "owned!";
 	if (kind == NodeKind::ABSTRACT_TYPE_POINTER)
 		return "pointer";
 	if (kind == NodeKind::ABSTRACT_TYPE_XFER)
@@ -79,8 +81,8 @@ string kind2str(NodeKind kind) {
 		return "dynamic array element";
 	if (kind == NodeKind::POINTER_AS_ARRAY)
 		return "pointer as array element";
-	if (kind == NodeKind::REFERENCE_LEGACY)
-		return "address operator";
+	if (kind == NodeKind::REFERENCE_RAW)
+		return "raw address operator";
 	if (kind == NodeKind::REFERENCE_NEW)
 		return "reference operator";
 	if (kind == NodeKind::DEREFERENCE)
@@ -180,7 +182,7 @@ string Node::signature(const Class *ns) const {
 		return t;
 	if (kind == NodeKind::POINTER_AS_ARRAY)
 		return t;
-	if (kind == NodeKind::REFERENCE_LEGACY)
+	if (kind == NodeKind::REFERENCE_RAW)
 		return t;
 	if (kind == NodeKind::REFERENCE_NEW)
 		return t;
@@ -372,17 +374,17 @@ shared<Node> Node::ref_new(const Class *t) const {
 }
 
 shared<Node> Node::ref_new(SyntaxTree *tree) const {
-	return ref_legacy(tree->request_implicit_class_reference(type, token_id));
+	return ref_raw(tree->request_implicit_class_reference(type, token_id));
 }
 
-shared<Node> Node::ref_legacy(const Class *t) const {
-	shared<Node> c = new Node(NodeKind::REFERENCE_LEGACY, 0, t, false, token_id);
+shared<Node> Node::ref_raw(const Class *t) const {
+	shared<Node> c = new Node(NodeKind::REFERENCE_RAW, 0, t, false, token_id);
 	c->set_num_params(1);
 	c->set_param(0, const_cast<Node*>(this));
 	return c;
 }
 
-shared<Node> Node::ref_legacy(SyntaxTree *tree) const {
+shared<Node> Node::ref_raw(SyntaxTree *tree) const {
 	return ref_new(tree->get_pointer(type, token_id));
 }
 
@@ -406,6 +408,12 @@ shared<Node> Node::deref_shift(int64 shift, const Class *type, int token_id) con
 	shared<Node> c = new Node(NodeKind::DEREF_ADDRESS_SHIFT, shift, type, is_const, token_id);
 	c->set_num_params(1);
 	c->set_param(0, const_cast<Node*>(this));
+	return c;
+}
+
+shared<Node> Node::change_type(const Class *type, int token_id) const {
+	auto c = shallow_copy();
+	c->type = type;
 	return c;
 }
 

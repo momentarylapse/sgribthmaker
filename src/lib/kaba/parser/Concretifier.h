@@ -27,6 +27,7 @@ struct CastingData {
 	int cast;
 	int penalty;
 	Function *f;
+	bool pre_deref;
 };
 
 class Concretifier {
@@ -51,7 +52,10 @@ public:
 	shared<Node> concretify_statement_if(shared<Node> node, Block *block, const Class *ns);
 	shared<Node> concretify_statement_while(shared<Node> node, Block *block, const Class *ns);
 	shared<Node> concretify_statement_for_range(shared<Node> node, Block *block, const Class *ns);
-	shared<Node> concretify_statement_for_array(shared<Node> node, Block *block, const Class *ns);
+	shared<Node> concretify_statement_for_container(shared<Node> node, Block *block, const Class *ns);
+	shared<Node> concretify_statement_for_array(shared<Node> node, shared<Node> container, Block *block, const Class *ns);
+	shared<Node> concretify_statement_for_unwrap_pointer(shared<Node> node, shared<Node> container, Block *block, const Class *ns);
+	shared<Node> concretify_statement_for_unwrap_optional(shared<Node> node, shared<Node> container, Block *block, const Class *ns);
 	shared<Node> concretify_statement_new(shared<Node> node, Block *block, const Class *ns);
 	shared<Node> concretify_statement_delete(shared<Node> node, Block *block, const Class *ns);
 	shared<Node> concretify_statement_raw_function_pointer(shared<Node> node, Block *block, const Class *ns);
@@ -89,6 +93,7 @@ public:
 	bool type_match_with_cast(shared<Node> node, bool is_modifiable, const Class *wanted, CastingData &cd);
 	bool type_match_tuple_as_contructor(shared<Node> node, Function *f_constructor, int &penalty);
 
+	shared<Node> apply_type_cast_basic(const CastingData &cast, shared<Node> param, const Class *wanted);
 	shared<Node> apply_type_cast(const CastingData &cast, shared<Node> param, const Class *wanted);
 	shared<Node> apply_params_with_cast(shared<Node> operand, const shared_array<Node> &params, const Array<CastingData> &casts, const Array<const Class*> &wanted, int offset = 0);
 	bool direct_param_match(const shared<Node> operand, const shared_array<Node> &params);
@@ -104,13 +109,14 @@ public:
 	shared<Node> check_param_link(shared<Node> link, const Class *type, const string &f_name = "", int param_no = -1, int num_params = 1);
 
 
-	shared<Node> deref_if_pointer(shared<Node> node);
+	shared<Node> deref_if_reference(shared<Node> node);
 	shared<Node> add_converter_str(shared<Node> sub, bool repr);
 
 	shared<Node> link_special_operator_is(shared<Node> param1, shared<Node> param2, int token_id);
 	shared<Node> link_special_operator_in(shared<Node> param1, shared<Node> param2, int token_id);
 	shared<Node> link_special_operator_as(shared<Node> param1, shared<Node> param2, int token_id);
 	shared<Node> link_special_operator_tuple_extract(shared<Node> param1, shared<Node> param2, int token_id);
+	shared<Node> link_special_operator_ref_assign(shared<Node> param1, shared<Node> param2, int token_id);
 	shared<Node> make_dynamical(shared<Node> node);
 	Array<const Class*> type_list_from_nodes(const shared_array<Node> &nn);
 

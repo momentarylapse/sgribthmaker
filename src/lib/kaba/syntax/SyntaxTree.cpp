@@ -16,6 +16,7 @@ extern const Class *TypeDictBase;
 extern const Class *TypeCallableBase;
 extern const Class *TypeMat4;
 extern const Class *TypeVec2;
+extern const Class *TypeSpecialFunctionRef;
 
 bool is_func(shared<Node> n);
 
@@ -61,7 +62,7 @@ const Class *SyntaxTree::request_implicit_class_callable_fp(const Array<const Cl
 	params_ret.add(ret);
 
 	auto ff = request_implicit_class("Callable[" + name + "]", Class::Type::CALLABLE_FUNCTION_POINTER, TypeCallableBase->size, 0, nullptr, params_ret, token_id);
-	return request_implicit_class(name, Class::Type::POINTER, config.target.pointer_size, 0, nullptr, {ff}, token_id);
+	return request_implicit_class(name, Class::Type::POINTER_RAW, config.target.pointer_size, 0, nullptr, {ff}, token_id);
 	//return make_class(name, Class::Type::CALLABLE_FUNCTION_POINTER, TypeCallableBase->size, 0, nullptr, params_ret, base_class);
 }
 
@@ -342,7 +343,8 @@ shared_array<Node> SyntaxTree::get_element_of(shared<Node> operand, const string
 		// referencing class functions
 		type = operand->as_class();
 		allow_member = false;
-	} else if (type->is_some_pointer()) {
+	//} else if (type->is_some_pointer()) {
+	} else if (type->is_reference() or type->is_pointer_owned_not_null()) {
 		// pointer -> dereference
 		type = type->param[0];
 		deref = true;
@@ -351,11 +353,12 @@ shared_array<Node> SyntaxTree::get_element_of(shared<Node> operand, const string
 	// super
 	if (type->parent and (name == Identifier::SUPER)) {
 		operand->token_id = token_id;
+		auto t_ref = request_implicit_class_reference(type->parent, token_id);
 		if (deref) {
-			operand->type = get_pointer(type->parent, token_id);
+			operand->type = t_ref;
 			return {operand};
 		}
-		return {operand->ref_legacy(get_pointer(type->parent, token_id))};
+		return {operand->ref_new(t_ref)};
 	}
 
 
@@ -544,7 +547,7 @@ const Class *SyntaxTree::request_implicit_class(const string &name, Class::Type 
 }
 
 const Class *SyntaxTree::get_pointer(const Class *base, int token_id) {
-	return request_implicit_class(class_name_might_need_parantheses(base) + "*", Class::Type::POINTER, config.target.pointer_size, 0, nullptr, {base}, token_id);
+	return request_implicit_class(class_name_might_need_parantheses(base) + "*", Class::Type::POINTER_RAW, config.target.pointer_size, 0, nullptr, {base}, token_id);
 }
 
 const Class *SyntaxTree::request_implicit_class_shared(const Class *parent, int token_id) {
@@ -557,6 +560,12 @@ const Class *SyntaxTree::request_implicit_class_owned(const Class *parent, int t
 	if (!parent->name_space)
 		do_error("owned[..] not allowed for: " + parent->long_name(), token_id);
 	return request_implicit_class(format("%s[%s]", Identifier::OWNED, parent->name), Class::Type::POINTER_OWNED, config.target.pointer_size, 0, nullptr, {parent}, token_id);
+}
+
+const Class *SyntaxTree::request_implicit_class_owned_not_null(const Class *parent, int token_id) {
+	if (!parent->name_space)
+		do_error("owned![..] not allowed for: " + parent->long_name(), token_id);
+	return request_implicit_class(format("%s![%s]", Identifier::OWNED, parent->name), Class::Type::POINTER_OWNED_NOT_NULL, config.target.pointer_size, 0, nullptr, {parent}, token_id);
 }
 
 const Class *SyntaxTree::request_implicit_class_xfer(const Class *parent, int token_id) {
@@ -617,7 +626,7 @@ shared<Node> SyntaxTree::conv_calls(shared<Node> c) {
 	if ((c->kind == NodeKind::STATEMENT) and (c->as_statement()->id == StatementID::RETURN))
 		if (c->params.num > 0) {
 			if ((c->params[0]->type->is_array()) /*or (c->Param[j]->Type->IsSuperArray)*/) {
-				c->set_param(0, c->params[0]->ref_legacy(this));
+				c->set_param(0, c->params[0]->ref_raw(this));
 			}
 			return c;
 		}
@@ -631,7 +640,8 @@ shared<Node> SyntaxTree::conv_calls(shared<Node> c) {
 				return true;
 			if (c->is_function()) {
 				auto f = c->as_func();
-				int param_offset = f->is_static() ? 0 : 1;
+				int param_offset = 0;//f->is_static() ? 0 : 1;
+				// TODO does g++ keep const refs to instance?!
 				if ((j >= param_offset) and (flags_has(f->var[j]->flags, Flags::OUT)))
 					return true;
 			}
@@ -641,7 +651,7 @@ shared<Node> SyntaxTree::conv_calls(shared<Node> c) {
 		// parameters, instance: class as reference
 		for (int j=0;j<c->params.num;j++)
 			if (c->params[j] and needs_conversion(j)) {
-				r->set_param(j, c->params[j]->ref_legacy(this));
+				r->set_param(j, c->params[j]->ref_raw(this));
 				changed = true;
 			}
 
@@ -653,24 +663,13 @@ shared<Node> SyntaxTree::conv_calls(shared<Node> c) {
 		if (changed)
 			return r;
 	}
-
-	// special string / list operators
-	if (c->kind == NodeKind::OPERATOR) {
-		// parameters: super array as reference
-		for (int j=0;j<c->params.num;j++)
-			if (c->params[j]->type->is_array() or c->params[j]->type->is_super_array()) {
-				c->set_param(j, c->params[j]->ref_legacy(this));
-				// REALLY ?!?!?!?  FIXME?!?!?
-				msg_error("this might be bad");
-			}
-  	}
 	return c;
 }
 
 
 // remove &*x
 shared<Node> SyntaxTree::conv_easyfy_ref_deref(shared<Node> c, int l) {
-	if ((c->kind == NodeKind::REFERENCE_LEGACY) or (c->kind == NodeKind::REFERENCE_NEW)) {
+	if ((c->kind == NodeKind::REFERENCE_RAW) or (c->kind == NodeKind::REFERENCE_NEW)) {
 		if (c->params[0]->kind == NodeKind::DEREFERENCE) {
 			// remove 2 knots...
 			return c->params[0]->params[0];
@@ -744,7 +743,9 @@ void SyntaxTree::convert_call_by_reference() {
 				v->type = get_pointer(v->type, -1);
 
 				// usage inside the function
-				transform_block(f->block.get(), [&](shared<Node> n){ return conv_cbr(n, v); });
+				transform_block(f->block.get(), [this, v](shared<Node> n) {
+					return conv_cbr(n, v);
+				});
 			}
 	}
 
@@ -752,10 +753,14 @@ void SyntaxTree::convert_call_by_reference() {
 	for (Function *f: functions)
 		if (f->literal_return_type->uses_return_by_memory() and (f->literal_return_type != TypeUnknown))
 			//convert_return_by_memory(this, f->block, f);
-			transform_block(f->block.get(), [&](shared<Node> n){ return conv_return_by_memory(n, f); });
+			transform_block(f->block.get(), [this, f](shared<Node> n) {
+				return conv_return_by_memory(n, f);
+			});
 
 	// convert function calls
-	transform([&](shared<Node> n){ return conv_calls(n); });
+	transform([this](shared<Node> n) {
+		return conv_calls(n);
+	});
 }
 
 
@@ -804,7 +809,7 @@ shared<Node> SyntaxTree::conv_break_down_low_level(shared<Node> c) {
 //             -> index
 
 		return add_node_operator_by_inline(__get_pointer_add_int(),
-				c->params[0]->ref_legacy(this), // array
+				c->params[0]->ref_raw(this), // array
 				add_node_operator_by_inline(InlineID::INT_MULTIPLY,
 						c->params[1], // ref
 						add_node_const(add_constant_int(el_type->size))),
@@ -840,7 +845,7 @@ shared<Node> SyntaxTree::conv_break_down_low_level(shared<Node> c) {
 //        -> shift
 
 		return add_node_operator_by_inline(__get_pointer_add_int(),
-				c->params[0]->ref_legacy(this), // struct
+				c->params[0]->ref_raw(this), // struct
 				add_node_const(add_constant_int(c->link_no)),
 				c->token_id,
 				get_pointer(el_type, c->token_id))->deref();
@@ -961,7 +966,7 @@ bool node_is_executable(shared<Node> n) {
 	if ((n->kind == NodeKind::CONSTANT) or (n->kind == NodeKind::VAR_LOCAL) or (n->kind == NodeKind::VAR_GLOBAL))
 		return false;
 	if ((n->kind == NodeKind::ADDRESS_SHIFT) or (n->kind == NodeKind::ARRAY) or (n->kind == NodeKind::DYNAMIC_ARRAY)
-			or (n->kind == NodeKind::REFERENCE_LEGACY) or (n->kind == NodeKind::REFERENCE_NEW) or (n->kind == NodeKind::DEREFERENCE)
+			or (n->kind == NodeKind::REFERENCE_RAW) or (n->kind == NodeKind::REFERENCE_NEW) or (n->kind == NodeKind::DEREFERENCE)
 			or (n->kind == NodeKind::DEREF_ADDRESS_SHIFT))
 		return node_is_executable(n->params[0]);
 	return true;
@@ -989,7 +994,7 @@ shared<Node> SyntaxTree::conv_class_and_func_to_const(shared<Node> n) {
 		return add_node_const(add_constant_pointer(TypeClassP, n->as_class()));
 	}
 	if (n->kind == NodeKind::SPECIAL_FUNCTION_NAME) {
-		return add_node_const(add_constant_pointer(TypeSpecialFunctionP, n->as_special_function()));
+		return add_node_const(add_constant_pointer(TypeSpecialFunctionRef, n->as_special_function()));
 	}
 	return n;
 }
@@ -1099,7 +1104,7 @@ shared<Node> SyntaxTree::conv_break_down_high_level(shared<Node> n, Block *b) {
 		nn->set_param(3, cmd_inc); // add to loop-block
 
 		return nn;
-	} else if ((n->kind == NodeKind::STATEMENT) and (n->as_statement()->id == StatementID::FOR_ARRAY)) {
+	} else if ((n->kind == NodeKind::STATEMENT) and (n->as_statement()->id == StatementID::FOR_CONTAINER)) {
 
 		// [VAR, INDEX, ARRAY, BLOCK]
 		auto var = n->params[0];
@@ -1158,7 +1163,7 @@ shared<Node> SyntaxTree::conv_break_down_high_level(shared<Node> n, Block *b) {
 		}
 
 		// &for_var = &array[index]
-		auto cmd_var_assign = add_node_operator_by_inline(InlineID::POINTER_ASSIGN, var, el->ref_legacy(this));
+		auto cmd_var_assign = add_node_operator_by_inline(InlineID::POINTER_ASSIGN, var, el->ref_raw(this));
 		block->params.insert(cmd_var_assign, 0);
 
 		return nn;

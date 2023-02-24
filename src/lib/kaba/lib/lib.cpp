@@ -37,6 +37,7 @@ const Class *TypeReg16;
 const Class *TypeReg8;
 const Class *TypeVoid;
 const Class *TypePointer;
+const Class *TypeReference;
 const Class *TypeNone; // nil
 const Class *TypeObject;
 const Class *TypeObjectP;
@@ -99,7 +100,7 @@ const Class *TypeFunctionP;
 const Class *TypeFunctionCode;
 const Class *TypeFunctionCodeP;
 const Class *TypeSpecialFunction;
-const Class *TypeSpecialFunctionP;
+const Class *TypeSpecialFunctionRef;
 
 Module *cur_package = nullptr;
 
@@ -163,7 +164,7 @@ const Class *add_type(const string &name, int size, Flags flags, const Class *na
 
 const Class *add_type_p(const Class *sub_type) {
 	string name = sub_type->name + "*";
-	Class *t = new Class(Class::Type::POINTER, name, config.target.pointer_size, cur_package->syntax, nullptr, {sub_type});
+	Class *t = new Class(Class::Type::POINTER_RAW, name, config.target.pointer_size, cur_package->syntax, nullptr, {sub_type});
 	flags_set(t->flags, Flags::FORCE_CALL_BY_VALUE);
 	__add_class__(t, sub_type->name_space);
 	cur_package->context->implicit_class_registry->add(t);
@@ -290,7 +291,7 @@ const Class *add_type_f(const Class *ret_type, const Array<const Class*> &params
 	cur_package->context->implicit_class_registry->add(ff);
 
 	auto ptr_param = [] (const Class *p) {
-		return p->is_pointer() or p->uses_call_by_reference();
+		return p->is_pointer_raw() or p->uses_call_by_reference();
 	};
 
 	add_class(ff);
@@ -312,7 +313,7 @@ const Class *add_type_f(const Class *ret_type, const Array<const Class*> &params
 				func_add_param("b", params[1]);
 		}
 	}
-	return cur_package->syntax->request_implicit_class(name, Class::Type::POINTER, config.target.pointer_size, 0, nullptr, {ff}, -1);
+	return cur_package->syntax->request_implicit_class(name, Class::Type::POINTER_RAW, config.target.pointer_size, 0, nullptr, {ff}, -1);
 
 	/*auto c = cur_package->syntax->make_class_callable_fp(params, ret_type);
 	add_class(c);
