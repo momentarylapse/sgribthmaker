@@ -191,6 +191,10 @@ bool type_match_up(const Class *given, const Class *wanted) {
 			return true;
 	}
 
+	if (given->is_pointer_shared_not_null() and wanted->is_pointer_shared())
+		if (given->param[0]->is_derived_from(wanted->param[0]))
+			return true;
+
 	//msg_write(given->long_name() + "  ->  " + wanted->long_name());
 	if (wanted->is_pointer_raw() and (given->is_reference() or given->is_pointer_shared() or given->is_pointer_shared_not_null() or given->is_pointer_owned() or given->is_pointer_owned_not_null()))
 		if (type_match_up(given->param[0], wanted->param[0])) {
@@ -1126,7 +1130,7 @@ shared<Node> Concretifier::concretify_statement_for_unwrap_pointer(shared<Node> 
 	auto t_out = tree->request_implicit_class_reference(t0->param[0], node->token_id);
 
 	auto *var = block_x->add_var(var_name, t_out);
-	block_x->add(add_node_operator_by_inline(InlineID::POINTER_ASSIGN, add_node_local(var), expr->shift(0, t_out)));
+	block_x->add(add_node_operator_by_inline(InlineID::POINTER_ASSIGN, add_node_local(var), expr->change_type(t_out)));
 
 	auto n_if = add_node_statement(StatementID::IF, node->token_id);
 	n_if->set_num_params(node->params.num - 2);
@@ -1404,17 +1408,20 @@ shared<Node> Concretifier::concretify_special_function_sort(shared<Node> node, B
 shared<Node> Concretifier::concretify_special_function_weak(shared<Node> node, Block *block, const Class *ns) {
 	auto sub = concretify_node(node->params[0], block, block->name_space());
 
+	if (sub->type->is_reference())
+		sub = sub->deref();
+
 	auto t = sub->type;
 	while (true) {
 		//if (t->is_pointer() or t->is_pointer_shared() or t->is_pointer_owned() or t->is_reference()) {
 		if (t->is_some_pointer()) {
 			auto tt = tree->get_pointer(t->param[0], -1);
-			return sub->shift(0, tt, node->token_id);
+			return sub->change_type(tt, node->token_id);
 		} else if (t->is_super_array()
 				and (t->param[0]->is_pointer_shared() or t->param[0]->is_pointer_shared_not_null()
 						or t->param[0]->is_pointer_owned() or t->param[0]->is_pointer_owned_not_null())) {
 			auto tt = tree->request_implicit_class_super_array(tree->get_pointer(t->param[0]->param[0], -1), node->token_id);
-			return sub->shift(0, tt, node->token_id);
+			return sub->change_type(tt, node->token_id);
 		}
 		if (t->parent)
 			t = t->parent;
