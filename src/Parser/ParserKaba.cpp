@@ -155,17 +155,17 @@ void ParserKaba::update_symbols(SourceView *sv) {
 
 		clear_symbols();
 
-		//m->syntax->
+		//m->tree->
 
-		/*for (auto c: weak(m->syntax->imported_symbols->classes)) {
+		/*for (auto c: weak(m->tree->imported_symbols->classes)) {
 			if (c->name.tail(1) == "*" or c->name.tail(2) == "[]")
 				continue;
 			add_class(this, c, "");
 			add_class_content(this, c, "");
 		}*/
 
-		add_class_content(this, m->syntax->imported_symbols.get(), "");
-		add_class_content(this, m->syntax->base_class, "");
+		add_class_content(this, m->tree->imported_symbols.get(), "");
+		add_class_content(this, m->tree->base_class, "");
 
 	} catch (Exception &e) {
 		//msg_error(e.message());

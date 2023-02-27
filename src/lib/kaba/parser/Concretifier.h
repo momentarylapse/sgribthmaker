@@ -34,6 +34,24 @@ class Concretifier {
 public:
 	Concretifier(Context *c, Parser *parser, SyntaxTree *tree);
 
+	enum TypeCastId {
+		NONE = -1,
+		DEREFERENCE = -2,
+		REFERENCE_LEGACY = -3,
+		REFERENCE_NEW = -4,
+		OWN_STRING = -10,
+		ABSTRACT_LIST = -20,
+		ABSTRACT_TUPLE = -21,
+		ABSTRACT_DICT = -22,
+		TUPLE_AS_CONSTRUCTOR = -23,
+		AUTO_CONSTRUCTOR = -24,
+		FUNCTION_AS_CALLABLE = -30,
+		MAKE_SHARED = -40, // TODO use auto constructor instead
+		MAKE_OWNED = -41,
+		WEAK_POINTER = -42
+	};
+
+
 	void concretify_all_params(shared<Node> &node, Block *block, const Class *ns);
 
 	shared<Node> concretify_node(shared<Node> node, Block *block, const Class *ns);

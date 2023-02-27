@@ -121,7 +121,7 @@ AutoComplete::Data find_top_level(SyntaxTree *syntax, Function *f, const string 
 	suggestions.append(find_top_level_from_class(syntax->base_class, yyy));
 	
 	for (auto i: syntax->includes)
-		suggestions.append(find_top_level_from_class(i->syntax->base_class, yyy));
+		suggestions.append(find_top_level_from_class(i->tree->base_class, yyy));
 	return suggestions;
 }
 
@@ -234,21 +234,21 @@ AutoComplete::Data AutoComplete::run(const string& _code, const Path &filename, 
 	s->just_analyse = true;
 	Data data;
 	kaba::Function *ff = nullptr;
-	s->syntax->parser = new kaba::Parser(s->syntax);
+	s->tree->parser = new kaba::Parser(s->tree.get());
 
 	try {
-		//s->syntax->ParseBuffer(code, true);
+		//s->tree->ParseBuffer(code, true);
 
-		s->syntax->default_import();
+		s->tree->default_import();
 
 		//printf("--a\n");
-		s->syntax->parser->Exp.analyse(s->syntax, code);
+		s->tree->parser->Exp.analyse(s->tree.get(), code);
 
 		//printf("--b\n");
-		s->syntax->parser->parse_macros(true);
+		s->tree->parser->parse_macros(true);
 
 		//printf("--c\n");
-		s->syntax->parser->parse_top_level();
+		s->tree->parser->parse_top_level();
 
 
 
@@ -256,7 +256,7 @@ AutoComplete::Data AutoComplete::run(const string& _code, const Path &filename, 
 		printf("err: %s\n", e.message().c_str());
 		//if (e.line)
 		//throw e;
-		//data = simple_parse(s->syntax, ff, cur_line);
+		//data = simple_parse(s->tree.get(), ff, cur_line);
 	}
 
 
@@ -264,17 +264,17 @@ AutoComplete::Data AutoComplete::run(const string& _code, const Path &filename, 
 
 
 	//printf("--d\n");
-	for (auto *f: s->syntax->functions) {
-		int f_line_no = s->syntax->parser->Exp.token_logical_line(f->token_id)->physical_line;
+	for (auto *f: s->tree->functions) {
+		int f_line_no = s->tree->parser->Exp.token_logical_line(f->token_id)->physical_line;
 		if (!f->is_extern() and (f_line_no >= 0) and (f_line_no < line))
 			ff = f;
 	}
 	if (ff) {
 //		printf("func: %s\n", ff->name.c_str());
-		_ParseFunctionBody(s->syntax, ff);
+		_ParseFunctionBody(s->tree.get(), ff);
 	}
 
-	data = simple_parse(s->syntax, ff, cur_line);
+	data = simple_parse(s->tree.get(), ff, cur_line);
 
 
 
