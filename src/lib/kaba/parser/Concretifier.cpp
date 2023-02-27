@@ -425,12 +425,12 @@ bool Concretifier::type_match_with_cast(shared<Node> node, bool is_modifiable, c
 			}
 		}
 	}
-	if (given->is_optional() and given->param[0] == wanted) {
+	/*if (given->is_optional() and given->param[0] == wanted) {
 		cd.cast = TYPE_CAST_OPTIONAL_VALUE;
 		cd.penalty = 20;
 		cd.f = given->get_call();
 		return true;
-	}
+	}*/
 	if (wanted == TypeStringAutoCast) {
 		//Function *cf = given->get_func(Identifier::Func::STR, TypeString, {});
 		//if (cf) {
@@ -536,13 +536,13 @@ shared<Node> Concretifier::apply_type_cast_basic(const CastingData &cast, shared
 		nn->set_param(0, node);
 		return nn;
 	}
-	if (cast.cast == TYPE_CAST_OPTIONAL_VALUE) {
+	/*if (cast.cast == TYPE_CAST_OPTIONAL_VALUE) {
 		if (!cast.f)
 			do_error(format("internal: optional cast... %s.%s() missing...", wanted->name, Identifier::Func::CALL), node);
 		auto nn = add_node_call(cast.f, node->token_id);
 		nn->set_param(0, node);
 		return nn;
-	}
+	}*/
 
 	auto c = add_node_call(context->type_casts[cast.cast].f, node->token_id);
 	c->type = context->type_casts[cast.cast].dest;
@@ -960,15 +960,12 @@ shared<Node> Concretifier::concretify_array(shared<Node> node, Block *block, con
 
 	operand = force_concrete_type(operand);
 
+	// auto deref?
 	operand = deref_if_reference(operand);
 	index = deref_if_reference(index);
 
-	// auto deref?
-	if (operand->type->is_pointer_raw()) {
-		if (!operand->type->param[0]->is_array() and !operand->type->param[0]->usable_as_super_array())
-			do_error(format("using pointer type '%s' as an array (like in C) is deprecated", operand->type->long_name()), index);
-		operand = operand->deref();
-	}
+	if (operand->type->is_pointer_raw())
+		do_error(format("using pointer type '%s' as an array (like in C) is deprecated", operand->type->long_name()), index);
 
 
 	// __subarray__() ?
@@ -1011,24 +1008,16 @@ shared<Node> Concretifier::concretify_array(shared<Node> node, Block *block, con
 		return operand->shift(e.offset, e.type, operand->token_id);
 	}
 
-	// allowed?
-	if (!operand->type->is_array() and !operand->type->usable_as_super_array())
-		do_error(format("type '%s' is neither an array nor does it have a function %s(%s)", operand->type->long_name(), Identifier::Func::GET, index->type->long_name()), index);
-
-
 	if (index->type != TypeInt)
 		do_error(format("array index needs to be of type 'int', not '%s'", index->type->long_name()), index);
 
 	shared<Node> array_element;
-
-	// pointer?
-	if (operand->type->usable_as_super_array()) {
+	if (operand->type->usable_as_super_array())
 		array_element = add_node_dyn_array(operand, index);
-	} else if (operand->type->is_pointer_raw()) {
-		array_element = add_node_parray(operand, index, operand->type->param[0]->param[0]);
-	} else {
+	else if (operand->type->is_array())
 		array_element = add_node_array(operand, index);
-	}
+	else
+		do_error(format("type '%s' is neither an array nor does it have a function %s(%s)", operand->type->long_name(), Identifier::Func::GET, index->type->long_name()), index);
 	array_element->is_const = operand->is_const;
 	return array_element;
 
@@ -1354,21 +1343,32 @@ shared<Node> Concretifier::concretify_statement_new(shared<Node> node, Block *bl
 }
 
 shared<Node> Concretifier::concretify_statement_delete(shared<Node> node, Block *block, const Class *ns) {
-	auto p = concretify_node(node->params[0], block, block->name_space());
-	if (!p->type->is_pointer_raw())
+	auto p = force_concrete_type(concretify_node(node->params[0], block, block->name_space()));
+
+	if (p->type->is_pointer_raw()) {
+		// override del operator?
+		if (auto f = p->type->param[0]->get_member_func(Identifier::Func::DELETE_OVERRIDE, TypeVoid, {})) {
+			auto cmd = add_node_call(f, node->token_id);
+			cmd->set_instance(p->deref());
+			return cmd;
+		}
+
+		// default delete
+		node->params[0] = p;
+		node->type = TypeVoid;
+		return node;
+	} else if (p->type->is_pointer_shared() or p->type->is_pointer_owned()) {
+		if (auto f = p->type->get_member_func(Identifier::Func::SHARED_CLEAR, TypeVoid, {}))
+			return add_node_member_call(f, p, p->token_id);
+		do_error("clear missing...", p);
+	} else if (p->type->is_super_array()) {
+		if (auto f = p->type->get_member_func("clear", TypeVoid, {}))
+			return add_node_member_call(f, p, p->token_id);
+		do_error("clear missing...", p);
+	} else {
 		do_error("pointer expected after 'del'", node->params[0]);
-
-	// override del operator?
-	if (auto f = p->type->param[0]->get_member_func(Identifier::Func::DELETE_OVERRIDE, TypeVoid, {})) {
-		auto cmd = add_node_call(f, node->token_id);
-		cmd->set_instance(p->deref());
-		return cmd;
 	}
-
-	// default delete
-	node->params[0] = p;
-	node->type = TypeVoid;
-	return node;
+	return nullptr;
 }
 
 shared<Node> Concretifier::concretify_special_function_dyn(shared<Node> node, Block *block, const Class *ns) {
