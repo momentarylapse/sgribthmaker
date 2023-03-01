@@ -440,7 +440,7 @@ shared<Node> Concretifier::concretify_call(shared<Node> node, Block *block, cons
 shared_array<Node> Concretifier::concretify_element(shared<Node> node, Block *block, const Class *ns) {
 	auto base = concretify_node(node->params[0], block, ns);
 	int token_id = node->params[1]->token_id;
-	auto el = parser->Exp.get_token(token_id);
+	auto el = node->params[1]->as_token();
 
 	base = force_concrete_type(base);
 	base = deref_if_reference(base);
@@ -553,15 +553,6 @@ shared<Node> Concretifier::concretify_array(shared<Node> node, Block *block, con
 		}
 	}
 
-	// __get__() ?
-	auto *cf = operand->type->get_get(index->type);
-	if (cf) {
-		auto f = add_node_member_call(cf, operand, operand->token_id);
-		f->is_const = operand->is_const;
-		f->set_param(1, index);
-		return f;
-	}
-
 	// tuple
 	if (operand->type->is_product()) {
 		index = tree->transform_node(index, [this] (shared<Node> n) {
@@ -578,8 +569,35 @@ shared<Node> Concretifier::concretify_array(shared<Node> node, Block *block, con
 		return operand->shift(e.offset, e.type, operand->token_id);
 	}
 
+	// __get__() ?
+	auto *cf = operand->type->get_get(index->type);
+	if (cf) {
+		auto f = add_node_member_call(cf, operand, operand->token_id);
+		f->is_const = operand->is_const;
+		f->set_param(1, index);
+		return f;
+	}
+
 	if (index->type != TypeInt)
 		do_error(format("array index needs to be of type 'int', not '%s'", index->type->long_name()), index);
+
+	index = tree->transform_node(index, [this] (shared<Node> n) {
+		return tree->conv_eval_const_func(n);
+	});
+	auto is_simple = [] (NodeKind k) {
+		return k == NodeKind::VAR_GLOBAL or k == NodeKind::VAR_LOCAL or k == NodeKind::CONSTANT;
+	};
+	if (index->kind == NodeKind::CONSTANT) {
+		int n = index->as_const()->as_int();
+		if (n < 0) {
+			if (!is_simple(operand->kind))
+					do_error("negative indices only allowed for simple operands", index);
+			auto l = add_node_special_function_call(SpecialFunctionID::LEN, index->token_id, index->type);
+			l->set_param(0, operand);
+			l = concretify_special_function_len(l, block, ns);
+			index = add_node_operator_by_inline(InlineID::INT_ADD, l, index, index->token_id);
+		}
+	}
 
 	shared<Node> array_element;
 	if (operand->type->usable_as_super_array())
@@ -682,7 +700,7 @@ shared<Node> Concretifier::concretify_statement_for_unwrap_pointer(shared<Node> 
 	// [OUT-VAR, ---, EXPRESSION, TRUE-BLOCK, [FALSE-BLOCK]]
 	auto expr = container;//concretify_node(node->params[2], block, ns);
 	auto t0 = expr->type;
-	auto var_name = parser->Exp.get_token(node->params[0]->token_id);
+	auto var_name = node->params[0]->as_token();
 
 	auto block_x = new Block(block->function, block);
 
@@ -710,7 +728,7 @@ shared<Node> Concretifier::concretify_statement_for_unwrap_optional(shared<Node>
 	// [OUT-VAR, ---, EXPRESSION, TRUE-BLOCK, [FALSE-BLOCK]]
 	auto expr = concretify_node(node->params[2], block, ns);
 	auto t0 = expr->type;
-	auto var_name = parser->Exp.get_token(node->params[0]->token_id);
+	auto var_name = node->params[0]->as_token();
 
 	auto block_x = new Block(block->function, block);
 
@@ -746,7 +764,7 @@ shared<Node> Concretifier::concretify_statement_while(shared<Node> node, Block *
 shared<Node> Concretifier::concretify_statement_for_range(shared<Node> node, Block *block, const Class *ns) {
 	// [VAR, VALUE0, VALUE1, STEP, BLOCK]
 
-	auto var_name = parser->Exp.get_token(node->params[0]->token_id);
+	auto var_name = node->params[0]->as_token();
 	auto val0 = force_concrete_type(concretify_node(node->params[1], block, ns));
 	auto val1 = force_concrete_type(concretify_node(node->params[2], block, ns));
 	auto step = node->params[3];
@@ -1052,7 +1070,7 @@ shared<Node> Concretifier::concretify_statement_try(shared<Node> node, Block *bl
 			auto ex_type = ex->params[0];
 			ex_type = concretify_node(ex_type, block, block->name_space());
 			auto type = try_digest_type(tree, ex_type);
-			auto var_name = parser->Exp.get_token(ex->params[1]->token_id);
+			auto var_name = ex->params[1]->as_token();
 
 			ex->params.resize(1);
 
