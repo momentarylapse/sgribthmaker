@@ -63,15 +63,15 @@ bool is_same_kind_of_pointer(const Class *a, const Class *b) {
 // can be re-interpreted as...?
 bool type_match_generic_pointer(const Class *given, const Class *wanted) {
 	// allow any non-owning pointer?
-	if ((wanted == TypePointer) and (given->is_pointer_raw() or given->is_pointer_raw_not_null() or given->is_reference()))
+	if ((wanted == TypePointer) and (given->is_pointer_raw() or given->is_reference()))
 		return true;
 
-	// allow any not-null non-owning pointer?
-	if ((wanted == TypePointerNN) and (given->is_pointer_raw_not_null() or given->is_reference()))
-		return true;
-
-	// reference
+	// any reference
 	if ((wanted == TypeReference) and given->is_reference())
+		return true;
+
+	// any xfer[..]?
+	if ((wanted->is_pointer_xfer() and wanted->param[0] == TypeVoid) and given->is_pointer_xfer())
 		return true;
 
 	return false;
@@ -106,12 +106,12 @@ bool type_match_up(const Class *given, const Class *wanted) {
 	//msg_write(given->long_name() + "  ->  " + wanted->long_name());
 
 	// ...  ->  raw
-	if (wanted->is_pointer_raw() and (given->is_reference() or given->is_pointer_raw_not_null() or given->is_pointer_owned() or given->is_pointer_owned_not_null()))
+	if (wanted->is_pointer_raw() and (given->is_reference() or given->is_pointer_owned() or given->is_pointer_owned_not_null()))
 		if (type_match_up(given->param[0], wanted->param[0]))
 			return true;
 
-	// ...  ->  raw
-	if (wanted->is_pointer_raw_not_null() and (given->is_reference() or given->is_pointer_owned_not_null()))
+	// ...  ->  ref
+	if (wanted->is_reference() and (given->is_reference() or given->is_pointer_owned_not_null()))
 		if (type_match_up(given->param[0], wanted->param[0]))
 			return true;
 
