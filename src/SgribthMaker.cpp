@@ -20,7 +20,7 @@
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.10.3";
+string AppVersion = "0.4.11.0";
 
 //#define ALLOW_LOGGING			true
 #define ALLOW_LOGGING			false
@@ -29,17 +29,13 @@ namespace nix {
 	extern string shader_error;
 }
 
-//------------------------------------------------------------------------------
-// Highlighting
-
-
 
 int status_count = -1;
 
 void SgribthMaker::UpdateStatusBar() {
 	status_count --;
 	if (status_count == 0)
-		MainWin->set_info_text("", {"clear"});
+		MainWin->hide_control("grid-info", true);
 		//MainWin->enable_statusbar(false);
 }
 
@@ -54,14 +50,23 @@ void SgribthMaker::SetMessage(const string &str) {
 
 void SgribthMaker::SetError(const string &str) {
 	//hui::error_box(MainWin, "error", str);
-	MainWin->set_info_text(str, {"error", "allow-close"});
+	//MainWin->set_info_text(str, {"error", "allow-close"});
+	//MainWin->set_string("info", "!bold\\\u26A0 " + str);
+	MainWin->set_string("error", "!bold\\Error: " + str);
+	MainWin->hide_control("grid-info", false);
+	MainWin->hide_control("info", true);
+	MainWin->hide_control("error", false);
 	status_count = -1;
 }
 
 void SgribthMaker::SetInfo(const string &str) {
-	MainWin->set_info_text(str, {"info", "allow-close"});
+	MainWin->set_string("info", "!bold\\" + str);
+	MainWin->hide_control("grid-info", false);
+	MainWin->hide_control("info", false);
+	MainWin->hide_control("error", true);
+	//MainWin->set_info_text(str, {"info", "allow-close"});
 	status_count = max(0, status_count) + 1;
-	hui::run_later(5, [=]{ UpdateStatusBar(); });
+	hui::run_later(5, [this] { UpdateStatusBar(); });
 }
 
 void SgribthMaker::SetWindowTitle() {
@@ -364,7 +369,6 @@ void SgribthMaker::CompileKaba() {
 
 	//HuiSetDirectory(SgribthDir);
 	//msg_set_verbose(true);
-	printf("COMPILE\n");
 
 	os::Timer timer;
 
@@ -380,7 +384,7 @@ void SgribthMaker::CompileKaba() {
 
 		//compile_module->Show();
 
-		SetMessage(format(_("Script compilable without errors!         (in %s)"), get_time_str(dt)));
+		SetMessage(format(_("Script compiles without errors!         (in %s)"), get_time_str(dt)));
 
 	} catch (const kaba::Exception &e) {
 		e.print();
@@ -390,7 +394,6 @@ void SgribthMaker::CompileKaba() {
 	}
 
 	//msg_set_verbose(ALLOW_LOGGING);
-	printf("/COMPILE\n");
 }
 
 void SgribthMaker::CompileShader() {
@@ -710,6 +713,7 @@ bool SgribthMaker::on_startup(const Array<string> &arg) {
 
 	MainWin->event_x("file_list", "hui:select", [=]{ OnFileList(); });
 	MainWin->event_x("function_list", "hui:select", [=]{ OnFunctionList(); });
+	MainWin->event("info-close", [this] { MainWin->hide_control("grid-info", true); });
 
 
 	if (arg.num > 1) {

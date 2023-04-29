@@ -1,5 +1,9 @@
 Window main-window "" borderwidth=0 spacing=0
-	Grid table_main ""
+	Grid table_main "" vertical
+		Grid grid-info "" hidden
+			Label info "" expandx
+			Label error "" style=error expandx
+			Button info-close "" image=hui:close flat grabfocus=no
 		Grid table_doc ""
 			TabControl tab "" nobar expandx
 			Grid table_side "" noexpandx width=180 vertical hidden

@@ -74,6 +74,42 @@ void AutoImplementer::db_add_print_label_node(shared<Block> block, const string 
 	block->add(cmd);
 }
 
+shared<Node> AutoImplementer::add_assign(Function *f, const string &ctx, shared<Node> a, shared<Node> b) {
+	if ((a->type->is_reference() and b->type->is_reference()) or (a->type->is_pointer_xfer() and b->type->is_pointer_xfer()))
+		return add_node_operator_by_inline(InlineID::POINTER_ASSIGN, a, b);
+	if (auto n_assign = parser->con.link_operator_id(OperatorID::ASSIGN, a, b))
+		return n_assign;
+	do_error_implicit(f, format("(%s) no operator %s = %s found", ctx, a->type->long_name(), b->type->long_name()));
+	return nullptr;
+}
+
+shared<Node> AutoImplementer::add_assign(Function *f, const string &ctx, const string &msg, shared<Node> a, shared<Node> b) {
+	if ((a->type->is_reference() and b->type->is_reference()) or (a->type->is_pointer_xfer() and b->type->is_pointer_xfer()))
+		return add_node_operator_by_inline(InlineID::POINTER_ASSIGN, a, b);
+	if (auto n_assign = parser->con.link_operator_id(OperatorID::ASSIGN, a, b))
+		return n_assign;
+	do_error_implicit(f, format("(%s) %s", ctx, msg));
+	return nullptr;
+}
+
+shared<Node> AutoImplementer::add_equal(Function *f, const string &ctx, shared<Node> a, shared<Node> b) {
+	if (auto n_eq = parser->con.link_operator_id(OperatorID::EQUAL, a, b))
+		return n_eq;
+	if (auto n_neq = parser->con.link_operator_id(OperatorID::NOT_EQUAL, a, b))
+		return add_node_operator_by_inline(InlineID::BOOL_NOT, n_neq, nullptr);
+	do_error_implicit(f, format("neither operator %s == %s nor != found", a->type->long_name(), b->type->long_name()));
+	return nullptr;
+}
+
+shared<Node> AutoImplementer::add_not_equal(Function *f, const string &ctx, shared<Node> a, shared<Node> b) {
+	if (auto n_neq = parser->con.link_operator_id(OperatorID::NOT_EQUAL, a, b))
+		return n_neq;
+	if (auto n_eq = parser->con.link_operator_id(OperatorID::EQUAL, a, b))
+		return add_node_operator_by_inline(InlineID::BOOL_NOT, n_eq, nullptr);
+	do_error_implicit(f, format("neither operator %s != %s nor == found", a->type->long_name(), b->type->long_name()));
+	return nullptr;
+}
+
 
 
 void AutoImplementer::do_error_implicit(Function *f, const string &str) {

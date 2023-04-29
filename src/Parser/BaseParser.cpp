@@ -207,7 +207,7 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 				}
 				// line comment starting?
 				if (begin_token(line_comment_begin)) {
-					bool line_comment = true;
+					[[maybe_unused]] bool line_comment = true;
 					set_mark();
 					in_type = IN_LINE_COMMENT;
 					break;

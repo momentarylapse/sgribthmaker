@@ -13,8 +13,6 @@
 namespace hui
 {
 
-void set_style_for_widget(GtkWidget *widget, const string &id, const string &_css);
-
 ControlLabel::ControlLabel(const string &title, const string &id) :
 	Control(CONTROL_LABEL, id)
 {
@@ -73,7 +71,10 @@ void ControlLabel::__set_option(const string &op, const string &value) {
 #endif
 	} else if (op == "angle") {
 #if GTK_CHECK_VERSION(4,0,0)
-		set_style_for_widget(widget, id, format("{transform: rotate(%.1fdeg);}", -value._float()));
+		if (fabs(value._float() - 90) < 20)
+			add_css_class("hui-rotate-left");
+		else
+			add_css_class("hui-rotate-left");
 #else
 		gtk_label_set_angle(GTK_LABEL(widget), value._float());
 #endif
@@ -85,6 +86,13 @@ void ControlLabel::__set_option(const string &op, const string &value) {
 		flag_underline = true;
 	} else if (op == "strikeout") {
 		flag_strikeout = true;
+	} else if (op == "style") {
+#if GTK_CHECK_VERSION(4,0,0)
+		gtk_widget_add_css_class(widget, value.c_str());
+#else
+		auto sc = gtk_widget_get_style_context(widget);
+		gtk_style_context_add_class(sc, value.c_str());
+#endif
 	}
 }
 

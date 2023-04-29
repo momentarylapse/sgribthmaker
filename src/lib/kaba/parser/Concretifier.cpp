@@ -708,10 +708,19 @@ shared<Node> Concretifier::concretify_statement_for_unwrap_pointer(shared<Node> 
 
 	auto block_x = new Block(block->function, block);
 
-	auto t_out = tree->request_implicit_class_reference(t0->param[0], node->token_id);
+	auto t_out = TypeVoid;
+	if (t0->is_pointer_shared())
+		// TODO would be nice to simply have an alias here!
+		// ...add temp var fist, then delete and remap inside the block_x?
+		t_out = tree->request_implicit_class_shared_not_null(t0->param[0], node->token_id);
+	else
+		t_out = tree->request_implicit_class_reference(t0->param[0], node->token_id);
 
 	auto *var = block_x->add_var(var_name, t_out);
-	block_x->add(add_node_operator_by_inline(InlineID::POINTER_ASSIGN, add_node_local(var), expr->change_type(t_out)));
+	if (t0->is_pointer_shared())
+		block_x->add(parser->con.link_operator_id(OperatorID::ASSIGN, add_node_local(var), expr->change_type(t_out)));
+	else
+		block_x->add(add_node_operator_by_inline(InlineID::POINTER_ASSIGN, add_node_local(var), expr->change_type(t_out)));
 
 	auto n_if = add_node_statement(StatementID::IF, node->token_id);
 	n_if->set_num_params(node->params.num - 2);
@@ -937,19 +946,13 @@ shared<Node> Concretifier::concretify_statement_new(shared<Node> node, Block *bl
 shared<Node> Concretifier::concretify_statement_delete(shared<Node> node, Block *block, const Class *ns) {
 	auto p = force_concrete_type(concretify_node(node->params[0], block, block->name_space()));
 
-	if (p->type->is_pointer_raw()) {
-		// override del operator?
-		if (auto f = p->type->param[0]->get_member_func(Identifier::Func::DELETE_OVERRIDE, TypeVoid, {})) {
-			auto cmd = add_node_call(f, node->token_id);
-			cmd->set_instance(p->deref());
-			return cmd;
-		}
-
-		// default delete
+	/*if (p->type->is_pointer_raw()) {
+		// classic default delete  -  OBSOLETE
 		node->params[0] = p;
 		node->type = TypeVoid;
 		return node;
-	} else if (p->type->is_pointer_shared() or p->type->is_pointer_owned()) {
+	}*/
+	if (p->type->is_pointer_shared() or p->type->is_pointer_owned()) {
 		if (auto f = p->type->get_member_func(Identifier::Func::SHARED_CLEAR, TypeVoid, {}))
 			return add_node_member_call(f, p, p->token_id);
 		do_error("clear missing...", p);
@@ -957,9 +960,15 @@ shared<Node> Concretifier::concretify_statement_delete(shared<Node> node, Block 
 		if (auto f = p->type->get_member_func("clear", TypeVoid, {}))
 			return add_node_member_call(f, p, p->token_id);
 		do_error("clear missing...", p);
-	} else {
-		do_error("pointer expected after 'del'", node->params[0]);
 	}
+
+	p = deref_if_reference(p);
+
+	// override del operator?
+	if (auto f = p->type->get_member_func(Identifier::Func::DELETE_OVERRIDE, TypeVoid, {}))
+		return add_node_member_call(f, p, node->token_id);
+
+	do_error("shared/owned pointer expected after 'del'", node->params[0]);
 	return nullptr;
 }
 
@@ -1221,7 +1230,7 @@ shared<Node> Concretifier::concretify_statement_lambda(shared<Node> node, Block 
 	auto should_capture_via_ref = [this, node] (Variable *v) {
 		if (v->name == Identifier::SELF)
 			return true;
-		if (v->type->can_memcpy() or v->type == TypeString)
+		if (v->type->can_memcpy() or v->type == TypeString /*or v->type->is_pointer_shared() or v->type->is_pointer_shared_not_null()*/)
 			return false;
 		do_error(format("currently not supported to capture variable '%s' of type '%s'", v->name, v->type->long_name()), node);
 		return true;
@@ -1234,7 +1243,7 @@ shared<Node> Concretifier::concretify_statement_lambda(shared<Node> node, Block 
 
 		bool via_ref = should_capture_via_ref(v);
 		capture_via_ref.add(via_ref);
-		auto cap_type = via_ref ? tree->get_pointer(v->type, -1) : v->type;
+		auto cap_type = via_ref ? tree->request_implicit_class_reference(v->type, -1) : v->type;
 
 
 		auto vvv = f->add_param(v->name, cap_type, Flags::NONE);
