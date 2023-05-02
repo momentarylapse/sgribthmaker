@@ -71,13 +71,13 @@ hidden
 3
 Label
 info
-expandx
+style=card,style=title-4,expandx
 0
 0
 0
 Label
 error
-style=error,expandx
+style=error,style=title-4,expandx
 1
 0
 0
@@ -123,7 +123,7 @@ function_expander
 1
 0
 1
-TreeView
+ListView
 function_list
 nobar,noindent
 0

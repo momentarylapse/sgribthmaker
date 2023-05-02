@@ -1,8 +1,8 @@
 Window main-window "" borderwidth=0 spacing=0
 	Grid table_main "" vertical
 		Grid grid-info "" hidden
-			Label info "" expandx
-			Label error "" style=error expandx
+			Label info "" style=card style=title-4 expandx
+			Label error "" style=error style=title-4 expandx
 			Button info-close "" image=hui:close flat grabfocus=no
 		Grid table_doc ""
 			TabControl tab "" nobar expandx
@@ -10,4 +10,4 @@ Window main-window "" borderwidth=0 spacing=0
 				Group group_files "Documents"
 					ListView file_list "file" nobar select-single noindent
 				Expander function_expander "Functions"
-					TreeView function_list "function" nobar noindent
+					ListView function_list "function" nobar noindent

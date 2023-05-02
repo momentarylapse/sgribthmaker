@@ -622,7 +622,8 @@ void SourceView::update_font() {
 	float size = (float)pango_font_description_get_size(font_desc) / 1024.0f;
 	string family = pango_font_description_get_family(font_desc);
 
-	control->_set_css(format("* { font-family: %s; font-size: %.1fpt; }", family, size));
+	//control->_set_css(format("* { font-family: %s; font-size: %.1fpt; }", family, size));
+	control->add_css_class("monospace");
 #else
 	gtk_widget_override_font(tv, font_desc);
 	if (line_no_tv)

@@ -18,6 +18,14 @@ gldep = dependency('GL')
 add_project_arguments('-DHAS_LIB_GL=1', language : ['cpp'])
 deps = [mdep, threaddep, gtk3dep, zlibdep, gldep]
 
+# optional dependency: adwaita
+if 
+	add_project_arguments('-DHAS_LIB_ADWAITA=1', language : ['cpp'])
+	deps += []
+else
+	add_project_arguments('-DHAS_LIB_ADWAITA=0', language : ['cpp'])
+endif
+
 # optional dependency: xlib
 d = cc.find_library('X11', required : false)
 if d.found()
