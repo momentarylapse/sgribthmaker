@@ -624,6 +624,16 @@ void SourceView::update_font() {
 
 	//control->_set_css(format("* { font-family: %s; font-size: %.1fpt; }", family, size));
 	control->add_css_class("monospace");
+
+
+	auto *css_provider = gtk_css_provider_new();
+
+	string css = format(".hui-source-view { font-size: %.1fpt; }", size);
+
+	gtk_css_provider_load_from_data(css_provider, (char*)css.data, css.num);
+	gtk_style_context_add_provider_for_display(gdk_display_get_default(), GTK_STYLE_PROVIDER(css_provider),  GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+	control->add_css_class("hui-source-view");
 #else
 	gtk_widget_override_font(tv, font_desc);
 	if (line_no_tv)
