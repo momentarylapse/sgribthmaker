@@ -289,7 +289,7 @@ void SgribthMaker::on_redo()
 {	cur_doc->history->Redo();	}
 
 void SgribthMaker::on_copy() {
-	hui::Clipboard::copy(cur_doc->source_view->get_selection_content());
+	hui::clipboard::copy(cur_doc->source_view->get_selection_content());
 	SetMessage(_("copied"));
 }
 
@@ -297,9 +297,9 @@ void SgribthMaker::on_paste() {
 	msg_write("SM.on paste");
 	cur_doc->source_view->delete_selection();
 	msg_write("x");
-	auto p = hui::Clipboard::paste();
+	auto p = hui::clipboard::paste();
 	msg_write("y " + i2s(p.num));
-	cur_doc->source_view->insert_at_cursor(p);//hui::Clipboard::paste());
+	cur_doc->source_view->insert_at_cursor(p);//hui::clipboard::paste());
 	msg_write("/SM.on paste");
 	SetMessage(_("pasted"));
 }
@@ -445,7 +445,7 @@ void SgribthMaker::CompileAndRun(bool verbose) {
 
 	Save(cur_doc, [this,verbose] {
 
-		hui::SetDirectory(cur_doc->filename.parent());
+		os::fs::set_current_directory(cur_doc->filename.parent());
 		//if (verbose)
 		//	msg_set_verbose(true);
 
@@ -525,7 +525,7 @@ void SgribthMaker::OnAutoComplete() {
 		return;
 	}
 
-	hui::SetDirectory(cur_doc->filename.parent());
+	os::fs::set_current_directory(cur_doc->filename.parent());
 
 	int line, pos;
 	cur_doc->source_view->get_cur_line_pos(line, pos);
