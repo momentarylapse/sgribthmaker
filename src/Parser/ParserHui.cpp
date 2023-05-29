@@ -44,6 +44,8 @@ ParserHui::ParserHui() : Parser("Hui") {
 	keywords.add("grabfocus");
 	keywords.add("ignorefocus");
 	keywords.add("link");
+	keywords.add("linked");
+	keywords.add("box");
 	keywords.add("danger");
 	keywords.add("margin");
 	keywords.add("alpha");

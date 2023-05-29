@@ -607,16 +607,14 @@ void SgribthMaker::OnPreviousDocument() {
 }
 
 SgribthMaker::SgribthMaker() :
-	hui::Application("sgribthmaker", "English", hui::FLAG_SILENT)
+	hui::Application("sgribthmaker", "English", hui::Flags::SILENT)
 {
 	set_property("name", AppTitle);
 	set_property("version", AppVersion);
 	set_property("comment", _("Text editor and kaba compiler"));
 	set_property("website", "http://michi.is-a-geek.org/michisoft");
-	set_property("copyright", "© 2006-2022 by MichiSoft TM");
+	set_property("copyright", "© 2006-2023 by MichiSoft TM");
 	set_property("author", "Michael Ankele <michi@lupina.de>");
-
-//	hui::RegisterFileType("kaba","MichiSoft Script Datei", directory + "Data/kaba.ico", filename,"open",true);
 
 	kaba::init();
 
