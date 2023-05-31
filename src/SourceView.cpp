@@ -36,7 +36,7 @@ void on_gtk_insert_text(GtkTextBuffer *textbuffer, GtkTextIter *location, gchar 
 
 	char *text2 = (char*)g_malloc(len + 1);
 	memcpy(text2, text, len);
-	sv->history->Execute(new CommandInsert(text2, len, gtk_text_iter_get_offset(location)));
+	sv->history->execute(new CommandInsert(text2, len, gtk_text_iter_get_offset(location)));
 //	SetWindowTitle(); TODO
 
 	sv->needs_update_start = gtk_text_iter_get_line(location);
@@ -51,7 +51,7 @@ void on_gtk_delete_range(GtkTextBuffer *textbuffer, GtkTextIter *start, GtkTextI
 	if (!sv->history->enabled)
 		return;
 	char *text = gtk_text_buffer_get_text(textbuffer, start, end, false);
-	sv->history->Execute(new CommandDelete(text, strlen(text), gtk_text_iter_get_offset(start)));
+	sv->history->execute(new CommandDelete(text, strlen(text), gtk_text_iter_get_offset(start)));
 	//SetWindowTitle();
 
 	sv->needs_update_start = gtk_text_iter_get_line(start);
@@ -238,7 +238,7 @@ void SourceView::clear() {
 	gtk_text_buffer_set_modified(tb, false);
 	set_parser(Path::EMPTY);
 
-	history->Reset();
+	history->reset();
 	history->enabled = true;
 
 }
@@ -267,13 +267,13 @@ bool SourceView::fill(const string &text) {
 	if (g_utf8_validate((char*)text.data, text.num, NULL)) {
 		gtk_text_buffer_set_text(tb, text.c_str(), -1);
 		gtk_text_buffer_set_modified(tb, false);
-		history->Reset();
+		history->reset();
 	} else {
 		string temp_utf8 = convert_to_utf8(text);
 		gtk_text_buffer_set_text(tb, temp_utf8.c_str(), -1);
 		gtk_text_buffer_set_modified(tb, true);
 		ok = false;
-		history->Reset();
+		history->reset();
 		history->saved_pos = -1;
 		history->changed = true;
 	}
@@ -285,16 +285,16 @@ bool SourceView::fill(const string &text) {
 }
 
 bool SourceView::is_undoable()
-{	return history->Undoable();	}
+{	return history->undoable();	}
 
 bool SourceView::is_redoable()
-{	return history->Redoable();	}
+{	return history->redoable();	}
 
 void SourceView::undo()
-{	history->Undo();	}
+{	history->undo();	}
 
 void SourceView::redo()
-{	history->Redo();	}
+{	history->redo();	}
 
 void SourceView::set_parser(const Path &filename) {
 	parser = GetParser(filename);

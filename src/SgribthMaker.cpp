@@ -85,8 +85,8 @@ void SgribthMaker::UpdateDocList() {
 }
 
 void SgribthMaker::UpdateMenu() {
-	MainWin->enable("undo", cur_doc->history->Undoable());
-	MainWin->enable("redo", cur_doc->history->Redoable());
+	MainWin->enable("undo", cur_doc->history->undoable());
+	MainWin->enable("redo", cur_doc->history->redoable());
 	//MainWin->enable("save", cur_doc->history->changed);
 	UpdateDocList();
 	SetWindowTitle();
@@ -283,10 +283,10 @@ void SgribthMaker::OnReload()
 {	Reload();	}
 
 void SgribthMaker::on_undo()
-{	cur_doc->history->Undo();	}
+{	cur_doc->history->undo();	}
 
 void SgribthMaker::on_redo()
-{	cur_doc->history->Redo();	}
+{	cur_doc->history->redo();	}
 
 void SgribthMaker::on_copy() {
 	hui::clipboard::copy(cur_doc->source_view->get_selection_content());

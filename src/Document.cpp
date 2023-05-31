@@ -67,7 +67,7 @@ bool Document::save(const Path &_filename) {
 	try {
 		os::fs::write_text(_filename, source_view->get_all());
 		filename = _filename;
-		history->DefineAsSaved();
+		history->define_as_saved();
 		//SetMessage(_("saved"));
 		//UpdateMenu();
 	} catch(...) {

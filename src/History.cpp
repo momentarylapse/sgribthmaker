@@ -11,8 +11,7 @@
 #include "SgribthMaker.h"
 #include "lib/hui/hui.h"
 
-History::History(SourceView *_sv)
-{
+History::History(SourceView *_sv) {
 	pos = 0;
 	saved_pos = 0;
 	changed = false;
@@ -20,18 +19,12 @@ History::History(SourceView *_sv)
 	sv = _sv;
 }
 
-History::~History()
-{
-	for (int i=0;i<stack.num;i++)
-		delete(stack[i]);
+History::~History() {
 }
 
 
 
-void History::Reset()
-{
-	for (int i=0;i<stack.num;i++)
-		delete(stack[i]);
+void History::reset() {
 	stack.clear();
 	pos = 0;
 	saved_pos = 0;
@@ -40,36 +33,32 @@ void History::Reset()
 	sv->doc->sgribthmaker->UpdateMenu();
 }
 
-bool History::Undoable()
-{
+bool History::undoable() {
 	return pos > 0;
 }
 
-bool History::Redoable()
-{
+bool History::redoable() {
 	return pos < stack.num;
 }
 
-void History::Undo()
-{
-	if (!Undoable())
+void History::undo() {
+	if (!undoable())
 		return;
 	enabled = false;
 	pos --;
 	Command *u = stack[pos];
-	u->Undo(sv);
+	u->undo(sv);
 	enabled = true;
 	changed = (pos != saved_pos);
 	sv->doc->sgribthmaker->UpdateMenu();
 }
 
-void History::Redo()
-{
-	if (!Redoable())
+void History::redo() {
+	if (!redoable())
 		return;
 	enabled = false;
 	Command *u = stack[pos];
-	u->Execute(sv);
+	u->execute(sv);
 	pos ++;
 	enabled = true;
 	changed = (pos != saved_pos);
@@ -78,14 +67,11 @@ void History::Redo()
 
 
 
-void History::Execute(History::Command *c)
-{
+void History::execute(History::Command *c) {
 	if (!enabled)
 		return;
 
 	// remove illegal actions
-	for (int i=pos; i<stack.num; i++)
-		delete(stack[i]);
 	stack.resize(pos);
 	if (pos < saved_pos)
 		saved_pos = -1;
@@ -97,54 +83,45 @@ void History::Execute(History::Command *c)
 	sv->doc->sgribthmaker->UpdateMenu();
 }
 
-void History::DefineAsSaved()
-{
+void History::define_as_saved() {
 	saved_pos = pos;
 	changed = false;
 	sv->doc->sgribthmaker->UpdateMenu();
 }
 
-CommandInsert::CommandInsert(char *_text, int _length, int _pos)
-{
+CommandInsert::CommandInsert(char *_text, int _length, int _pos) {
 	text = _text;
 	length = _length;
 	pos = _pos;
 }
 
-CommandInsert::~CommandInsert()
-{
+CommandInsert::~CommandInsert() {
 	g_free(text);
 }
 
-void CommandInsert::Execute(SourceView *sv)
-{
+void CommandInsert::execute(SourceView *sv) {
 	sv->undo_insert_text(pos, text, length);
 }
 
-void CommandInsert::Undo(SourceView *sv)
-{
+void CommandInsert::undo(SourceView *sv) {
 	sv->undo_remove_text(pos, text, length);
 }
 
-CommandDelete::CommandDelete(char *_text, int _length, int _pos)
-{
+CommandDelete::CommandDelete(char *_text, int _length, int _pos) {
 	text = _text;
 	length = _length;
 	pos = _pos;
 }
 
-CommandDelete::~CommandDelete()
-{
+CommandDelete::~CommandDelete() {
 	g_free(text);
 }
 
-void CommandDelete::Execute(SourceView *sv)
-{
+void CommandDelete::execute(SourceView *sv) {
 	sv->undo_remove_text(pos, text, length);
 }
 
-void CommandDelete::Undo(SourceView *sv)
-{
+void CommandDelete::undo(SourceView *sv) {
 	sv->undo_insert_text(pos, text, length);
 }
 

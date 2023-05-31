@@ -9,24 +9,24 @@
 #define HISTORY_H_
 
 #include "lib/base/base.h"
+#include "lib/base/pointer.h"
 
 class SourceView;
 
-class History
-{
+class History {
 public:
 	History(SourceView *sv);
 	virtual ~History();
 
-	void Reset();
+	void reset();
 
-	bool Undoable();
-	bool Redoable();
+	bool undoable();
+	bool redoable();
 
-	void Undo();
-	void Redo();
+	void undo();
+	void redo();
 
-	void DefineAsSaved();
+	void define_as_saved();
 
 	bool changed;
 	bool enabled;
@@ -34,41 +34,38 @@ public:
 
 	int pos;
 	int saved_pos;
-	class Command{
+
+	class Command {
 	public:
-		virtual ~Command(){}
-		virtual void Execute(SourceView *sv) = 0;
-		virtual void Undo(SourceView *sv) = 0;
+		virtual ~Command() {}
+		virtual void execute(SourceView *sv) = 0;
+		virtual void undo(SourceView *sv) = 0;
 	};
-	Array<Command*> stack;
+	owned_array<Command> stack;
 
 
-
-	void Execute(Command *c);
+	void execute(Command *c);
 	SourceView *sv;
-
 };
 
-class CommandInsert : public History::Command
-{
+class CommandInsert : public History::Command {
 	int pos, length;
 	char *text;
 public:
 	CommandInsert(char *text, int length, int pos);
 	virtual ~CommandInsert();
-	virtual void Execute(SourceView *sv);
-	virtual void Undo(SourceView *sv);
+	virtual void execute(SourceView *sv);
+	virtual void undo(SourceView *sv);
 };
 
-class CommandDelete : public History::Command
-{
+class CommandDelete : public History::Command {
 	int pos, length;
 	char *text;
 public:
 	CommandDelete(char *text, int length, int pos);
 	virtual ~CommandDelete();
-	virtual void Execute(SourceView *sv);
-	virtual void Undo(SourceView *sv);
+	virtual void execute(SourceView *sv);
+	virtual void undo(SourceView *sv);
 };
 
 #endif /* HISTORY_H_ */
