@@ -99,7 +99,7 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 	if (gtk_text_buffer_get_char_count(sv->tb) > MAX_HIGHLIGHTING_SIZE)
 		return;
 
-	update_symbols(sv);
+	//update_symbols(sv);
 
 	int comment_level = 0;
 	int num_lines = sv->get_num_lines();

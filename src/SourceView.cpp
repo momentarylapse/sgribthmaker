@@ -12,6 +12,10 @@
 #include "Parser/BaseParser.h"
 
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
+
 void on_gtk_insert_text(GtkTextBuffer *textbuffer, GtkTextIter *location, gchar *text, gint len, gpointer user_data) {
 	SourceView *sv = (SourceView*)user_data;
 	if (!sv->history->enabled)
@@ -119,15 +123,17 @@ void SourceView::create_text_colors(int first_line, int last_line) {
 
 void SourceView::create_colors_if_not_busy() {
 	color_busy_level --;
-	if (color_busy_level == 0)
+	if (color_busy_level == 0) {
+		parser->update_symbols(this);
 		create_text_colors();
+	}
 }
 
 void on_gtk_changed(GtkTextBuffer *textbuffer, gpointer user_data) {
 	SourceView *sv = (SourceView*)user_data;
 	//printf("change\n");
 	sv->create_text_colors(sv->needs_update_start, sv->needs_update_end);
-	hui::run_later(1, [sv] {
+	hui::run_later(2, [sv] {
 		sv->create_colors_if_not_busy();
 	});
 	sv->color_busy_level ++;
@@ -147,7 +153,7 @@ void source_callback(SourceView *v) {
 	int x, y;
 	gtk_text_view_buffer_to_window_coords(GTK_TEXT_VIEW(v->tv), GTK_TEXT_WINDOW_WIDGET, 0, 0, &x, &y);
 	//printf("%d  %d\n", x, y);
-	int height = gtk_widget_get_allocated_height(v->tv);
+//	int height = gtk_widget_get_allocated_height(v->tv);
 
 	GtkTextIter iter;//gtk_text_iter_
 	int top;
@@ -243,7 +249,7 @@ string convert_to_utf8(string temp) {
 	const char *t = temp.c_str();
 	while (*t) {
 		gunichar a = g_utf8_get_char_validated(t, -1);
-		if (a != -1)
+		if (a != (gunichar)-1)
 			utf8.append_1_single(a);
 		else
 			utf8.append_1_single('?');
@@ -649,7 +655,7 @@ bool SourceView::find(const string &str) {
 	// find...
 	GtkTextIter ii, isb;
 	gtk_text_buffer_get_iter_at_mark(tb, &ii, gtk_text_buffer_get_insert(tb));
-	int off = gtk_text_iter_get_offset(&ii);
+	//int off = gtk_text_iter_get_offset(&ii);
 	//int nn = gtk_text_buffer_get_char_count(tb);
 
 	string temp;
@@ -681,3 +687,6 @@ bool SourceView::find(const string &str) {
 	}
 	return found;
 }
+
+
+#pragma GCC diagnostic pop
