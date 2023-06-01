@@ -67,7 +67,8 @@ void CodeCompiler::compile_kaba() {
 
 	} catch (const kaba::Exception &e) {
 		e.print();
-		//ErrorBox(MainWin, _("Error"), e.message());
+		string m = e.message();
+
 		doc->win->set_error(e.message());
 		doc->source_view->move_cursor_to(e.line, e.column);
 	}
