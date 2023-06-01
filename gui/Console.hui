@@ -1,0 +1,8 @@
+Dialog console-panel "Console" width=500 height=300
+	Grid grid-console "" height=300 noexpandy
+		MultilineEdit log "" disabled monospace
+		---|
+		Grid grid-command "" noexpandy expandx
+			Edit input "" expandx width=200
+			Button console-ok "Ok" image=hui:ok
+			Button console-close "" image=hui:close

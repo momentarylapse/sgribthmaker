@@ -98,9 +98,9 @@ SgribthMakerWindow::SgribthMakerWindow() :
 	for (int i=0; i<100; i++)
 		event("auto-complete-" + i2s(i), [this,i]{ on_insert_auto_complete(i); });
 
-	//console = new Console;
-	//embed(console, "table_main", 0, 1);
-	//console->show(false);
+	console = new Console;
+	embed(console, "table_main", 2, 0);
+	console->show(false);
 
 	show();
 

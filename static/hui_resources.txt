@@ -1,6 +1,6 @@
 t7
 # Number Of Resources
-5
+6
 # Resource
 Dialog
 command_dialog
@@ -49,6 +49,49 @@ ok
 default,image=hui:ok
 0
 1
+0
+# Resource
+Dialog
+console-panel
+width=500,height=300
+0
+0
+1
+Grid
+grid-console
+height=300,noexpandy
+0
+0
+2
+MultilineEdit
+log
+disabled,monospace
+0
+0
+0
+Grid
+grid-command
+noexpandy,expandx
+0
+1
+3
+Edit
+input
+expandx,width=200
+0
+0
+0
+Button
+console-ok
+image=hui:ok
+1
+0
+0
+Button
+console-close
+image=hui:close
+2
+0
 0
 # Resource
 Window
@@ -581,7 +624,7 @@ image=hui:media-play,important
 # Language
 English
 # Number Of IDs
-49
+51
 # Text
 /about
 Info...
@@ -667,6 +710,12 @@ Run
 command_dialog/replace
 
 Replace
+console-panel/console-ok
+Ok
+
+console-panel/console-panel
+Console
+
 main-window/file_list
 file
 

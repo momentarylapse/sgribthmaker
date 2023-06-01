@@ -130,6 +130,24 @@ void CodeCompiler::compile_shader() {
 	});
 }
 
+static SgribthMakerWindow* cur_win;
+
+void print_to_console(const string &s) {
+	cur_win->console->add(s + "\n");
+}
+
+void redirect_print(kaba::Context* context, Document *doc) {
+	cur_win = doc->win;
+	for (auto p: weak(context->packages))
+		if (p->filename == "base") {
+			for (auto f: p->tree->functions)
+				if (f->name == "print") {
+					f->address = (int_p)&print_to_console;
+					f->address_preprocess = (void*)&print_to_console;
+				}
+		}
+}
+
 
 void CodeCompiler::compile_and_run(bool verbose) {
 	if (doc->filename.extension() != "kaba") {
@@ -149,6 +167,8 @@ void CodeCompiler::compile_and_run(bool verbose) {
 		//kaba::config.verbose = true;
 
 		auto context = ownify(kaba::Context::create());
+		redirect_print(context.get(), doc);
+		doc->win->console->clear();
 
 		try {
 			auto module = context->load_module(doc->filename);

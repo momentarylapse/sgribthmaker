@@ -10,16 +10,18 @@
 
 #include "lib/hui/hui.h"
 
-class Console : public hui::Panel
-{
+class Console : public hui::Panel {
 public:
 	Console();
-	virtual ~Console();
 
+	void clear();
 	void set(const string &msg);
+	void add(const string &msg);
 	void show(bool show);
 
 	void on_close();
+
+	string text;
 };
 
 #endif /* CONSOLE_H_ */
