@@ -40,9 +40,9 @@ bool SgribthMaker::on_startup(const Array<string> &arg) {
 
 	if (arg.num > 1) {
 		for (int i=1; i<arg.num; i++)
-			win->LoadFromFile(Path(arg[i]).absolute().canonical());
+			win->load_from_file(Path(arg[i]).absolute().canonical());
 	} else {
-		win->New();
+		win->create_new_document();
 	}
 	return true;
 }

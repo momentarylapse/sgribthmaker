@@ -27,5 +27,5 @@ CommandDialog::CommandDialog(SgribthMakerWindow *_mw) :
 void CommandDialog::on_ok() {
 	prev_command = get_string("command");
 	prev_subsitude = get_string("substitude");
-	main_win->ExecuteCommand(prev_command);
+	main_win->execute_command(prev_command);
 }

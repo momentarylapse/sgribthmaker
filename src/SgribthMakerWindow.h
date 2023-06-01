@@ -23,33 +23,34 @@ public:
 	obs::Sink in_update;
 
 
-	void OnAbout();
-	void OnExit();
+	void on_about();
+	void on_exit();
 
-	void UpdateStatusBar();
-	void SetMessage(const string &str);
-	void SetError(const string &str);
-	void SetInfo(const string &str);
-	void SetWindowTitle();
-	void UpdateDocList();
-	void UpdateMenu();
-	void UpdateFunctionList();
-	void SetActiveDocument(Document *d);
-	void AllowTermination(const hui::Callback &on_success = nullptr, const hui::Callback &on_fail = nullptr);
-	void AllowDocTermination(Document *d, const hui::Callback &on_success = nullptr, const hui::Callback &on_fail = nullptr);
-	void New();
-	void OnCloseDocument();
-	bool LoadFromFile(const Path &filename);
-	bool WriteToFile(Document *doc, const Path &filename);
-	void Open();
+	void update_status_bar();
+	void set_message(const string &str);
+	void set_error(const string &str);
+	void set_info(const string &str);
+	void set_window_title();
+	void update_doc_list();
+	void update_menu();
+	void update_function_list();
+	void set_active_document(Document *d);
+	void allow_termination(const hui::Callback &on_success = nullptr, const hui::Callback &on_fail = nullptr);
+	void allow_doc_termination(Document *d, const hui::Callback &on_success = nullptr, const hui::Callback &on_fail = nullptr);
+	void on_close_document();
+	bool load_from_file(const Path &filename);
+	bool write_to_file(Document *doc, const Path &filename);
+	void open();
 
-	void SaveAs(Document *doc, const hui::Callback &on_success = nullptr, const hui::Callback &on_fail = nullptr);
-	void Save(Document *doc, const hui::Callback &on_success = nullptr, const hui::Callback &on_fail = nullptr);
-	void OnOpen();
-	void OnSave();
-	void OnSaveAs();
-	void Reload();
-	void OnReload();
+	Document* create_new_document();
+
+	void save_as(Document *doc, const hui::Callback &on_success = nullptr, const hui::Callback &on_fail = nullptr);
+	void save(Document *doc, const hui::Callback &on_success = nullptr, const hui::Callback &on_fail = nullptr);
+	void on_open();
+	void on_save();
+	void on_save_as();
+	void reload(Document *doc);
+	void on_reload();
 	void on_undo();
 	void on_redo();
 	void on_copy();
@@ -62,22 +63,22 @@ public:
 	void on_uncomment();
 	void on_indent();
 	void on_unindent();
-	void CompileKaba();
-	void CompileShader();
-	void Compile();
-	void CompileAndRun(bool verbose);
-	void OnAutoComplete();
-	void OnInsertAutoComplete(int n);
-	void OnCompileAndRunVerbose();
-	void OnCompileAndRunSilent();
-	void ShowCurLine();
-	void ExecuteCommand(const string &cmd);
-	void ExecuteCommandDialog();
-	void ExecuteSettingsDialog();
-	void OnFunctionList();
-	void OnFileList();
-	void OnNextDocument();
-	void OnPreviousDocument();
+	void compile_kaba();
+	void compile_shader();
+	void compile();
+	void compile_and_run(bool verbose);
+	void on_auto_complete();
+	void on_insert_auto_complete(int n);
+	void on_compile_and_run_verbose();
+	void on_compile_and_run_silent();
+	void show_cur_line();
+	void execute_command(const string &cmd);
+	void execute_command_dialog();
+	void execute_settings_dialog();
+	void on_function_list();
+	void on_file_list();
+	void on_next_document();
+	void on_previous_document();
 
 
 	Array<SourceView*> source_view;

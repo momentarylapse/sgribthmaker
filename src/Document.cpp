@@ -49,15 +49,15 @@ bool Document::load(const Path &_filename) {
 	try {
 		string temp = os::fs::read_text(_filename);
 		if (!source_view->fill(temp))
-			win->SetMessage(_("File is not UTF-8 compatible"));
+			win->set_message(_("File is not UTF-8 compatible"));
 
 		filename = _filename;
 
 		source_view->set_parser(filename);
 
-		win->UpdateMenu();
+		win->update_menu();
 	} catch(...) {
-		win->SetMessage(_("File does not want to be opened"));
+		win->set_message(_("File does not want to be opened"));
 		return false;
 	}
 	return true;
@@ -71,7 +71,7 @@ bool Document::save(const Path &_filename) {
 		//SetMessage(_("saved"));
 		//UpdateMenu();
 	} catch(...) {
-		win->SetMessage(_("Can not save file"));
+		win->set_message(_("Can not save file"));
 		return false;
 	}
 
