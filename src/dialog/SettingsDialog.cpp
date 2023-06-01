@@ -6,8 +6,8 @@
  */
 
 #include "SettingsDialog.h"
-#include "SourceView.h"
-#include "SgribthMakerWindow.h"
+#include "../SourceView.h"
+#include "../SgribthMakerWindow.h"
 
 SettingsDialog::SettingsDialog(SgribthMakerWindow *_mw) :
 	hui::Window("settings_dialog", _mw)

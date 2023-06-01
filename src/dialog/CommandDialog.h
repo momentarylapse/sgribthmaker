@@ -5,10 +5,10 @@
  *      Author: michi
  */
 
-#ifndef COMMANDDIALOG_H_
-#define COMMANDDIALOG_H_
+#ifndef SRC_DIALOG_COMMANDDIALOG_H_
+#define SRC_DIALOG_COMMANDDIALOG_H_
 
-#include "lib/hui/hui.h"
+#include "../lib/hui/hui.h"
 
 class SgribthMakerWindow;
 
@@ -24,4 +24,4 @@ public:
 	static string prev_subsitude;
 };
 
-#endif /* COMMANDDIALOG_H_ */
+#endif /* SRC_DIALOG_COMMANDDIALOG_H_ */

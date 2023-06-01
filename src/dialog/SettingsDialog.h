@@ -5,10 +5,10 @@
  *      Author: michi
  */
 
-#ifndef SETTINGSDIALOG_H_
-#define SETTINGSDIALOG_H_
+#ifndef SRC_DIALOG_SETTINGSDIALOG_H_
+#define SRC_DIALOG_SETTINGSDIALOG_H_
 
-#include "lib/hui/hui.h"
+#include "../lib/hui/hui.h"
 
 class SgribthMakerWindow;
 
@@ -31,4 +31,4 @@ public:
 	SgribthMakerWindow *main_win;
 };
 
-#endif /* SETTINGSDIALOG_H_ */
+#endif /* SRC_DIALOG_SETTINGSDIALOG_H_ */

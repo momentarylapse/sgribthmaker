@@ -6,7 +6,7 @@
  */
 
 #include "CommandDialog.h"
-#include "SgribthMakerWindow.h"
+#include "../SgribthMakerWindow.h"
 
 string CommandDialog::prev_command;
 string CommandDialog::prev_subsitude;

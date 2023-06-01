@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ClCompile Include="src\dialog\CommandDialog.cpp">
+      <Filter>src\dialog</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dialog\SettingsDialog.cpp">
+      <Filter>src\dialog</Filter>
+    </ClCompile>
     <ClCompile Include="src\lib\algebra\crypto.cpp">
       <Filter>src\lib\algebra</Filter>
     </ClCompile>
@@ -601,9 +607,6 @@
     <ClCompile Include="src\CodeCompiler.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\CommandDialog.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\Console.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -614,9 +617,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\History.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\SettingsDialog.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\SgribthMaker.cpp">
@@ -1079,6 +1079,12 @@
     </ClInclude>
     <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\SourceView.h">
       <Filter>appdir\files\lib\debug\source\sgribthmaker\src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dialog\CommandDialog.h">
+      <Filter>src\dialog</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dialog\SettingsDialog.h">
+      <Filter>src\dialog</Filter>
     </ClInclude>
     <ClInclude Include="src\lib\algebra\algebra.h">
       <Filter>src\lib\algebra</Filter>
@@ -1605,9 +1611,6 @@
     <ClInclude Include="src\CodeCompiler.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\CommandDialog.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="src\Console.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -1618,9 +1621,6 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\History.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\SettingsDialog.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\SgribthMaker.h">
@@ -1636,6 +1636,9 @@
   <ItemGroup>
     <Filter Include="src">
       <UniqueIdentifier>{F12EA729-9762-4175-D211-F4CA3BE60BD0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\dialog">
+      <UniqueIdentifier>{0F11A3FB-5870-E940-6F44-CFF45368B6AB}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\lib">
       <UniqueIdentifier>{78C09F83-C1B9-0A6A-D375-DF41AB8FB723}</UniqueIdentifier>

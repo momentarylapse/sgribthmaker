@@ -116,6 +116,8 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\dialog\CommandDialog.cpp" />
+    <ClCompile Include="src\dialog\SettingsDialog.cpp" />
     <ClCompile Include="src\lib\algebra\crypto.cpp" />
     <ClCompile Include="src\lib\algebra\vli.cpp" />
     <ClCompile Include="src\lib\any\any.cpp" />
@@ -316,12 +318,10 @@
     <ClCompile Include="src\parser\ParserText.cpp" />
     <ClCompile Include="src\AutoComplete.cpp" />
     <ClCompile Include="src\CodeCompiler.cpp" />
-    <ClCompile Include="src\CommandDialog.cpp" />
     <ClCompile Include="src\Console.cpp" />
     <ClCompile Include="src\Document.cpp" />
     <ClCompile Include="src\HighlightScheme.cpp" />
     <ClCompile Include="src\History.cpp" />
-    <ClCompile Include="src\SettingsDialog.cpp" />
     <ClCompile Include="src\SgribthMaker.cpp" />
     <ClCompile Include="src\SgribthMakerWindow.cpp" />
     <ClCompile Include="src\SourceView.cpp" />
@@ -477,6 +477,8 @@
     <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\SettingsDialog.h" />
     <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\SgribthMaker.h" />
     <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\SourceView.h" />
+    <ClInclude Include="src\dialog\CommandDialog.h" />
+    <ClInclude Include="src\dialog\SettingsDialog.h" />
     <ClInclude Include="src\lib\algebra\algebra.h" />
     <ClInclude Include="src\lib\algebra\crypto.h" />
     <ClInclude Include="src\lib\algebra\vli.h" />
@@ -652,12 +654,10 @@
     <ClInclude Include="src\parser\ParserText.h" />
     <ClInclude Include="src\AutoComplete.h" />
     <ClInclude Include="src\CodeCompiler.h" />
-    <ClInclude Include="src\CommandDialog.h" />
     <ClInclude Include="src\Console.h" />
     <ClInclude Include="src\Document.h" />
     <ClInclude Include="src\HighlightScheme.h" />
     <ClInclude Include="src\History.h" />
-    <ClInclude Include="src\SettingsDialog.h" />
     <ClInclude Include="src\SgribthMaker.h" />
     <ClInclude Include="src\SgribthMakerWindow.h" />
     <ClInclude Include="src\SourceView.h" />

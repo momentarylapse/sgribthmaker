@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_BUILD_TYPE Debug)
 set(SOURCE 
+	src/dialog/CommandDialog.cpp
+	src/dialog/SettingsDialog.cpp
 	src/lib/algebra/crypto.cpp
 	src/lib/algebra/vli.cpp
 	src/lib/any/any.cpp
@@ -206,12 +208,10 @@ set(SOURCE
 	src/parser/ParserText.cpp
 	src/AutoComplete.cpp
 	src/CodeCompiler.cpp
-	src/CommandDialog.cpp
 	src/Console.cpp
 	src/Document.cpp
 	src/HighlightScheme.cpp
 	src/History.cpp
-	src/SettingsDialog.cpp
 	src/SgribthMaker.cpp
 	src/SgribthMakerWindow.cpp
 	src/SourceView.cpp
