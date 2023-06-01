@@ -63,10 +63,7 @@ public:
 	void on_uncomment();
 	void on_indent();
 	void on_unindent();
-	void compile_kaba();
-	void compile_shader();
-	void compile();
-	void compile_and_run(bool verbose);
+	void on_compile();
 	void on_auto_complete();
 	void on_insert_auto_complete(int n);
 	void on_compile_and_run_verbose();

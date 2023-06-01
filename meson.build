@@ -254,6 +254,7 @@ sources = [
 	'src/Parser/ParserShader.cpp',
 	'src/Parser/ParserText.cpp',
 	'src/AutoComplete.cpp',
+	'src/CodeCompiler.cpp',
 	'src/CommandDialog.cpp',
 	'src/Console.cpp',
 	'src/Document.cpp',

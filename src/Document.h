@@ -17,6 +17,7 @@ class Parser;
 class HighlightScheme;
 class SourceView;
 class SgribthMakerWindow;
+class CodeCompiler;
 
 class Document : public obs::Node<VirtualBase> {
 public:
@@ -38,6 +39,7 @@ public:
 	HighlightScheme *scheme;
 	SourceView *source_view;
 	SgribthMakerWindow *win;
+	CodeCompiler *compiler;
 };
 
 #endif /* DOCUMENT_H_ */

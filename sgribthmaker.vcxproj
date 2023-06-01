@@ -315,6 +315,7 @@
     <ClCompile Include="src\Parser\ParserShader.cpp" />
     <ClCompile Include="src\Parser\ParserText.cpp" />
     <ClCompile Include="src\AutoComplete.cpp" />
+    <ClCompile Include="src\CodeCompiler.cpp" />
     <ClCompile Include="src\CommandDialog.cpp" />
     <ClCompile Include="src\Console.cpp" />
     <ClCompile Include="src\Document.cpp" />
@@ -650,6 +651,7 @@
     <ClInclude Include="src\Parser\ParserShader.h" />
     <ClInclude Include="src\Parser\ParserText.h" />
     <ClInclude Include="src\AutoComplete.h" />
+    <ClInclude Include="src\CodeCompiler.h" />
     <ClInclude Include="src\CommandDialog.h" />
     <ClInclude Include="src\Console.h" />
     <ClInclude Include="src\Document.h" />
@@ -659,7 +661,6 @@
     <ClInclude Include="src\SgribthMaker.h" />
     <ClInclude Include="src\SgribthMakerWindow.h" />
     <ClInclude Include="src\SourceView.h" />
-    <ClInclude Include="SgribthMakerWindow.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

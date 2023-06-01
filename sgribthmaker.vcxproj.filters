@@ -598,6 +598,9 @@
     <ClCompile Include="src\AutoComplete.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\CodeCompiler.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="src\CommandDialog.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -1599,6 +1602,9 @@
     <ClInclude Include="src\AutoComplete.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\CodeCompiler.h">
+      <Filter>src</Filter>
+    </ClInclude>
     <ClInclude Include="src\CommandDialog.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -1625,9 +1631,6 @@
     </ClInclude>
     <ClInclude Include="src\SourceView.h">
       <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="SgribthMakerWindow.h">
-      <Filter></Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

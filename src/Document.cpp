@@ -17,6 +17,7 @@ Document::Document(SgribthMakerWindow *_win) {
 	source_view = nullptr;
 	scheme = nullptr;
 	buffer_dirty = false;
+	compiler = nullptr;
 	history = new History(this);
 }
 

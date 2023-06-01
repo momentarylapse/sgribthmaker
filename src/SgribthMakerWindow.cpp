@@ -2,10 +2,8 @@
 #include "SgribthMaker.h"
 #include "lib/base/base.h"
 #include "lib/hui/hui.h"
-#include "lib/nix/nix.h"
 #include "lib/os/filesystem.h"
 #include "lib/os/msg.h"
-#include "lib/os/time.h"
 #include "SettingsDialog.h"
 #include "CommandDialog.h"
 #include "Console.h"
@@ -15,13 +13,9 @@
 #include "Parser/BaseParser.h"
 #include "Document.h"
 #include "AutoComplete.h"
-#include "lib/kaba/kaba.h"
+#include "CodeCompiler.h"
 
 extern string AppTitle;
-
-namespace nix {
-	extern string shader_error;
-}
 
 SgribthMakerWindow::SgribthMakerWindow() :
 	obs::Node<hui::Window>("", 800, 600),
@@ -83,7 +77,7 @@ SgribthMakerWindow::SgribthMakerWindow() :
 	set_key_code("undo", hui::KEY_Z + hui::KEY_CONTROL, "hui:undo");
 	event("redo", [this] { on_redo(); });
 	set_key_code("redo", hui::KEY_Z + hui::KEY_SHIFT + hui::KEY_CONTROL, "hui:redo");
-	event("compile", [this] { compile(); });
+	event("compile", [this] { on_compile(); });
 	set_key_code("compile", hui::KEY_F7);
 	event("compile_and_run_verbose", [this] { on_compile_and_run_verbose(); });
 	set_key_code("compile_and_run_verbose", hui::KEY_F6 + hui::KEY_CONTROL);
@@ -266,6 +260,7 @@ SourceView* SgribthMakerWindow::create_new_document() {
 	add_multiline_edit("!handlekeys,noframe", 1, 0, id);
 
 	auto doc = new Document(this);
+	doc->compiler = new CodeCompiler(doc);
 	SourceView *view = new SourceView(this, id, doc);
 
 	view->history->out_changed >> in_update;
@@ -459,159 +454,18 @@ void SgribthMakerWindow::on_cut() {
 	on_delete();
 }
 
-string get_time_str(float t) {
-	if (t < 0.3f)
-		return format("%.2fms", t * 1000.0f);
-	else
-		return format("%.2fs", t);
-}
-
-void SgribthMakerWindow::compile_kaba() {
-
-	//HuiSetDirectory(SgribthDir);
-	//msg_set_verbose(true);
-
-	os::Timer timer;
-
-	kaba::config.compile_silently = true;
-	//kaba::config.verbose = true;
-
-	auto context = ownify(kaba::Context::create());
-
-	try {
-		auto module = context->load_module(cur_doc()->filename, true);
-
-		float dt = timer.get();
-
-		//compile_module->Show();
-
-		set_message(format(_("Script compiles without errors!         (in %s)"), get_time_str(dt)));
-
-	} catch (const kaba::Exception &e) {
-		e.print();
-		//ErrorBox(MainWin, _("Error"), e.message());
-		set_error(e.message());
-		cur_view->move_cursor_to(e.line, e.column);
-	}
-
-	//msg_set_verbose(ALLOW_LOGGING);
-}
-
-void SgribthMakerWindow::compile_shader() {
-	return;
-
-	// NOPE, not working
-	hui::run_later(0.01f, [this] {
-
-	auto *w = new hui::NixWindow("nix", 640, 480);
-	//w->add_drawing_area("!opengl", 0, 0, "nix-area");
-	w->event_x("nix-area", "realize", [this] {
-		nix::init();
-	//	nix::init("OpenGL", w, "nix-area");
-
-		auto *shader = nix::Shader::load(cur_doc()->filename);
-		if (!shader) {
-			set_error(nix::shader_error);
-		} else {
-			set_message(_("Shader compiles without error!"));
-			//shader->unref();
-		}
-	});
-
-
-	w->show();
-	delete w;
-
-	//msg_set_verbose(ALLOW_LOGGING);
-	});
-}
-
-void SgribthMakerWindow::compile() {
+void SgribthMakerWindow::on_compile() {
 	save(cur_doc(), [this] {
-		string ext = cur_doc()->filename.extension();
-		if (ext == "kaba")
-			compile_kaba();
-		else if (ext == "shader")
-			compile_shader();
-		else
-			set_error(_("only *.kaba and *.shader files can be compiled!"));
-	}, []{});
-}
-
-void SgribthMakerWindow::compile_and_run(bool verbose) {
-	if (cur_doc()->filename.extension() != "kaba") {
-		set_error(_("only *.kaba files can be executed!"));
-		return;
-	}
-
-	save(cur_doc(), [this,verbose] {
-
-		os::fs::set_current_directory(cur_doc()->filename.parent());
-		//if (verbose)
-		//	msg_set_verbose(true);
-
-		// compile
-		os::Timer timer;
-		kaba::config.compile_silently = true;
-		//kaba::config.verbose = true;
-
-		auto context = ownify(kaba::Context::create());
-
-		try {
-			auto module = context->load_module(cur_doc()->filename);
-			float dt_compile = timer.get();
-
-			if (!verbose)
-				msg_set_verbose(true);
-
-			int msg_size0 = msg_get_buffer_size();
-
-
-			float dt_execute = 0;
-			timer.reset();
-			typedef void void_func();
-			typedef void strings_func(const Array<string>);
-			auto f = (void_func*)module->match_function("main", "void", {});
-			auto fsa = (strings_func*)module->match_function("main", "void", {"string[]"});
-			if (f) {
-				f();
-			} else if (fsa) {
-				fsa({});
-			}
-			//compile_module->ShowVars(false);
-			dt_execute = timer.get();
-
-			if (f or fsa) {
-				set_message(format(_("Compiling: %s         opcode: %db         execution: %s"), get_time_str(dt_compile), module->opcode_size, get_time_str(dt_execute)));
-			} else {
-				set_error(_("no 'void main()' or 'void main(string[])' found"));
-			}
-			//if (verbose)
-			//	HuiInfoBox(MainWin,"Speicher",string("nicht freigegebener Speicher des Scriptes: ",i2s(script->MemoryUsed),"b"));}
-
-			// messages? (not working anymore, since kaba is not writing to log)
-			int msg_size = msg_get_buffer_size();
-			if (msg_size > msg_size0)
-				console->set(msg_get_buffer(msg_size - msg_size0));
-
-		} catch(const kaba::Exception &e) {
-			e.print();
-
-			set_error(e.message());
-			//ErrorBox(MainWin, _("Error"), e.message());
-			cur_view->move_cursor_to(e.line, e.column);
-		}
-
-		//msg_set_verbose(ALLOW_LOGGING);
+		cur_doc()->compiler->compile();
 	}, []{});
 }
 
 void SgribthMakerWindow::on_compile_and_run_verbose() {
-	compile_and_run(true);
+	cur_doc()->compiler->compile_and_run(true);
 }
 
 void SgribthMakerWindow::on_compile_and_run_silent() {
-	compile_and_run(false);
+	cur_doc()->compiler->compile_and_run(false);
 }
 
 
