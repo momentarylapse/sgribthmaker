@@ -272,6 +272,8 @@ SourceView* SgribthMakerWindow::create_new_document() {
 	SourceView *view = new SourceView(this, id, doc);
 
 	view->history->out_changed >> in_update;
+	doc->out_changed >> in_update;
+	doc->out_not_utf8 >> create_sink([this] { set_error("File is not utf8 compatible"); });
 
 	view->apply_scheme(HighlightScheme::default_scheme);
 	source_views.add(view);
@@ -306,13 +308,18 @@ void SgribthMakerWindow::on_close_document() {
 
 bool SgribthMakerWindow::load_from_file(const Path &filename) {
 	auto view = create_new_document();
-	return view->doc->load(filename);
+	auto ok = view->doc->load(filename);
+	if (!ok)
+		set_message(_("Can not open file"));
+	return ok;
 }
 
 bool SgribthMakerWindow::write_to_file(Document *doc, const Path &filename) {
 	bool ok = doc->save(filename);
 	if (ok)
 		set_message(_("saved"));
+	else
+		set_message(_("Can not save file"));
 	return ok;
 }
 
@@ -331,7 +338,7 @@ void SgribthMakerWindow::open() {
 
 void SgribthMakerWindow::save_as(Document *doc, const hui::Callback &on_success, const hui::Callback &on_fail) {
 	hui::file_dialog_save(this, _("Save file"), working_dir_from_doc(doc), {"showfilter=" + _("All (*.*)"), "filter=*"}, [this,doc,on_success,on_fail] (const Path &filename) {
-		if (!filename.is_empty()) {
+		if (filename) {
 			if (write_to_file(doc, filename))
 				on_success();
 			else
@@ -365,9 +372,11 @@ void SgribthMakerWindow::on_save_as() {
 
 void SgribthMakerWindow::reload(Document *doc) {
 	allow_doc_termination(doc, [this, doc] {
-		if (!doc->filename.is_empty()) {
+		if (doc->filename) {
 			if (doc->load(doc->filename))
 				set_message(_("reloaded"));
+			else
+				set_message(_("failed reloading"));
 		}
 	}, []{});
 }

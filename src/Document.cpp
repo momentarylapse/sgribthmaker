@@ -8,7 +8,6 @@
 #include "Document.h"
 #include "History.h"
 #include "SourceView.h"
-#include "SgribthMakerWindow.h"
 #include "lib/os/file.h"
 #include "lib/hui/hui.h"
 
@@ -48,18 +47,17 @@ bool Document::load(const Path &_filename) {
 	try {
 		string temp = os::fs::read_text(_filename);
 		if (!source_view->fill(temp))
-			win->set_message(_("File is not UTF-8 compatible"));
+			out_not_utf8.notify();
 
 		filename = _filename;
 
 		source_view->set_parser(filename);
 
-		win->update_menu();
+		out_changed.notify();
+		return true;
 	} catch(...) {
-		win->set_message(_("File does not want to be opened"));
 		return false;
 	}
-	return true;
 }
 
 bool Document::save(const Path &_filename) {
@@ -67,10 +65,7 @@ bool Document::save(const Path &_filename) {
 		os::fs::write_text(_filename, source_view->get_all());
 		filename = _filename;
 		history->define_as_saved();
-		//SetMessage(_("saved"));
-		//UpdateMenu();
 	} catch(...) {
-		win->set_message(_("Can not save file"));
 		return false;
 	}
 

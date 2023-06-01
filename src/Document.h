@@ -10,6 +10,7 @@
 
 #include "lib/base/base.h"
 #include "lib/os/path.h"
+#include "lib/pattern/Observable.h"
 
 class History;
 class Parser;
@@ -17,10 +18,12 @@ class HighlightScheme;
 class SourceView;
 class SgribthMakerWindow;
 
-class Document {
+class Document : public obs::Node<VirtualBase> {
 public:
 	Document(SgribthMakerWindow *win);
 	virtual ~Document();
+
+	obs::Source out_not_utf8{this, "not-utf8"};
 
 	string name(bool long_name) const;
 	bool load(const Path &filename);
