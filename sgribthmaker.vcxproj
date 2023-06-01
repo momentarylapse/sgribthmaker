@@ -321,9 +321,11 @@
     <ClCompile Include="src\History.cpp" />
     <ClCompile Include="src\SettingsDialog.cpp" />
     <ClCompile Include="src\SgribthMaker.cpp" />
+    <ClCompile Include="src\SgribthMakerWindow.cpp" />
     <ClCompile Include="src\SourceView.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="_pattern\Observable.h" />
     <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\algebra\crypto.h" />
     <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\algebra\vli.h" />
     <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\any\any.h" />
@@ -654,6 +656,7 @@
     <ClInclude Include="src\History.h" />
     <ClInclude Include="src\SettingsDialog.h" />
     <ClInclude Include="src\SgribthMaker.h" />
+    <ClInclude Include="src\SgribthMakerWindow.h" />
     <ClInclude Include="src\SourceView.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -8,6 +8,7 @@
 #include "SourceView.h"
 #include "History.h"
 #include "Document.h"
+#include "SgribthMakerWindow.h"
 #include "lib/hui/Controls/Control.h"
 #include "Parser/BaseParser.h"
 

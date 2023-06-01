@@ -616,11 +616,17 @@
     <ClCompile Include="src\SgribthMaker.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\SgribthMakerWindow.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="src\SourceView.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="_pattern\Observable.h">
+      <Filter>_pattern</Filter>
+    </ClInclude>
     <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\algebra\crypto.h">
       <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\algebra</Filter>
     </ClInclude>
@@ -1609,6 +1615,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\SgribthMaker.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SgribthMakerWindow.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\SourceView.h">

@@ -8,12 +8,12 @@
 #include "Document.h"
 #include "History.h"
 #include "SourceView.h"
-#include "SgribthMaker.h"
+#include "SgribthMakerWindow.h"
 #include "lib/os/file.h"
 #include "lib/hui/hui.h"
 
-Document::Document(SgribthMaker *_sgribthmaker) {
-	sgribthmaker = _sgribthmaker;
+Document::Document(SgribthMakerWindow *_win) {
+	win = _win;
 	parser = NULL;
 	source_view = NULL;
 	history = NULL;
@@ -49,15 +49,15 @@ bool Document::load(const Path &_filename) {
 	try {
 		string temp = os::fs::read_text(_filename);
 		if (!source_view->fill(temp))
-			sgribthmaker->SetMessage(_("File is not UTF-8 compatible"));
+			win->SetMessage(_("File is not UTF-8 compatible"));
 
 		filename = _filename;
 
 		source_view->set_parser(filename);
 
-		sgribthmaker->UpdateMenu();
+		win->UpdateMenu();
 	} catch(...) {
-		sgribthmaker->SetMessage(_("File does not want to be opened"));
+		win->SetMessage(_("File does not want to be opened"));
 		return false;
 	}
 	return true;
@@ -71,7 +71,7 @@ bool Document::save(const Path &_filename) {
 		//SetMessage(_("saved"));
 		//UpdateMenu();
 	} catch(...) {
-		sgribthmaker->SetMessage(_("Can not save file"));
+		win->SetMessage(_("Can not save file"));
 		return false;
 	}
 

@@ -7,12 +7,12 @@
 
 #include "SettingsDialog.h"
 #include "SourceView.h"
-#include "SgribthMaker.h"
+#include "SgribthMakerWindow.h"
 
-SettingsDialog::SettingsDialog(SgribthMaker *_sgribthmaker) :
-	hui::Window("settings_dialog", _sgribthmaker->MainWin)
+SettingsDialog::SettingsDialog(SgribthMakerWindow *_mw) :
+	hui::Window("settings_dialog", _mw)
 {
-	sgribthmaker = _sgribthmaker;
+	main_win = _mw;
 	set_int("tab_width", hui::config.get_int("TabWidth", 8));
 	set_string("font", hui::config.get_str("Font", "Monospace 10"));
 	add_string("context_list", _("Text"));
@@ -80,7 +80,7 @@ void SettingsDialog::onFont() {
 		if (font.num > 0) {
 			set_string("font", font);
 			hui::config.set_str("Font", font);
-			for (SourceView *sv: sgribthmaker->source_view)
+			for (SourceView *sv: main_win->source_view)
 				sv->update_font();
 		}
 	});
@@ -88,7 +88,7 @@ void SettingsDialog::onFont() {
 
 void SettingsDialog::onTabWidth() {
 	hui::config.set_int("TabWidth", get_int("tab_width"));
-	for (SourceView *sv: sgribthmaker->source_view)
+	for (SourceView *sv: main_win->source_view)
 		sv->update_tab_size();
 }
 
@@ -123,7 +123,7 @@ void SettingsDialog::onSchemeChange() {
 	c.bold = is_checked("bold");
 	c.italic = is_checked("italic");
 	s->changed = true;
-	for (SourceView *sv: sgribthmaker->source_view)
+	for (SourceView *sv: main_win->source_view)
 		sv->apply_scheme(s);
 	fillSchemeList();
 }
@@ -132,14 +132,14 @@ void SettingsDialog::onSchemes() {
 	int n = get_int("");
 	HighlightScheme *s = HighlightScheme::get_all()[n];
 	HighlightScheme::default_scheme = s;
-	for (SourceView *sv: sgribthmaker->source_view)
+	for (SourceView *sv: main_win->source_view)
 		sv->apply_scheme(s);
 	onContextListSelect();
 }
 
 void SettingsDialog::onCopyScheme() {
 	HighlightScheme *s = HighlightScheme::default_scheme->copy(_("new scheme"));
-	for (SourceView *sv: sgribthmaker->source_view)
+	for (SourceView *sv: main_win->source_view)
 		sv->apply_scheme(s);
 	fillSchemeList();
 	onContextListSelect();

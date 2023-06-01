@@ -6,15 +6,15 @@
  */
 
 #include "CommandDialog.h"
-#include "SgribthMaker.h"
+#include "SgribthMakerWindow.h"
 
 string CommandDialog::prev_command;
 string CommandDialog::prev_subsitude;
 
-CommandDialog::CommandDialog(SgribthMaker *_sgribthmaker) :
-	hui::Dialog("command_dialog", _sgribthmaker->MainWin)
+CommandDialog::CommandDialog(SgribthMakerWindow *_mw) :
+	hui::Dialog("command_dialog", _mw)
 {
-	sgribthmaker = _sgribthmaker;
+	main_win = _mw;
 	hide_control("substitude", true);
 	set_string("command", prev_command);
 	set_string("substitude", prev_subsitude);
@@ -23,13 +23,9 @@ CommandDialog::CommandDialog(SgribthMaker *_sgribthmaker) :
 	event("replace", [=]{ hide_control("substitude", !is_checked("replace")); });
 }
 
-CommandDialog::~CommandDialog()
-{
-}
-
 
 void CommandDialog::on_ok() {
 	prev_command = get_string("command");
 	prev_subsitude = get_string("substitude");
-	sgribthmaker->ExecuteCommand(prev_command);
+	main_win->ExecuteCommand(prev_command);
 }

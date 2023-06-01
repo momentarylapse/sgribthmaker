@@ -211,6 +211,7 @@ set(SOURCE
 	src/History.cpp
 	src/SettingsDialog.cpp
 	src/SgribthMaker.cpp
+	src/SgribthMakerWindow.cpp
 	src/SourceView.cpp
 )
 
