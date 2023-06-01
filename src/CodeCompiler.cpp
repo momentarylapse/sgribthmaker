@@ -44,6 +44,31 @@ string get_time_str(float t) {
 		return format("%.2fs", t);
 }
 
+const kaba::Exception& get_root_error(const kaba::Exception& e) {
+	if (e.parent.get())
+		return get_root_error(*e.parent.get());
+	return e;
+}
+
+void jump_to_error_source(Document *doc, const kaba::Exception& e) {
+	auto win = doc->win;
+	auto& ee = get_root_error(e);
+
+	// already open?
+	for (auto view: win->source_views)
+		if (view->doc->filename == ee.filename) {
+			win->set_active_view(view);
+			view->move_cursor_to(ee.line, ee.column);
+			return;
+		}
+
+	// load
+	if (win->load_from_file(ee.filename))
+		win->cur_view->move_cursor_to(ee.line, ee.column);
+	else
+		doc->source_view->move_cursor_to(e.line, e.column);
+}
+
 void CodeCompiler::compile_kaba() {
 
 	//HuiSetDirectory(SgribthDir);
@@ -70,7 +95,7 @@ void CodeCompiler::compile_kaba() {
 		string m = e.message();
 
 		doc->win->set_error(e.message());
-		doc->source_view->move_cursor_to(e.line, e.column);
+		jump_to_error_source(doc, e);
 	}
 
 	//msg_set_verbose(ALLOW_LOGGING);
@@ -152,7 +177,7 @@ void CodeCompiler::compile_and_run(bool verbose) {
 			if (f or fsa) {
 				doc->win->set_message(format(_("Compiling: %s         opcode: %db         execution: %s"), get_time_str(dt_compile), module->opcode_size, get_time_str(dt_execute)));
 			} else {
-				doc->win->set_error(_("no 'void main()' or 'void main(string[])' found"));
+				doc->win->set_error(_("no 'func main()' or 'func main(string[])' found"));
 			}
 			//if (verbose)
 			//	HuiInfoBox(MainWin,"Speicher",string("nicht freigegebener Speicher des Scriptes: ",i2s(script->MemoryUsed),"b"));}
@@ -166,8 +191,7 @@ void CodeCompiler::compile_and_run(bool verbose) {
 			e.print();
 
 			doc->win->set_error(e.message());
-			//ErrorBox(MainWin, _("Error"), e.message());
-			doc->source_view->move_cursor_to(e.line, e.column);
+			jump_to_error_source(doc, e);
 		}
 
 		//msg_set_verbose(ALLOW_LOGGING);
