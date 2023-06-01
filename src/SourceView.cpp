@@ -10,7 +10,7 @@
 #include "Document.h"
 #include "SgribthMakerWindow.h"
 #include "lib/hui/Controls/Control.h"
-#include "Parser/BaseParser.h"
+#include "parser/BaseParser.h"
 
 
 #pragma GCC diagnostic push

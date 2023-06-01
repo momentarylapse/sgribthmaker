@@ -10,7 +10,7 @@
 #include "History.h"
 #include "HighlightScheme.h"
 #include "SourceView.h"
-#include "Parser/BaseParser.h"
+#include "parser/BaseParser.h"
 #include "Document.h"
 #include "AutoComplete.h"
 #include "CodeCompiler.h"

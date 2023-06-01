@@ -197,13 +197,13 @@ set(SOURCE
 	src/lib/os/terminal.cpp
 	src/lib/os/time.cpp
 	src/lib/pattern/Observable.cpp
-	src/Parser/BaseParser.cpp
-	src/Parser/ParserC.cpp
-	src/Parser/ParserHui.cpp
-	src/Parser/ParserKaba.cpp
-	src/Parser/ParserPython.cpp
-	src/Parser/ParserShader.cpp
-	src/Parser/ParserText.cpp
+	src/parser/BaseParser.cpp
+	src/parser/ParserC.cpp
+	src/parser/ParserHui.cpp
+	src/parser/ParserKaba.cpp
+	src/parser/ParserPython.cpp
+	src/parser/ParserShader.cpp
+	src/parser/ParserText.cpp
 	src/AutoComplete.cpp
 	src/CodeCompiler.cpp
 	src/CommandDialog.cpp

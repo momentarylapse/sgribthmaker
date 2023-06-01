@@ -574,26 +574,26 @@
     <ClCompile Include="src\lib\pattern\Observable.cpp">
       <Filter>src\lib\pattern</Filter>
     </ClCompile>
-    <ClCompile Include="src\Parser\BaseParser.cpp">
-      <Filter>src\Parser</Filter>
+    <ClCompile Include="src\parser\BaseParser.cpp">
+      <Filter>src\parser</Filter>
     </ClCompile>
-    <ClCompile Include="src\Parser\ParserC.cpp">
-      <Filter>src\Parser</Filter>
+    <ClCompile Include="src\parser\ParserC.cpp">
+      <Filter>src\parser</Filter>
     </ClCompile>
-    <ClCompile Include="src\Parser\ParserHui.cpp">
-      <Filter>src\Parser</Filter>
+    <ClCompile Include="src\parser\ParserHui.cpp">
+      <Filter>src\parser</Filter>
     </ClCompile>
-    <ClCompile Include="src\Parser\ParserKaba.cpp">
-      <Filter>src\Parser</Filter>
+    <ClCompile Include="src\parser\ParserKaba.cpp">
+      <Filter>src\parser</Filter>
     </ClCompile>
-    <ClCompile Include="src\Parser\ParserPython.cpp">
-      <Filter>src\Parser</Filter>
+    <ClCompile Include="src\parser\ParserPython.cpp">
+      <Filter>src\parser</Filter>
     </ClCompile>
-    <ClCompile Include="src\Parser\ParserShader.cpp">
-      <Filter>src\Parser</Filter>
+    <ClCompile Include="src\parser\ParserShader.cpp">
+      <Filter>src\parser</Filter>
     </ClCompile>
-    <ClCompile Include="src\Parser\ParserText.cpp">
-      <Filter>src\Parser</Filter>
+    <ClCompile Include="src\parser\ParserText.cpp">
+      <Filter>src\parser</Filter>
     </ClCompile>
     <ClCompile Include="src\AutoComplete.cpp">
       <Filter>src</Filter>
@@ -1578,26 +1578,26 @@
     <ClInclude Include="src\lib\config.h">
       <Filter>src\lib</Filter>
     </ClInclude>
-    <ClInclude Include="src\Parser\BaseParser.h">
-      <Filter>src\Parser</Filter>
+    <ClInclude Include="src\parser\BaseParser.h">
+      <Filter>src\parser</Filter>
     </ClInclude>
-    <ClInclude Include="src\Parser\ParserC.h">
-      <Filter>src\Parser</Filter>
+    <ClInclude Include="src\parser\ParserC.h">
+      <Filter>src\parser</Filter>
     </ClInclude>
-    <ClInclude Include="src\Parser\ParserHui.h">
-      <Filter>src\Parser</Filter>
+    <ClInclude Include="src\parser\ParserHui.h">
+      <Filter>src\parser</Filter>
     </ClInclude>
-    <ClInclude Include="src\Parser\ParserKaba.h">
-      <Filter>src\Parser</Filter>
+    <ClInclude Include="src\parser\ParserKaba.h">
+      <Filter>src\parser</Filter>
     </ClInclude>
-    <ClInclude Include="src\Parser\ParserPython.h">
-      <Filter>src\Parser</Filter>
+    <ClInclude Include="src\parser\ParserPython.h">
+      <Filter>src\parser</Filter>
     </ClInclude>
-    <ClInclude Include="src\Parser\ParserShader.h">
-      <Filter>src\Parser</Filter>
+    <ClInclude Include="src\parser\ParserShader.h">
+      <Filter>src\parser</Filter>
     </ClInclude>
-    <ClInclude Include="src\Parser\ParserText.h">
-      <Filter>src\Parser</Filter>
+    <ClInclude Include="src\parser\ParserText.h">
+      <Filter>src\parser</Filter>
     </ClInclude>
     <ClInclude Include="src\AutoComplete.h">
       <Filter>src</Filter>
@@ -1700,8 +1700,8 @@
     <Filter Include="src\lib\pattern">
       <UniqueIdentifier>{17D8B691-D873-B504-9323-722AD85B2FA4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\Parser">
-      <UniqueIdentifier>{8585DDCA-1431-0235-4E4C-C29576E3CB05}</UniqueIdentifier>
+    <Filter Include="src\parser">
+      <UniqueIdentifier>{D75A0DDB-42AA-AF8C-DCDB-BCC09853BA59}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

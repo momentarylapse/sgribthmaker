@@ -1,7 +1,7 @@
 #include "SgribthMaker.h"
 #include "SgribthMakerWindow.h"
 #include "HighlightScheme.h"
-#include "Parser/BaseParser.h"
+#include "parser/BaseParser.h"
 #include "lib/kaba/kaba.h"
 
 
