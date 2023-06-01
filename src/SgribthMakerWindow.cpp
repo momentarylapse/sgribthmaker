@@ -108,9 +108,6 @@ SgribthMakerWindow::SgribthMakerWindow() :
 	//embed(console, "table_main", 0, 1);
 	//console->show(false);
 
-	InitParser();
-	HighlightScheme::default_scheme = HighlightScheme::get(hui::config.get_str("HighlightScheme", "default"));
-
 	show();
 
 	event_x("file_list", "hui:select", [this] { on_file_list(); });
@@ -295,7 +292,7 @@ void SgribthMakerWindow::on_close_document() {
 		}
 
 		int n = get_int("tab");
-		hui::run_later(0.001f, [=] {
+		hui::run_later(0.001f, [this, n] {
 			remove_string("tab", n);
 			delete source_views[n];
 			source_views.erase(n);
@@ -504,11 +501,11 @@ void SgribthMakerWindow::compile_shader() {
 	return;
 
 	// NOPE, not working
-	hui::run_later(0.01f, [=] {
+	hui::run_later(0.01f, [this] {
 
 	auto *w = new hui::NixWindow("nix", 640, 480);
 	//w->add_drawing_area("!opengl", 0, 0, "nix-area");
-	w->event_x("nix-area", "realize", [=] {
+	w->event_x("nix-area", "realize", [this] {
 		nix::init();
 	//	nix::init("OpenGL", w, "nix-area");
 

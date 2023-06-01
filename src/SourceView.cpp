@@ -71,22 +71,25 @@ void on_gtk_move_cursor(GtkTextView *text_view, GtkMovementStep step, gint count
 	//printf("move cursor  %d  %d  %d\n", count, (int)extend_selection, (int)step);
 }
 
-void on_gtk_copy_clipboard(GtkTextView *text_view, gpointer user_data)
-{	g_signal_stop_emission_by_name(text_view, "copy-clipboard");	}
+void on_gtk_copy_clipboard(GtkTextView *text_view, gpointer user_data) {
+	g_signal_stop_emission_by_name(text_view, "copy-clipboard");
+}
 
-void on_gtk_paste_clipboard(GtkTextView *text_view, gpointer user_data)
-{	g_signal_stop_emission_by_name(text_view, "paste-clipboard");	}
+void on_gtk_paste_clipboard(GtkTextView *text_view, gpointer user_data) {
+	g_signal_stop_emission_by_name(text_view, "paste-clipboard");
+}
 
-void on_gtk_cut_clipboard(GtkTextView *text_view, gpointer user_data)
-{	g_signal_stop_emission_by_name(text_view, "cut-clipboard");	}
+void on_gtk_cut_clipboard(GtkTextView *text_view, gpointer user_data) {
+	g_signal_stop_emission_by_name(text_view, "cut-clipboard");
+}
 
-void on_gtk_toggle_cursor_visible(GtkTextView *text_view, gpointer user_data)
-{	g_signal_stop_emission_by_name(text_view, "toggle-cursor-visible");	}
+void on_gtk_toggle_cursor_visible(GtkTextView *text_view, gpointer user_data) {
+	g_signal_stop_emission_by_name(text_view, "toggle-cursor-visible");
+}
 
 gboolean CallbackJumpLine(GtkWidget *widget, gpointer user_data) {
 	auto *j = (SourceView::JumpData*)user_data;
 	j->sv->show_line_on_screen(j->line);
-	//msg_write((int)(long)data);
 	return FALSE;
 }
 
@@ -283,17 +286,21 @@ bool SourceView::fill(const string &text) {
 	return ok;
 }
 
-bool SourceView::is_undoable()
-{	return history->undoable();	}
+bool SourceView::is_undoable() {
+	return history->undoable();
+}
 
-bool SourceView::is_redoable()
-{	return history->redoable();	}
+bool SourceView::is_redoable() {
+	return history->redoable();
+}
 
-void SourceView::undo()
-{	history->undo();	}
+void SourceView::undo() {
+	history->undo();
+}
 
-void SourceView::redo()
-{	history->redo();	}
+void SourceView::redo() {
+	history->redo();
+}
 
 void SourceView::set_parser(const Path &filename) {
 	parser = GetParser(filename);
@@ -421,8 +428,8 @@ void SourceView::mark_word(int line, int start, int end, int type, char *p0, cha
 	if (start == end)
 		return;
 	string temp;
-	if ((long)p - (long)p0 < 64)
-		temp = string(p0, (long)p - (long)p0);
+	if ((int_p)p - (int_p)p0 < 64)
+		temp = string(p0, (int_p)p - (int_p)p0);
 	if (start == 0)
 		word_namespace = "";
 
@@ -571,10 +578,7 @@ void SourceView::set_tag(int i, const char *fg_color, const char *bg_color, bool
 }
 
 string color_to_hex(const color &c) {
-	int r = int(255.0f * c.r);
-	int g = int(255.0f * c.g);
-	int b = int(255.0f * c.b);
-	return "#" + string((char*)&r, 1).hex() + string((char*)&g, 1).hex() + string((char*)&b, 1).hex();
+	return c.hex().sub(0, 7); // skip alpha
 }
 
 void color2gdkrgba(const color &c, GdkRGBA &g) {

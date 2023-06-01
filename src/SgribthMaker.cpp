@@ -33,10 +33,11 @@ SgribthMaker::SgribthMaker() :
 
 
 bool SgribthMaker::on_startup(const Array<string> &arg) {
-	win = new SgribthMakerWindow();
 
 	InitParser();
 	HighlightScheme::default_scheme = HighlightScheme::get(hui::config.get_str("HighlightScheme", "default"));
+
+	win = new SgribthMakerWindow();
 
 	if (arg.num > 1) {
 		for (int i=1; i<arg.num; i++)
