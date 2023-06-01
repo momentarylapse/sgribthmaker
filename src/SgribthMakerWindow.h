@@ -9,15 +9,18 @@
 #define SRC_SGRIBTHMAKERWINDOW_H_
 
 #include "lib/hui/hui.h"
+#include "lib/pattern/Observable.h"
 
 class Document;
 class SourceView;
 class Console;
 class Path;
 
-class SgribthMakerWindow : public hui::Window {
+class SgribthMakerWindow : public obs::Node<hui::Window> {
 public:
 	SgribthMakerWindow();
+
+	obs::Sink in_update;
 
 
 	void OnAbout();

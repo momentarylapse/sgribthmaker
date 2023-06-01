@@ -571,6 +571,9 @@
     <ClCompile Include="src\lib\os\time.cpp">
       <Filter>src\lib\os</Filter>
     </ClCompile>
+    <ClCompile Include="src\lib\pattern\Observable.cpp">
+      <Filter>src\lib\pattern</Filter>
+    </ClCompile>
     <ClCompile Include="src\Parser\BaseParser.cpp">
       <Filter>src\Parser</Filter>
     </ClCompile>
@@ -624,9 +627,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="_pattern\Observable.h">
-      <Filter>_pattern</Filter>
-    </ClInclude>
     <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\algebra\crypto.h">
       <Filter>appdir\files\lib\debug\source\sgribthmaker\src\lib\algebra</Filter>
     </ClInclude>
@@ -1569,6 +1569,9 @@
     <ClInclude Include="src\lib\os\time.h">
       <Filter>src\lib\os</Filter>
     </ClInclude>
+    <ClInclude Include="src\lib\pattern\Observable.h">
+      <Filter>src\lib\pattern</Filter>
+    </ClInclude>
     <ClInclude Include="src\lib\config.h">
       <Filter>src\lib</Filter>
     </ClInclude>
@@ -1622,6 +1625,9 @@
     </ClInclude>
     <ClInclude Include="src\SourceView.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="SgribthMakerWindow.h">
+      <Filter></Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1687,6 +1693,9 @@
     </Filter>
     <Filter Include="src\lib\os">
       <UniqueIdentifier>{71C98AAD-A0D7-45A4-DD42-1D9B63491998}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\lib\pattern">
+      <UniqueIdentifier>{17D8B691-D873-B504-9323-722AD85B2FA4}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\Parser">
       <UniqueIdentifier>{8585DDCA-1431-0235-4E4C-C29576E3CB05}</UniqueIdentifier>

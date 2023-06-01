@@ -7,8 +7,6 @@
 
 #include "History.h"
 #include "SourceView.h"
-#include "Document.h"
-#include "SgribthMakerWindow.h"
 #include "lib/hui/hui.h"
 
 
@@ -31,7 +29,7 @@ void History::reset() {
 	saved_pos = 0;
 	changed = false;
 	enabled = true;
-	sv->doc->win->UpdateMenu();
+	out_changed.notify();
 }
 
 bool History::undoable() {
@@ -51,7 +49,7 @@ void History::undo() {
 	u->undo(sv);
 	enabled = true;
 	changed = (pos != saved_pos);
-	sv->doc->win->UpdateMenu();
+	out_changed.notify();
 }
 
 void History::redo() {
@@ -63,7 +61,7 @@ void History::redo() {
 	pos ++;
 	enabled = true;
 	changed = (pos != saved_pos);
-	sv->doc->win->UpdateMenu();
+	out_changed.notify();
 }
 
 
@@ -81,13 +79,13 @@ void History::execute(History::Command *c) {
 	stack.add(c);
 	pos ++;
 	changed = true;
-	sv->doc->win->UpdateMenu();
+	out_changed.notify();
 }
 
 void History::define_as_saved() {
 	saved_pos = pos;
 	changed = false;
-	sv->doc->win->UpdateMenu();
+	out_changed.notify();
 }
 
 CommandInsert::CommandInsert(char *_text, int _length, int _pos) {

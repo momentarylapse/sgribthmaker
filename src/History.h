@@ -10,10 +10,11 @@
 
 #include "lib/base/base.h"
 #include "lib/base/pointer.h"
+#include "lib/pattern/Observable.h"
 
 class SourceView;
 
-class History {
+class History : public obs::Node<VirtualBase> {
 public:
 	History(SourceView *sv);
 	virtual ~History();

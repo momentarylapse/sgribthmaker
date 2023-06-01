@@ -24,7 +24,8 @@ namespace nix {
 }
 
 SgribthMakerWindow::SgribthMakerWindow() :
-	hui::Window("", 800, 600)
+	obs::Node<hui::Window>("", 800, 600),
+	in_update(this, [this] { UpdateMenu(); })
 {
 	console = nullptr;
 	int width = hui::config.get_int("Window.Width", 800);

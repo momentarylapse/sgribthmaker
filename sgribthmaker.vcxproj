@@ -306,6 +306,7 @@
     <ClCompile Include="src\lib\os\stream.cpp" />
     <ClCompile Include="src\lib\os\terminal.cpp" />
     <ClCompile Include="src\lib\os\time.cpp" />
+    <ClCompile Include="src\lib\pattern\Observable.cpp" />
     <ClCompile Include="src\Parser\BaseParser.cpp" />
     <ClCompile Include="src\Parser\ParserC.cpp" />
     <ClCompile Include="src\Parser\ParserHui.cpp" />
@@ -325,7 +326,6 @@
     <ClCompile Include="src\SourceView.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="_pattern\Observable.h" />
     <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\algebra\crypto.h" />
     <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\algebra\vli.h" />
     <ClInclude Include="appdir\files\lib\debug\source\sgribthmaker\src\lib\any\any.h" />
@@ -640,6 +640,7 @@
     <ClInclude Include="src\lib\os\stream.h" />
     <ClInclude Include="src\lib\os\terminal.h" />
     <ClInclude Include="src\lib\os\time.h" />
+    <ClInclude Include="src\lib\pattern\Observable.h" />
     <ClInclude Include="src\lib\config.h" />
     <ClInclude Include="src\Parser\BaseParser.h" />
     <ClInclude Include="src\Parser\ParserC.h" />
@@ -658,6 +659,7 @@
     <ClInclude Include="src\SgribthMaker.h" />
     <ClInclude Include="src\SgribthMakerWindow.h" />
     <ClInclude Include="src\SourceView.h" />
+    <ClInclude Include="SgribthMakerWindow.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
