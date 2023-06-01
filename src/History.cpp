@@ -6,16 +6,17 @@
  */
 
 #include "History.h"
+#include "Document.h"
 #include "SourceView.h"
 #include "lib/hui/hui.h"
 
 
-History::History(SourceView *_sv) {
+History::History(Document* _doc) {
 	pos = 0;
 	saved_pos = 0;
 	changed = false;
 	enabled = true;
-	sv = _sv;
+	doc = _doc;
 }
 
 History::~History() {
@@ -46,7 +47,7 @@ void History::undo() {
 	enabled = false;
 	pos --;
 	Command *u = stack[pos];
-	u->undo(sv);
+	u->undo(doc);
 	enabled = true;
 	changed = (pos != saved_pos);
 	out_changed.notify();
@@ -57,7 +58,7 @@ void History::redo() {
 		return;
 	enabled = false;
 	Command *u = stack[pos];
-	u->execute(sv);
+	u->execute(doc);
 	pos ++;
 	enabled = true;
 	changed = (pos != saved_pos);
@@ -98,12 +99,12 @@ CommandInsert::~CommandInsert() {
 	g_free(text);
 }
 
-void CommandInsert::execute(SourceView *sv) {
-	sv->undo_insert_text(pos, text, length);
+void CommandInsert::execute(Document* doc) {
+	doc->source_view->undo_insert_text(pos, text, length);
 }
 
-void CommandInsert::undo(SourceView *sv) {
-	sv->undo_remove_text(pos, text, length);
+void CommandInsert::undo(Document* doc) {
+	doc->source_view->undo_remove_text(pos, text, length);
 }
 
 CommandDelete::CommandDelete(char *_text, int _length, int _pos) {
@@ -116,11 +117,11 @@ CommandDelete::~CommandDelete() {
 	g_free(text);
 }
 
-void CommandDelete::execute(SourceView *sv) {
-	sv->undo_remove_text(pos, text, length);
+void CommandDelete::execute(Document* doc) {
+	doc->source_view->undo_remove_text(pos, text, length);
 }
 
-void CommandDelete::undo(SourceView *sv) {
-	sv->undo_insert_text(pos, text, length);
+void CommandDelete::undo(Document* doc) {
+	doc->source_view->undo_insert_text(pos, text, length);
 }
 

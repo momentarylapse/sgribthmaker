@@ -75,7 +75,6 @@ public:
 
 	GtkTextTag *tag[NUM_TAG_TYPES];
 
-	//void SwitchToDocument(Document *d);
 	Document *doc;
 	History *history;
 

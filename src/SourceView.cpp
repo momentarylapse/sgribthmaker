@@ -212,9 +212,8 @@ SourceView::SourceView(hui::Window *win, const string &_id, Document *d) {
 
 	//gtk_text_view_set_accepts_tab(GTK_TEXT_VIEW(tv), false);
 
-	history = new History(this);
-	d->history = history;
 	d->source_view = this;
+	history = d->history;
 
 
 	history->out_changed >> doc->win->in_update;
@@ -229,7 +228,6 @@ SourceView::SourceView(hui::Window *win, const string &_id, Document *d) {
 }
 
 SourceView::~SourceView() {
-	delete history;
 }
 
 

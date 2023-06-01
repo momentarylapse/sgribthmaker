@@ -13,10 +13,11 @@
 #include "lib/pattern/Observable.h"
 
 class SourceView;
+class Document;
 
 class History : public obs::Node<VirtualBase> {
 public:
-	History(SourceView *sv);
+	History(Document* doc);
 	virtual ~History();
 
 	void reset();
@@ -35,18 +36,18 @@ public:
 
 	int pos;
 	int saved_pos;
+	Document* doc;
 
 	class Command {
 	public:
 		virtual ~Command() {}
-		virtual void execute(SourceView *sv) = 0;
-		virtual void undo(SourceView *sv) = 0;
+		virtual void execute(Document* doc) = 0;
+		virtual void undo(Document* doc) = 0;
 	};
 	owned_array<Command> stack;
 
 
 	void execute(Command *c);
-	SourceView *sv;
 };
 
 class CommandInsert : public History::Command {
@@ -55,8 +56,8 @@ class CommandInsert : public History::Command {
 public:
 	CommandInsert(char *text, int length, int pos);
 	virtual ~CommandInsert();
-	virtual void execute(SourceView *sv);
-	virtual void undo(SourceView *sv);
+	virtual void execute(Document* doc);
+	virtual void undo(Document* doc);
 };
 
 class CommandDelete : public History::Command {
@@ -65,8 +66,8 @@ class CommandDelete : public History::Command {
 public:
 	CommandDelete(char *text, int length, int pos);
 	virtual ~CommandDelete();
-	virtual void execute(SourceView *sv);
-	virtual void undo(SourceView *sv);
+	virtual void execute(Document* doc);
+	virtual void undo(Document* doc);
 };
 
 #endif /* HISTORY_H_ */

@@ -14,16 +14,15 @@
 
 Document::Document(SgribthMakerWindow *_win) {
 	win = _win;
-	parser = NULL;
-	source_view = NULL;
-	history = NULL;
-	//history = new History;
-	scheme = NULL;
+	parser = nullptr;
+	source_view = nullptr;
+	scheme = nullptr;
 	buffer_dirty = false;
+	history = new History(this);
 }
 
 Document::~Document() {
-	//delete(history);
+	delete history;
 }
 
 string simplify_path(const Path &filename) {
