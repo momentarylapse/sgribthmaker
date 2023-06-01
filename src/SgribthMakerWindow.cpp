@@ -156,33 +156,33 @@ void SgribthMakerWindow::set_info(const string &str) {
 }
 
 void SgribthMakerWindow::set_window_title() {
-	if (!cur_doc)
+	if (!cur_view)
 		return;
-	set_title(cur_doc->name(true) + " - " + AppTitle);
+	set_title(cur_doc()->name(true) + " - " + AppTitle);
 }
 
 void SgribthMakerWindow::update_doc_list() {
 	reset("file_list");
-	foreachi(Document *d, documents, i) {
-		add_string("file_list", d->name(false));
-		if (cur_doc == d)
+	foreachi(SourceView *v, source_views, i) {
+		add_string("file_list", v->doc->name(false));
+		if (cur_view == v)
 			set_int("file_list", i);
 	}
 }
 
 void SgribthMakerWindow::update_menu() {
-	enable("undo", cur_doc->history->undoable());
-	enable("redo", cur_doc->history->redoable());
-	//enable("save", cur_doc->history->changed);
+	enable("undo", cur_doc()->history->undoable());
+	enable("redo", cur_doc()->history->redoable());
+	//enable("save", cur_doc()->history->changed);
 	update_doc_list();
 	set_window_title();
 }
 
 void SgribthMakerWindow::update_function_list() {
 	reset("function_list");
-	if (!cur_doc->parser)
+	if (!cur_doc()->parser)
 		return;
-	auto labels = cur_doc->parser->FindLabels(cur_doc->source_view);
+	auto labels = cur_doc()->parser->FindLabels(cur_view);
 	int last_parent = -1;
 	foreachi(Parser::Label &l, labels, i) {
 		if (l.level > 0) {
@@ -194,27 +194,27 @@ void SgribthMakerWindow::update_function_list() {
 	}
 }
 
-void SgribthMakerWindow::set_active_document(Document *d) {
-	foreachi(Document *dd, documents, i)
-		if (dd == d) {
+void SgribthMakerWindow::set_active_view(SourceView *view) {
+	foreachi(SourceView *vv, source_views, i)
+		if (vv == view) {
 			set_int("tab", i);
-			activate(dd->source_view->id);
+			activate(view->id);
 			break;
 		}
-	cur_doc = d;
+	cur_view = view;
 	update_menu();
 	update_function_list();
 }
 
 void SgribthMakerWindow::allow_termination(const hui::Callback &on_success, const hui::Callback &on_fail) {
 	Array<Document*> unsaved;
-	for (auto d: documents)
-		if (d->history->changed)
-			unsaved.add(d);
+	for (auto v: source_views)
+		if (v->history->changed)
+			unsaved.add(v->doc);
 	if (unsaved.num == 0) {
 		on_success();
 	} else if (unsaved.num == 1) {
-		set_active_document(unsaved[0]);
+		set_active_view(unsaved[0]->source_view);
 		hui::question_box(this, _("respectful question"), _("You increased entropy. Do you wish to save your work?"), [this,unsaved,on_success,on_fail] (const string &answer) {
 			if (answer == "hui:cancel")
 				on_fail();
@@ -237,7 +237,7 @@ void SgribthMakerWindow::allow_termination(const hui::Callback &on_success, cons
 
 void SgribthMakerWindow::allow_doc_termination(Document *d, const hui::Callback &on_success, const hui::Callback &on_fail) {
 	if (d->history->changed) {
-		set_active_document(d);
+		set_active_view(d->source_view);
 		hui::question_box(this, _("respectful question"), _("You increased entropy. Do you wish to save your work?"), [this,d,on_success,on_fail] (const string &answer) {
 			if (answer == "hui:cancel")
 				on_fail();
@@ -251,16 +251,16 @@ void SgribthMakerWindow::allow_doc_termination(Document *d, const hui::Callback 
 	}
 }
 
-Document* SgribthMakerWindow::create_new_document() {
-	if (documents.num > 0)
+SourceView* SgribthMakerWindow::create_new_document() {
+	if (source_views.num > 0)
 		hide_control("table_side", false);
 
 	string id = format("edit-%06d", randi(1000000));
 
 	set_border_width(0);
-	add_string("tab", i2s(documents.num));
+	add_string("tab", i2s(source_views.num));
 	set_target("tab");
-	add_grid("", documents.num, 0, id + "-grid");
+	add_grid("", source_views.num, 0, id + "-grid");
 	set_target(id + "-grid");
 	if (hui::config.get_bool("ShowLineNumbers", false)) {
 		add_multiline_edit("!noframe,disabled,width=70,noexpandx", 0, 0, id + "-lines");
@@ -269,20 +269,25 @@ Document* SgribthMakerWindow::create_new_document() {
 	add_multiline_edit("!handlekeys,noframe", 1, 0, id);
 
 	auto doc = new Document(this);
-	documents.add(doc);
-	SourceView *sv = new SourceView(this, id, doc);
+	SourceView *view = new SourceView(this, id, doc);
 
-	sv->apply_scheme(HighlightScheme::default_scheme);
-	source_view.add(sv);
+	view->history->out_changed >> in_update;
 
-	set_active_document(doc);
+	view->apply_scheme(HighlightScheme::default_scheme);
+	source_views.add(view);
+
+	set_active_view(view);
 	update_menu();
-	return doc;
+	return view;
+}
+
+Document* SgribthMakerWindow::cur_doc() const {
+	return cur_view->doc;
 }
 
 void SgribthMakerWindow::on_close_document() {
-	allow_doc_termination(cur_doc, [this] {
-		if (documents.num <= 1) {
+	allow_doc_termination(cur_doc(), [this] {
+		if (source_views.num <= 1) {
 			on_exit();
 			return;
 		}
@@ -290,20 +295,18 @@ void SgribthMakerWindow::on_close_document() {
 		int n = get_int("tab");
 		hui::run_later(0.001f, [=] {
 			remove_string("tab", n);
-			delete documents[n];
-			documents.erase(n);
-			delete source_view[n];
-			source_view.erase(n);
+			delete source_views[n];
+			source_views.erase(n);
 
-			set_active_document(documents.back());
+			set_active_view(source_views.back());
 			update_menu();
 		});
 	}, [] {});
 }
 
 bool SgribthMakerWindow::load_from_file(const Path &filename) {
-	auto doc = create_new_document();
-	return doc->load(filename);
+	auto view = create_new_document();
+	return view->doc->load(filename);
 }
 
 bool SgribthMakerWindow::write_to_file(Document *doc, const Path &filename) {
@@ -320,7 +323,7 @@ Path working_dir_from_doc(Document *d) {
 }
 
 void SgribthMakerWindow::open() {
-	hui::file_dialog_open(this, _("Open file"), working_dir_from_doc(cur_doc), {"showfilter="+_("All (*.*)"), "filter=*"}, [this] (const Path &filename) {
+	hui::file_dialog_open(this, _("Open file"), working_dir_from_doc(cur_doc()), {"showfilter="+_("All (*.*)"), "filter=*"}, [this] (const Path &filename) {
 		if (filename)
 			load_from_file(filename);
 	});
@@ -353,51 +356,51 @@ void SgribthMakerWindow::on_open() {
 }
 
 void SgribthMakerWindow::on_save() {
-	save(cur_doc, []{}, []{});
+	save(cur_doc(), []{}, []{});
 }
 
 void SgribthMakerWindow::on_save_as() {
-	save_as(cur_doc, []{}, []{});
+	save_as(cur_doc(), []{}, []{});
 }
 
 void SgribthMakerWindow::reload(Document *doc) {
 	allow_doc_termination(doc, [this, doc] {
 		if (!doc->filename.is_empty()) {
-			if (doc->load(cur_doc->filename))
+			if (doc->load(doc->filename))
 				set_message(_("reloaded"));
 		}
 	}, []{});
 }
 
 void SgribthMakerWindow::on_reload() {
-	reload(cur_doc);
+	reload(cur_doc());
 }
 
 void SgribthMakerWindow::on_undo() {
-	cur_doc->history->undo();
+	cur_doc()->history->undo();
 }
 
 void SgribthMakerWindow::on_redo()
-{	cur_doc->history->redo();	}
+{	cur_doc()->history->redo();	}
 
 void SgribthMakerWindow::on_copy() {
-	hui::clipboard::copy(cur_doc->source_view->get_selection_content());
+	hui::clipboard::copy(cur_view->get_selection_content());
 	set_message(_("copied"));
 }
 
 void SgribthMakerWindow::on_paste() {
 	msg_write("SM.on paste");
-	cur_doc->source_view->delete_selection();
+	cur_view->delete_selection();
 	msg_write("x");
 	auto p = hui::clipboard::paste();
 	msg_write("y " + i2s(p.num));
-	cur_doc->source_view->insert_at_cursor(p);//hui::clipboard::paste());
+	cur_view->insert_at_cursor(p);//hui::clipboard::paste());
 	msg_write("/SM.on paste");
 	set_message(_("pasted"));
 }
 
 void SgribthMakerWindow::prepend_selected_lines(const string &s) {
-	auto sv = cur_doc->source_view;
+	auto sv = cur_view;
 	int pos0, pos1;
 	sv->get_selection(pos0, pos1);
 	int l0 = sv->get_line_no_at(pos0);
@@ -408,7 +411,7 @@ void SgribthMakerWindow::prepend_selected_lines(const string &s) {
 }
 
 void SgribthMakerWindow::unprepend_selected_lines(const string &s) {
-	auto sv = cur_doc->source_view;
+	auto sv = cur_view;
 	int pos0, pos1;
 	sv->get_selection(pos0, pos1);
 	int l0 = sv->get_line_no_at(pos0);
@@ -422,15 +425,15 @@ void SgribthMakerWindow::unprepend_selected_lines(const string &s) {
 }
 
 void SgribthMakerWindow::on_comment() {
-	prepend_selected_lines(cur_doc->parser->line_comment_begin);
+	prepend_selected_lines(cur_doc()->parser->line_comment_begin);
 }
 
 void SgribthMakerWindow::on_uncomment() {
-	unprepend_selected_lines(cur_doc->parser->line_comment_begin);
+	unprepend_selected_lines(cur_doc()->parser->line_comment_begin);
 }
 
 void SgribthMakerWindow::on_indent() {
-	auto sv = cur_doc->source_view;
+	auto sv = cur_view;
 	if (sv->has_selection())
 		prepend_selected_lines("\t");
 	else
@@ -442,7 +445,7 @@ void SgribthMakerWindow::on_unindent() {
 }
 
 void SgribthMakerWindow::on_delete() {
-	cur_doc->source_view->delete_selection();
+	cur_view->delete_selection();
 }
 
 void SgribthMakerWindow::on_cut() {
@@ -470,7 +473,7 @@ void SgribthMakerWindow::compile_kaba() {
 	auto context = ownify(kaba::Context::create());
 
 	try {
-		auto module = context->load_module(cur_doc->filename, true);
+		auto module = context->load_module(cur_doc()->filename, true);
 
 		float dt = timer.get();
 
@@ -482,7 +485,7 @@ void SgribthMakerWindow::compile_kaba() {
 		e.print();
 		//ErrorBox(MainWin, _("Error"), e.message());
 		set_error(e.message());
-		cur_doc->source_view->move_cursor_to(e.line, e.column);
+		cur_view->move_cursor_to(e.line, e.column);
 	}
 
 	//msg_set_verbose(ALLOW_LOGGING);
@@ -500,7 +503,7 @@ void SgribthMakerWindow::compile_shader() {
 		nix::init();
 	//	nix::init("OpenGL", w, "nix-area");
 
-		auto *shader = nix::Shader::load(cur_doc->filename);
+		auto *shader = nix::Shader::load(cur_doc()->filename);
 		if (!shader) {
 			set_error(nix::shader_error);
 		} else {
@@ -518,8 +521,8 @@ void SgribthMakerWindow::compile_shader() {
 }
 
 void SgribthMakerWindow::compile() {
-	save(cur_doc, [this] {
-		string ext = cur_doc->filename.extension();
+	save(cur_doc(), [this] {
+		string ext = cur_doc()->filename.extension();
 		if (ext == "kaba")
 			compile_kaba();
 		else if (ext == "shader")
@@ -530,14 +533,14 @@ void SgribthMakerWindow::compile() {
 }
 
 void SgribthMakerWindow::compile_and_run(bool verbose) {
-	if (cur_doc->filename.extension() != "kaba") {
+	if (cur_doc()->filename.extension() != "kaba") {
 		set_error(_("only *.kaba files can be executed!"));
 		return;
 	}
 
-	save(cur_doc, [this,verbose] {
+	save(cur_doc(), [this,verbose] {
 
-		os::fs::set_current_directory(cur_doc->filename.parent());
+		os::fs::set_current_directory(cur_doc()->filename.parent());
 		//if (verbose)
 		//	msg_set_verbose(true);
 
@@ -549,7 +552,7 @@ void SgribthMakerWindow::compile_and_run(bool verbose) {
 		auto context = ownify(kaba::Context::create());
 
 		try {
-			auto module = context->load_module(cur_doc->filename);
+			auto module = context->load_module(cur_doc()->filename);
 			float dt_compile = timer.get();
 
 			if (!verbose)
@@ -590,7 +593,7 @@ void SgribthMakerWindow::compile_and_run(bool verbose) {
 
 			set_error(e.message());
 			//ErrorBox(MainWin, _("Error"), e.message());
-			cur_doc->source_view->move_cursor_to(e.line, e.column);
+			cur_view->move_cursor_to(e.line, e.column);
 		}
 
 		//msg_set_verbose(ALLOW_LOGGING);
@@ -610,24 +613,24 @@ static AutoComplete::Data _auto_complete_data_;
 
 void SgribthMakerWindow::on_insert_auto_complete(int n) {
 	if ((n >= 0) and (n < _auto_complete_data_.suggestions.num))
-		cur_doc->source_view->insert_at_cursor(_auto_complete_data_.suggestions[n].name.sub(_auto_complete_data_.offset));
+		cur_view->insert_at_cursor(_auto_complete_data_.suggestions[n].name.sub(_auto_complete_data_.offset));
 }
 
 void SgribthMakerWindow::on_auto_complete() {
-	if (cur_doc->filename.extension() != "kaba") {
+	if (cur_doc()->filename.extension() != "kaba") {
 		set_error(_("auto-completion only available for *.kaba files!"));
 		return;
 	}
 
-	os::fs::set_current_directory(cur_doc->filename.parent());
+	os::fs::set_current_directory(cur_doc()->filename.parent());
 
 	int line, pos;
-	cur_doc->source_view->get_cur_line_pos(line, pos);
-	auto data = AutoComplete::run(cur_doc->source_view->get_all(), cur_doc->filename, line, pos);
+	cur_view->get_cur_line_pos(line, pos);
+	auto data = AutoComplete::run(cur_view->get_all(), cur_doc()->filename, line, pos);
 	_auto_complete_data_ = data;
 
 	if (data.suggestions.num == 1) {
-		cur_doc->source_view->insert_at_cursor(data.suggestions[0].name.sub(data.offset));
+		cur_view->insert_at_cursor(data.suggestions[0].name.sub(data.offset));
 		set_message(data.suggestions[0].context);
 
 	} else if (data.suggestions.num > 1) {
@@ -643,12 +646,12 @@ void SgribthMakerWindow::on_auto_complete() {
 
 void SgribthMakerWindow::show_cur_line() {
 	int line, off;
-	cur_doc->source_view->get_cur_line_pos(line, off);
+	cur_view->get_cur_line_pos(line, off);
 	set_message(format(_("Line  %d : %d"), line + 1, off + 1));
 }
 
 void SgribthMakerWindow::execute_command(const string &cmd) {
-	bool found = cur_doc->source_view->find(cmd);
+	bool found = cur_view->find(cmd);
 	if (!found)
 		set_error(format(_("\"%s\" not found"), cmd.c_str()));
 }
@@ -665,37 +668,37 @@ void SgribthMakerWindow::execute_settings_dialog() {
 
 void SgribthMakerWindow::on_function_list() {
 	int n = get_int("");
-	auto labels = cur_doc->parser->FindLabels(cur_doc->source_view);
+	auto labels = cur_doc()->parser->FindLabels(cur_view);
 	if ((n >= 0) and (n < labels.num)) {
-		cur_doc->source_view->show_line_on_screen(labels[n].line);
-		activate(cur_doc->source_view->id);
+		cur_view->show_line_on_screen(labels[n].line);
+		activate(cur_view->id);
 	}
 }
 
 void SgribthMakerWindow::on_file_list() {
 	int s = get_int("");
 	if (s >= 0)
-		set_active_document(documents[s]);
+		set_active_view(source_views[s]);
 }
 
 void SgribthMakerWindow::on_next_document() {
-	foreachi(Document *d, documents, i)
-		if (d == cur_doc) {
-			if (i < documents.num - 1)
-				set_active_document(documents[i + 1]);
+	foreachi(auto v, source_views, i)
+		if (v == cur_view) {
+			if (i < source_views.num - 1)
+				set_active_view(source_views[i + 1]);
 			else
-				set_active_document(documents[0]);
+				set_active_view(source_views[0]);
 			break;
 		}
 }
 
 void SgribthMakerWindow::on_previous_document() {
-	foreachi(Document *d, documents, i)
-		if (d == cur_doc) {
+	foreachi(auto v, source_views, i)
+		if (v == cur_view) {
 			if (i > 0)
-				set_active_document(documents[i - 1]);
+				set_active_view(source_views[i - 1]);
 			else
-				set_active_document(documents.back());
+				set_active_view(source_views.back());
 			break;
 		}
 }

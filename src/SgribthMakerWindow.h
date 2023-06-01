@@ -34,7 +34,7 @@ public:
 	void update_doc_list();
 	void update_menu();
 	void update_function_list();
-	void set_active_document(Document *d);
+	void set_active_view(SourceView *view);
 	void allow_termination(const hui::Callback &on_success = nullptr, const hui::Callback &on_fail = nullptr);
 	void allow_doc_termination(Document *d, const hui::Callback &on_success = nullptr, const hui::Callback &on_fail = nullptr);
 	void on_close_document();
@@ -42,7 +42,7 @@ public:
 	bool write_to_file(Document *doc, const Path &filename);
 	void open();
 
-	Document* create_new_document();
+	SourceView* create_new_document();
 
 	void save_as(Document *doc, const hui::Callback &on_success = nullptr, const hui::Callback &on_fail = nullptr);
 	void save(Document *doc, const hui::Callback &on_success = nullptr, const hui::Callback &on_fail = nullptr);
@@ -81,11 +81,11 @@ public:
 	void on_previous_document();
 
 
-	Array<SourceView*> source_view;
+	Array<SourceView*> source_views;
 	Console *console;
 
-	Array<Document*> documents;
-	Document *cur_doc = nullptr;
+	SourceView *cur_view = nullptr;
+	Document *cur_doc() const;
 
 	int status_count = -1;
 };

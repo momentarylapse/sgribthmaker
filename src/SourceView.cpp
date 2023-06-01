@@ -215,9 +215,6 @@ SourceView::SourceView(hui::Window *win, const string &_id, Document *d) {
 	d->source_view = this;
 	history = d->history;
 
-
-	history->out_changed >> doc->win->in_update;
-
 	update_font();
 	//g_object_set(tv, "wrap-mode", GTK_WRAP_WORD_CHAR, NULL);
 

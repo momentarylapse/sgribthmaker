@@ -80,7 +80,7 @@ void SettingsDialog::onFont() {
 		if (font.num > 0) {
 			set_string("font", font);
 			hui::config.set_str("Font", font);
-			for (SourceView *sv: main_win->source_view)
+			for (SourceView *sv: main_win->source_views)
 				sv->update_font();
 		}
 	});
@@ -88,7 +88,7 @@ void SettingsDialog::onFont() {
 
 void SettingsDialog::onTabWidth() {
 	hui::config.set_int("TabWidth", get_int("tab_width"));
-	for (SourceView *sv: main_win->source_view)
+	for (SourceView *sv: main_win->source_views)
 		sv->update_tab_size();
 }
 
@@ -123,7 +123,7 @@ void SettingsDialog::onSchemeChange() {
 	c.bold = is_checked("bold");
 	c.italic = is_checked("italic");
 	s->changed = true;
-	for (SourceView *sv: main_win->source_view)
+	for (SourceView *sv: main_win->source_views)
 		sv->apply_scheme(s);
 	fillSchemeList();
 }
@@ -132,14 +132,14 @@ void SettingsDialog::onSchemes() {
 	int n = get_int("");
 	HighlightScheme *s = HighlightScheme::get_all()[n];
 	HighlightScheme::default_scheme = s;
-	for (SourceView *sv: main_win->source_view)
+	for (SourceView *sv: main_win->source_views)
 		sv->apply_scheme(s);
 	onContextListSelect();
 }
 
 void SettingsDialog::onCopyScheme() {
 	HighlightScheme *s = HighlightScheme::default_scheme->copy(_("new scheme"));
-	for (SourceView *sv: main_win->source_view)
+	for (SourceView *sv: main_win->source_views)
 		sv->apply_scheme(s);
 	fillSchemeList();
 	onContextListSelect();
