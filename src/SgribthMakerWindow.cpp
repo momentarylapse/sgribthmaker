@@ -125,11 +125,15 @@ void SgribthMakerWindow::set_message(const string &str) {
 		set_info(str);
 }
 
+string pango_escape(const string& s) {
+	return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+}
+
 void SgribthMakerWindow::set_error(const string &str) {
 	//hui::error_box(MainWin, "error", str);
 	//set_info_text(str, {"error", "allow-close"});
 	//set_string("info", "!bold\\\u26A0 " + str);
-	set_string("error", "!bold\\Error: " + str.replace("<", "&lt;").replace(">", "&gt;"));
+	set_string("error", "!bold\\Error: " + pango_escape(str));
 	hide_control("grid-info", false);
 	hide_control("info", true);
 	hide_control("error", false);
@@ -137,7 +141,7 @@ void SgribthMakerWindow::set_error(const string &str) {
 }
 
 void SgribthMakerWindow::set_info(const string &str) {
-	set_string("info", "!bold\\" + str.replace("<", "&lt;").replace(">", "&gt;"));
+	set_string("info", "!bold\\" + pango_escape(str));
 	hide_control("grid-info", false);
 	hide_control("info", false);
 	hide_control("error", true);
