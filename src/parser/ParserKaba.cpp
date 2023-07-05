@@ -46,6 +46,7 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 	keywords.add(kaba::Identifier::STRUCT);
 	keywords.add(kaba::Identifier::INTERFACE);
 	keywords.add(kaba::Identifier::FUNC);
+	keywords.add(kaba::Identifier::MACRO);
 	keywords.add(kaba::Identifier::EXTENDS);
 	keywords.add(kaba::Identifier::USE);
 	keywords.add(kaba::Identifier::ASM);
