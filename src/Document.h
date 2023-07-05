@@ -24,7 +24,7 @@ public:
 	Document(SgribthMakerWindow *win);
 	virtual ~Document();
 
-	obs::Source out_not_utf8{this, "not-utf8"};
+	obs::source out_not_utf8{this, "not-utf8"};
 
 	string name(bool long_name) const;
 	bool load(const Path &filename);

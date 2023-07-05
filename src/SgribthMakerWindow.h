@@ -20,7 +20,7 @@ class SgribthMakerWindow : public obs::Node<hui::Window> {
 public:
 	SgribthMakerWindow();
 
-	obs::Sink in_update;
+	obs::sink in_update;
 
 
 	void on_about();
