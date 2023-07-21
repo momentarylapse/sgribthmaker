@@ -88,6 +88,7 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 	keywords.add(kaba::Identifier::VAR);
 	keywords.add(kaba::Identifier::LAMBDA);
 	keywords.add(kaba::Identifier::RAW_FUNCTION_POINTER);
+	keywords.add(kaba::Identifier::TRUST_ME);
 	compiler_functions.add(kaba::Identifier::DYN);
 	compiler_functions.add(kaba::Identifier::WEAK);
 	compiler_functions.add(kaba::Identifier::GIVE);
