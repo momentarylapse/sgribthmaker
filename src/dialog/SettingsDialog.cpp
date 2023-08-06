@@ -76,13 +76,11 @@ void SettingsDialog::fillSchemeList() {
 }
 
 void SettingsDialog::onFont() {
-	hui::select_font(this, _("Select font"), {}, [this] (const string &font) {
-		if (font.num > 0) {
-			set_string("font", font);
-			hui::config.set_str("Font", font);
-			for (SourceView *sv: main_win->source_views)
-				sv->update_font();
-		}
+	hui::select_font(this, _("Select font"), {}).on([this] (const string &font) {
+		set_string("font", font);
+		hui::config.set_str("Font", font);
+		for (SourceView *sv: main_win->source_views)
+			sv->update_font();
 	});
 }
 
