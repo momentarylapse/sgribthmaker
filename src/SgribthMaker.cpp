@@ -32,7 +32,7 @@ SgribthMaker::SgribthMaker() :
 }
 
 
-bool SgribthMaker::on_startup(const Array<string> &arg) {
+hui::AppStatus SgribthMaker::on_startup(const Array<string> &arg) {
 
 	InitParser();
 	HighlightScheme::default_scheme = HighlightScheme::get(hui::config.get_str("HighlightScheme", "default"));
@@ -45,7 +45,7 @@ bool SgribthMaker::on_startup(const Array<string> &arg) {
 	} else {
 		win->create_new_document();
 	}
-	return true;
+	return hui::AppStatus::RUN;
 }
 
 HUI_EXECUTE(SgribthMaker)

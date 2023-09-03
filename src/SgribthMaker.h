@@ -17,7 +17,7 @@ class SgribthMakerWindow;
 class SgribthMaker : public hui::Application {
 public:
 	SgribthMaker();
-	bool on_startup(const Array<string> &arg) override;
+	hui::AppStatus on_startup(const Array<string> &arg) override;
 
 	SgribthMakerWindow* win;
 };
