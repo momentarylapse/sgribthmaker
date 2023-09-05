@@ -1,4 +1,4 @@
-Window main-window "" borderwidth=0 spacing=0
+Window main-window "" borderwidth=0 spacing=0 layout=menubar|toolbar|toolbar-left
 	Grid table_main "" vertical
 		Grid grid-info "" hidden
 			Label info "" style=card style=title-4 expandx

@@ -32,7 +32,7 @@ SgribthMakerWindow::SgribthMakerWindow() :
 
 	from_resource("main-window");
 	set_menu(hui::create_resource_menu("menu", this));
-	toolbar[0]->set_by_id("toolbar");
+	get_toolbar(0)->set_by_id("toolbar");
 
 
 	event("about", [this] { on_about(); });

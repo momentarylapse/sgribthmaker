@@ -96,7 +96,7 @@ image=hui:close
 # Resource
 Window
 main-window
-borderwidth=0,spacing=0
+borderwidth=0,spacing=0,layout=menubar|toolbar|toolbar-left
 0
 0
 1
