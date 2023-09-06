@@ -366,36 +366,13 @@ public:
 		Control(CONTROL_BASIC_WINDOW_LAYOUT, id)
 	{
 		panel = _panel;
-		msg_write(p2s(panel));
 		auto win = panel->win;
-		msg_write(p2s(win));
 		toolbar[TOOLBAR_TOP] = new Toolbar(win);
 		toolbar[TOOLBAR_LEFT] = new Toolbar(win, true);
 		toolbar[TOOLBAR_RIGHT] = new Toolbar(win, true);
 		toolbar[TOOLBAR_BOTTOM] = new Toolbar(win);
 
-
-
 		auto vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-
-		// inserting...
-/*		if (dialog) {
-#if GTK_CHECK_VERSION(4,0,0)
-			gtk_window_set_child(GTK_WINDOW(win->window), vbox);
-#else
-			vbox = gtk_dialog_get_content_area(GTK_DIALOG(win->window));
-#endif
-		} else {
-			vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-			//gtk_box_pack_start(GTK_BOX(window), vbox, TRUE, TRUE, 0);
-#if GTK_CHECK_VERSION(4,0,0)
-			gtk_window_set_child(GTK_WINDOW(win->window), vbox);
-#else
-			gtk_container_add(GTK_CONTAINER(win->window), vbox);
-			gtk_widget_show(vbox);
-#endif
-		}*/
-
 
 #if GTK_CHECK_VERSION(4,0,0)
 
@@ -408,9 +385,9 @@ public:
 
 		gtk_box_append(GTK_BOX(vbox), toolbar[TOOLBAR_TOP]->widget);
 
-		win->plugable = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+		inner_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 		//gtk_container_set_border_width(GTK_CONTAINER(plugable), 0);
-		gtk_box_append(GTK_BOX(vbox), win->plugable);
+		gtk_box_append(GTK_BOX(vbox), inner_box);
 #else
 		// vbox
 		//   menubar
@@ -461,6 +438,18 @@ public:
 		DBDEL_X(format("BasicLayout.add  %s  cw=%s", child->id, p2s(child->widget)));
 	}
 
+
+	void remove_child(Control *child) override {
+		DBDEL_X(format("BasicLayout.remove  %s  cw=%s", child->id, p2s(child->widget)));
+		auto child_widget = child->get_frame();
+	#if GTK_CHECK_VERSION(4,0,0)
+		gtk_box_remove(GTK_BOX(widget), child_widget);
+	#else
+		gtk_container_remove(GTK_CONTAINER(widget), child_widget);
+	#endif
+		control_unlink(this, child);
+	}
+
 	void set_menu(xfer<Menu> _menu) {
 
 #if GTK_CHECK_VERSION(4,0,0)
@@ -469,7 +458,7 @@ public:
 	if (_menu) {
 		menu = _menu;
 
-		_connect_menu_to_panel(menu.get());
+		panel->_connect_menu_to_panel(menu.get());
 
 		gtk_popover_menu_bar_set_menu_model(GTK_POPOVER_MENU_BAR(menubar), G_MENU_MODEL(menu->gmenu));
 		gtk_widget_set_visible(menubar, true);
@@ -761,6 +750,7 @@ Menu *Window::get_menu() {
 void Window::add_basic_layout(const string& l) {
 	basic_layout = new ControlBasicWindowLayout("", ":layout:", this, l);
 	_insert_control_(basic_layout, 0, 0);
+	target_control = basic_layout;
 }
 
 void Window::_add_headerbar() {

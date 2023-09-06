@@ -59,7 +59,6 @@ Panel::Panel() {
 	id = p2s(this);
 	num_float_decimals = 3;
 	root_control = nullptr;
-	plugable = nullptr;
 	current_event_listener_uid = 0;
 
 	unique_id = current_uid ++;

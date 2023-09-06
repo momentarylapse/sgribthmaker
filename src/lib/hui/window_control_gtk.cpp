@@ -88,12 +88,37 @@ void Panel::_insert_control_(shared<Control> c, int x, int y) {
 	c->panel = this;
 	if (target_control) {
 		target_control->add_child(c, x, y);
+	} else if (root_control) {
+		root_control->add_child(c, x, y);
 	} else {
 		root_control = c;
 		// directly into the window...
 		//gtk_container_add(GTK_CONTAINER(plugable), frame);
-		if (plugable) {
-			// this = HuiWindow...
+		if (this == win) {
+
+
+			if (win->is_dialog()) {
+#if GTK_CHECK_VERSION(4,0,0)
+				gtk_window_set_child(GTK_WINDOW(win->window), frame);
+#else
+				auto plugable = gtk_dialog_get_content_area(GTK_DIALOG(win->window));
+				gtk_box_pack_start(GTK_BOX(plugable), frame, true, true, 0);
+				gtk_container_set_border_width(GTK_CONTAINER(plugable), border_width);
+#endif
+			} else {
+				//vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+				//gtk_box_pack_start(GTK_BOX(window), vbox, TRUE, TRUE, 0);
+#if GTK_CHECK_VERSION(4,0,0)
+				gtk_window_set_child(GTK_WINDOW(win->window), frame);
+#else
+				gtk_container_add(GTK_CONTAINER(win->window), frame);
+				//gtk_container_set_border_width(GTK_CONTAINER(plugable), border_width);
+				gtk_widget_show(frame);
+#endif
+			}
+
+
+#if 0
 #if GTK_CHECK_VERSION(4,0,0)
 			gtk_box_append(GTK_BOX(plugable), frame);
 			//g_object_set(G_OBJECT(plugable), "margin-start", 40, nullptr);
@@ -104,6 +129,7 @@ void Panel::_insert_control_(shared<Control> c, int x, int y) {
 #else
 			gtk_box_pack_start(GTK_BOX(plugable), frame, true, true, 0);
 			gtk_container_set_border_width(GTK_CONTAINER(plugable), border_width);
+#endif
 #endif
 		} else {
 			// sub-panel
