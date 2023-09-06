@@ -35,8 +35,8 @@ public:
 	void update_menu();
 	void update_function_list();
 	void set_active_view(SourceView *view);
-	void allow_termination(const hui::Callback &on_success = nullptr, const hui::Callback &on_fail = nullptr);
-	void allow_doc_termination(Document *d, const hui::Callback &on_success = nullptr, const hui::Callback &on_fail = nullptr);
+	base::future<void> allow_termination();
+	base::future<void> allow_doc_termination(Document *d);
 	void on_close_document();
 	bool load_from_file(const Path &filename);
 	bool write_to_file(Document *doc, const Path &filename);

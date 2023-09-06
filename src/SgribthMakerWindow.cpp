@@ -201,49 +201,53 @@ void SgribthMakerWindow::set_active_view(SourceView *view) {
 	update_function_list();
 }
 
-void SgribthMakerWindow::allow_termination(const hui::Callback &on_success, const hui::Callback &on_fail) {
+base::future<void> SgribthMakerWindow::allow_termination() {
 	Array<Document*> unsaved;
 	for (auto v: source_views)
 		if (v->history->changed)
 			unsaved.add(v->doc);
+	base::promise<void> promise;
 	if (unsaved.num == 0) {
-		on_success();
+		promise();
 	} else if (unsaved.num == 1) {
 		set_active_view(unsaved[0]->source_view);
-		hui::question_box(this, _("respectful question"), _("You increased entropy. Do you wish to save your work?"), true).on([this,unsaved,on_success,on_fail] (bool answer) {
+		hui::question_box(this, _("respectful question"), _("You increased entropy. Do you wish to save your work?"), true).on([this,unsaved,promise] (bool answer) mutable {
 			if (answer)
-				save(unsaved[0], on_success, on_fail);
+				promise.fail();//save(unsaved[0], on_success, on_fail);
 			else
-				on_success();
-		}).on_fail([on_fail] {
-			on_fail();
+				promise();
+		}).on_fail([promise] () mutable {
+			promise.fail();
 		});
 	} else {
-		hui::question_box(this, _("respectful question"), _("Several unsaved documents. Do you want to save before quitting?"), true).on([this,unsaved,on_success,on_fail] (bool answer) {
+		hui::question_box(this, _("respectful question"), _("Several unsaved documents. Do you want to save before quitting?"), true).on([this,unsaved,promise] (bool answer) mutable {
 			if (answer)
-				on_fail();
+				promise.fail();
 			else
-				on_success();
-		}).on_fail([on_fail] {
-			on_fail();
+				promise();
+		}).on_fail([promise] () mutable {
+			promise.fail();
 		});
 	}
+	return promise.get_future();
 }
 
-void SgribthMakerWindow::allow_doc_termination(Document *d, const hui::Callback &on_success, const hui::Callback &on_fail) {
+base::future<void> SgribthMakerWindow::allow_doc_termination(Document *d) {
+	base::promise<void> promise;
 	if (d->history->changed) {
 		set_active_view(d->source_view);
-		hui::question_box(this, _("respectful question"), _("You increased entropy. Do you wish to save your work?"), true).on([this,d,on_success,on_fail] (bool answer) {
+		hui::question_box(this, _("respectful question"), _("You increased entropy. Do you wish to save your work?"), true).on([this,d,promise] (bool answer) mutable {
 			if (answer)
-				save(d, on_success, on_fail);
+				promise.fail();//save(d, on_success, on_fail);
 			else
-				on_success();
-		}).on_fail([on_fail] {
-			on_fail();
+				promise();
+		}).on_fail([promise] () mutable {
+			promise.fail();
 		});
 	} else {
-		on_success();
+		promise();
 	}
+	return promise.get_future();
 }
 
 SourceView* SgribthMakerWindow::create_new_document() {
@@ -284,7 +288,7 @@ Document* SgribthMakerWindow::cur_doc() const {
 }
 
 void SgribthMakerWindow::on_close_document() {
-	allow_doc_termination(cur_doc(), [this] {
+	allow_doc_termination(cur_doc()).on([this] {
 		if (source_views.num <= 1) {
 			on_exit();
 			return;
@@ -299,7 +303,7 @@ void SgribthMakerWindow::on_close_document() {
 			set_active_view(source_views.back());
 			update_menu();
 		});
-	}, [] {});
+	});
 }
 
 bool SgribthMakerWindow::load_from_file(const Path &filename) {
@@ -364,14 +368,14 @@ void SgribthMakerWindow::on_save_as() {
 }
 
 void SgribthMakerWindow::reload(Document *doc) {
-	allow_doc_termination(doc, [this, doc] {
+	allow_doc_termination(doc).on([this, doc] {
 		if (doc->filename) {
 			if (doc->load(doc->filename))
 				set_message(_("reloaded"));
 			else
 				set_message(_("failed reloading"));
 		}
-	}, []{});
+	});
 }
 
 void SgribthMakerWindow::on_reload() {
@@ -391,13 +395,8 @@ void SgribthMakerWindow::on_copy() {
 }
 
 void SgribthMakerWindow::on_paste() {
-	msg_write("SM.on paste");
 	cur_view->delete_selection();
-	msg_write("x");
-	auto p = hui::clipboard::paste();
-	msg_write("y " + i2s(p.num));
-	cur_view->insert_at_cursor(p);//hui::clipboard::paste());
-	msg_write("/SM.on paste");
+	cur_view->insert_at_cursor(hui::clipboard::paste());
 	set_message(_("pasted"));
 }
 
@@ -569,14 +568,17 @@ void SgribthMakerWindow::on_about() {
 }
 
 void SgribthMakerWindow::on_exit() {
-	allow_termination([this] {
+	allow_termination().on([this] {
 		int w, h;
 		get_size_desired(w, h);
 		hui::config.set_int("Window.Width", w);
 		hui::config.set_int("Window.Height", h);
 		hui::config.set_bool("Window.Maximized", is_maximized());
-		request_destroy();
-		sgribthmaker->end();
-	}, []{});
+		//request_destroy();
+		hui::run_later(0.01f, [this] {
+			delete this;
+			sgribthmaker->end();
+		});
+	});
 }
 
