@@ -367,12 +367,32 @@ public:
 	{
 		panel = _panel;
 		auto win = panel->win;
-		toolbar[TOOLBAR_TOP] = new Toolbar(win);
-		toolbar[TOOLBAR_LEFT] = new Toolbar(win, true);
-		toolbar[TOOLBAR_RIGHT] = new Toolbar(win, true);
-		toolbar[TOOLBAR_BOTTOM] = new Toolbar(win);
+		auto xx = layout.explode("|");
+		bool want_toolbar_top = sa_contains(xx, "toolbar-top") or sa_contains(xx, "toolbar");
+		bool want_toolbar_left = sa_contains(xx, "toolbar-left");
+		bool want_toolbar_right = sa_contains(xx, "toolbar-right");
+		bool want_toolbar_bottom = sa_contains(xx, "toolbar-bottom");
+		if (want_toolbar_top)
+			toolbar[TOOLBAR_TOP] = new Toolbar(win);
+		if (want_toolbar_left)
+			toolbar[TOOLBAR_LEFT] = new Toolbar(win, true);
+		if (want_toolbar_right)
+			toolbar[TOOLBAR_RIGHT] = new Toolbar(win, true);
+		if (want_toolbar_bottom)
+			toolbar[TOOLBAR_BOTTOM] = new Toolbar(win);
+
+		// vbox
+		//   menubar
+		//   toolbar top
+		//   hbox
+		//     toolbar left
+		//     inner box
+		//     toolbar right
+		//   toolbar bottom
 
 		auto vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+		hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+		inner_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 
 #if GTK_CHECK_VERSION(4,0,0)
 
@@ -383,47 +403,52 @@ public:
 		menubar = gtk_popover_menu_bar_new_from_model(G_MENU_MODEL(menu));
 		gtk_box_append(GTK_BOX(vbox), menubar);
 
-		gtk_box_append(GTK_BOX(vbox), toolbar[TOOLBAR_TOP]->widget);
+		if (want_toolbar_top)
+			gtk_box_append(GTK_BOX(vbox), toolbar[TOOLBAR_TOP]->widget);
 
-		inner_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 		//gtk_container_set_border_width(GTK_CONTAINER(plugable), 0);
-		gtk_box_append(GTK_BOX(vbox), inner_box);
+		gtk_box_append(GTK_BOX(vbox), hbox);
+
+		if (want_toolbar_left)
+			gtk_box_append(GTK_BOX(hbox), toolbar[TOOLBAR_LEFT]->widget);
+
+		gtk_box_append(GTK_BOX(hbox), inner_box);
+
+		if (want_toolbar_right)
+			gtk_box_append(GTK_BOX(hbox), toolbar[TOOLBAR_RIGHT]->widget);
+
+		if (want_toolbar_bottom)
+			gtk_box_append(GTK_BOX(vbox), toolbar[TOOLBAR_BOTTOM]->widget);
 #else
-		// vbox
-		//   menubar
-		//   toolbar top
-		//   hbox
-		//     toolbar left
-		//     hbox 2
-		//     toolbar right
-		//   toolbar bottom
 
 		// menu bar
 		menubar = gtk_menu_bar_new();
 		gtk_box_pack_start(GTK_BOX(vbox), menubar, FALSE, FALSE, 0);
 
 		// tool bars
-	#if GTK_CHECK_VERSION(3,0,0)
-		gtk_style_context_add_class(gtk_widget_get_style_context(toolbar[TOOLBAR_TOP]->widget), "primary-toolbar");
-	#endif
-		gtk_box_pack_start(GTK_BOX(vbox), toolbar[TOOLBAR_TOP]->widget, FALSE, FALSE, 0);
+		if (want_toolbar_top) {
+			gtk_style_context_add_class(gtk_widget_get_style_context(toolbar[TOOLBAR_TOP]->widget), "primary-toolbar");
+			gtk_box_pack_start(GTK_BOX(vbox), toolbar[TOOLBAR_TOP]->widget, FALSE, FALSE, 0);
+		}
 
-		hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 		gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 		//gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 		gtk_widget_show(hbox);
 
-		gtk_box_pack_start(GTK_BOX(hbox), toolbar[TOOLBAR_LEFT]->widget, FALSE, FALSE, 0);
+		if (want_toolbar_left)
+			gtk_box_pack_start(GTK_BOX(hbox), toolbar[TOOLBAR_LEFT]->widget, FALSE, FALSE, 0);
 
-		inner_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 		gtk_widget_show(inner_box);
 		//gtk_container_set_border_width(GTK_CONTAINER(inner_box), 0);
 		gtk_box_pack_start(GTK_BOX(hbox), inner_box, TRUE, TRUE, 0);
 
-		gtk_box_pack_start(GTK_BOX(hbox), toolbar[TOOLBAR_RIGHT]->widget, FALSE, FALSE, 0);
-		gtk_box_pack_start(GTK_BOX(vbox), toolbar[TOOLBAR_BOTTOM]->widget, FALSE, FALSE, 0);
+		if (want_toolbar_right)
+			gtk_box_pack_start(GTK_BOX(hbox), toolbar[TOOLBAR_RIGHT]->widget, FALSE, FALSE, 0);
+		if (want_toolbar_bottom)
+			gtk_box_pack_start(GTK_BOX(vbox), toolbar[TOOLBAR_BOTTOM]->widget, FALSE, FALSE, 0);
 #endif
 		widget = vbox;
+		take_gtk_ownership();
 	}
 
 	void add_child(shared<Control> child, int x, int y) override {
