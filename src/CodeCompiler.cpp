@@ -110,10 +110,10 @@ void CodeCompiler::compile_shader() {
 	auto *w = new hui::NixWindow("nix", 640, 480);
 	//w->add_drawing_area("!opengl", 0, 0, "nix-area");
 	w->event_x("nix-area", "realize", [this] {
-		nix::init();
+		auto gl = nix::init({});
 	//	nix::init("OpenGL", w, "nix-area");
 
-		auto *shader = nix::Shader::load(doc->filename);
+		auto *shader = gl->load_shader(doc->filename);
 		if (!shader) {
 			doc->win->set_error(nix::shader_error);
 		} else {
