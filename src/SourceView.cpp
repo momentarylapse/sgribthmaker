@@ -174,8 +174,8 @@ SourceView::SourceView(hui::Window *win, const string &_id, Document *d) {
 	tv = control->widget;
 	tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tv));
 
-	line_no_tv = NULL;
-	line_no_tb = NULL;
+	line_no_tv = nullptr;
+	line_no_tb = nullptr;
 
 	auto cc = win->_get_control_(id + "-lines");
 	if (cc) {

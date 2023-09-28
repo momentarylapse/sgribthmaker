@@ -47,8 +47,6 @@ inline Window *win_from_widget(void *widget) {
 }
 
 void Window::_try_send_by_key_code_(int key_code) {
-#if GTK_CHECK_VERSION(4,0,0)
-#else
 	if (key_code <= 0)
 		return;
 	for (auto &k: event_key_codes)
@@ -56,7 +54,6 @@ void Window::_try_send_by_key_code_(int key_code) {
 			Event e = Event(k.id, k.message);
 			_send_event_(&e);
 		}
-#endif
 }
 
 #if GTK_CHECK_VERSION(4,0,0)
