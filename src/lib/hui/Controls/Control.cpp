@@ -464,29 +464,29 @@ void Control::notify(const string &message, bool is_default) {
 
 	Window *win = panel->win;
 	if (message == EventID::MOUSE_MOVE) {
-		win->on_mouse_move();
+		win->on_mouse_move(get_event()->m);
 	} else if (message == EventID::MOUSE_WHEEL) {
-		win->on_mouse_wheel();
+		win->on_mouse_wheel(get_event()->m);
 	} else if (message == EventID::MOUSE_ENTER) {
-		win->on_mouse_enter();
+		win->on_mouse_enter(get_event()->m);
 	} else if (message == EventID::MOUSE_LEAVE) {
 		win->on_mouse_leave();
 	} else if (message == EventID::LEFT_BUTTON_DOWN) {
-		win->on_left_button_down();
+		win->on_left_button_down(get_event()->m);
 	} else if (message == EventID::LEFT_BUTTON_UP) {
-		win->on_left_button_up();
+		win->on_left_button_up(get_event()->m);
 	} else if (message == EventID::MIDDLE_BUTTON_DOWN) {
-		win->on_middle_button_down();
+		win->on_middle_button_down(get_event()->m);
 	} else if (message == EventID::MIDDLE_BUTTON_UP) {
-		win->on_middle_button_up();
+		win->on_middle_button_up(get_event()->m);
 	} else if (message == EventID::RIGHT_BUTTON_DOWN) {
-		win->on_right_button_down();
+		win->on_right_button_down(get_event()->m);
 	} else if (message == EventID::RIGHT_BUTTON_UP) {
-		win->on_right_button_up();
+		win->on_right_button_up(get_event()->m);
 	} else if (message == EventID::KEY_DOWN) {
-		win->on_key_down();
+		win->on_key_down(get_event()->key_code);
 	} else if (message == EventID::KEY_UP) {
-		win->on_key_up();
+		win->on_key_up(get_event()->key_code);
 	} else if (message == EventID::DRAW) {
 		Painter p(win, id);
 		win->on_draw(&p);
