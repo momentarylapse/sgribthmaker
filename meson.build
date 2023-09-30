@@ -262,6 +262,7 @@ sources = [
 	'src/Document.cpp',
 	'src/HighlightScheme.cpp',
 	'src/History.cpp',
+	'src/LineNumberView.cpp',
 	'src/SgribthMaker.cpp',
 	'src/SgribthMakerWindow.cpp',
 	'src/SourceView.cpp'

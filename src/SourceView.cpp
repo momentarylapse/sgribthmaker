@@ -6,11 +6,14 @@
  */
 
 #include "SourceView.h"
+#include "LineNumberView.h"
 #include "History.h"
 #include "Document.h"
 #include "SgribthMakerWindow.h"
 #include "lib/hui/Controls/Control.h"
 #include "parser/BaseParser.h"
+
+
 
 
 #pragma GCC diagnostic push
@@ -149,21 +152,16 @@ SourceView::JumpData::JumpData(SourceView *_sv, int _line) {
 	line = _line;
 }
 
-void source_callback(SourceView *v) {
-	/*GtkTextIter iter;
-	int line_top = 0;
-	gtk_text_view_get_line_at_y(GTK_TEXT_VIEW(v->tv), &iter, 0, &line_top);
-	printf("%d\n", line_top);*/
-	int x, y;
-	gtk_text_view_buffer_to_window_coords(GTK_TEXT_VIEW(v->tv), GTK_TEXT_WINDOW_WIDGET, 0, 0, &x, &y);
-	//printf("%d  %d\n", x, y);
-//	int height = gtk_widget_get_allocated_height(v->tv);
+void on_gtk_text_view_scrolled(GtkAdjustment* self, SourceView *v) {
+	auto a = gtk_scrollable_get_vadjustment(GTK_SCROLLABLE(v->tv));
+	float o = (float)gtk_adjustment_get_value(a);
+	v->line_number_view->set_pos(o);
+}
 
-	GtkTextIter iter;//gtk_text_iter_
-	int top;
-	gtk_text_view_get_line_at_y(GTK_TEXT_VIEW(v->line_no_tv), &iter, -y, &top);
-	gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(v->line_no_tv), &iter, 0, 1, 0, 0);
-
+void on_gtk_text_view_cursor_changed(GObject* self, GParamSpec* pspec, SourceView *v) {
+	GtkTextIter start, end;
+	gtk_text_buffer_get_selection_bounds(v->tb, &start, &end);
+	v->line_number_view->set_cursor_line(gtk_text_iter_get_line(&start));
 }
 
 SourceView::SourceView(hui::Window *win, const string &_id, Document *d) {
@@ -174,20 +172,8 @@ SourceView::SourceView(hui::Window *win, const string &_id, Document *d) {
 	tv = control->widget;
 	tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tv));
 
-	line_no_tv = nullptr;
 	line_no_tb = nullptr;
 
-	auto cc = win->_get_control_(id + "-lines");
-	if (cc) {
-		line_no_tv = cc->widget;
-		line_no_tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(line_no_tv));
-
-
-		string lines;
-		for (int i=0; i<1000; i++)
-			lines += format("%04d\n", i+1);
-		gtk_text_buffer_set_text(line_no_tb, lines.c_str(), -1);
-	}
 
 
 	for (int i=0; i<NUM_TAG_TYPES; i++)
@@ -199,6 +185,8 @@ SourceView::SourceView(hui::Window *win, const string &_id, Document *d) {
 	change_return = true;
 	scheme = HighlightScheme::default_scheme;
 	set_parser(Path::EMPTY);
+
+	line_number_view = new LineNumberView(win, id + "-lines", scheme);
 
 	g_signal_connect(G_OBJECT(tb),"insert-text",G_CALLBACK(on_gtk_insert_text),this);
 	g_signal_connect(G_OBJECT(tb),"delete-range",G_CALLBACK(on_gtk_delete_range),this);
@@ -223,8 +211,10 @@ SourceView::SourceView(hui::Window *win, const string &_id, Document *d) {
 
 	hui::run_later(0.05f, [this]{ update_tab_size(); });
 
-	if (line_no_tv)
-		hui::run_repeated(1.0f, [this]{ source_callback(this); });
+	auto a = gtk_scrollable_get_vadjustment(GTK_SCROLLABLE(tv));
+	g_signal_connect(G_OBJECT(a),"value-changed",G_CALLBACK(on_gtk_text_view_scrolled), this);
+
+	g_signal_connect(G_OBJECT(tb), "notify::cursor-position", G_CALLBACK(on_gtk_text_view_cursor_changed), this);
 }
 
 SourceView::~SourceView() {
@@ -620,6 +610,11 @@ void SourceView::update_font() {
 	string font_name = hui::config.get_str("Font", "Monospace 10");
 	PangoFontDescription *font_desc = pango_font_description_from_string(font_name.c_str());
 
+	auto ccc = gtk_widget_get_pango_context(tv);
+	auto mmm = pango_context_get_metrics(ccc, font_desc, nullptr);
+	float lh = pango_units_to_double(pango_font_metrics_get_height(mmm));
+	line_number_view->set_font(font_name, lh + 1.0f);
+
 #if GTK_CHECK_VERSION(4,0,0)
 	float size = (float)pango_font_description_get_size(font_desc) / 1024.0f;
 	string family = pango_font_description_get_family(font_desc);
@@ -638,8 +633,8 @@ void SourceView::update_font() {
 	control->add_css_class("hui-source-view");
 #else
 	gtk_widget_override_font(tv, font_desc);
-	if (line_no_tv)
-		gtk_widget_override_font(line_no_tv, font_desc);
+	//if (line_no_tv)
+	//	gtk_widget_override_font(line_no_tv, font_desc);
 	pango_font_description_free(font_desc);
 
 	hui::run_later(0.010f, [this] { update_tab_size(); });

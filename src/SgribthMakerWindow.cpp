@@ -317,10 +317,13 @@ SourceView* SgribthMakerWindow::create_new_document() {
 	set_target("tab");
 	add_grid("", source_views.num, 0, id + "-grid");
 	set_target(id + "-grid");
-	if (hui::config.get_bool("ShowLineNumbers", false)) {
+
+	add_drawing_area("!width=50,noexpandx", 0, 0, id + "-lines");
+
+	/*if (hui::config.get_bool("ShowLineNumbers", false)) {
 		add_multiline_edit("!noframe,disabled,width=70,noexpandx", 0, 0, id + "-lines");
 		enable(id + "-lines", false);
-	}
+	}*/
 	add_multiline_edit("!handlekeys,noframe", 1, 0, id);
 
 	auto doc = new Document(this);

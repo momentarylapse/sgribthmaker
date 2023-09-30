@@ -14,6 +14,7 @@
 class Document;
 class History;
 class Parser;
+class LineNumberView;
 
 class SourceView : public hui::EventHandler {
 public:
@@ -71,12 +72,14 @@ public:
 	GtkTextBuffer *tb;
 	GtkWidget *tv;
 	GtkTextBuffer *line_no_tb;
-	GtkWidget *line_no_tv;
+	//GtkWidget *line_no_tv;
 
 	GtkTextTag *tag[NUM_TAG_TYPES];
 
 	Document *doc;
 	History *history;
+
+	owned<LineNumberView> line_number_view;
 
 	int needs_update_start, needs_update_end;
 	int color_busy_level;

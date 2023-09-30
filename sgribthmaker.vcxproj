@@ -321,6 +321,7 @@
     <ClCompile Include="src\Document.cpp" />
     <ClCompile Include="src\HighlightScheme.cpp" />
     <ClCompile Include="src\History.cpp" />
+    <ClCompile Include="src\LineNumberView.cpp" />
     <ClCompile Include="src\SgribthMaker.cpp" />
     <ClCompile Include="src\SgribthMakerWindow.cpp" />
     <ClCompile Include="src\SourceView.cpp" />
@@ -657,6 +658,7 @@
     <ClInclude Include="src\Document.h" />
     <ClInclude Include="src\HighlightScheme.h" />
     <ClInclude Include="src\History.h" />
+    <ClInclude Include="src\LineNumberView.h" />
     <ClInclude Include="src\SgribthMaker.h" />
     <ClInclude Include="src\SgribthMakerWindow.h" />
     <ClInclude Include="src\SourceView.h" />

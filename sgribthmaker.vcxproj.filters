@@ -616,6 +616,9 @@
     <ClCompile Include="src\History.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\LineNumberView.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="src\SgribthMaker.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -1618,6 +1621,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\History.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\LineNumberView.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\SgribthMaker.h">
