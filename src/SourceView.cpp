@@ -391,20 +391,13 @@ void SourceView::insert_at(int pos, const string &text) {
 void SourceView::insert_at_cursor(const string &text) {
 	if (text == "")
 		return;
-	msg_write("SV.insert " + p2s(text.data) + "  " + i2s(text.num));
-	msg_write(p2s(this) + "   " + p2s(tb));
-	gtk_text_buffer_insert_at_cursor(tb, (const gchar*)text.data, text.num);
-	msg_write("a");
+	gtk_text_buffer_insert_at_cursor(tb, (const gchar*)text.c_str(), text.num);
 	gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb));
-	msg_write("b");
 }
 
 void SourceView::delete_selection() {
-	msg_write("SV.del");
 	gtk_text_buffer_delete_selection(tb, true, true);
-	msg_write("a");
 	gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb));
-	msg_write("b");
 }
 
 void SourceView::delete_content(int pos0, int pos1) {
