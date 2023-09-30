@@ -7,7 +7,7 @@
 
 
 string AppTitle = "SgribthMaker";
-string AppVersion = "0.4.13.0";
+string AppVersion = "0.4.14.0";
 
 //#define ALLOW_LOGGING			true
 #define ALLOW_LOGGING			false

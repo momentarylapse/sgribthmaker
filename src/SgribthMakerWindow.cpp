@@ -48,29 +48,30 @@ SgribthMakerWindow::SgribthMakerWindow() :
 			set_image("save", "hui:save");
 			set_tooltip("save", "Save document");
 
-		// unde/redo
-		/*set_target(":header:");
-		add_grid("!box,linked", 1, 0, "undo-redo-box");
-			set_target("undo-redo-box");
-			add_button("!ignorefocus", 0, 0, "undo");
-			set_image("undo", "hui:undo");
-			add_button("!ignorefocus", 1, 0, "redo");
-			set_image("redo", "hui:redo");*/
+		if (false) {
+			// unde/redo
+			set_target(":header:");
+			add_grid("!box,linked", 1, 0, "undo-redo-box");
+				set_target("undo-redo-box");
+				add_button("!ignorefocus", 0, 0, "undo");
+				set_image("undo", "hui:undo");
+				add_button("!ignorefocus", 1, 0, "redo");
+				set_image("redo", "hui:redo");
 
-		// copy/paste
-		/*set_target(":header:");
-		add_grid("!box,linked", 2, 0, "copy-paste-box");
-			set_target("copy-paste-box");
-			add_button("!ignorefocus", 0, 0, "copy");
-			set_image("copy", "hui:copy");
-			add_button("!ignorefocus", 0, 0, "paste");
-			set_image("paste", "hui:paste");*/
+			// copy/paste
+			set_target(":header:");
+			add_grid("!box,linked", 2, 0, "copy-paste-box");
+				set_target("copy-paste-box");
+				add_button("!ignorefocus", 0, 0, "copy");
+				set_image("copy", "hui:copy");
+				add_button("!ignorefocus", 0, 0, "paste");
+				set_image("paste", "hui:paste");
+		}
 
 
 		set_target(":header:");
-		add_button("!ignorefocus", 1, 1, "settings");
-		set_image("settings", "hui:preferences");
-		set_tooltip("settings", "Settings");
+		add_menu_button("!menu=header-menu,arrow=no", 1, 1, "menu-x");
+		set_image("menu-x", "hui:open-menu");
 
 		// ...
 		set_target(":header:");
@@ -82,6 +83,7 @@ SgribthMakerWindow::SgribthMakerWindow() :
 			add_button("!ignorefocus", 0, 0, "compile_and_run");
 			set_image("compile_and_run", "hui:media-play");
 			set_tooltip("compile_and_run", "Compile and run");
+			add_menu_button("!menu=commands-menu", 1, 1, "menu-commands");
 	} else {
 		from_resource("main-window-legacy");
 		set_menu(hui::create_resource_menu("menu", this));

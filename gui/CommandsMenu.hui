@@ -1,0 +1,10 @@
+Menu commands-menu "Commands"
+	Item reload "Reload file" image=hui:refresh
+	Item auto-complete "Auto complete"
+	Item comment "Comment selection"
+	Item uncomment "Uncomment selection"
+	Item indent "Indent selection"
+	Item unindent "Unindent selection"
+	Item /find "Find..." image=hui:find
+	Item /execute_command "Execute command..." image=hui:execute
+	

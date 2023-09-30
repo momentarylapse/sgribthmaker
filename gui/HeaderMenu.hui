@@ -1,0 +1,4 @@
+Menu header-menu "Menu"
+	Item settings "Settings" image=hui:preferences
+	Separator
+	Item /about "About..." image=hui:about

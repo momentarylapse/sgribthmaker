@@ -1,6 +1,6 @@
 t7
 # Number Of Resources
-7
+9
 # Resource
 Dialog
 command_dialog
@@ -51,6 +51,61 @@ default,image=hui:ok
 1
 0
 # Resource
+Menu
+commands-menu
+
+0
+0
+8
+Item
+reload
+image=hui:refresh
+0
+0
+0
+Item
+auto-complete
+
+1
+0
+0
+Item
+comment
+
+2
+0
+0
+Item
+uncomment
+
+3
+0
+0
+Item
+indent
+
+4
+0
+0
+Item
+unindent
+
+5
+0
+0
+Item
+find
+image=hui:find
+6
+0
+0
+Item
+execute_command
+image=hui:execute
+7
+0
+0
+# Resource
 Dialog
 console-panel
 width=500,height=300
@@ -90,6 +145,31 @@ image=hui:ok
 Button
 console-close
 image=hui:close
+2
+0
+0
+# Resource
+Menu
+header-menu
+
+0
+0
+3
+Item
+settings
+image=hui:preferences
+0
+0
+0
+Separator
+
+
+1
+0
+0
+Item
+about
+image=hui:about
 2
 0
 0
@@ -703,10 +783,10 @@ image=hui:media-play,important
 # Language
 English
 # Number Of IDs
-55
+64
 # Text
 /about
-Info...
+About...
 
 /cancel
 Close
@@ -789,11 +869,38 @@ Run
 command_dialog/replace
 
 Replace
+commands-menu/auto-complete
+Auto complete
+
+commands-menu/commands-menu
+Commands
+
+commands-menu/comment
+Comment selection
+
+commands-menu/indent
+Indent selection
+
+commands-menu/reload
+Reload file
+
+commands-menu/uncomment
+Uncomment selection
+
+commands-menu/unindent
+Unindent selection
+
 console-panel/console-ok
 Ok
 
 console-panel/console-panel
 Console
+
+header-menu/header-menu
+Menu
+
+header-menu/settings
+Settings
 
 main-window-legacy/file_list
 file
