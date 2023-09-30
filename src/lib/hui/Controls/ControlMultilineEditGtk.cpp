@@ -94,9 +94,12 @@ void ControlMultilineEdit::set_tab_size(int tab_size) {
 
 void ControlMultilineEdit::__set_option(const string &op, const string &value) {
 	if (op == "handlekeys") {
+		if (value != "exclusive" and value != "")
+			msg_error("handlekeys=['',exclusive]");
 		user_key_handling = true;
 		if (value == "exclusive")
 			basic_internal_key_handling = false;
+			// disable arrow keys
 
 #if GTK_CHECK_VERSION(4,0,0)
 		auto handler_key = gtk_event_controller_key_new();
