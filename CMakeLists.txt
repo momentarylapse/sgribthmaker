@@ -5,7 +5,7 @@ project(sgribthmaker)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_BUILD_TYPE Debug)
-set(SOURCE 
+set(SOURCE
 	src/dialog/CommandDialog.cpp
 	src/dialog/SettingsDialog.cpp
 	src/lib/algebra/crypto.cpp
@@ -216,60 +216,47 @@ set(SOURCE
 	src/SourceView.cpp
 )
 
+add_executable(sgribthmaker ${SOURCE})
+
 find_package(PkgConfig REQUIRED)
 
-# gtk3 or gtk4 mandatory
-set(GTK3_OR_GTK4 "gtk3" CACHE STRING "Use gtk3 or gtk4?")
-pkg_check_modules(GTK3 gtk+-3.0)
-if(GTK3_FOUND)
-	list(APPEND GTK3_OR_GTK4_FOUND "gtk3")
-endif()
+
+# lib: gtk4 or gtk3 (mandatory)
+set(GTK4_OR_GTK3 "gtk4" CACHE STRING "Use gtk4 or gtk3?")
 pkg_check_modules(GTK4 gtk4)
 if(GTK4_FOUND)
-	list(APPEND GTK3_OR_GTK4_FOUND "gtk4")
+	list(APPEND GTK4_OR_GTK3_FOUND "gtk4")
 endif()
-if(GTK3_OR_GTK4_FOUND)
-	if(NOT ${GTK3_OR_GTK4} IN_LIST GTK3_OR_GTK4_FOUND)
-		list(GET GTK3_OR_GTK4_FOUND 0 X)
-		set(GTK3_OR_GTK4 ${X} CACHE STRING "choose" FORCE)
-		message(WARNING "Choice for GTK3_OR_GTK4 invalid, using ${GTK3_OR_GTK4} instead")
+pkg_check_modules(GTK3 gtk+-3.0)
+if(GTK3_FOUND)
+	list(APPEND GTK4_OR_GTK3_FOUND "gtk3")
+endif()
+if(GTK4_OR_GTK3_FOUND)
+	if(NOT ${GTK3_OR_GTK4} IN_LIST GTK4_OR_GTK3_FOUND)
+		list(GET GTK4_OR_GTK3_FOUND 0 X)
+		set(GTK4_OR_GTK3 ${X} CACHE STRING "choose" FORCE)
+		message(WARNING "Choice for GTK4_OR_GTK3 invalid, using ${GTK4_OR_GTK3} instead")
 	endif()
 else()
-	message(SEND_ERROR "Neither gtk3 or gtk4 found") #  or/nor..
-	set(GTK3_OR_GTK4 "")
+	message(SEND_ERROR "Neither gtk4 or gtk3 found") #  or/nor..
+	set(GTK4_OR_GTK3 "")
 endif()
-if(GTK3_OR_GTK4 STREQUAL "gtk3")
-	include_directories(${GTK3_INCLUDE_DIRS})
-	link_directories(${GTK3_LIBRARY_DIRS})
-	list(APPEND DEPS ${GTK3_LIBRARIES})
-	add_definitions(${GTK3_CFLAGS_OTHER})
-	add_compile_definitions(HAS_LIB_GTK3=1)
-endif()
-if(GTK3_OR_GTK4 STREQUAL "gtk4")
+if(GTK4_OR_GTK3 STREQUAL "gtk4")
 	include_directories(${GTK4_INCLUDE_DIRS})
 	link_directories(${GTK4_LIBRARY_DIRS})
 	list(APPEND DEPS ${GTK4_LIBRARIES})
 	add_definitions(${GTK4_CFLAGS_OTHER})
 	add_compile_definitions(HAS_LIB_GTK4=1)
 endif()
+if(GTK4_OR_GTK3 STREQUAL "gtk3")
+	include_directories(${GTK3_INCLUDE_DIRS})
+	link_directories(${GTK3_LIBRARY_DIRS})
+	list(APPEND DEPS ${GTK3_LIBRARIES})
+	add_definitions(${GTK3_CFLAGS_OTHER})
+	add_compile_definitions(HAS_LIB_GTK3=1)
+endif()
 
-# zlib mandatory
-pkg_check_modules(ZLIB REQUIRED zlib)
-include_directories(${ZLIB_INCLUDE_DIRS})
-link_directories(${ZLIB_LIBRARY_DIRS})
-list(APPEND DEPS ${ZLIB_LIBRARIES})
-add_definitions(${ZLIB_CFLAGS_OTHER})
-add_compile_definitions(HAS_LIB_ZLIB=1)
-
-# gl mandatory
-pkg_check_modules(GL REQUIRED gl)
-include_directories(${GL_INCLUDE_DIRS})
-link_directories(${GL_LIBRARY_DIRS})
-list(APPEND DEPS ${GL_LIBRARIES})
-add_definitions(${GL_CFLAGS_OTHER})
-add_compile_definitions(HAS_LIB_GL=1)
-
-# adwaita (optional)
+# lib: adwaita (optional)
 pkg_check_modules(LIBADWAITA-1 libadwaita-1)
 if(LIBADWAITA-1_FOUND)
 	include_directories(${LIBADWAITA-1_INCLUDE_DIRS})
@@ -281,7 +268,23 @@ else()
 	add_compile_definitions(HAS_LIB_ADWAITA=0)
 endif()
 
-# xlib (optional)
+# lib: zlib mandatory
+pkg_check_modules(ZLIB REQUIRED zlib)
+include_directories(${ZLIB_INCLUDE_DIRS})
+link_directories(${ZLIB_LIBRARY_DIRS})
+list(APPEND DEPS ${ZLIB_LIBRARIES})
+add_definitions(${ZLIB_CFLAGS_OTHER})
+add_compile_definitions(HAS_LIB_ZLIB=1)
+
+# lib: gl mandatory
+pkg_check_modules(GL REQUIRED gl)
+include_directories(${GL_INCLUDE_DIRS})
+link_directories(${GL_LIBRARY_DIRS})
+list(APPEND DEPS ${GL_LIBRARIES})
+add_definitions(${GL_CFLAGS_OTHER})
+add_compile_definitions(HAS_LIB_GL=1)
+
+# lib: xlib (optional)
 pkg_check_modules(X11 x11)
 if(X11_FOUND)
 	include_directories(${X11_INCLUDE_DIRS})
@@ -293,7 +296,7 @@ else()
 	add_compile_definitions(HAS_LIB_XLIB=0)
 endif()
 
-# unwind (optional)
+# lib: unwind (optional)
 pkg_check_modules(LIBUNWIND libunwind)
 if(LIBUNWIND_FOUND)
 	include_directories(${LIBUNWIND_INCLUDE_DIRS})
@@ -305,11 +308,9 @@ else()
 	add_compile_definitions(HAS_LIB_UNWIND=0)
 endif()
 
-# dl...
+# lib: dl...
 list(APPEND DEPS ${CMAKE_DL_LIBS})
 add_compile_definitions(HAS_LIB_DL=1)
-
-add_executable(sgribthmaker ${SOURCE})
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
@@ -327,15 +328,12 @@ install(FILES "static/kaba.png" DESTINATION share/sgribthmaker)
 install(FILES "static/license.txt" DESTINATION share/sgribthmaker)
 install(FILES "static/license_small.txt" DESTINATION share/sgribthmaker)
 
+# install .desktop file
 set(INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 configure_file("static/michisoft-sgribthmaker.desktop" /tmp/michisoft-sgribthmaker.desktop NO_SOURCE_PERMISSIONS)
+install(FILES /tmp/michisoft-sgribthmaker.desktop DESTINATION share/applications)
 
-find_program(XDG_DESKTOP_MENU_EXECUTABLE xdg-desktop-menu)
-if(NOT XDG_DESKTOP_MENU_EXECUTABLE STREQUAL "XDG_DESKTOP_MENU_EXECUTABLE_NOTFOUND")
-	install(CODE "message(STATUS \"installing desktop file\")")
-	install(CODE "execute_process(COMMAND ${XDG_DESKTOP_MENU_EXECUTABLE} install /tmp/michisoft-sgribthmaker.desktop)")
-endif()
-
+# install mime
 find_program(XDG_MIME_EXECUTABLE xdg-mime)
 if(NOT XDG_MIME_EXECUTABLE STREQUAL "XDG_MIME_EXECUTABLE_NOTFOUND")
 	install(CODE "message(STATUS \"installing mime file\")")

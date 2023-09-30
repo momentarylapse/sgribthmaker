@@ -10,13 +10,10 @@ cc = meson.get_compiler('cpp')
 # mandatory dependencies
 mdep = cc.find_library('m', required : false)
 threaddep = dependency('threads')
+gtk4dep = dependency('gtk-4.0')
+add_project_arguments('-DHAS_LIB_GTK4=1', language : ['cpp'])
 gtk3dep = dependency('gtk+-3.0')
 add_project_arguments('-DHAS_LIB_GTK3=1', language : ['cpp'])
-zlibdep = dependency('zlib')
-add_project_arguments('-DHAS_LIB_ZLIB=1', language : ['cpp'])
-gldep = dependency('GL')
-add_project_arguments('-DHAS_LIB_GL=1', language : ['cpp'])
-deps = [mdep, threaddep, gtk3dep, zlibdep, gldep]
 
 # optional dependency: adwaita
 if 
@@ -25,6 +22,10 @@ if
 else
 	add_project_arguments('-DHAS_LIB_ADWAITA=0', language : ['cpp'])
 endif
+zlibdep = dependency('zlib')
+add_project_arguments('-DHAS_LIB_ZLIB=1', language : ['cpp'])
+gldep = dependency('GL')
+add_project_arguments('-DHAS_LIB_GL=1', language : ['cpp'])
 
 # optional dependency: xlib
 d = cc.find_library('X11', required : false)
@@ -52,6 +53,7 @@ if d.found()
 else
 	add_project_arguments('-DHAS_LIB_DL=0', language : ['cpp'])
 endif
+deps = [mdep, threaddep, gtk4dep, gtk3dep, zlibdep, gldep]
 
 
 sources = [
