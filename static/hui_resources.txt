@@ -1,6 +1,6 @@
 t7
 # Number Of Resources
-6
+7
 # Resource
 Dialog
 command_dialog
@@ -96,7 +96,86 @@ image=hui:close
 # Resource
 Window
 main-window
-borderwidth=0,spacing=0,layout=menubar|toolbar|toolbar-left
+borderwidth=0,spacing=0,headerbar
+0
+0
+1
+Grid
+table_main
+vertical
+0
+0
+2
+Grid
+grid-info
+hidden
+0
+0
+3
+Label
+info
+style=card,style=title-4,expandx
+0
+0
+0
+Label
+error
+style=error,style=title-4,expandx
+1
+0
+0
+Button
+info-close
+image=hui:close,flat,grabfocus=no
+2
+0
+0
+Grid
+table_doc
+
+1
+0
+2
+TabControl
+tab
+nobar,expandx
+0
+0
+0
+Grid
+table_side
+noexpandx,width=180,vertical,hidden
+1
+0
+2
+Group
+group_files
+
+0
+0
+1
+ListView
+file_list
+nobar,select-single,noindent
+0
+0
+0
+Expander
+function_expander
+
+1
+0
+1
+ListView
+function_list
+nobar,noindent
+0
+0
+0
+# Resource
+Window
+main-window-legacy
+borderwidth=0,spacing=0,layout=menubar|toolbar
 0
 0
 1
@@ -624,7 +703,7 @@ image=hui:media-play,important
 # Language
 English
 # Number Of IDs
-51
+55
 # Text
 /about
 Info...
@@ -715,6 +794,18 @@ Ok
 
 console-panel/console-panel
 Console
+
+main-window-legacy/file_list
+file
+
+main-window-legacy/function_expander
+Functions
+
+main-window-legacy/function_list
+function
+
+main-window-legacy/group_files
+Documents
 
 main-window/file_list
 file

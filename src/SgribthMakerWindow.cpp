@@ -29,10 +29,64 @@ SgribthMakerWindow::SgribthMakerWindow() :
 	set_size(width, height);
 	set_maximized(maximized);
 
+	bool new_design = true;
 
-	from_resource("main-window");
-	set_menu(hui::create_resource_menu("menu", this));
-	get_toolbar(0)->set_by_id("toolbar");
+	if (new_design) {
+		from_resource("main-window");
+
+		// file load/save
+		set_target(":header:");
+		add_grid("!box,linked", 0, 0, "file-box");
+			set_target("file-box");
+			add_button("!ignorefocus", 0, 0, "new");
+			set_tooltip("new", "New document");
+			set_image("new", "hui:new");
+			add_button("!ignorefocus", 1, 0, "open");
+			set_tooltip("open", "Open document");
+			set_image("open", "hui:open");
+			add_button("!ignorefocus", 1, 0, "save");
+			set_image("save", "hui:save");
+			set_tooltip("save", "Save document");
+
+		// unde/redo
+		/*set_target(":header:");
+		add_grid("!box,linked", 1, 0, "undo-redo-box");
+			set_target("undo-redo-box");
+			add_button("!ignorefocus", 0, 0, "undo");
+			set_image("undo", "hui:undo");
+			add_button("!ignorefocus", 1, 0, "redo");
+			set_image("redo", "hui:redo");*/
+
+		// copy/paste
+		/*set_target(":header:");
+		add_grid("!box,linked", 2, 0, "copy-paste-box");
+			set_target("copy-paste-box");
+			add_button("!ignorefocus", 0, 0, "copy");
+			set_image("copy", "hui:copy");
+			add_button("!ignorefocus", 0, 0, "paste");
+			set_image("paste", "hui:paste");*/
+
+
+		set_target(":header:");
+		add_button("!ignorefocus", 1, 1, "settings");
+		set_image("settings", "hui:preferences");
+		set_tooltip("settings", "Settings");
+
+		// ...
+		set_target(":header:");
+		add_grid("!box,linked", 0, 1, "other-box");
+			set_target("other-box");
+			add_button("!ignorefocus", 0, 0, "compile");
+			set_image("compile", "hui:media-record");
+			set_tooltip("compile", "Compile");
+			add_button("!ignorefocus", 0, 0, "compile_and_run");
+			set_image("compile_and_run", "hui:media-play");
+			set_tooltip("compile_and_run", "Compile and run");
+	} else {
+		from_resource("main-window-legacy");
+		set_menu(hui::create_resource_menu("menu", this));
+		get_toolbar(0)->set_by_id("toolbar");
+	}
 
 
 	event("about", [this] { on_about(); });

@@ -45,7 +45,7 @@ ControlMultilineEdit::ControlMultilineEdit(const string &title, const string &id
 
 	// frame
 	frame = scroll;
-	if (option_has(get_option_from_title(title), "noframe")) { //(border_width > 0){
+	if (!option_has(get_option_from_title(title), "noframe")) { //(border_width > 0){
 		frame = gtk_frame_new(nullptr);
 #if GTK_CHECK_VERSION(4,0,0)
 		gtk_frame_set_child(GTK_FRAME(frame), scroll);
