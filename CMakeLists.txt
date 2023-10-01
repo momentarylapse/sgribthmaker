@@ -321,6 +321,7 @@ add_compile_definitions(INSTALL_PREFIX="${CMAKE_INSTALL_PREFIX}")
 
 install(TARGETS sgribthmaker DESTINATION bin)
 install(DIRECTORY "static/Icon" DESTINATION share/sgribthmaker)
+install(DIRECTORY "static/icons" DESTINATION share/sgribthmaker)
 install(FILES "static/hui_resources.txt" DESTINATION share/sgribthmaker)
 install(FILES "static/icon.ico" DESTINATION share/sgribthmaker)
 install(FILES "static/icon.png" DESTINATION share/sgribthmaker)
