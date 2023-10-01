@@ -42,6 +42,7 @@ public:
 	void set_tag(int i, const char *fg_color, const char *bg_color, bool bold, bool italic);
 	void update_font();
 	void update_tab_size();
+	void update_line_numbers();
 
 	void clear_markings(int first_line, int last_line);
 	void mark_word(int line, int start, int end, int type, char *p0, char *p);

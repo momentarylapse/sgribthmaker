@@ -20,6 +20,7 @@ public:
 	void set_font(const string& font, float line_height);
 	void set_pos(float pos);
 	void set_cursor_line(int line);
+	void set_line_offsets(int line0, const Array<int> &y);
 
 	hui::Window *win;
 	string id;
@@ -28,6 +29,8 @@ public:
 	string font_name;
 	float font_size;
 	float offset;
+	int line0;
+	Array<int> line_offsets;
 	HighlightScheme *scheme;
 };
 

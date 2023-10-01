@@ -144,6 +144,7 @@ void on_gtk_changed(GtkTextBuffer *textbuffer, gpointer user_data) {
 		sv->create_colors_if_not_busy();
 	});
 	sv->color_busy_level ++;
+	sv->update_line_numbers();
 }
 
 
@@ -152,10 +153,35 @@ SourceView::JumpData::JumpData(SourceView *_sv, int _line) {
 	line = _line;
 }
 
-void on_gtk_text_view_scrolled(GtkAdjustment* self, SourceView *v) {
-	auto a = gtk_scrollable_get_vadjustment(GTK_SCROLLABLE(v->tv));
+void SourceView::update_line_numbers() {
+	auto a = gtk_scrollable_get_vadjustment(GTK_SCROLLABLE(tv));
 	float o = (float)gtk_adjustment_get_value(a);
-	v->line_number_view->set_pos(o);
+	line_number_view->set_pos(o);
+
+	GdkRectangle r;
+	gtk_text_view_get_visible_rect(GTK_TEXT_VIEW(tv), &r);
+
+	GtkTextIter iter;
+	int line_top;
+	gtk_text_view_get_line_at_y(GTK_TEXT_VIEW(tv), &iter, r.y, &line_top);
+
+	int line0 = gtk_text_iter_get_line(&iter);
+	int num_lines = gtk_text_buffer_get_line_count(tb);
+
+	Array<int> yy;
+	for (int l=line0; l<num_lines; l++) {
+		gtk_text_buffer_get_iter_at_line(tb, &iter, l);
+		int y, height;
+		gtk_text_view_get_line_yrange(GTK_TEXT_VIEW(tv), &iter, &y, &height);
+		yy.add(y);
+		if (y > r.y + r.height)
+			break;
+	}
+	line_number_view->set_line_offsets(line0, yy);
+}
+
+void on_gtk_text_view_scrolled(GtkAdjustment* self, SourceView *v) {
+	v->update_line_numbers();
 }
 
 void on_gtk_text_view_cursor_changed(GObject* self, GParamSpec* pspec, SourceView *v) {
@@ -607,20 +633,18 @@ void SourceView::update_tab_size() {
 }
 
 void SourceView::update_font() {
+
 	string font_name = hui::config.get_str("Font", "Monospace 10");
 	PangoFontDescription *font_desc = pango_font_description_from_string(font_name.c_str());
 
-	auto ccc = gtk_widget_get_pango_context(tv);
-	auto mmm = pango_context_get_metrics(ccc, font_desc, nullptr);
-	float lh = pango_units_to_double(pango_font_metrics_get_height(mmm));
-	line_number_view->set_font(font_name, lh + 1.0f);
 
 #if GTK_CHECK_VERSION(4,0,0)
 	float size = (float)pango_font_description_get_size(font_desc) / 1024.0f;
 	string family = pango_font_description_get_family(font_desc);
 
 	//control->_set_css(format("* { font-family: %s; font-size: %.1fpt; }", family, size));
-	control->add_css_class("monospace");
+//	control->add_css_class("monospace");
+	gtk_text_view_set_monospace(GTK_TEXT_VIEW(tv), true);
 
 
 	auto *css_provider = gtk_css_provider_new();
@@ -636,9 +660,18 @@ void SourceView::update_font() {
 	//if (line_no_tv)
 	//	gtk_widget_override_font(line_no_tv, font_desc);
 	pango_font_description_free(font_desc);
-
-	hui::run_later(0.010f, [this] { update_tab_size(); });
 #endif
+
+	hui::run_later(0.010f, [this, font_name] {
+		auto ccc = gtk_widget_get_pango_context(tv);
+		auto fd = pango_context_get_font_description(ccc);
+		auto mmm = pango_context_get_metrics(ccc, fd, nullptr);
+		float lh = pango_units_to_double(pango_font_metrics_get_height(mmm));
+		//line_number_view->set_font(pango_font_description_to_string(fd), lh);// + 1.0f);
+		line_number_view->set_font(font_name, lh);
+		update_line_numbers();
+		update_tab_size();
+	});
 }
 
 

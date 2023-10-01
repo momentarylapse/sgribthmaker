@@ -96,10 +96,8 @@ SgribthMakerWindow::SgribthMakerWindow() :
 
 	event("new", [this] { create_new_document(); });
 	set_key_code("new", hui::KEY_N + hui::KEY_CONTROL, "hui:new");
-	//hui::HuiAddKeyCode(HMM_NEW_HEX, hui::KEY_F1 + 256);
 	event("open", [this] { on_open(); });
 	set_key_code("open", hui::KEY_O + hui::KEY_CONTROL, "hui:open");
-	//hui::HuiAddKeyCode(HMM_OPEN_HEX, hui::KEY_F9 + 256);
 	event("save", [this] { on_save(); });
 	set_key_code("save", hui::KEY_S + hui::KEY_CONTROL, "hui:save");
 	event("save_as", [this] { on_save_as(); });
@@ -318,7 +316,7 @@ SourceView* SgribthMakerWindow::create_new_document() {
 	add_grid("", source_views.num, 0, id + "-grid");
 	set_target(id + "-grid");
 
-	add_drawing_area("!width=50,noexpandx", 0, 0, id + "-lines");
+	add_drawing_area("!width=10,noexpandx", 0, 0, id + "-lines");
 
 	/*if (hui::config.get_bool("ShowLineNumbers", false)) {
 		add_multiline_edit("!noframe,disabled,width=70,noexpandx", 0, 0, id + "-lines");
