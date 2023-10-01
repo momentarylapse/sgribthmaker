@@ -331,7 +331,7 @@ install(FILES "static/license_small.txt" DESTINATION share/sgribthmaker)
 
 # install .desktop file
 set(INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
-configure_file("static/michisoft-sgribthmaker.desktop" /tmp/michisoft-sgribthmaker.desktop NO_SOURCE_PERMISSIONS)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/static/michisoft-sgribthmaker.desktop" /tmp/michisoft-sgribthmaker.desktop NO_SOURCE_PERMISSIONS)
 install(FILES /tmp/michisoft-sgribthmaker.desktop DESTINATION share/applications)
 
 # install mime
