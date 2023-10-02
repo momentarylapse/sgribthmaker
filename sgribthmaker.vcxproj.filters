@@ -586,6 +586,9 @@
     <ClCompile Include="src\parser\ParserHui.cpp">
       <Filter>src\parser</Filter>
     </ClCompile>
+    <ClCompile Include="src\parser\ParserIni.cpp">
+      <Filter>src\parser</Filter>
+    </ClCompile>
     <ClCompile Include="src\parser\ParserKaba.cpp">
       <Filter>src\parser</Filter>
     </ClCompile>
@@ -1591,6 +1594,9 @@
       <Filter>src\parser</Filter>
     </ClInclude>
     <ClInclude Include="src\parser\ParserHui.h">
+      <Filter>src\parser</Filter>
+    </ClInclude>
+    <ClInclude Include="src\parser\ParserIni.h">
       <Filter>src\parser</Filter>
     </ClInclude>
     <ClInclude Include="src\parser\ParserKaba.h">

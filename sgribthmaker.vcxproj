@@ -311,6 +311,7 @@
     <ClCompile Include="src\parser\BaseParser.cpp" />
     <ClCompile Include="src\parser\ParserC.cpp" />
     <ClCompile Include="src\parser\ParserHui.cpp" />
+    <ClCompile Include="src\parser\ParserIni.cpp" />
     <ClCompile Include="src\parser\ParserKaba.cpp" />
     <ClCompile Include="src\parser\ParserPython.cpp" />
     <ClCompile Include="src\parser\ParserShader.cpp" />
@@ -648,6 +649,7 @@
     <ClInclude Include="src\parser\BaseParser.h" />
     <ClInclude Include="src\parser\ParserC.h" />
     <ClInclude Include="src\parser\ParserHui.h" />
+    <ClInclude Include="src\parser\ParserIni.h" />
     <ClInclude Include="src\parser\ParserKaba.h" />
     <ClInclude Include="src\parser\ParserPython.h" />
     <ClInclude Include="src\parser\ParserShader.h" />

@@ -12,6 +12,7 @@
 #include "ParserShader.h"
 #include "ParserPython.h"
 #include "ParserHui.h"
+#include "ParserIni.h"
 #include "../SourceView.h"
 #include "../HighlightScheme.h"
 
@@ -242,6 +243,8 @@ void InitParser() {
 	ParserAssociations.add(ParserAssociation(new ParserShader, "shader"));
 	ParserAssociations.add(ParserAssociation(new ParserPython, "py"));
 	ParserAssociations.add(ParserAssociation(new ParserHui, "hui"));
+	ParserAssociations.add(ParserAssociation(new ParserIni, "ini"));
+	ParserAssociations.add(ParserAssociation(new ParserIni, "conf"));
 }
 
 Parser *GetParser(const Path &filename) {

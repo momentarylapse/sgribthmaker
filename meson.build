@@ -252,6 +252,7 @@ sources = [
 	'src/parser/BaseParser.cpp',
 	'src/parser/ParserC.cpp',
 	'src/parser/ParserHui.cpp',
+	'src/parser/ParserIni.cpp',
 	'src/parser/ParserKaba.cpp',
 	'src/parser/ParserPython.cpp',
 	'src/parser/ParserShader.cpp',
