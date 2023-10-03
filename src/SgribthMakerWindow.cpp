@@ -322,7 +322,7 @@ SourceView* SgribthMakerWindow::create_new_document() {
 		add_multiline_edit("!noframe,disabled,width=70,noexpandx", 0, 0, id + "-lines");
 		enable(id + "-lines", false);
 	}*/
-	add_multiline_edit("!handlekeys,noframe", 1, 0, id);
+	add_multiline_edit("!handlekeys,noframe,wrap", 1, 0, id);
 
 	auto doc = new Document(this);
 	doc->compiler = new CodeCompiler(doc);

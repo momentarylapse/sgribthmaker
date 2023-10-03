@@ -144,7 +144,9 @@ void on_gtk_changed(GtkTextBuffer *textbuffer, gpointer user_data) {
 		sv->create_colors_if_not_busy();
 	});
 	sv->color_busy_level ++;
-	sv->update_line_numbers();
+	hui::run_later(0.01f, [sv] {
+		sv->update_line_numbers();
+	});
 }
 
 
@@ -188,6 +190,10 @@ void on_gtk_text_view_cursor_changed(GObject* self, GParamSpec* pspec, SourceVie
 	GtkTextIter start, end;
 	gtk_text_buffer_get_selection_bounds(v->tb, &start, &end);
 	v->line_number_view->set_cursor_line(gtk_text_iter_get_line(&start));
+}
+
+void on_gtk_text_view_size_changed(GObject* self, GParamSpec* pspec, SourceView *v) {
+	v->update_line_numbers();
 }
 
 SourceView::SourceView(hui::Window *win, const string &_id, Document *d) {
@@ -240,7 +246,11 @@ SourceView::SourceView(hui::Window *win, const string &_id, Document *d) {
 	auto a = gtk_scrollable_get_vadjustment(GTK_SCROLLABLE(tv));
 	g_signal_connect(G_OBJECT(a),"value-changed",G_CALLBACK(on_gtk_text_view_scrolled), this);
 
+	g_signal_connect(G_OBJECT(win->window), "notify::default-width", G_CALLBACK(on_gtk_text_view_size_changed), this);
+	g_signal_connect(G_OBJECT(win->window), "notify::default-height", G_CALLBACK(on_gtk_text_view_size_changed), this);
 	g_signal_connect(G_OBJECT(tb), "notify::cursor-position", G_CALLBACK(on_gtk_text_view_cursor_changed), this);
+
+	update_line_numbers();
 }
 
 SourceView::~SourceView() {
