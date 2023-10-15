@@ -77,7 +77,7 @@ void SettingsDialog::fillSchemeList() {
 
 void SettingsDialog::onFont() {
 	string old_font = get_string("font");
-	hui::select_font(this, _("Select font"), {"font=" + old_font}).on([this] (const string &font) {
+	hui::select_font(this, _("Select font"), {"font=" + old_font}).then([this] (const string &font) {
 		set_string("font", font);
 		hui::config.set_str("Font", font);
 		for (SourceView *sv: main_win->source_views)
