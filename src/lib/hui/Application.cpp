@@ -191,10 +191,12 @@ void Application::guess_directories(const Array<string> &arg, const string &app_
 
 	#if defined(OS_LINUX) || defined(OS_MINGW) //defined(__GNUC__) || defined(OS_LINUX)
 		// installed version?
-		if (filename.is_in(prefix) or (filename.str().find("/") < 0)) {
+		if (filename.is_in(prefix) or (filename.str().find("/") < 0) or !os::fs::is_directory(directory_static)) {
 			installed = true;
 			directory_static = prefix | "share" | app_name;
+			msg_write("INSTALLED");
 		}
+		msg_write(directory_static.str());
 
 		directory = format("%s/.%s/", getenv("HOME"), app_name);
 		os::fs::create_directory(directory);
