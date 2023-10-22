@@ -77,6 +77,7 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 	modifiers.add(kaba::Identifier::OWNED);
 	modifiers.add(kaba::Identifier::XFER);
 	modifiers.add(kaba::Identifier::RAW_POINTER);
+	modifiers.add(kaba::Identifier::FUTURE);
 	keywords.add(kaba::Identifier::SELF);
 	keywords.add(kaba::Identifier::SUPER);
 	keywords.add(kaba::Identifier::NAMESPACE);
