@@ -245,6 +245,7 @@ void InitParser() {
 	ParserAssociations.add(ParserAssociation(new ParserHui, "hui"));
 	ParserAssociations.add(ParserAssociation(new ParserIni, "ini"));
 	ParserAssociations.add(ParserAssociation(new ParserIni, "conf"));
+	ParserAssociations.add(ParserAssociation(new ParserIni, "material"));
 }
 
 Parser *GetParser(const Path &filename) {
