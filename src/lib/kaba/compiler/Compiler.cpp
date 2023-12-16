@@ -139,12 +139,12 @@ void* get_nice_memory(int64 size, bool executable, Module *module) {
 #elif defined(OS_MAC)
 	msg_error("FIXME: kaba compiler - mmap() parameters for MacOS");
 	int prot = 0;//PROT_READ | PROT_WRITE;
-	int flags = 0;//MAP_PRIVATE | MAP_ANON | MAP_FIXED;
+	int flags = 0;//MAP_PRIVATE | MAP_ANON | MAP_FIXED_NOREPLACE;
 	//if (executable) {
 	//	prot |= PROT_EXEC;
 #else // OS_LINUX
 	int prot = PROT_READ | PROT_WRITE;
-	int flags = MAP_PRIVATE | MAP_ANON | MAP_FIXED;
+	int flags = MAP_PRIVATE | MAP_ANON | MAP_FIXED_NOREPLACE;
 	if (executable) {
 		prot |= PROT_EXEC;
 		flags |= MAP_EXECUTABLE;
