@@ -168,7 +168,7 @@ void ParserKaba::update_symbols(SourceView *sv) {
 			add_class_content(this, c, "");
 		}*/
 
-		add_class_content(this, m->tree->imported_symbols.get(), "");
+//		add_class_content(this, m->tree->imported_symbols.get(), "");
 		add_class_content(this, m->tree->base_class, "");
 
 	} catch (Exception &e) {
