@@ -31,6 +31,22 @@ void add_class_content(ParserKaba *p, const kaba::Class *c, const string &ns) {
 		add_class(p, cc, ns);
 }
 
+void add_scope_content(ParserKaba *p, kaba::Scope& scope, const string &ns) {
+	for (auto& e: scope.entries) {
+		if (e.kind == kaba::NodeKind::CLASS)
+			add_class(p, reinterpret_cast<const kaba::Class*>(e.p), ns);
+		if (e.kind == kaba::NodeKind::CONSTANT)
+			p->constants.add(ns + reinterpret_cast<const kaba::Constant*>(e.p)->name);
+		if (e.kind == kaba::NodeKind::FUNCTION)
+			p->functions.add(ns + reinterpret_cast<const kaba::Function*>(e.p)->name);
+		if (e.kind == kaba::NodeKind::VAR_GLOBAL) {
+			auto v = reinterpret_cast<const kaba::Variable *>(e.p);
+			if (allowed(ns + v->name))
+				p->global_variables.add(ns + v->name);
+		}
+	}
+}
+
 void add_class(ParserKaba *p, const kaba::Class *c, const string &ns) {
 	p->types.add(ns + c->name);
 	add_class_content(p, c, ns + c->name + ".");
@@ -158,6 +174,8 @@ void ParserKaba::update_symbols(SourceView *sv) {
 		auto m = context->create_module_for_source(sv->get_all(), true);
 
 		clear_symbols();
+
+		add_scope_content(this, m->tree->global_scope, "");
 
 		//m->tree->
 
