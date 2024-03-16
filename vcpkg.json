@@ -1,0 +1,6 @@
+{
+  "dependencies": [
+    "opengl",
+    "zlib"
+  ]
+}
