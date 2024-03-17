@@ -22,7 +22,7 @@ SgribthMaker::SgribthMaker() :
 	set_property("version", AppVersion);
 	set_property("comment", _("Text editor and kaba compiler"));
 	set_property("website", "http://michi.is-a-geek.org/michisoft");
-	set_property("copyright", "© 2006-2023 by MichiSoft TM");
+	set_property("copyright", "© 2006-2024 by MichiSoft TM");
 	set_property("author", "Michael Ankele <michi@lupina.de>");
 
 	kaba::init();

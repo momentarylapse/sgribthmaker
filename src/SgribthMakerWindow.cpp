@@ -453,8 +453,12 @@ void SgribthMakerWindow::on_copy() {
 
 void SgribthMakerWindow::on_paste() {
 	cur_view->delete_selection();
-	cur_view->insert_at_cursor(hui::clipboard::paste());
-	set_message(_("pasted"));
+	hui::clipboard::paste().then([this] (const string& text) {
+		cur_view->insert_at_cursor(text);
+		set_message(_("pasted"));
+	}).on_fail([this] {
+		set_message(_("clipboard empty"));
+	});
 }
 
 void SgribthMakerWindow::prepend_selected_lines(const string &s) {
