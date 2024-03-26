@@ -262,6 +262,7 @@ sources = [
 	'src/CodeCompiler.cpp',
 	'src/Console.cpp',
 	'src/Document.cpp',
+	'src/FileBrowser.cpp',
 	'src/HighlightScheme.cpp',
 	'src/History.cpp',
 	'src/LineNumberView.cpp',

@@ -14,6 +14,7 @@
 class Document;
 class SourceView;
 class Console;
+class FileBrowser;
 class Path;
 
 class SgribthMakerWindow : public obs::Node<hui::Window> {
@@ -41,12 +42,12 @@ public:
 	bool load_from_file(const Path &filename);
 	bool write_to_file(Document *doc, const Path &filename);
 	void open();
+	void open_directory();
 
 	SourceView* create_new_document();
 
 	void save_as(Document *doc, const hui::Callback &on_success = nullptr, const hui::Callback &on_fail = nullptr);
 	void save(Document *doc, const hui::Callback &on_success = nullptr, const hui::Callback &on_fail = nullptr);
-	void on_open();
 	void on_save();
 	void on_save_as();
 	void reload(Document *doc);
@@ -80,6 +81,7 @@ public:
 
 	Array<SourceView*> source_views;
 	Console *console;
+	FileBrowser *file_browser;
 
 	SourceView *cur_view = nullptr;
 	Document *cur_doc() const;

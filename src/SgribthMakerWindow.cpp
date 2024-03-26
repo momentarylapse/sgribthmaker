@@ -7,6 +7,7 @@
 #include "dialog/SettingsDialog.h"
 #include "dialog/CommandDialog.h"
 #include "Console.h"
+#include "FileBrowser.h"
 #include "History.h"
 #include "HighlightScheme.h"
 #include "SourceView.h"
@@ -29,66 +30,58 @@ SgribthMakerWindow::SgribthMakerWindow() :
 	set_size(width, height);
 	set_maximized(maximized);
 
-	bool new_design = true;
+	from_resource("main-window");
 
-	if (new_design) {
-		from_resource("main-window");
+	// file load/save
+	set_target(":header:");
+	add_grid("!box,linked", 0, 0, "file-box");
+		set_target("file-box");
+		add_button("!ignorefocus", 0, 0, "new");
+		set_tooltip("new", "New document");
+		set_image("new", "hui:new");
+		add_button("!ignorefocus", 1, 0, "open");
+		set_tooltip("open", "Open document");
+		set_image("open", "hui:open");
+		add_button("!ignorefocus", 1, 0, "save");
+		set_image("save", "hui:save");
+		set_tooltip("save", "Save document");
 
-		// file load/save
+	if (false) {
+		// unde/redo
 		set_target(":header:");
-		add_grid("!box,linked", 0, 0, "file-box");
-			set_target("file-box");
-			add_button("!ignorefocus", 0, 0, "new");
-			set_tooltip("new", "New document");
-			set_image("new", "hui:new");
-			add_button("!ignorefocus", 1, 0, "open");
-			set_tooltip("open", "Open document");
-			set_image("open", "hui:open");
-			add_button("!ignorefocus", 1, 0, "save");
-			set_image("save", "hui:save");
-			set_tooltip("save", "Save document");
+		add_grid("!box,linked", 1, 0, "undo-redo-box");
+			set_target("undo-redo-box");
+			add_button("!ignorefocus", 0, 0, "undo");
+			set_image("undo", "hui:undo");
+			add_button("!ignorefocus", 1, 0, "redo");
+			set_image("redo", "hui:redo");
 
-		if (false) {
-			// unde/redo
-			set_target(":header:");
-			add_grid("!box,linked", 1, 0, "undo-redo-box");
-				set_target("undo-redo-box");
-				add_button("!ignorefocus", 0, 0, "undo");
-				set_image("undo", "hui:undo");
-				add_button("!ignorefocus", 1, 0, "redo");
-				set_image("redo", "hui:redo");
-
-			// copy/paste
-			set_target(":header:");
-			add_grid("!box,linked", 2, 0, "copy-paste-box");
-				set_target("copy-paste-box");
-				add_button("!ignorefocus", 0, 0, "copy");
-				set_image("copy", "hui:copy");
-				add_button("!ignorefocus", 0, 0, "paste");
-				set_image("paste", "hui:paste");
-		}
-
-
+		// copy/paste
 		set_target(":header:");
-		add_menu_button("!menu=header-menu,arrow=no", 1, 1, "menu-x");
-		set_image("menu-x", "hui:open-menu");
-
-		// ...
-		set_target(":header:");
-		add_grid("!box,linked", 0, 1, "other-box");
-			set_target("other-box");
-			add_button("!ignorefocus", 0, 0, "compile");
-			set_image("compile", "hui:media-record");
-			set_tooltip("compile", "Compile");
-			add_button("!ignorefocus", 0, 0, "compile_and_run");
-			set_image("compile_and_run", "hui:media-play");
-			set_tooltip("compile_and_run", "Compile and run");
-			add_menu_button("!menu=commands-menu", 1, 1, "menu-commands");
-	} else {
-		from_resource("main-window-legacy");
-		set_menu(hui::create_resource_menu("menu", this));
-		get_toolbar(0)->set_by_id("toolbar");
+		add_grid("!box,linked", 2, 0, "copy-paste-box");
+			set_target("copy-paste-box");
+			add_button("!ignorefocus", 0, 0, "copy");
+			set_image("copy", "hui:copy");
+			add_button("!ignorefocus", 0, 0, "paste");
+			set_image("paste", "hui:paste");
 	}
+
+
+	set_target(":header:");
+	add_menu_button("!menu=header-menu,arrow=no", 1, 1, "menu-x");
+	set_image("menu-x", "hui:open-menu");
+
+	// ...
+	set_target(":header:");
+	add_grid("!box,linked", 0, 1, "other-box");
+		set_target("other-box");
+		add_button("!ignorefocus", 0, 0, "compile");
+		set_image("compile", "hui:media-record");
+		set_tooltip("compile", "Compile");
+		add_button("!ignorefocus", 0, 0, "compile_and_run");
+		set_image("compile_and_run", "hui:media-play");
+		set_tooltip("compile_and_run", "Compile and run");
+		add_menu_button("!menu=commands-menu", 1, 1, "menu-commands");
 
 
 	event("about", [this] { on_about(); });
@@ -96,8 +89,10 @@ SgribthMakerWindow::SgribthMakerWindow() :
 
 	event("new", [this] { create_new_document(); });
 	set_key_code("new", hui::KEY_N + hui::KEY_CONTROL, "hui:new");
-	event("open", [this] { on_open(); });
+	event("open", [this] { open(); });
 	set_key_code("open", hui::KEY_O + hui::KEY_CONTROL, "hui:open");
+	event("open-directory", [this] { open_directory(); });
+	set_key_code("open-directory", hui::KEY_O + hui::KEY_CONTROL + hui::KEY_SHIFT, "hui:open");
 	event("save", [this] { on_save(); });
 	set_key_code("save", hui::KEY_S + hui::KEY_CONTROL, "hui:save");
 	event("save_as", [this] { on_save_as(); });
@@ -156,10 +151,20 @@ SgribthMakerWindow::SgribthMakerWindow() :
 	embed(console, "table_main", 2, 0);
 	console->show(false);
 
+	file_browser = new FileBrowser(this);
+	file_browser->out_file_clicked >> create_data_sink<Path>([this] (const Path& p) {
+		for (auto v: source_views)
+			if (v->doc->filename == p) {
+				set_active_view(v);
+				return;
+			}
+		load_from_file(p);
+	});
+
 	show();
 
-	event_x("file_list", "hui:select", [this] { on_file_list(); });
-	event_x("function_list", "hui:select", [this] { on_function_list(); });
+	event_x("file-list", "hui:select", [this] { on_file_list(); });
+	event_x("structure-list", "hui:select", [this] { on_function_list(); });
 	event("info-close", [this] { hide_control("grid-info", true); });
 }
 
@@ -211,11 +216,11 @@ void SgribthMakerWindow::set_window_title() {
 }
 
 void SgribthMakerWindow::update_doc_list() {
-	reset("file_list");
+	reset("file-list");
 	foreachi(SourceView *v, source_views, i) {
-		add_string("file_list", v->doc->name(false));
+		add_string("file-list", v->doc->name(false));
 		if (cur_view == v)
-			set_int("file_list", i);
+			set_int("file-list", i);
 	}
 }
 
@@ -228,17 +233,17 @@ void SgribthMakerWindow::update_menu() {
 }
 
 void SgribthMakerWindow::update_function_list() {
-	reset("function_list");
+	reset("structure-list");
 	if (!cur_doc()->parser)
 		return;
 	auto labels = cur_doc()->parser->FindLabels(cur_view);
 	int last_parent = -1;
 	foreachi(Parser::Label &l, labels, i) {
 		if (l.level > 0) {
-			add_child_string("function_list", last_parent, l.name);
+			add_child_string("structure-list", last_parent, l.name);
 		} else {
 			last_parent = i;
-			add_string("function_list", l.name);
+			add_string("structure-list", l.name);
 		}
 	}
 }
@@ -306,7 +311,7 @@ base::future<void> SgribthMakerWindow::allow_doc_termination(Document *d) {
 
 SourceView* SgribthMakerWindow::create_new_document() {
 	if (source_views.num > 0)
-		hide_control("table_side", false);
+		hide_control("table-left", false);
 
 	string id = format("edit-%06d", randi(1000000));
 
@@ -392,6 +397,13 @@ void SgribthMakerWindow::open() {
 	});
 }
 
+void SgribthMakerWindow::open_directory() {
+	hui::file_dialog_dir(this, _("Open directory"), working_dir_from_doc(cur_doc()), {}).then([this] (const Path &dir) {
+		file_browser->set_directory(dir);
+		hide_control("table-left", false);
+	});
+}
+
 void SgribthMakerWindow::save_as(Document *doc, const hui::Callback &on_success, const hui::Callback &on_fail) {
 	hui::file_dialog_save(this, _("Save file"), working_dir_from_doc(doc), {"showfilter=" + _("All (*.*)"), "filter=*"}).then([this,doc,on_success,on_fail] (const Path &filename) {
 		if (write_to_file(doc, filename))
@@ -410,10 +422,6 @@ void SgribthMakerWindow::save(Document *doc, const hui::Callback &on_success, co
 	} else {
 		save_as(doc, on_success, on_fail);
 	}
-}
-
-void SgribthMakerWindow::on_open() {
-	open();
 }
 
 void SgribthMakerWindow::on_save() {

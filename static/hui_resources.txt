@@ -215,39 +215,57 @@ table_doc
 
 1
 0
-2
-TabControl
-tab
-nobar,expandx
-0
-0
-0
+3
 Grid
-table_side
-noexpandx,width=180,vertical,hidden
-1
+table-left
+noexpandx,width=300,vertical,hidden
+0
 0
 2
 Group
-group_files
+group-file-browser
+
+0
+0
+1
+DrawingArea
+file-browser
+expandy
+0
+0
+0
+Group
+group-file-list
+
+1
+0
+1
+ListView
+file-list
+nobar,select-single,noindent,height=320,noexpandy
+0
+0
+0
+TabControl
+tab
+nobar,expandx
+1
+0
+0
+Grid
+table-right
+noexpandx,width=220,vertical,hidden
+2
+0
+1
+Group
+group-structure
 
 0
 0
 1
 ListView
-file_list
-nobar,select-single,noindent
-0
-0
-0
-Expander
-function_expander
-
-1
-0
-1
-ListView
-function_list
+structure-list
 nobar,noindent
 0
 0
@@ -783,7 +801,7 @@ image=hui:media-play,important
 # Language
 English
 # Number Of IDs
-64
+65
 # Text
 /about
 About...
@@ -914,17 +932,20 @@ function
 main-window-legacy/group_files
 Documents
 
-main-window/file_list
+main-window/file-list
 file
 
-main-window/function_expander
-Functions
+main-window/group-file-browser
+Directory
 
-main-window/function_list
-function
+main-window/group-file-list
+Open documents
 
-main-window/group_files
-Documents
+main-window/group-structure
+Structure
+
+main-window/structure-list
+items
 
 menu/menu_edit
 Edit
