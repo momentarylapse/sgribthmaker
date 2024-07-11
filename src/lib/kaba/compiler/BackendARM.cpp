@@ -55,7 +55,6 @@ void BackendARM::correct() {
 	cmd.next_cmd_target(0);
 	add_function_intro_params(cur_func);
 	serializer->cmd_list_out("x:b", "post paramtrafo");
-
 }
 
 void BackendARM::implement_mov_chunk(kaba::SerialNode &c, int i, int size) {
@@ -71,7 +70,7 @@ void BackendARM::implement_mov_chunk(kaba::SerialNode &c, int i, int size) {
 		insert_cmd(Asm::InstID::MOV, param_shift(p1, j, TypeInt8), param_shift(p2, j, TypeInt8));
 }
 
-int first_bit(int i) {
+static int first_bit(int i) {
 	for (int b=0; b<32; b++)
 		if ((i & (1 << b)) != 0)
 			return b;
@@ -300,6 +299,8 @@ void BackendARM::correct_implement_commands() {
 		//msg_write("CORRECT  " + c.str(serializer));
 		if (c.inst == Asm::InstID::LABEL)
 			continue;
+		if (c.inst == Asm::InstID::ASM)
+			continue;
 		if (c.inst == Asm::InstID::MOV) {
 			int size = c.p[0].type->size;
 			auto p0 = c.p[0];
@@ -412,23 +413,23 @@ void BackendARM::correct_implement_commands() {
 			insert_cmd(Asm::InstID::MOV, param_vreg(p0.type, reg), param_imm(TypeBool, 1), p_none);
 			insert_cmd(Asm::InstID::MOV, param_vreg(p0.type, reg), param_imm(TypeBool, 0), p_none);
 			if (inst == Asm::InstID::SETZ) { // ==
-				cmd.cmd[cmd.next_cmd_index - 2].cond = Asm::ArmCond::EQUAL;
-				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::NOT_EQUAL;
+				cmd.cmd[cmd.next_cmd_index - 2].cond = Asm::ArmCond::Equal;
+				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::NotEqual;
 			} else if (inst == Asm::InstID::SETNZ) { // !=
-				cmd.cmd[cmd.next_cmd_index - 2].cond = Asm::ArmCond::NOT_EQUAL;
-				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::EQUAL;
+				cmd.cmd[cmd.next_cmd_index - 2].cond = Asm::ArmCond::NotEqual;
+				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::Equal;
 			} else if (inst == Asm::InstID::SETNLE) { // >
-				cmd.cmd[cmd.next_cmd_index - 2].cond = Asm::ArmCond::GREATER_THAN;
-				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::LESS_EQUAL;
+				cmd.cmd[cmd.next_cmd_index - 2].cond = Asm::ArmCond::GreaterThan;
+				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::LessEqual;
 			} else if (inst == Asm::InstID::SETNL) { // >=
-				cmd.cmd[cmd.next_cmd_index - 2].cond = Asm::ArmCond::GREATER_EQUAL;
-				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::LESS_THAN;
+				cmd.cmd[cmd.next_cmd_index - 2].cond = Asm::ArmCond::GreaterEqual;
+				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::LessThan;
 			} else if (inst == Asm::InstID::SETL) { // <
-				cmd.cmd[cmd.next_cmd_index - 2].cond = Asm::ArmCond::LESS_THAN;
-				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::GREATER_EQUAL;
+				cmd.cmd[cmd.next_cmd_index - 2].cond = Asm::ArmCond::LessThan;
+				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::GreaterEqual;
 			} else if (inst == Asm::InstID::SETLE) { // <=
-				cmd.cmd[cmd.next_cmd_index - 2].cond = Asm::ArmCond::LESS_EQUAL;
-				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::GREATER_THAN;
+				cmd.cmd[cmd.next_cmd_index - 2].cond = Asm::ArmCond::LessEqual;
+				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::GreaterThan;
 			}
 			_from_register_8(reg, p0, 0);
 			i = cmd.next_cmd_index - 1;
@@ -438,17 +439,17 @@ void BackendARM::correct_implement_commands() {
 			cmd.remove_cmd(i);
 			insert_cmd(Asm::InstID::B, p0);
 			if (inst == Asm::InstID::JZ) { // ==
-				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::EQUAL;
+				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::Equal;
 			} else if (inst == Asm::InstID::JNZ) { // !=
-				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::NOT_EQUAL;
+				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::NotEqual;
 			} else if (inst == Asm::InstID::JNLE) { // >
-				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::GREATER_THAN;
+				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::GreaterThan;
 			} else if (inst == Asm::InstID::JNL) { // >=
-				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::GREATER_EQUAL;
+				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::GreaterEqual;
 			} else if (inst == Asm::InstID::JL) { // <
-				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::LESS_THAN;
+				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::LessThan;
 			} else if (inst == Asm::InstID::JLE) { // <=
-				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::LESS_EQUAL;
+				cmd.cmd[cmd.next_cmd_index - 1].cond = Asm::ArmCond::LessEqual;
 			}
 			i = cmd.next_cmd_index - 1;
 		} else if (c.inst == Asm::InstID::LEA) {
@@ -537,7 +538,7 @@ int BackendARM::_reference_to_register_32(const SerialNodeParam &p, const Class 
 	return reg;
 }
 
-bool arm_type_uses_int_register(const Class *t) {
+static bool arm_type_uses_int_register(const Class *t) {
 	return (t == TypeInt) /*or (t == TypeInt64)*/ or (t == TypeInt8) or (t == TypeBool) or t->is_enum() or t->is_some_pointer();
 }
 
@@ -785,7 +786,8 @@ namespace armhelper {
 inline void try_map_param_to_stack(SerialNodeParam &p, int v, SerialNodeParam &stackvar) {
 	if ((p.kind == NodeKind::VAR_TEMP) and (p.p == v)) {
 		p.kind = NodeKind::LOCAL_MEMORY;//stackvar.kind;
-		p.p = stackvar.p;
+		p.p = stackvar.p + p.shift;
+		p.shift = 0;
 	} else if ((p.kind == NodeKind::DEREF_VAR_TEMP) and (p.p == v)) {
 		p.kind = NodeKind::DEREF_LOCAL_MEMORY;
 		p.p = stackvar.p;
@@ -831,10 +833,13 @@ Asm::InstructionParam BackendARM::prepare_param(Asm::InstID inst, SerialNodePara
 			do_error("prepare_param: evil global of type " + p.type->name);
 		return Asm::param_deref_imm(p.p + p.shift, size);
 	} else if (p.kind == NodeKind::LOCAL_MEMORY) {
-		return Asm::param_deref_reg_shift(Asm::RegID::R13, p.p + p.shift, p.type->size);
+		if (config.target.instruction_set == Asm::InstructionSet::ARM64)
+			return Asm::param_deref_reg_shift(Asm::RegID::R31, p.p + p.shift, p.type->size);
+		else
+			return Asm::param_deref_reg_shift(Asm::RegID::R13, p.p + p.shift, p.type->size);
 		//if ((param_size != 1) and (param_size != 2) and (param_size != 4) and (param_size != 8))
 		//	param_size = -1; // lea doesn't need size...
-			//s->DoErrorInternal("get_param: evil local of type " + p.type->name);
+			//s->DoErrorInternal("prepare_param: evil local of type " + p.type->name);
 	} else if (p.kind == NodeKind::CONSTANT_BY_ADDRESS) {
 		bool imm_allowed = Asm::get_instruction_allow_const(inst);
 		if ((imm_allowed) and (p.type->is_pointer_raw())) {
@@ -846,7 +851,7 @@ Asm::InstructionParam BackendARM::prepare_param(Asm::InstID inst, SerialNodePara
 		}
 	} else if (p.kind == NodeKind::IMMEDIATE) {
 		if (p.shift > 0)
-			do_error("get_param: immediate + shift");
+			do_error("prepare_param: immediate + shift");
 		return Asm::param_imm(p.p, p.type->size);
 	} else {
 		do_error("prepare_param: unexpected param..." + p.str(serializer));
@@ -904,7 +909,6 @@ void BackendARM::assemble() {
 		}
 	}
 	list->add2(Asm::InstID::ALIGN_OPCODE);
-
 }
 
 
