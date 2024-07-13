@@ -24,8 +24,15 @@ else
 endif
 zlibdep = dependency('zlib')
 add_project_arguments('-DHAS_LIB_ZLIB=1', language : ['cpp'])
-gldep = dependency('GL')
-add_project_arguments('-DHAS_LIB_GL=1', language : ['cpp'])
+
+# optional dependency: gl
+d = cc.find_library('GL', required : false)
+if d.found()
+	add_project_arguments('-DHAS_LIB_GL=1', language : ['cpp'])
+	deps += [d]
+else
+	add_project_arguments('-DHAS_LIB_GL=0', language : ['cpp'])
+endif
 
 # optional dependency: xlib
 d = cc.find_library('X11', required : false)
@@ -53,7 +60,7 @@ if d.found()
 else
 	add_project_arguments('-DHAS_LIB_DL=0', language : ['cpp'])
 endif
-deps = [mdep, threaddep, gtk4dep, gtk3dep, zlibdep, gldep]
+deps = [mdep, threaddep, gtk4dep, gtk3dep, zlibdep]
 
 
 sources = [
