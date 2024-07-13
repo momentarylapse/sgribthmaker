@@ -13,12 +13,15 @@
 #include "lib/os/time.h"
 #include "lib/os/filesystem.h"
 #include "lib/kaba/kaba.h"
+#if HAS_LIB_GL
 #include "lib/nix/nix.h"
+#endif
 
-
+#if HAS_LIB_GL
 namespace nix {
 	extern string shader_error;
 }
+#endif
 
 CodeCompiler::CodeCompiler(Document *_doc) {
 	doc = _doc;
@@ -103,6 +106,7 @@ void CodeCompiler::compile_kaba() {
 
 void CodeCompiler::compile_shader() {
 	return;
+#if HAS_LIB_GL
 
 	// NOPE, not working
 	hui::run_later(0.01f, [this] {
@@ -128,6 +132,7 @@ void CodeCompiler::compile_shader() {
 
 	//msg_set_verbose(ALLOW_LOGGING);
 	});
+#endif
 }
 
 static SgribthMakerWindow* cur_win;
