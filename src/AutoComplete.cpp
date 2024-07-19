@@ -245,7 +245,7 @@ AutoComplete::Data AutoComplete::run(const string& _code, const Path &filename, 
 		s->tree->parser->Exp.analyse(s->tree.get(), code);
 
 		//printf("--b\n");
-		s->tree->parser->parse_macros(true);
+		s->tree->parser->parse_legacy_macros(true);
 
 		//printf("--c\n");
 		s->tree->parser->parse_top_level();
