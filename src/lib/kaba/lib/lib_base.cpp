@@ -8,6 +8,7 @@
 #include "../dynamic/sorting.h"
 #include "../template/template.h"
 #include "../template/implicit.h"
+#include "../template/implicit_future.h"
 #include "../../os/msg.h"
 #include "../../os/terminal.h"
 #include "../../base/callable.h"
@@ -55,11 +56,16 @@ const Class *TypeReferenceT;
 const Class *TypeArrayT;
 const Class *TypeListT;
 const Class *TypeDictT;
-const Class *TypeCallableT;
+const Class *TypeCallableFPT;
+const Class *TypeCallableBindT;
 const Class *TypeOptionalT;
 const Class *TypeProductT;
 const Class *TypeFutureT;
 const Class *TypeFutureCoreT;
+const Class *TypeEnumT;
+const Class *TypeStructT;
+const Class *TypeInterfaceT;
+const Class *TypeNamespaceT;
 
 string class_name_might_need_parantheses(const Class *t);
 
@@ -214,16 +220,20 @@ string kaba_char2str(int c) {
 	//return string(&c, 1);
 }
 
-string kaba_int32_hex(int i) {
-	return format("%x", i);
+string kaba_int32_hex(unsigned int i) {
+	return format("0x%08x", i);
+}
+
+string kaba_int64_hex(int64 i) {
+	return format("0x%016x", i);
 }
 
 /*string kaba_char_repr(char c) {
 	return "'" + string(&c, 1).escape() + "'";
 }*/
 
-string kaba_int8_to_str(char c) {
-	return format("0x%02x", (int)c);//i2s((int)c);
+string kaba_int8_to_str(uint8_t c) {
+	return format("0x%02x", (unsigned int)c);
 }
 
 /*string kaba_char_repr(char c) {
@@ -299,6 +309,9 @@ Array<int> enum_all(const Class *e) {
 	return r;
 }
 
+
+
+
 void SIAddXCommands(Context *c) {
 
 	add_func("@sorted", TypeDynamicArray, &array_sort, Flags::STATIC | Flags::RAISES_EXCEPTIONS);
@@ -350,6 +363,30 @@ void SIAddPackageBase(Context *c) {
 	cur_package->tree->base_class->type_aliases.add({"float", TypeFloat32});
 
 
+
+	TypeRawT = add_class_template("ptr", {"T"}, new TemplateClassInstantiatorPointerRaw);
+	TypeXferT = add_class_template("xfer", {"T"}, new TemplateClassInstantiatorPointerXfer);
+	TypeSharedT = add_class_template("shared", {"T"}, new TemplateClassInstantiatorPointerShared);
+	TypeSharedNotNullT = add_class_template("shared!", {"T"}, new TemplateClassInstantiatorPointerSharedNotNull);
+	TypeOwnedT = add_class_template("owned", {"T"}, new TemplateClassInstantiatorPointerOwned);
+	TypeOwnedNotNullT = add_class_template("owned!", {"T"}, new TemplateClassInstantiatorPointerOwnedNotNull);
+	TypeAliasT = add_class_template("@alias", {"T"}, new TemplateClassInstantiatorPointerAlias);
+	TypeReferenceT = add_class_template("ref", {"T"}, new TemplateClassInstantiatorReference);
+	TypeArrayT = add_class_template("@Array", {"T"}, new TemplateClassInstantiatorArray);
+	TypeListT = add_class_template("@List", {"T"}, new TemplateClassInstantiatorList);
+	TypeDictT = add_class_template("@Dict", {"T"}, new TemplateClassInstantiatorDict);
+	TypeCallableFPT = add_class_template("@CallableFP", {"T..."}, new TemplateClassInstantiatorCallableFP);
+	TypeCallableBindT = add_class_template("@Bind", {"T..."}, new TemplateClassInstantiatorCallableBind);
+	TypeOptionalT = add_class_template("@Optional", {"T"}, new TemplateClassInstantiatorOptional);
+	TypeProductT = add_class_template("@Product", {"T"}, new TemplateClassInstantiatorProduct);
+	TypeFutureCoreT = add_class_template("@FutureCore", {"T"}, new TemplateClassInstantiatorFutureCore);
+	TypeFutureT = add_class_template("future", {"T"}, new TemplateClassInstantiatorFuture);
+	TypeStructT = add_class_template("@Struct", {"T"}, nullptr);
+	TypeEnumT = add_class_template("@Enum", {"T"}, new TemplateClassInstantiatorEnum);
+	TypeInterfaceT = add_class_template("@Interface", {"T"}, nullptr);
+	TypeNamespaceT = add_class_template("@Namespace", {"T"}, nullptr);
+
+
 	add_class(TypeObject);
 		class_add_func(Identifier::Func::INIT, TypeVoid, &_VirtualBase::__init__, Flags::MUTABLE);
 		class_add_func_virtual(Identifier::Func::DELETE, TypeVoid, &VirtualBase::__delete__, Flags::MUTABLE);
@@ -389,76 +426,6 @@ void SIAddPackageBase(Context *c) {
 		class_add_func(Identifier::Func::INIT, TypeVoid, nullptr, Flags::MUTABLE);
 			func_set_inline(InlineID::SHARED_POINTER_INIT);
 
-
-#if 0
-	auto create_class = [] (SyntaxTree *tree, const string &name, Class::Type type, int size, int array_size, const Class *parent, const Array<const Class*> &params, int token_id) {
-		/*msg_write("CREATE " + name);
-		msg_write(p2s(tree));
-		msg_write(p2s(tree->implicit_symbols.get()));*/
-
-		auto ns = tree->implicit_symbols.get();
-
-		Class *t = new Class(type, name, size, tree, parent, params);
-		t->token_id = token_id;
-		tree->owned_classes.add(t);
-
-		// link namespace
-		ns->classes.add(t);
-		t->name_space = ns;
-		return t;
-	};
-
-	auto create_auto_class = [create_class] (SyntaxTree *tree, const string &name, Class::Type type, int size, int array_size, const Class *parent, const Array<const Class*> &params, int token_id) {
-		auto t = create_class(tree, name, type, size, array_size, parent, params, token_id);
-		AutoImplementer ai(nullptr, tree);
-		ai.complete_type(t, 0, token_id);
-		return t;
-	};
-
-	TypeRawT = add_class_template("ptr", {"T"}, [create_auto_class] (SyntaxTree *tree, const Array<const Class*>& params, int token_id) {
-		return create_auto_class(tree, class_name_might_need_parantheses(params[0]) + "*", Class::Type::POINTER_RAW, config.target.pointer_size, 0, nullptr, params, token_id);
-//		return create_auto_class(format("%s[%s]", Identifier::RAW_POINTER, params[0]->name), Class::Type::POINTER_RAW, config.target.pointer_size, 0, nullptr, params, token_id);
-	});
-	TypeXferT = add_class_template("xfer", {"T"}, [create_auto_class] (SyntaxTree *tree, const Array<const Class*>& params, int token_id) {
-		return create_auto_class(tree, format("%s[%s]", Identifier::XFER, params[0]->name), Class::Type::POINTER_XFER_NOT_NULL, config.target.pointer_size, 0, nullptr, params, token_id);
-	});
-	TypeSharedT = add_class_template("shared", {"T"}, [create_auto_class] (SyntaxTree *tree, const Array<const Class*>& params, int token_id) {
-		return create_auto_class(tree, format("%s[%s]", Identifier::SHARED, params[0]->name), Class::Type::POINTER_SHARED, config.target.pointer_size, 0, nullptr, params, token_id);
-	});
-	TypeSharedNotNullT = add_class_template("shared!", {"T"}, [create_auto_class] (SyntaxTree *tree, const Array<const Class*>& params, int token_id) {
-		return create_auto_class(tree, format("%s![%s]", Identifier::SHARED, params[0]->name), Class::Type::POINTER_SHARED_NOT_NULL, config.target.pointer_size, 0, nullptr, params, token_id);
-	});
-	TypeOwnedT = add_class_template("owned", {"T"}, [create_auto_class] (SyntaxTree *tree, const Array<const Class*>& params, int token_id) {
-		return create_auto_class(tree, format("%s[%s]", Identifier::OWNED, params[0]->name), Class::Type::POINTER_OWNED, config.target.pointer_size, 0, nullptr, params, token_id);
-	});
-	TypeOwnedNotNullT = add_class_template("owned!", {"T"}, [create_auto_class] (SyntaxTree *tree, const Array<const Class*>& params, int token_id) {
-		return create_auto_class(tree, format("%s![%s]", Identifier::OWNED, params[0]->name), Class::Type::POINTER_OWNED_NOT_NULL, config.target.pointer_size, 0, nullptr, params, token_id);
-	});
-	TypeAliasT = add_class_template("@alias", {"T"}, [create_auto_class] (SyntaxTree *tree, const Array<const Class*>& params, int token_id) {
-		return create_auto_class(tree, format("%s[%s]", Identifier::ALIAS, params[0]->name), Class::Type::POINTER_ALIAS, config.target.pointer_size, 0, nullptr, params, token_id);
-	});
-	TypeReferenceT = add_class_template("ref", {"T"}, [create_auto_class] (SyntaxTree *tree, const Array<const Class*>& params, int token_id) {
-		return create_auto_class(tree, class_name_might_need_parantheses(params[0]) + "&", Class::Type::REFERENCE, config.target.pointer_size, 0, nullptr, params, token_id);
-	});
-
-#else
-	TypeRawT = add_class_template("ptr", {"T"}, nullptr);
-	TypeXferT = add_class_template("xfer", {"T"}, nullptr);
-	TypeSharedT = add_class_template("shared", {"T"}, nullptr);
-	TypeSharedNotNullT = add_class_template("shared!", {"T"}, nullptr);
-	TypeOwnedT = add_class_template("owned", {"T"}, nullptr);
-	TypeOwnedNotNullT = add_class_template("owned!", {"T"}, nullptr);
-	TypeAliasT = add_class_template("@alias", {"T"}, nullptr);
-	TypeReferenceT = add_class_template("ref", {"T"}, nullptr);
-	TypeArrayT = add_class_template("@Array", {"T"}, nullptr);
-	TypeListT = add_class_template("@List", {"T"}, nullptr);
-	TypeDictT = add_class_template("@Dict", {"T"}, nullptr);
-	TypeCallableT = add_class_template("@Callable", {"T..."}, nullptr);
-	TypeOptionalT = add_class_template("@Optional", {"T"}, nullptr);
-	TypeProductT = add_class_template("@Product", {"T"}, nullptr);
-	TypeFutureCoreT = add_class_template("@FutureCore", {"T"}, nullptr);
-	TypeFutureT = add_class_template("future", {"T"}, nullptr);
-#endif
 
 	TypeObjectP			= add_type_p_raw(TypeObject);
 
@@ -941,6 +908,8 @@ void SIAddPackageBase(Context *c) {
 		func_add_param("c", TypeInt32);
 	add_func("hex", TypeString, &kaba_int32_hex, Flags::STATIC | Flags::PURE);
 		func_add_param("i", TypeInt32);
+	add_func("hex", TypeString, &kaba_int64_hex, Flags::STATIC | Flags::PURE);
+		func_add_param("i", TypeInt64);
 	// debug output
 	/*add_func("cprint", TypeVoid, &_cstringout, Flags::STATIC);
 		func_add_param("str", TypeCString);*/
