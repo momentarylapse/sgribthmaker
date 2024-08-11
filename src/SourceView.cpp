@@ -9,7 +9,6 @@
 #include "LineNumberView.h"
 #include "History.h"
 #include "Document.h"
-#include "SgribthMakerWindow.h"
 #include "lib/hui/Controls/Control.h"
 #include "parser/BaseParser.h"
 
