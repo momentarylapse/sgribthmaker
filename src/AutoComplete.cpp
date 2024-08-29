@@ -53,7 +53,7 @@ void _ParseFunctionBody(SyntaxTree *syntax, Function *f) {
 // instructions
 	try {
 		while (more_to_parse) {
-			more_to_parse = syntax->parser->parse_abstract_function_command(f, indent0);
+			more_to_parse = syntax->parser->parse_abstract_indented_command_into_block(f->block.get(), indent0);
 		}
 	} catch (...) {}
 }
