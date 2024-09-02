@@ -72,6 +72,7 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 	keywords.add(kaba::Identifier::WHILE);
 	keywords.add(kaba::Identifier::FOR);
 	keywords.add(kaba::Identifier::IN);
+	keywords.add(kaba::Identifier::MATCH);
 	keywords.add(kaba::Identifier::RETURN);
 	keywords.add(kaba::Identifier::BREAK);
 	keywords.add(kaba::Identifier::CONTINUE);

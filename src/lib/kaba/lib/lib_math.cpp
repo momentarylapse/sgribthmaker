@@ -239,32 +239,47 @@ public:
 #pragma GCC optimize("0")
 
 
-
 class KabaAny : public Any {
 public:
-	Any _cdecl _map_get(const string &key)
+	const Class* _get_class() {
+		if (type == Any::Type::Int)
+			return TypeInt32;
+		if (type == Any::Type::Float)
+			return TypeFloat32;
+		if (type == Any::Type::Bool)
+			return TypeBool;
+		if (type == Any::Type::String)
+			return TypeString;
+		if (type == Any::Type::List)
+			return TypeAnyList;
+		if (type == Any::Type::Dict)
+			return TypeAnyDict;
+		return TypeVoid;
+	}
+
+	//Any _cdecl _map_get(const string &key)
 	//{ return map_get(key); }
-	{ KABA_EXCEPTION_WRAPPER(return map_get(key)); return Any(); }
-	void _cdecl _map_set(const string &key, Any &a)
-	{ KABA_EXCEPTION_WRAPPER(map_set(key, a)); }
-	Any _cdecl _array_get(int i)
-	{ KABA_EXCEPTION_WRAPPER(return array_get(i)); return Any(); }
-	void _cdecl _array_set(int i, Any &a)
-	{ KABA_EXCEPTION_WRAPPER(array_set(i, a)); }
-	void _cdecl _array_add(Any &a)
-	{ KABA_EXCEPTION_WRAPPER(add(a)); }
-	Array<Any> _as_array() {
-		if (type != TYPE_ARRAY)
-			kaba_raise_exception(new KabaException("not an array"));
+	//{ KABA_EXCEPTION_WRAPPER(return map_get(key)); return Any(); }
+	//void _cdecl _map_set(const string &key, Any &a)
+	//{ KABA_EXCEPTION_WRAPPER(map_set(key, a)); }
+	//Any _cdecl _array_get(int i)
+	//{ KABA_EXCEPTION_WRAPPER(return array_get(i)); return Any(); }
+	//void _cdecl _array_set(int i, Any &a)
+	//{ KABA_EXCEPTION_WRAPPER(array_set(i, a)); }
+	//void _cdecl _array_add(Any &a)
+	//{ KABA_EXCEPTION_WRAPPER(add(a)); }
+	Array<Any> _as_list() {
+		if (type != Type::List)
+			kaba_raise_exception(new KabaException("not a list"));
 		Array<Any> r;
-		r.set_ref(as_array());
+		r.set_ref(as_list());
 		return r;
 	}
-	Array<int> _as_map() { // FAKE TYPE!!!
-		if (type != TYPE_MAP)
-			kaba_raise_exception(new KabaException("not a map"));
+	Array<int> _as_dict() { // FAKE TYPE!!!
+		if (type != Type::Dict)
+			kaba_raise_exception(new KabaException("not a dict"));
 		Array<int> r;
-		r.set_ref((Array<int>&)as_map());
+		r.set_ref((Array<int>&)as_dict());
 		return r;
 	}
 	
@@ -279,22 +294,22 @@ public:
 			*(string*)var = aa.as_string();
 		} else if (type->is_pointer_raw()) {
 			*(const void**)var = aa.as_pointer();
-		} else if (type->is_list() and (aa.type == TYPE_ARRAY)) {
+		} else if (type->is_list() and (aa.type == Type::List)) {
 			auto *t_el = type->get_array_element();
 			auto *a = (DynamicArray*)var;
-			auto &b = aa.as_array();
+			auto &b = aa.as_list();
 			int n = b.num;
 			array_resize(var, type, n);
 			for (int i=0; i<n; i++)
 				unwrap(aa[i], (char*)a->data + i * t_el->size, t_el);
-		} else if (type->is_array() and (aa.type == TYPE_ARRAY)) {
+		} else if (type->is_array() and (aa.type == Type::List)) {
 			auto *t_el = type->get_array_element();
-			auto &b = aa.as_array();
+			auto &b = aa.as_list();
 			int n = min(type->array_length, b.num);
 			for (int i=0; i<n; i++)
 				unwrap(b[i], (char*)var + i*t_el->size, t_el);
-		} else if (aa.type == TYPE_MAP) {
-			[[maybe_unused]] auto &map = aa.as_map();
+		} else if (aa.type == Type::Dict) {
+			[[maybe_unused]] auto &map = aa.as_dict();
 			auto keys = aa.keys();
 			for (auto &e: type->elements)
 				for (string &k: keys)
@@ -402,6 +417,9 @@ void SIAddPackageMath(Context *c) {
 
 	const_cast<Class*>(TypeVec3)->alignment = 4; // would be updated too late, otherwise...
 	auto TypeVec3Optional = add_type_optional(TypeVec3);
+
+	auto TypeAnyRef = add_type_ref(TypeAny);
+	auto TypeAnyRefOptional = add_type_optional(TypeAnyRef);
 	
 	// dirty hack :P
 	/*if (config.instruction_set == Asm::INSTRUCTION_SET_AMD64)*/ {
@@ -902,30 +920,30 @@ void SIAddPackageMath(Context *c) {
 		add_operator(OperatorID::MULTIPLYS, TypeVoid, TypeVli, TypeVli, InlineID::NONE, algebra_p(&vli::operator*=));
 	
 	add_class(TypeAny);
-		class_add_element("type", TypeClassRef, &Any::_class);
 		class_add_element("data", TypePointer, &Any::data);
 		class_add_func(Identifier::Func::INIT, TypeVoid, &Any::__init__, Flags::MUTABLE);
 		class_add_func(Identifier::Func::DELETE, TypeVoid, &Any::__delete__, Flags::MUTABLE);
 		class_add_func(Identifier::Func::ASSIGN, TypeVoid, &Any::set, Flags::MUTABLE);
 			func_add_param("a", TypeAny);
+		class_add_func("type", TypeClassRef, &KabaAny::_get_class);
 		class_add_func("clear", TypeVoid, &Any::clear, Flags::MUTABLE);
 		class_add_func(Identifier::Func::LENGTH, TypeInt32, &Any::length, Flags::PURE);
-		class_add_func(Identifier::Func::GET, TypeAny, &KabaAny::_map_get, Flags::REF | Flags::RAISES_EXCEPTIONS);
+		class_add_func(Identifier::Func::GET, TypeAnyRefOptional, &KabaAny::dict_get, Flags::REF);
 			func_add_param("key", TypeString);
-		class_add_func(Identifier::Func::SET, TypeVoid, &KabaAny::_map_set, Flags::RAISES_EXCEPTIONS | Flags::MUTABLE);
+		class_add_func(Identifier::Func::SET, TypeVoid, &KabaAny::dict_set, Flags::MUTABLE);
 			func_add_param("key", TypeString);
 			func_add_param("value", TypeAny);
-		class_add_func(Identifier::Func::GET, TypeAny, &KabaAny::_array_get, Flags::REF | Flags::RAISES_EXCEPTIONS);
+		class_add_func(Identifier::Func::GET, TypeAnyRefOptional, &KabaAny::list_get, Flags::REF);
 			func_add_param("index", TypeInt32);
-		class_add_func(Identifier::Func::SET, TypeVoid, &KabaAny::_array_set, Flags::RAISES_EXCEPTIONS | Flags::MUTABLE);
+		class_add_func(Identifier::Func::SET, TypeVoid, &KabaAny::list_set, Flags::MUTABLE);
 			func_add_param("index", TypeInt32);
 			func_add_param("value", TypeAny);
 		class_add_func("is_empty", TypeBool, &Any::is_empty, Flags::PURE);
 		class_add_func("has", TypeBool, &Any::has, Flags::PURE);
 			func_add_param("key", TypeString);
-		class_add_func("add", TypeVoid, &KabaAny::_array_add, Flags::RAISES_EXCEPTIONS | Flags::MUTABLE);
+		class_add_func("add", TypeVoid, &KabaAny::add, Flags::MUTABLE);
 			func_add_param("a", TypeAny);
-		class_add_func("drop", TypeVoid, &Any::map_drop, Flags::RAISES_EXCEPTIONS | Flags::MUTABLE);
+		class_add_func("drop", TypeVoid, &Any::dict_drop, Flags::RAISES_EXCEPTIONS | Flags::MUTABLE);
 			func_add_param("key", TypeString);
 		class_add_func("keys", TypeStringList, &Any::keys, Flags::PURE);//, Flags::RAISES_EXCEPTIONS);
 		class_add_func("__bool__", TypeBool, &Any::_bool, Flags::PURE);
@@ -940,6 +958,10 @@ void SIAddPackageMath(Context *c) {
 			func_add_param("s", TypeString);
 		add_operator(OperatorID::ADDS, TypeVoid, TypeAny, TypeAny, InlineID::NONE, &Any::_add);// operator+=);
 		add_operator(OperatorID::SUBTRACTS, TypeVoid, TypeAny, TypeAny, InlineID::NONE, &Any::_sub);// operator-);
+
+
+	lib_create_optional<void*>(TypeAnyRefOptional);
+
 
 	add_func("@int2any", TypeAny, &int2any, Flags::STATIC);
 		func_add_param("i", TypeInt32);
@@ -1243,8 +1265,8 @@ void SIAddPackageMath(Context *c) {
 
 
 	add_class(TypeAny);
-		class_add_func("as_array", TypeAnyList, &KabaAny::_as_array, Flags::REF | Flags::RAISES_EXCEPTIONS);
-		class_add_func("as_map", TypeAnyDict, &KabaAny::_as_map, Flags::REF | Flags::RAISES_EXCEPTIONS);
+		class_add_func("as_list", TypeAnyList, &KabaAny::_as_list, Flags::REF | Flags::RAISES_EXCEPTIONS);
+		class_add_func("as_dict", TypeAnyDict, &KabaAny::_as_dict, Flags::REF | Flags::RAISES_EXCEPTIONS);
 
 
 	add_type_cast(50, TypeInt32, TypeAny, "math.@int2any");
