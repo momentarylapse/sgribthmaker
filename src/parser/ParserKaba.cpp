@@ -33,13 +33,13 @@ void add_class_content(ParserKaba *p, const kaba::Class *c, const string &ns) {
 
 void add_scope_content(ParserKaba *p, kaba::Scope& scope, const string &ns) {
 	for (auto& e: scope.entries) {
-		if (e.kind == kaba::NodeKind::CLASS)
+		if (e.kind == kaba::NodeKind::Class)
 			add_class(p, reinterpret_cast<const kaba::Class*>(e.p), ns);
-		if (e.kind == kaba::NodeKind::CONSTANT)
+		if (e.kind == kaba::NodeKind::Constant)
 			p->constants.add(ns + reinterpret_cast<const kaba::Constant*>(e.p)->name);
-		if (e.kind == kaba::NodeKind::FUNCTION)
+		if (e.kind == kaba::NodeKind::Function)
 			p->functions.add(ns + reinterpret_cast<const kaba::Function*>(e.p)->name);
-		if (e.kind == kaba::NodeKind::VAR_GLOBAL) {
+		if (e.kind == kaba::NodeKind::VarGlobal) {
 			auto v = reinterpret_cast<const kaba::Variable *>(e.p);
 			if (allowed(ns + v->name))
 				p->global_variables.add(ns + v->name);
@@ -57,103 +57,103 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 	line_comment_begin = "#";
 	string_sub_begin = "{{";
 	string_sub_end = "}}";
-	keywords.add(kaba::Identifier::ENUM);
-	keywords.add(kaba::Identifier::CLASS);
-	keywords.add(kaba::Identifier::STRUCT);
-	keywords.add(kaba::Identifier::INTERFACE);
-	keywords.add(kaba::Identifier::FUNC);
-	keywords.add(kaba::Identifier::MACRO);
-	keywords.add(kaba::Identifier::EXTENDS);
-	keywords.add(kaba::Identifier::USE);
-	keywords.add(kaba::Identifier::ASM);
-	keywords.add(kaba::Identifier::IMPORT);
-	keywords.add(kaba::Identifier::IF);
-	keywords.add(kaba::Identifier::ELSE);
-	keywords.add(kaba::Identifier::WHILE);
-	keywords.add(kaba::Identifier::FOR);
-	keywords.add(kaba::Identifier::IN);
-	keywords.add(kaba::Identifier::MATCH);
-	keywords.add(kaba::Identifier::RETURN);
-	keywords.add(kaba::Identifier::BREAK);
-	keywords.add(kaba::Identifier::CONTINUE);
-	keywords.add(kaba::Identifier::NOT);
-	keywords.add(kaba::Identifier::AND);
-	keywords.add(kaba::Identifier::OR);
-	keywords.add(kaba::Identifier::NEW);
-	keywords.add(kaba::Identifier::DELETE);
-	modifiers.add(kaba::Identifier::EXTERN);
-	modifiers.add(kaba::Identifier::VIRTUAL);
-	modifiers.add(kaba::Identifier::OVERRIDE);
-	modifiers.add(kaba::Identifier::STATIC);
-	keywords.add(kaba::Identifier::CONST);
-	modifiers.add(kaba::Identifier::MUTABLE);
-	modifiers.add(kaba::Identifier::SELFREF);
-	modifiers.add(kaba::Identifier::REF);
-	modifiers.add(kaba::Identifier::OUT);
-	modifiers.add(kaba::Identifier::SHARED);
-	modifiers.add(kaba::Identifier::OWNED);
-	modifiers.add(kaba::Identifier::XFER);
-	modifiers.add(kaba::Identifier::RAW_POINTER);
-	modifiers.add(kaba::Identifier::FUTURE);
-	keywords.add(kaba::Identifier::SELF);
-	keywords.add(kaba::Identifier::SUPER);
-	keywords.add(kaba::Identifier::NAMESPACE);
-	keywords.add(kaba::Identifier::RAISE);
-	keywords.add(kaba::Identifier::TRY);
-	keywords.add(kaba::Identifier::EXCEPT);
-	keywords.add(kaba::Identifier::PASS);
-	keywords.add(kaba::Identifier::LET);
-	keywords.add(kaba::Identifier::VAR);
-	keywords.add(kaba::Identifier::LAMBDA);
-	keywords.add(kaba::Identifier::RAW_FUNCTION_POINTER);
-	keywords.add(kaba::Identifier::TRUST_ME);
-	compiler_functions.add(kaba::Identifier::DYN);
-	compiler_functions.add(kaba::Identifier::WEAK);
-	compiler_functions.add(kaba::Identifier::GIVE);
-	compiler_functions.add(kaba::Identifier::LEN);
-	compiler_functions.add(kaba::Identifier::SIZEOF);
-	compiler_functions.add(kaba::Identifier::STR);
-	compiler_functions.add(kaba::Identifier::TYPEOF);
-	compiler_functions.add(kaba::Identifier::SORT);
-	compiler_functions.add(kaba::Identifier::FILTER);
-	operator_functions.add(kaba::Identifier::Func::INIT);
-	operator_functions.add(kaba::Identifier::Func::DELETE);
-	operator_functions.add(kaba::Identifier::Func::DELETE_OVERRIDE);
-	operator_functions.add(kaba::Identifier::Func::ASSIGN);
-	operator_functions.add(kaba::Identifier::Func::CONTAINS);
-	operator_functions.add(kaba::Identifier::Func::STR);
-	operator_functions.add(kaba::Identifier::Func::REPR);
-	operator_functions.add(kaba::Identifier::Func::SET);
-	operator_functions.add(kaba::Identifier::Func::GET);
-	operator_functions.add(kaba::Identifier::Func::SUBARRAY);
-	operator_functions.add(kaba::Identifier::Func::ADD);
-	operator_functions.add(kaba::Identifier::Func::ADD_ASSIGN);
-	operator_functions.add(kaba::Identifier::Func::SUBTRACT);
-	operator_functions.add(kaba::Identifier::Func::SUBTRACT_ASSIGN);
-	operator_functions.add(kaba::Identifier::Func::MULTIPLY);
-	operator_functions.add(kaba::Identifier::Func::MULTIPLY_ASSIGN);
-	operator_functions.add(kaba::Identifier::Func::DIVIDE);
-	operator_functions.add(kaba::Identifier::Func::DIVIDE_ASSIGN);
-	operator_functions.add(kaba::Identifier::Func::SMALLER);
-	operator_functions.add(kaba::Identifier::Func::SMALLER_EQUAL);
-	operator_functions.add(kaba::Identifier::Func::GREATER);
-	operator_functions.add(kaba::Identifier::Func::GREATER_EQUAL);
-	operator_functions.add(kaba::Identifier::Func::EQUAL);
-	operator_functions.add(kaba::Identifier::Func::NOT_EQUAL);
-	operator_functions.add(kaba::Identifier::Func::MODULO);
-	operator_functions.add(kaba::Identifier::Func::INCREASE);
-	operator_functions.add(kaba::Identifier::Func::DECREASE);
-	operator_functions.add(kaba::Identifier::Func::EXPONENT);
-	operator_functions.add(kaba::Identifier::Func::SHIFT_LEFT);
-	operator_functions.add(kaba::Identifier::Func::SHIFT_RIGHT);
-	operator_functions.add(kaba::Identifier::Func::AND);
-	operator_functions.add(kaba::Identifier::Func::OR);
-	operator_functions.add(kaba::Identifier::Func::NOT);
-	operator_functions.add(kaba::Identifier::Func::NEGATIVE);
-	operator_functions.add(kaba::Identifier::Func::BIT_AND);
-	operator_functions.add(kaba::Identifier::Func::BIT_OR);
-	operator_functions.add(kaba::Identifier::Func::MAPS_TO);
-	operator_functions.add(kaba::Identifier::Func::CALL);
+	keywords.add(kaba::Identifier::Enum);
+	keywords.add(kaba::Identifier::Class);
+	keywords.add(kaba::Identifier::Struct);
+	keywords.add(kaba::Identifier::Interface);
+	keywords.add(kaba::Identifier::Func);
+	keywords.add(kaba::Identifier::Macro);
+	keywords.add(kaba::Identifier::Extends);
+	keywords.add(kaba::Identifier::Use);
+	keywords.add(kaba::Identifier::Asm);
+	keywords.add(kaba::Identifier::Import);
+	keywords.add(kaba::Identifier::If);
+	keywords.add(kaba::Identifier::Else);
+	keywords.add(kaba::Identifier::While);
+	keywords.add(kaba::Identifier::For);
+	keywords.add(kaba::Identifier::In);
+	keywords.add(kaba::Identifier::Match);
+	keywords.add(kaba::Identifier::Return);
+	keywords.add(kaba::Identifier::Break);
+	keywords.add(kaba::Identifier::Continue);
+	keywords.add(kaba::Identifier::Not);
+	keywords.add(kaba::Identifier::And);
+	keywords.add(kaba::Identifier::Or);
+	keywords.add(kaba::Identifier::New);
+	keywords.add(kaba::Identifier::Delete);
+	modifiers.add(kaba::Identifier::Extern);
+	modifiers.add(kaba::Identifier::Virtual);
+	modifiers.add(kaba::Identifier::Override);
+	modifiers.add(kaba::Identifier::Static);
+	keywords.add(kaba::Identifier::Const);
+	modifiers.add(kaba::Identifier::Mutable);
+	modifiers.add(kaba::Identifier::Selfref);
+	modifiers.add(kaba::Identifier::Ref);
+	modifiers.add(kaba::Identifier::Out);
+	modifiers.add(kaba::Identifier::Shared);
+	modifiers.add(kaba::Identifier::Owned);
+	modifiers.add(kaba::Identifier::Xfer);
+	modifiers.add(kaba::Identifier::RawPointer);
+	modifiers.add(kaba::Identifier::Future);
+	keywords.add(kaba::Identifier::Self);
+	keywords.add(kaba::Identifier::Super);
+	keywords.add(kaba::Identifier::Namespace);
+	keywords.add(kaba::Identifier::Raise);
+	keywords.add(kaba::Identifier::Try);
+	keywords.add(kaba::Identifier::Except);
+	keywords.add(kaba::Identifier::Pass);
+	keywords.add(kaba::Identifier::Let);
+	keywords.add(kaba::Identifier::Var);
+	keywords.add(kaba::Identifier::Lambda);
+	keywords.add(kaba::Identifier::RawFunctionPointer);
+	keywords.add(kaba::Identifier::TrustMe);
+	compiler_functions.add(kaba::Identifier::Dyn);
+	compiler_functions.add(kaba::Identifier::Weak);
+	compiler_functions.add(kaba::Identifier::Give);
+	compiler_functions.add(kaba::Identifier::Len);
+	compiler_functions.add(kaba::Identifier::Sizeof);
+	compiler_functions.add(kaba::Identifier::Str);
+	compiler_functions.add(kaba::Identifier::Typeof);
+	compiler_functions.add(kaba::Identifier::Sort);
+	compiler_functions.add(kaba::Identifier::Filter);
+	operator_functions.add(kaba::Identifier::func::Init);
+	operator_functions.add(kaba::Identifier::func::Delete);
+	operator_functions.add(kaba::Identifier::func::DeleteOverride);
+	operator_functions.add(kaba::Identifier::func::Assign);
+	operator_functions.add(kaba::Identifier::func::Contains);
+	operator_functions.add(kaba::Identifier::func::Str);
+	operator_functions.add(kaba::Identifier::func::Repr);
+	operator_functions.add(kaba::Identifier::func::Set);
+	operator_functions.add(kaba::Identifier::func::Get);
+	operator_functions.add(kaba::Identifier::func::Subarray);
+	operator_functions.add(kaba::Identifier::func::Add);
+	operator_functions.add(kaba::Identifier::func::AddAssign);
+	operator_functions.add(kaba::Identifier::func::Subtract);
+	operator_functions.add(kaba::Identifier::func::SubtractAssign);
+	operator_functions.add(kaba::Identifier::func::Multiply);
+	operator_functions.add(kaba::Identifier::func::MultiplyAssign);
+	operator_functions.add(kaba::Identifier::func::Divide);
+	operator_functions.add(kaba::Identifier::func::DivideAssign);
+	operator_functions.add(kaba::Identifier::func::Smaller);
+	operator_functions.add(kaba::Identifier::func::SmallerEqual);
+	operator_functions.add(kaba::Identifier::func::Greater);
+	operator_functions.add(kaba::Identifier::func::GreaterEqual);
+	operator_functions.add(kaba::Identifier::func::Equal);
+	operator_functions.add(kaba::Identifier::func::NotEqual);
+	operator_functions.add(kaba::Identifier::func::Modulo);
+	operator_functions.add(kaba::Identifier::func::Increase);
+	operator_functions.add(kaba::Identifier::func::Decrease);
+	operator_functions.add(kaba::Identifier::func::Exponent);
+	operator_functions.add(kaba::Identifier::func::ShiftLeft);
+	operator_functions.add(kaba::Identifier::func::ShiftRight);
+	operator_functions.add(kaba::Identifier::func::And);
+	operator_functions.add(kaba::Identifier::func::Or);
+	operator_functions.add(kaba::Identifier::func::Not);
+	operator_functions.add(kaba::Identifier::func::Negative);
+	operator_functions.add(kaba::Identifier::func::BitAnd);
+	operator_functions.add(kaba::Identifier::func::BitOr);
+	operator_functions.add(kaba::Identifier::func::MapsTo);
+	operator_functions.add(kaba::Identifier::func::Call);
 	keywords.add("as");
 	//for (auto &s: kaba::Statements)
 	//	special_words.add(s.name);
@@ -220,13 +220,13 @@ Array<Parser::Label> ParserKaba::FindLabels(SourceView *sv) {
 			} else {
 				continue;
 			}
-			if (s.find(kaba::Identifier::EXTERN) >= 0)
+			if (s.find(kaba::Identifier::Extern) >= 0)
 				continue;
 			labels.add(Label(s, l, 0));
 		} else if ((last_class.num > 0) && (s[0] == '\t') && (char_type(s[1]) == CHAR_LETTER)) {
 			if (s.find("(") < 0)
 				continue;
-			s = s.replace(kaba::Identifier::VIRTUAL + " ", "").replace(kaba::Identifier::OVERRIDE + " ", "").trim();
+			s = s.replace(kaba::Identifier::Virtual + " ", "").replace(kaba::Identifier::Override + " ", "").trim();
 			labels.add(Label(s, l, 1));
 		}
 	}

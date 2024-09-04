@@ -36,7 +36,7 @@ const kaba::Class *simplify_type(const kaba::Class *c) {
 }
 
 const kaba::Class *node_namespace(shared<kaba::Node> n) {
-	if (n->kind == NodeKind::CLASS)
+	if (n->kind == NodeKind::Class)
 		return n->as_class();
 	return simplify_type(n->type);
 }
