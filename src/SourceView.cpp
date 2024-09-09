@@ -10,6 +10,7 @@
 #include "History.h"
 #include "Document.h"
 #include "lib/hui/Controls/Control.h"
+#include "lib/hui/config.h"
 #include "parser/BaseParser.h"
 
 

@@ -1,6 +1,7 @@
 #include "FileBrowser.h"
 #include "lib/os/filesystem.h"
 #include "lib/math/rect.h"
+#include "lib/image/color.h"
 
 static float ITEM_HEIGHT = 28;
 

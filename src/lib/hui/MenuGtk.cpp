@@ -4,7 +4,11 @@
 #include "Controls/MenuItemToggle.h"
 #include "hui.h"
 #include "internal.h"
+#include "../image/image.h"
+#include "../os/msg.h"
 #ifdef HUI_API_GTK
+
+#include <gtk/gtk.h>
 
 #ifdef HUGE
 #undef HUGE

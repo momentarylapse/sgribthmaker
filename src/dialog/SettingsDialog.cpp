@@ -8,6 +8,7 @@
 #include "SettingsDialog.h"
 #include "../SourceView.h"
 #include "../SgribthMakerWindow.h"
+#include "../lib/hui/config.h"
 
 SettingsDialog::SettingsDialog(SgribthMakerWindow *_mw) :
 	hui::Window("settings_dialog", _mw)
@@ -34,22 +35,21 @@ SettingsDialog::SettingsDialog(SgribthMakerWindow *_mw) :
 	set_int("context_list", 0);
 	onContextListSelect();
 
-	event("close", std::bind(&SettingsDialog::onClose, this));
-	event("font", std::bind(&SettingsDialog::onFont, this));
-	event("tab_width", std::bind(&SettingsDialog::onTabWidth, this));
-	event_x("context_list", "hui:select", std::bind(&SettingsDialog::onContextListSelect, this));
-	event("schemes", std::bind(&SettingsDialog::onSchemes, this));
-	event("copy_scheme", std::bind(&SettingsDialog::onCopyScheme, this));
-	event("scheme_background", std::bind(&SettingsDialog::onSchemeChange, this));
-	event("color_text", std::bind(&SettingsDialog::onSchemeChange, this));
-	event("color_background", std::bind(&SettingsDialog::onSchemeChange, this));
-	event("overwrite_background", std::bind(&SettingsDialog::onSchemeChange, this));
-	event("bold", std::bind(&SettingsDialog::onSchemeChange, this));
-	event("italic", std::bind(&SettingsDialog::onSchemeChange, this));
+	event("close", [this] { onClose(); });
+	event("font", [this] { onFont(); });
+	event("tab_width", [this] { onTabWidth(); });
+	event_x("context_list", "hui:select", [this] { onContextListSelect(); });
+	event("schemes", [this] { onSchemes(); });
+	event("copy_scheme", [this] { onCopyScheme(); });
+	event("scheme_background", [this] { onSchemeChange(); });
+	event("color_text", [this] { onSchemeChange(); });
+	event("color_background", [this] { onSchemeChange(); });
+	event("overwrite_background", [this] { onSchemeChange(); });
+	event("bold", [this] { onSchemeChange(); });
+	event("italic", [this] { onSchemeChange(); });
 }
 
-SettingsDialog::~SettingsDialog() {
-}
+SettingsDialog::~SettingsDialog() = default;
 
 
 void SettingsDialog::onClose() {

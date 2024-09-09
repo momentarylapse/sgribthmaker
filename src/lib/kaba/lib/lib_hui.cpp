@@ -7,9 +7,11 @@
 
 #if __has_include("../../hui/hui.h")
 	#include "../../hui/hui.h"
+	#include "../../hui/config.h"
 	#define KABA_EXPORT_HUI
 #elif __has_include("../../hui_minimal/hui.h")
 	#include "../../hui_minimal/hui.h"
+	#include "../../hui_minimal/config.h"
 	#define KABA_EXPORT_HUI_MINIMAL
 #else
 	#error("we are re screwed.... no hui or hui_minimal")

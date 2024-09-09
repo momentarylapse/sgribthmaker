@@ -12,6 +12,7 @@
 #include "Console.h"
 #include "lib/os/time.h"
 #include "lib/os/filesystem.h"
+#include "lib/os/msg.h"
 #include "lib/kaba/kaba.h"
 #if HAS_LIB_GL
 #include "lib/nix/nix.h"
@@ -27,8 +28,7 @@ CodeCompiler::CodeCompiler(Document *_doc) {
 	doc = _doc;
 }
 
-CodeCompiler::~CodeCompiler() {
-}
+CodeCompiler::~CodeCompiler() = default;
 
 void CodeCompiler::compile() {
 	string ext = doc->filename.extension();

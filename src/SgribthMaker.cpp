@@ -3,6 +3,7 @@
 #include "HighlightScheme.h"
 #include "parser/BaseParser.h"
 #include "lib/kaba/kaba.h"
+#include "lib/hui/config.h"
 
 
 

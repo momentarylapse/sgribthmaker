@@ -10,6 +10,7 @@
 
 #include "lib/hui/hui.h"
 #include "HighlightScheme.h"
+#include <gtk/gtk.h>
 
 class Document;
 class History;
@@ -19,7 +20,7 @@ class LineNumberView;
 class SourceView : public hui::EventHandler {
 public:
 	SourceView(hui::Window *win, const string &id, Document *d);
-	virtual ~SourceView();
+	~SourceView() override;
 
 	void clear();
 	bool fill(const string &text);

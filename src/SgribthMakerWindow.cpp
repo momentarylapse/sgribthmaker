@@ -2,6 +2,7 @@
 #include "SgribthMaker.h"
 #include "lib/base/base.h"
 #include "lib/hui/hui.h"
+#include "lib/hui/config.h"
 #include "lib/os/filesystem.h"
 #include "lib/os/msg.h"
 #include "dialog/SettingsDialog.h"
