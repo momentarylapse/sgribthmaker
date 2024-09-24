@@ -17,6 +17,8 @@
 #include "AutoComplete.h"
 #include "CodeCompiler.h"
 
+#include <stdio.h>
+
 extern string AppTitle;
 
 SgribthMakerWindow::SgribthMakerWindow() :
@@ -117,6 +119,11 @@ SgribthMakerWindow::SgribthMakerWindow() :
 	set_key_code("copy", hui::KEY_C + mod, "hui:copy");
 	event("paste", [this] { on_paste(); });
 	set_key_code("paste", hui::KEY_V + mod, "hui:paste");
+#ifdef OS_MAC
+	set_key_code("cut", hui::KEY_X + hui::KEY_CONTROL, "hui:cut");
+	set_key_code("copy", hui::KEY_C + hui::KEY_CONTROL, "hui:copy");
+	set_key_code("paste", hui::KEY_V + hui::KEY_CONTROL, "hui:paste");
+#endif
 	event("comment", [this] { on_comment(); });
 	set_key_code("comment", hui::KEY_D + mod, "");
 	event("uncomment", [this] { on_uncomment(); });
