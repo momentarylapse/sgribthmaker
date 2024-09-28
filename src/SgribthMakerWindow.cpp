@@ -120,7 +120,8 @@ SgribthMakerWindow::SgribthMakerWindow() :
 	event("paste", [this] { on_paste(); });
 	set_key_code("paste", hui::KEY_V + mod, "hui:paste");
 #ifdef OS_MAC
-	set_key_code("cut", hui::KEY_X + hui::KEY_CONTROL, "hui:cut");
+	set_key_code("cut", hui::KEY_X + hui::KEY_CONTROL
+		, "hui:cut");
 	set_key_code("copy", hui::KEY_C + hui::KEY_CONTROL, "hui:copy");
 	set_key_code("paste", hui::KEY_V + hui::KEY_CONTROL, "hui:paste");
 #endif
