@@ -120,10 +120,17 @@ SgribthMakerWindow::SgribthMakerWindow() :
 	event("paste", [this] { on_paste(); });
 	set_key_code("paste", hui::KEY_V + mod, "hui:paste");
 #ifdef OS_MAC
-	set_key_code("cut", hui::KEY_X + hui::KEY_CONTROL
-		, "hui:cut");
+	set_key_code("cut", hui::KEY_X + hui::KEY_CONTROL, "hui:cut");
 	set_key_code("copy", hui::KEY_C + hui::KEY_CONTROL, "hui:copy");
 	set_key_code("paste", hui::KEY_V + hui::KEY_CONTROL, "hui:paste");
+	event("cursor-jump-end-of-line", [this] { cur_view->jump_to_end_of_line(false); });
+	set_key_code("cursor-jump-end-of-line", hui::KEY_RIGHT + mod, "");
+	event("cursor-jump-start-of-line", [this] { cur_view->jump_to_start_of_line(false); });
+	set_key_code("cursor-jump-start-of-line", hui::KEY_LEFT + mod, "");
+	event("cursor-select-end-of-line", [this] { cur_view->jump_to_end_of_line(true); });
+	set_key_code("cursor-select-end-of-line", hui::KEY_RIGHT + hui::KEY_SHIFT + mod, "");
+	event("cursor-select-start-of-line", [this] { cur_view->jump_to_start_of_line(true); });
+	set_key_code("cursor-select-start-of-line", hui::KEY_LEFT + hui::KEY_SHIFT + mod, "");
 #endif
 	event("comment", [this] { on_comment(); });
 	set_key_code("comment", hui::KEY_D + mod, "");
