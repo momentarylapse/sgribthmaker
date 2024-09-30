@@ -15,7 +15,7 @@ class Path;
 
 class Parser {
 public:
-	Parser(const string &name);
+	explicit Parser(const string &name);
 	virtual ~Parser();
 
 	string name;

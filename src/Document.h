@@ -21,8 +21,8 @@ class CodeCompiler;
 
 class Document : public obs::Node<VirtualBase> {
 public:
-	Document(SgribthMakerWindow *win);
-	virtual ~Document();
+	explicit Document(SgribthMakerWindow *win);
+	~Document() override;
 
 	obs::source out_not_utf8{this, "not-utf8"};
 

@@ -12,7 +12,7 @@ class Document;
 
 class CodeCompiler {
 public:
-	CodeCompiler(Document *doc);
+	explicit CodeCompiler(Document *doc);
 	~CodeCompiler();
 
 	void compile();

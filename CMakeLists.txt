@@ -340,6 +340,7 @@ add_executable(sgribthmaker
 	src/lib/pattern/Observable.cpp
 	src/parser/BaseParser.cpp
 	src/parser/ParserC.cpp
+	src/parser/ParserCmake.cpp
 	src/parser/ParserHui.cpp
 	src/parser/ParserIni.cpp
 	src/parser/ParserKaba.cpp

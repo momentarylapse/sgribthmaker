@@ -9,6 +9,7 @@
 #include "ParserText.h"
 #include "ParserKaba.h"
 #include "ParserC.h"
+#include "ParserCmake.h"
 #include "ParserShader.h"
 #include "ParserPython.h"
 #include "ParserHui.h"
@@ -21,12 +22,21 @@
 #define MAX_HIGHLIGHTING_SIZE	100000
 
 struct ParserAssociation {
-	Parser *parser;
+	Parser *parser = nullptr;
 	string extension;
-	ParserAssociation(){}
-	ParserAssociation(Parser *p, const string &ext) {
+	string base_name;
+	ParserAssociation() = default;
+	ParserAssociation(Parser *p, const string &ext, const string& _base_name = "") {
 		parser = p;
 		extension = ext;
+		base_name = _base_name;
+	}
+	bool is_applicable(const Path& filename) const {
+		if (extension.num > 0)
+			return filename.extension() == extension;
+		if (base_name.num > 0)
+			return filename.basename() == base_name;
+		return false;
 	}
 };
 static Array<ParserAssociation> ParserAssociations;
@@ -47,9 +57,7 @@ Parser::Parser(const string &_name) {
 	string_sub_end = "-none-";
 }
 
-Parser::~Parser()
-{
-}
+Parser::~Parser() = default;
 
 
 Array<Parser::Label> Parser::FindLabels(SourceView *sv) {
@@ -239,6 +247,7 @@ void InitParser() {
 	ParserAssociations.add(ParserAssociation(new ParserC, "cpp"));
 	ParserAssociations.add(ParserAssociation(new ParserC, "h"));
 	ParserAssociations.add(ParserAssociation(new ParserC, "hpp"));
+	ParserAssociations.add(ParserAssociation(new ParserCmake, "", "CMakeLists.txt"));
 	ParserAssociations.add(ParserAssociation(new ParserShader, "glsl"));
 	ParserAssociations.add(ParserAssociation(new ParserShader, "shader"));
 	ParserAssociations.add(ParserAssociation(new ParserPython, "py"));
@@ -249,9 +258,8 @@ void InitParser() {
 }
 
 Parser *GetParser(const Path &filename) {
-	string ext = filename.extension();
 	for (auto &a: ParserAssociations)
-		if (ext == a.extension)
+		if (a.is_applicable(filename))
 			return a.parser;
 	return ParserAssociations[0].parser;
 }
