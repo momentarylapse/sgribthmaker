@@ -17,32 +17,48 @@ ParserCmake::ParserCmake() : Parser("Python") {
 	keywords.add("endif");
 	keywords.add("macro");
 	keywords.add("endmacro");
-	operator_functions.add("AND");
-	operator_functions.add("GET");
-	operator_functions.add("MATCH");
-	operator_functions.add("NOT");
-	operator_functions.add("OR");
-	operator_functions.add("STREQUAL");
-	types.add("APPEND");
+
+	//operator_functions
+	keywords.add("APPEND");
+	keywords.add("AND");
+	keywords.add("FILTER");
+	keywords.add("FIND");
+	keywords.add("GET");
+	keywords.add("IN_LIST");
+	keywords.add("JOIN");
+	keywords.add("LENGTH");
+	keywords.add("MATCH");
+	keywords.add("NOT");
+	keywords.add("OR");
+	keywords.add("REVERSE");
+	keywords.add("SORT");
+	keywords.add("STREQUAL");
+	keywords.add("SUBLIST");
+
 	types.add("BOOL");
-	types.add("CACHE");
+	types.add("PATH");
+	types.add("FILEPATH");
+	types.add("STRING");
+	types.add("UNINITIALIZED");
+
+	//modifiers
+	modifiers.add("CACHE");
 	types.add("CODE");
 	types.add("DESTINATION");
 	types.add("DIRECTORIES");
 	types.add("DIRECTORY");
 	types.add("FILES");
-	types.add("FORCE");
+	modifiers.add("FORCE");
 	types.add("INSTALL_PREFIX");
-	types.add("INTERFACE");
-	types.add("NO_SOURCE_PERMISSIONS");
+	modifiers.add("INTERFACE");
+	modifiers.add("NO_SOURCE_PERMISSIONS");
 	types.add("ON");
 	types.add("OFF");
-	types.add("PUBLIC");
-	types.add("PRIVATE");
-	types.add("REQUIRED");
+	modifiers.add("PUBLIC");
+	modifiers.add("PRIVATE");
+	modifiers.add("REQUIRED");
 	types.add("SEND_ERROR");
 	types.add("STATUS");
-	types.add("STRING");
 	types.add("TARGETS");
 	types.add("VERSION");
 	types.add("WARNING");
@@ -62,6 +78,7 @@ ParserCmake::ParserCmake() : Parser("Python") {
 	compiler_functions.add("configure_file");
 	compiler_functions.add("copy_if_different");
 	compiler_functions.add("execute_process");
+	compiler_functions.add("file");
 	compiler_functions.add("find_library");
 	compiler_functions.add("find_package");
 	compiler_functions.add("find_program");
