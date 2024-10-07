@@ -6,8 +6,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_BUILD_TYPE Debug)
 
+
 #=======================================================================================
-#    libs
+#    libraries
 #=======================================================================================
 
 find_package(PkgConfig REQUIRED)
@@ -138,11 +139,42 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 list(APPEND DEPS Threads::Threads)
 
+
+#=======================================================================================
+#    MacOS bundle icon
+#=======================================================================================
+
+if (APPLE)
+	add_custom_command(OUTPUT sgribthmaker.icns
+		COMMAND [ -e sgribthmaker.iconset ] || mkdir sgribthmaker.iconset
+		COMMAND sips -z 16 16 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_16x16.png
+		COMMAND sips -z 32 32 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_16x16@2x.png
+		COMMAND sips -z 32 32 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_32x32.png
+		COMMAND sips -z 64 64 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_32x32@2x.png
+		COMMAND sips -z 128 128 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_128x128.png
+		COMMAND sips -z 256 256 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_128x128@2x.png
+		COMMAND sips -z 256 256 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_256x256.png
+		COMMAND sips -z 512 512 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_256x256@2x.png
+		COMMAND sips -z 512 512 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_512x512.png
+		COMMAND sips -z 1024 1024 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_512x512@2x.png
+		COMMAND iconutil -c icns sgribthmaker.iconset
+		DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png"
+		VERBATIM)
+
+
+	set(MACOSX_BUNDLE_ICON_FILE sgribthmaker.icns)
+	set_source_files_properties(sgribthmaker.icns
+		PROPERTIES
+		MACOSX_PACKAGE_LOCATION "Resources")
+endif()
+
+
 #=======================================================================================
 #    target sgribthmaker
 #=======================================================================================
 
-add_executable(sgribthmaker WIN32
+add_executable(sgribthmaker WIN32 MACOSX_BUNDLE
+	${MACOSX_BUNDLE_ICON_FILE}
 	src/dialog/CommandDialog.cpp
 	src/dialog/SettingsDialog.cpp
 	src/lib/algebra/crypto.cpp
@@ -364,29 +396,52 @@ target_compile_options(sgribthmaker PUBLIC ${COMPILE_OPTIONS})
 target_compile_definitions(sgribthmaker PUBLIC ${COMPILE_DEFINITIONS} INSTALL_PREFIX="${CMAKE_INSTALL_PREFIX}")
 target_link_libraries(sgribthmaker PUBLIC ${DEPS})
 
+
 #=======================================================================================
 #    install
 #=======================================================================================
+		
+if (APPLE)
+	set_target_properties(sgribthmaker
+		PROPERTIES
+		BUNDLE True
+		MACOSX_BUNDLE_BUNDLE_NAME sgribthmaker
+		MACOSX_BUNDLE_GUI_IDENTIFIER "michisoft"
+		MACOSX_BUNDLE_BUNDLE_VERSION "0.1"
+		MACOSX_BUNDLE_SHORT_VERSION_STRING "0.1"
+		RESOURCE "${resource_files}")
+	set(RESOURCE_DESTINATION bin/sgribthmaker.app/Contents/Resources)
+else ()
+	set(RESOURCE_DESTINATION share/sgribthmaker)
+endif ()
 
-install(TARGETS sgribthmaker DESTINATION bin)
-install(DIRECTORY "static/Icon" DESTINATION share/sgribthmaker)
-install(DIRECTORY "static/icons" DESTINATION share/sgribthmaker)
-install(FILES "static/hui_resources.txt" DESTINATION share/sgribthmaker)
-install(FILES "static/icon.ico" DESTINATION share/sgribthmaker)
-install(FILES "static/icon.png" DESTINATION share/sgribthmaker)
-install(FILES "static/kaba.ico" DESTINATION share/sgribthmaker)
-install(FILES "static/kaba.png" DESTINATION share/sgribthmaker)
-install(FILES "static/license.txt" DESTINATION share/sgribthmaker)
-install(FILES "static/license_small.txt" DESTINATION share/sgribthmaker)
+# binaries
+install(TARGETS sgribthmaker DESTINATION bin)	
 
-# install .desktop file
-set(INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/static/michisoft-sgribthmaker.desktop" /tmp/michisoft-sgribthmaker.desktop NO_SOURCE_PERMISSIONS)
-install(FILES /tmp/michisoft-sgribthmaker.desktop DESTINATION share/applications)
+# resources
+install(DIRECTORY "static/Icon" DESTINATION ${RESOURCE_DESTINATION})
+install(DIRECTORY "static/icons" DESTINATION ${RESOURCE_DESTINATION})
+install(FILES "static/hui_resources.txt" DESTINATION ${RESOURCE_DESTINATION})
+install(FILES "static/icon.ico" DESTINATION ${RESOURCE_DESTINATION})
+install(FILES "static/icon.png" DESTINATION ${RESOURCE_DESTINATION})
+install(FILES "static/kaba.ico" DESTINATION ${RESOURCE_DESTINATION})
+install(FILES "static/kaba.png" DESTINATION ${RESOURCE_DESTINATION})
+install(FILES "static/license.txt" DESTINATION ${RESOURCE_DESTINATION})
+install(FILES "static/license_small.txt" DESTINATION ${RESOURCE_DESTINATION})
 
-# install mime
-find_program(XDG_MIME_EXECUTABLE xdg-mime)
-if(NOT XDG_MIME_EXECUTABLE STREQUAL "XDG_MIME_EXECUTABLE_NOTFOUND")
-	install(CODE "message(STATUS \"installing mime file\")")
-	install(CODE "execute_process(COMMAND ${XDG_MIME_EXECUTABLE} install --novendor ${CMAKE_CURRENT_SOURCE_DIR}/static/michisoft-sgribthmaker.xml)")
+
+if (UNIX AND NOT APPLE)
+	# install .desktop file
+	set(INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+	configure_file("${CMAKE_CURRENT_SOURCE_DIR}/static/michisoft-sgribthmaker.desktop" /tmp/michisoft-sgribthmaker.desktop NO_SOURCE_PERMISSIONS)
+	install(FILES /tmp/michisoft-sgribthmaker.desktop DESTINATION share/applications)
+endif ()
+
+if (UNIX AND NOT APPLE)
+	# install mime
+	find_program(XDG_MIME_EXECUTABLE xdg-mime)
+	if(NOT XDG_MIME_EXECUTABLE STREQUAL "XDG_MIME_EXECUTABLE_NOTFOUND")
+		install(CODE "message(STATUS \"installing mime file\")")
+		install(CODE "execute_process(COMMAND ${XDG_MIME_EXECUTABLE} install --novendor ${CMAKE_CURRENT_SOURCE_DIR}/static/michisoft-sgribthmaker.xml)")
+	endif()
 endif()
