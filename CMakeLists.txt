@@ -142,7 +142,7 @@ list(APPEND DEPS Threads::Threads)
 #    target sgribthmaker
 #=======================================================================================
 
-add_executable(sgribthmaker
+add_executable(sgribthmaker WIN32
 	src/dialog/CommandDialog.cpp
 	src/dialog/SettingsDialog.cpp
 	src/lib/algebra/crypto.cpp

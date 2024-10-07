@@ -6,6 +6,6 @@ Name[de]=SgribthMaker Text-Editor
 Comment=Edits Kaba Scripts
 Comment[de]=Editor für Kaba Scripte
 Categories=Utility;TextEditor;
-Exec=${INSTALL_PREFIX}/bin/sgribthmaker %F
+Exec=sgribthmaker %F
 Icon=${INSTALL_PREFIX}/share/sgribthmaker/icon.png
 MimeType=text/plain;text/michisoft-kaba
