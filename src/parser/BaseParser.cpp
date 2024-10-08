@@ -248,6 +248,7 @@ void InitParser() {
 	ParserAssociations.add(ParserAssociation(new ParserC, "h"));
 	ParserAssociations.add(ParserAssociation(new ParserC, "hpp"));
 	ParserAssociations.add(ParserAssociation(new ParserCmake, "", "CMakeLists.txt"));
+	ParserAssociations.add(ParserAssociation(new ParserCmake, "cmake"));
 	ParserAssociations.add(ParserAssociation(new ParserShader, "glsl"));
 	ParserAssociations.add(ParserAssociation(new ParserShader, "shader"));
 	ParserAssociations.add(ParserAssociation(new ParserPython, "py"));

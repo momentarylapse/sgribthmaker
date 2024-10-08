@@ -21,8 +21,6 @@
 
 #include <gtk/gtk.h>
 
-#include "../os/file.h"
-
 #ifdef OS_WINDOWS
 #include <windows.h>
 #endif

@@ -44,6 +44,8 @@ ParserCmake::ParserCmake() : Parser("Python") {
 	//modifiers
 	modifiers.add("CACHE");
 	types.add("CODE");
+	types.add("COMMAND");
+	types.add("DEPENDS");
 	types.add("DESTINATION");
 	types.add("DIRECTORIES");
 	types.add("DIRECTORY");
@@ -53,7 +55,9 @@ ParserCmake::ParserCmake() : Parser("Python") {
 	modifiers.add("INTERFACE");
 	modifiers.add("NO_SOURCE_PERMISSIONS");
 	types.add("ON");
+	types.add("OUTPUT");
 	types.add("OFF");
+	types.add("PROPERTIES");
 	modifiers.add("PUBLIC");
 	modifiers.add("PRIVATE");
 	modifiers.add("REQUIRED");
@@ -63,15 +67,24 @@ ParserCmake::ParserCmake() : Parser("Python") {
 	types.add("VERSION");
 	types.add("WARNING");
 	global_variables.add("APPLE");
+	global_variables.add("CMAKE_CURRENT_SOURCE_DIR");
 	global_variables.add("CMAKE_CXX_STANDARD");
 	global_variables.add("CMAKE_CXX_STANDARD_REQUIRED");
 	global_variables.add("CMAKE_BUILD_TYPE");
 	global_variables.add("CMAKE_SYSTEM");
 	global_variables.add("CMAKE_SYSTEM_VERSION");
 	global_variables.add("MSVC");
+	global_variables.add("MACOSX_BUNDLE");
+	global_variables.add("MACOSX_BUNDLE_ICON_FILE");
+	global_variables.add("MACOSX_BUNDLE_BUNDLE_NAME");
+	global_variables.add("MACOSX_BUNDLE_GUI_IDENTIFIER");
+	global_variables.add("MACOSX_BUNDLE_BUNDLE_VERSION");
+	global_variables.add("MACOSX_BUNDLE_SHORT_VERSION_STRING");
+	global_variables.add("MACOSX_PACKAGE_LOCATION");
 	global_variables.add("THREADS_PREFER_PTHREAD_FLAG");
 	global_variables.add("UNIX");
 	global_variables.add("WIN32");
+	compiler_functions.add("add_custom_command");
 	compiler_functions.add("add_executable");
 	compiler_functions.add("add_library");
 	compiler_functions.add("cmake_minimum_required");
@@ -89,6 +102,8 @@ ParserCmake::ParserCmake() : Parser("Python") {
 	compiler_functions.add("pkg_check_modules");
 	compiler_functions.add("project");
 	compiler_functions.add("set");
+	compiler_functions.add("set_source_files_properties");
+	compiler_functions.add("set_target_properties");
 	compiler_functions.add("target_compile_options");
 	compiler_functions.add("target_compile_definitions");
 	compiler_functions.add("target_include_directories");
