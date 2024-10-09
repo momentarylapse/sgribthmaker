@@ -141,40 +141,10 @@ list(APPEND DEPS Threads::Threads)
 
 
 #=======================================================================================
-#    MacOS bundle icon
-#=======================================================================================
-
-if (APPLE)
-	add_custom_command(OUTPUT sgribthmaker.icns
-		COMMAND [ -e sgribthmaker.iconset ] || mkdir sgribthmaker.iconset
-		COMMAND sips -z 16 16 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_16x16.png
-		COMMAND sips -z 32 32 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_16x16@2x.png
-		COMMAND sips -z 32 32 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_32x32.png
-		COMMAND sips -z 64 64 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_32x32@2x.png
-		COMMAND sips -z 128 128 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_128x128.png
-		COMMAND sips -z 256 256 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_128x128@2x.png
-		COMMAND sips -z 256 256 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_256x256.png
-		COMMAND sips -z 512 512 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_256x256@2x.png
-		COMMAND sips -z 512 512 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_512x512.png
-		COMMAND sips -z 1024 1024 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_512x512@2x.png
-		COMMAND iconutil -c icns sgribthmaker.iconset
-		DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png"
-		VERBATIM)
-
-
-	set(MACOSX_BUNDLE_ICON_FILE sgribthmaker.icns)
-	set_source_files_properties(sgribthmaker.icns
-		PROPERTIES
-		MACOSX_PACKAGE_LOCATION "Resources")
-endif()
-
-
-#=======================================================================================
 #    target sgribthmaker
 #=======================================================================================
 
-add_executable(sgribthmaker WIN32 MACOSX_BUNDLE
-	${MACOSX_BUNDLE_ICON_FILE}
+add_executable(sgribthmaker WIN32
 	src/dialog/CommandDialog.cpp
 	src/dialog/SettingsDialog.cpp
 	src/lib/algebra/crypto.cpp
@@ -398,22 +368,54 @@ target_link_libraries(sgribthmaker PUBLIC ${DEPS})
 
 
 #=======================================================================================
+#    MacOS bundle
+#=======================================================================================
+
+if (APPLE)
+	add_custom_command(OUTPUT sgribthmaker.icns
+		COMMAND [ -e sgribthmaker.iconset ] || mkdir sgribthmaker.iconset
+		COMMAND sips -z 16 16 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_16x16.png
+		COMMAND sips -z 32 32 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_16x16@2x.png
+		COMMAND sips -z 32 32 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_32x32.png
+		COMMAND sips -z 64 64 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_32x32@2x.png
+		COMMAND sips -z 128 128 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_128x128.png
+		COMMAND sips -z 256 256 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_128x128@2x.png
+		COMMAND sips -z 256 256 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_256x256.png
+		COMMAND sips -z 512 512 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_256x256@2x.png
+		COMMAND sips -z 512 512 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_512x512.png
+		COMMAND sips -z 1024 1024 ${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png --out sgribthmaker.iconset/icon_512x512@2x.png
+		COMMAND iconutil -c icns sgribthmaker.iconset
+		DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png"
+		VERBATIM)
+
+	add_custom_target(bundle
+		COMMAND [ -e sgribthmaker.app ] || mkdir sgribthmaker.app
+		COMMAND [ -e sgribthmaker.app/Contents ] || mkdir sgribthmaker.app/Contents
+		COMMAND [ -e sgribthmaker.app/Contents/MacOS ] || mkdir sgribthmaker.app/Contents/MacOS
+		COMMAND cp -f sgribthmaker sgribthmaker.app/Contents/MacOS
+		COMMAND [ -e sgribthmaker.app/Contents/Resources ] || mkdir sgribthmaker.app/Contents/Resources
+		COMMAND cp -rf sgribthmaker.icns sgribthmaker.app/Contents/Resources
+		COMMAND cp -rf "${CMAKE_CURRENT_SOURCE_DIR}/static/Icon" sgribthmaker.app/Contents/Resources
+		COMMAND cp -rf "${CMAKE_CURRENT_SOURCE_DIR}/static/icons" sgribthmaker.app/Contents/Resources
+		COMMAND cp -rf "${CMAKE_CURRENT_SOURCE_DIR}/static/hui_resources.txt" sgribthmaker.app/Contents/Resources
+		COMMAND cp -rf "${CMAKE_CURRENT_SOURCE_DIR}/static/icon.ico" sgribthmaker.app/Contents/Resources
+		COMMAND cp -rf "${CMAKE_CURRENT_SOURCE_DIR}/static/icon.png" sgribthmaker.app/Contents/Resources
+		COMMAND cp -rf "${CMAKE_CURRENT_SOURCE_DIR}/static/kaba.ico" sgribthmaker.app/Contents/Resources
+		COMMAND cp -rf "${CMAKE_CURRENT_SOURCE_DIR}/static/kaba.png" sgribthmaker.app/Contents/Resources
+		COMMAND cp -rf "${CMAKE_CURRENT_SOURCE_DIR}/static/license.txt" sgribthmaker.app/Contents/Resources
+		COMMAND cp -rf "${CMAKE_CURRENT_SOURCE_DIR}/static/license_small.txt" sgribthmaker.app/Contents/Resources
+		COMMAND cp -rf "${CMAKE_CURRENT_SOURCE_DIR}/.cmake/Info.plist" sgribthmaker.app/Contents
+		DEPENDS sgribthmaker sgribthmaker.icns
+		VERBATIM)
+
+endif()
+
+
+#=======================================================================================
 #    install
 #=======================================================================================
-		
-if (APPLE)
-	set_target_properties(sgribthmaker
-		PROPERTIES
-		BUNDLE True
-		MACOSX_BUNDLE_BUNDLE_NAME sgribthmaker
-		MACOSX_BUNDLE_GUI_IDENTIFIER "michisoft"
-		MACOSX_BUNDLE_BUNDLE_VERSION "0.1"
-		MACOSX_BUNDLE_SHORT_VERSION_STRING "0.1"
-		RESOURCE "${resource_files}")
-	set(RESOURCE_DESTINATION bin/sgribthmaker.app/Contents/Resources)
-else ()
-	set(RESOURCE_DESTINATION share/sgribthmaker)
-endif ()
+
+set(RESOURCE_DESTINATION share/sgribthmaker)
 
 # binaries
 install(TARGETS sgribthmaker DESTINATION bin)	
