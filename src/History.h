@@ -17,13 +17,13 @@ class Document;
 
 class History : public obs::Node<VirtualBase> {
 public:
-	History(Document* doc);
-	virtual ~History();
+	explicit History(Document* doc);
+	~History() override;
 
 	void reset();
 
-	bool undoable();
-	bool redoable();
+	bool undoable() const;
+	bool redoable() const;
 
 	void undo();
 	void redo();
@@ -40,7 +40,7 @@ public:
 
 	class Command {
 	public:
-		virtual ~Command() {}
+		virtual ~Command() = default;
 		virtual void execute(Document* doc) = 0;
 		virtual void undo(Document* doc) = 0;
 	};
@@ -51,23 +51,28 @@ public:
 };
 
 class CommandInsert : public History::Command {
-	int pos, length;
-	char *text;
+	int pos;
+	string text;
 public:
-	CommandInsert(char *text, int length, int pos);
-	virtual ~CommandInsert();
-	virtual void execute(Document* doc);
-	virtual void undo(Document* doc);
+	CommandInsert(const string& text, int pos);
+	void execute(Document* doc) override;
+	void undo(Document* doc) override;
 };
 
 class CommandDelete : public History::Command {
-	int pos, length;
-	char *text;
+	int pos;
+	string text;
 public:
-	CommandDelete(char *text, int length, int pos);
-	virtual ~CommandDelete();
-	virtual void execute(Document* doc);
-	virtual void undo(Document* doc);
+	CommandDelete(const string& text, int pos);
+	void execute(Document* doc) override;
+	void undo(Document* doc) override;
+};
+
+class CommandGroup : public History::Command {
+public:
+	owned_array<Command> commands;
+	void execute(Document* doc) override;
+	void undo(Document* doc) override;
 };
 
 #endif /* HISTORY_H_ */

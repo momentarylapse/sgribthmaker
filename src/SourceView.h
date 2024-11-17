@@ -50,8 +50,8 @@ public:
 	void create_colors_if_not_busy();
 	void create_text_colors(int first_line = -1, int last_line = -1);
 
-	void undo_insert_text(int pos, char *text, int length);
-	void undo_remove_text(int pos, char *text, int length);
+	void undo_insert_text(int pos, const string& text);
+	void undo_remove_text(int pos, const string& text);
 
 
 	bool is_undoable();

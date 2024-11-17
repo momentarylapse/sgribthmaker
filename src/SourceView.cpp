@@ -38,9 +38,7 @@ void on_gtk_insert_text(GtkTextBuffer *textbuffer, GtkTextIter *location, gchar 
 		return;
 	}
 
-	char *text2 = (char*)g_malloc(len + 1);
-	memcpy(text2, text, len);
-	sv->history->execute(new CommandInsert(text2, len, gtk_text_iter_get_offset(location)));
+	sv->history->execute(new CommandInsert(string(text, len), gtk_text_iter_get_offset(location)));
 //	SetWindowTitle(); TODO
 
 	sv->needs_update_start = gtk_text_iter_get_line(location);
@@ -51,11 +49,11 @@ void on_gtk_insert_text(GtkTextBuffer *textbuffer, GtkTextIter *location, gchar 
 }
 
 void on_gtk_delete_range(GtkTextBuffer *textbuffer, GtkTextIter *start, GtkTextIter *end, gpointer user_data) {
-	SourceView *sv = (SourceView*)user_data;
+	auto sv = reinterpret_cast<SourceView*>(user_data);
 	if (!sv->history->enabled)
 		return;
 	char *text = gtk_text_buffer_get_text(textbuffer, start, end, false);
-	sv->history->execute(new CommandDelete(text, strlen(text), gtk_text_iter_get_offset(start)));
+	sv->history->execute(new CommandDelete(string(text, strlen(text)), gtk_text_iter_get_offset(start)));
 	//SetWindowTitle();
 
 	sv->needs_update_start = gtk_text_iter_get_line(start);
@@ -476,19 +474,19 @@ void SourceView::mark_word(int line, int start, int end, int type, char *p0, cha
 
 
 
-void SourceView::undo_insert_text(int pos, char *text, int length) {
+void SourceView::undo_insert_text(int pos, const string& text) {
 	GtkTextIter start;
 	gtk_text_buffer_get_iter_at_offset(tb, &start, pos);
-	gtk_text_buffer_insert(tb, &start, text, length);
+	gtk_text_buffer_insert(tb, &start, (const char*)text.data, text.num);
 	gtk_text_buffer_place_cursor(tb, &start);
 	gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb));
 }
 
-void SourceView::undo_remove_text(int pos, char *text, int length) {
+void SourceView::undo_remove_text(int pos, const string& text) {
 	GtkTextIter start, end;
 	gtk_text_buffer_get_iter_at_offset(tb, &start, pos);
 	gtk_text_buffer_get_iter_at_offset(tb, &end, pos);
-	gtk_text_iter_forward_chars(&end, g_utf8_strlen(text, length));
+	gtk_text_iter_forward_chars(&end, g_utf8_strlen((const char*)text.data, text.num));
 	gtk_text_buffer_delete(tb, &start, &end);
 	gtk_text_buffer_place_cursor(tb, &start);
 	gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(tv), gtk_text_buffer_get_insert(tb));

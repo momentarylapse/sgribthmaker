@@ -8,6 +8,7 @@
 #include "History.h"
 #include "Document.h"
 #include "SourceView.h"
+#include "lib/base/sort.h"
 #include "lib/hui/hui.h"
 
 
@@ -19,8 +20,7 @@ History::History(Document* _doc) {
 	doc = _doc;
 }
 
-History::~History() {
-}
+History::~History() = default;
 
 
 
@@ -33,11 +33,11 @@ void History::reset() {
 	out_changed.notify();
 }
 
-bool History::undoable() {
+bool History::undoable() const {
 	return pos > 0;
 }
 
-bool History::redoable() {
+bool History::redoable() const {
 	return pos < stack.num;
 }
 
@@ -89,39 +89,40 @@ void History::define_as_saved() {
 	out_changed.notify();
 }
 
-CommandInsert::CommandInsert(char *_text, int _length, int _pos) {
+CommandInsert::CommandInsert(const string& _text, int _pos) {
 	text = _text;
-	length = _length;
 	pos = _pos;
-}
-
-CommandInsert::~CommandInsert() {
-	g_free(text);
 }
 
 void CommandInsert::execute(Document* doc) {
-	doc->source_view->undo_insert_text(pos, text, length);
+	doc->source_view->undo_insert_text(pos, text);
 }
 
 void CommandInsert::undo(Document* doc) {
-	doc->source_view->undo_remove_text(pos, text, length);
+	doc->source_view->undo_remove_text(pos, text);
 }
 
-CommandDelete::CommandDelete(char *_text, int _length, int _pos) {
+CommandDelete::CommandDelete(const string& _text, int _pos) {
 	text = _text;
-	length = _length;
 	pos = _pos;
 }
 
-CommandDelete::~CommandDelete() {
-	g_free(text);
-}
-
 void CommandDelete::execute(Document* doc) {
-	doc->source_view->undo_remove_text(pos, text, length);
+	doc->source_view->undo_remove_text(pos, text);
 }
 
 void CommandDelete::undo(Document* doc) {
-	doc->source_view->undo_insert_text(pos, text, length);
+	doc->source_view->undo_insert_text(pos, text);
 }
+
+void CommandGroup::execute(Document* doc) {
+	for (auto c: weak(commands))
+		c->execute(doc);
+}
+
+void CommandGroup::undo(Document* doc) {
+	for (auto c: base::reverse(weak(commands)))
+		c->undo(doc);
+}
+
 
