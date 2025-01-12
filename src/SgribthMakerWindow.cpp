@@ -157,9 +157,9 @@ SgribthMakerWindow::SgribthMakerWindow() :
 	event("settings", [this] { execute_settings_dialog(); });
 	//event("script_help", "hui:help", hui::KEY_F1 + hui::KEY_SHIFT);
 	event("next_document", [this] { on_next_document(); });
-	set_key_code("next_document", hui::KEY_PAGE_DOWN + mod, "hui:down");
+	set_key_code("next_document", hui::KEY_PAGE_DOWN + hui::KEY_ALT, "hui:down");
 	event("prev_document", [this] { on_previous_document(); });
-	set_key_code("prev_document", hui::KEY_PAGE_UP + mod, "hui:up");
+	set_key_code("prev_document", hui::KEY_PAGE_UP + hui::KEY_ALT, "hui:up");
 
 	event("show_cur_line", [this] { show_cur_line(); });
 	set_key_code("show_cur_line", hui::KEY_F2);
