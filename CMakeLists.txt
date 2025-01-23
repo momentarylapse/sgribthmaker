@@ -22,7 +22,7 @@ if(GTK4_FOUND)
 	list(APPEND GTK4_OR_GTK3_FOUND "gtk4")
 endif()
 pkg_check_modules(GTK+30 gtk+-3.0)
-if(GTK3_FOUND)
+if(GTK+30_FOUND)
 	list(APPEND GTK4_OR_GTK3_FOUND "gtk3")
 endif()
 if(GTK4_OR_GTK3_FOUND)
@@ -78,7 +78,7 @@ list(APPEND COMPILE_DEFINITIONS HAS_LIB_ZLIB=1)
 # lib: gl (optional)
 set(LIB_GL_ENABLED true CACHE BOOL "Use gl library?")
 find_package(OpenGL)
-if(OPENGL_FOUND AND NOT APPLE)
+if(OPENGL_FOUND AND NOT APPLE AND NOT WIN32)
 else()
 	set(LIB_GL_ENABLED false CACHE BOOL "gl library not found" FORCE)
 endif()
@@ -303,6 +303,7 @@ add_executable(sgribthmaker WIN32
 	src/lib/kaba/Interpreter.cpp
 	src/lib/kaba/kaba.cpp
 	src/lib/kaba/Module.cpp
+	src/lib/math/Box.cpp
 	src/lib/math/complex.cpp
 	src/lib/math/interpolation.cpp
 	src/lib/math/mat3.cpp
