@@ -26,6 +26,7 @@ ParserShader::ParserShader() : Parser("Shader") {
 	keywords.add("triangles");
 	keywords.add("lines");
 	keywords.add("points");
+	keywords.add("quads");
 	keywords.add("triangle_strip");
 	keywords.add("max_vertices");
 	keywords.add("struct");
@@ -47,8 +48,8 @@ ParserShader::ParserShader() : Parser("Shader") {
 	keywords.add("FragmentShader");
 	keywords.add("GeometryShader");
 	keywords.add("ComputeShader");
-	keywords.add("TessComputeShader");
-	keywords.add("TessEvaluationShader");
+	keywords.add("TesselationControlShader");
+	keywords.add("TesselationEvaluationShader");
 	keywords.add("RayGenShader");
 	keywords.add("RayMissShader");
 	keywords.add("RayClosestHitShader");
@@ -134,6 +135,7 @@ ParserShader::ParserShader() : Parser("Shader") {
 	compiler_functions.add("memoryBarrierAtomicCounter");
 	global_variables.add("gl_Position");
 	global_variables.add("gl_in");
+	global_variables.add("gl_out");
 	// <Layout>...
 	global_variables.add("bindings");
 	global_variables.add("pushsize");
@@ -152,6 +154,11 @@ ParserShader::ParserShader() : Parser("Shader") {
 	global_variables.add("push_constant");
 	global_variables.add("local_size_x");
 	global_variables.add("local_size_y");
+	global_variables.add("equal_spacing");
+	global_variables.add("fractional_even_spacing");
+	global_variables.add("fractional_odd_spacing");
+	global_variables.add("cw");
+	global_variables.add("vertices");
 	global_variables.add("std430");
 	global_variables.add("std140");
 	global_variables.add("rgba8");
@@ -196,6 +203,10 @@ ParserShader::ParserShader() : Parser("Shader") {
 	global_variables.add("gl_InstanceIndex");
 	global_variables.add("gl_LocalInvocationID");
 	global_variables.add("gl_LocalInvocationIndex");
+	global_variables.add("gl_TessLevelInner");
+	global_variables.add("gl_TessLevelOuter");
+	global_variables.add("gl_InvocationID");
+	global_variables.add("gl_TessCoord");
 
 	// rtx
 	keywords.add("GL_NV_ray_tracing");
