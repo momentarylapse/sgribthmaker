@@ -109,7 +109,7 @@ void *ExternalLinkData::get_link(const string &name) {
 }
 
 void ExternalLinkData::declare_class_size(const string &class_name, int size) {
-	ClassSizeData d;
+	ClassSize d;
 	d.class_name = class_name;
 	d.size = size;
 	class_sizes.add(d);
@@ -122,7 +122,7 @@ void split_namespace(const string &name, string &class_name, string &element) {
 }
 
 void ExternalLinkData::_declare_class_element(const string &name, int offset) {
-	ClassOffsetData d;
+	ClassOffset d;
 	split_namespace(name, d.class_name, d.element);
 	d.offset = offset;
 	d.is_virtual = false;
@@ -133,7 +133,7 @@ void ExternalLinkData::_link_virtual(const string &name, void *p, void *instance
 	VirtualTable *v = *(VirtualTable**)instance;
 
 
-	ClassOffsetData d;
+	ClassOffset d;
 	split_namespace(name, d.class_name, d.element);
 	d.offset = get_virtual_index(p, d.class_name, d.element);
 	d.is_virtual = true;
@@ -161,6 +161,29 @@ int ExternalLinkData::process_class_num_virtuals(const string &class_name, int n
 		if ((d.class_name == class_name) and (d.is_virtual))
 			num_virtual = max(num_virtual, d.offset + 1);
 	return num_virtual;
+}
+
+
+
+Exporter::Exporter(Context* _ctx, Module* _module) {
+	ctx = _ctx;
+	module = _module;
+}
+Exporter::~Exporter() = default;
+void Exporter::declare_class_size(const string& name, int size) {
+	//msg_write("SIZE:  " + name);
+	ctx->external->declare_class_size(name, size);
+}
+void Exporter::_declare_class_element(const string& name, int offset) {
+	ctx->external->_declare_class_element(name, offset);
+}
+void Exporter::link(const string& name, void* p) {
+	//msg_write("LINK:  " + name);
+	ctx->external->link(name, p);
+}
+void Exporter::_link_virtual(const string& name, void* p, void* instance) {
+	//msg_write("LINK VIRTUAL:  " + name);
+	ctx->external->_link_virtual(name, p, instance);
 }
 
 }
