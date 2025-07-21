@@ -143,7 +143,7 @@ void print_to_console(const string &s) {
 
 void redirect_print(kaba::Context* context, Document *doc) {
 	cur_win = doc->win;
-	for (auto p: weak(context->packages))
+	for (auto p: weak(context->internal_packages))
 		if (p->filename == "base") {
 			for (auto f: p->tree->functions)
 				if (f->name == "print") {
