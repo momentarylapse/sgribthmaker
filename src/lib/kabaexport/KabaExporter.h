@@ -4,6 +4,7 @@
 #if __has_include(<lib/kaba/lib/extern.h>)
 #include <lib/kaba/lib/extern.h>
 #include <lib/kaba/lib/lib.h>
+#include <lib/kaba/dynamic/exception.h>
 
 #else
 

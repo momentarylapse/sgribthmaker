@@ -199,6 +199,7 @@ add_executable(sgribthmaker WIN32
 	src/lib/hui/Controls/ToolItemSeparatorWin.cpp
 	src/lib/hui/Controls/ToolItemToggleButtonGtk.cpp
 	src/lib/hui/Controls/ToolItemToggleButtonWin.cpp
+	src/lib/hui/_kaba_export.cpp
 	src/lib/hui/Application.cpp
 	src/lib/hui/Callback.cpp
 	src/lib/hui/Clipboard.cpp
@@ -320,6 +321,7 @@ add_executable(sgribthmaker WIN32
 	src/lib/net/BinaryBuffer.cpp
 	src/lib/net/net.cpp
 	src/lib/net/Socket.cpp
+	src/lib/nix/_kaba_export.cpp
 	src/lib/nix/nix.cpp
 	src/lib/nix/nix_buffer.cpp
 	src/lib/nix/nix_draw.cpp
