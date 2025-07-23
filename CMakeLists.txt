@@ -153,6 +153,7 @@ add_executable(sgribthmaker WIN32
 	src/lib/base/array.cpp
 	src/lib/base/pointer.cpp
 	src/lib/base/strings.cpp
+	src/lib/doc/_kaba_export.cpp
 	src/lib/doc/chunked.cpp
 	src/lib/doc/pdf.cpp
 	src/lib/doc/ttf.cpp
@@ -328,6 +329,7 @@ add_executable(sgribthmaker WIN32
 	src/lib/nix/nix_textures.cpp
 	src/lib/nix/nix_vertexbuffer.cpp
 	src/lib/nix/nix_view.cpp
+	src/lib/os/app.cpp
 	src/lib/os/CommandLineParser.cpp
 	src/lib/os/config.cpp
 	src/lib/os/date.cpp
@@ -365,6 +367,7 @@ target_link_directories(sgribthmaker PUBLIC ${LINK_DIRECTORIES})
 target_compile_options(sgribthmaker PUBLIC ${COMPILE_OPTIONS})
 target_compile_definitions(sgribthmaker PUBLIC ${COMPILE_DEFINITIONS}  INSTALL_PREFIX="${CMAKE_INSTALL_PREFIX}")
 target_link_libraries(sgribthmaker PUBLIC ${DEPS})
+target_include_directories(sgribthmaker PUBLIC src)
 
 
 #=======================================================================================
