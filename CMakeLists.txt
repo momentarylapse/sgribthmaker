@@ -367,7 +367,7 @@ add_executable(sgribthmaker WIN32
 target_include_directories(sgribthmaker PUBLIC ${INCLUDE_DIRECTORIES})
 target_link_directories(sgribthmaker PUBLIC ${LINK_DIRECTORIES})
 target_compile_options(sgribthmaker PUBLIC ${COMPILE_OPTIONS})
-target_compile_definitions(sgribthmaker PUBLIC ${COMPILE_DEFINITIONS}  INSTALL_PREFIX="${CMAKE_INSTALL_PREFIX}")
+target_compile_definitions(sgribthmaker PUBLIC ${COMPILE_DEFINITIONS}  SOURCE_ROOT="${CMAKE_SOURCE_DIR}" INSTALL_PREFIX="${CMAKE_INSTALL_PREFIX}")
 target_link_libraries(sgribthmaker PUBLIC ${DEPS})
 target_include_directories(sgribthmaker PUBLIC src)
 
