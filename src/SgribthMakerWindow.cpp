@@ -290,7 +290,7 @@ base::future<void> SgribthMakerWindow::allow_termination() {
 		promise();
 	} else if (unsaved.num == 1) {
 		set_active_view(unsaved[0]->source_view);
-		hui::question_box(this, _("respectful question"), _("You increased entropy. Do you wish to save your work?"), true).then([this,unsaved,promise] (bool answer) mutable {
+		hui::question_box(this, _("respectful question"), _("You increased entropy. Do you wish to save your work?"), true).then([promise] (bool answer) mutable {
 			if (answer)
 				promise.fail();//save(unsaved[0], on_success, on_fail);
 			else
@@ -299,7 +299,7 @@ base::future<void> SgribthMakerWindow::allow_termination() {
 			promise.fail();
 		});
 	} else {
-		hui::question_box(this, _("respectful question"), _("Several unsaved documents. Do you want to save before quitting?"), true).then([this,unsaved,promise] (bool answer) mutable {
+		hui::question_box(this, _("respectful question"), _("Several unsaved documents. Do you want to save before quitting?"), true).then([promise] (bool answer) mutable {
 			if (answer)
 				promise.fail();
 			else
@@ -315,7 +315,7 @@ base::future<void> SgribthMakerWindow::allow_doc_termination(Document *d) {
 	base::promise<void> promise;
 	if (d->history->changed) {
 		set_active_view(d->source_view);
-		hui::question_box(this, _("respectful question"), _("You increased entropy. Do you wish to save your work?"), true).then([this,d,promise] (bool answer) mutable {
+		hui::question_box(this, _("respectful question"), _("You increased entropy. Do you wish to save your work?"), true).then([promise] (bool answer) mutable {
 			if (answer)
 				promise.fail();//save(d, on_success, on_fail);
 			else

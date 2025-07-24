@@ -389,12 +389,9 @@ string SourceView::get_line(int line) {
 	GtkTextIter start, end;
 	gtk_text_buffer_get_iter_at_line_index(tb, &start, line, 0);
 	gtk_text_buffer_get_iter_at_line_index(tb, &end, line, 0);
-	int pos = 0;
 	while (!gtk_text_iter_ends_line(&end)) {
 		if (!gtk_text_iter_forward_char(&end))
 			break;
-		else
-			pos ++;
 	}
 	return sv_get_content(tb, start, end);
 }

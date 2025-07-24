@@ -41,7 +41,7 @@ bool is_numeric(const string& s) {
 }
 
 void ParserIni::CreateTextColorsKeyValue(SourceView *sv, int line_no, const string& line) {
-	int num_uchars = line.utf8len();
+//	int num_uchars = line.utf8len();
 	char *p = (char*)line.data;//(const char*)&line[0];
 	char *p0 = p;
 
