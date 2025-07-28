@@ -257,8 +257,6 @@ add_executable(sgribthmaker WIN32
 	src/lib/kaba/lib/lib.cpp
 	src/lib/kaba/lib/lib_async.cpp
 	src/lib/kaba/lib/lib_base.cpp
-	src/lib/kaba/lib/lib_gl.cpp
-	src/lib/kaba/lib/lib_hui.cpp
 	src/lib/kaba/lib/lib_image.cpp
 	src/lib/kaba/lib/lib_kaba.cpp
 	src/lib/kaba/lib/lib_math.cpp
@@ -266,7 +264,6 @@ add_executable(sgribthmaker WIN32
 	src/lib/kaba/lib/lib_os.cpp
 	src/lib/kaba/lib/lib_threads.cpp
 	src/lib/kaba/lib/lib_time.cpp
-	src/lib/kaba/lib/lib_vulkan.cpp
 	src/lib/kaba/lib/list.cpp
 	src/lib/kaba/parser/abstract.cpp
 	src/lib/kaba/parser/Concretifier.cpp
