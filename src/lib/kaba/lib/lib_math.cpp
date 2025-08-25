@@ -223,9 +223,9 @@ class KabaAny : public Any {
 public:
 	const Class* _get_class() {
 		if (type == Any::Type::Int)
-			return TypeInt32;
+			return TypeInt32; // legacy...
 		if (type == Any::Type::Float)
-			return TypeFloat32;
+			return TypeFloat32; // legacy...
 		if (type == Any::Type::Bool)
 			return TypeBool;
 		if (type == Any::Type::String)
@@ -252,43 +252,6 @@ public:
 	void _add(const Any &a) {	Any b = *this + a;	*static_cast<Any*>(this) = b;	}
 	void _sub(const Any &a) {	Any b = *this - a;	*static_cast<Any*>(this) = b;	}
 
-	
-	static void unwrap(Any &aa, void *var, const Class *type) {
-		if (type == TypeInt32) {
-			*(int*)var = aa.as_int();
-		} else if (type == TypeFloat32) {
-			*(float*)var = aa.as_float();
-		} else if (type == TypeBool) {
-			*(bool*)var = aa.as_bool();
-		} else if (type == TypeString) {
-			*(string*)var = aa.as_string();
-		} else if (type->is_pointer_raw()) {
-			*(const void**)var = aa.as_pointer();
-		} else if (type->is_list() and (aa.type == Type::List)) {
-			auto *t_el = type->get_array_element();
-			auto *a = (DynamicArray*)var;
-			auto &b = aa.as_list();
-			int n = b.num;
-			array_resize(var, type, n);
-			for (int i=0; i<n; i++)
-				unwrap(aa[i], (char*)a->data + i * t_el->size, t_el);
-		} else if (type->is_array() and (aa.type == Type::List)) {
-			auto *t_el = type->get_array_element();
-			auto &b = aa.as_list();
-			int n = min(type->array_length, b.num);
-			for (int i=0; i<n; i++)
-				unwrap(b[i], (char*)var + i*t_el->size, t_el);
-		} else if (aa.type == Type::Dict) {
-			[[maybe_unused]] auto &map = aa.as_dict();
-			auto keys = aa.keys();
-			for (auto &e: type->elements)
-				for (string &k: keys)
-					if (e.name == k)
-						unwrap(aa[k], (char*)var + e.offset, e.type);
-		} else {
-			msg_error("unwrap... "  + aa.str() + " -> " + type->long_name());
-		}
-	}
 	static Any _cdecl parse(const string &s)
 	{ KABA_EXCEPTION_WRAPPER(return Any::parse(s)); return Any(); }
 };
@@ -871,14 +834,14 @@ void SIAddPackageMath(Context *c) {
 	add_class(TypeVli);
 		class_add_element("sign", TypeBool, 0);
 		class_add_element("data", TypeInt32List, 4);
-		class_add_func(Identifier::func::Init, TypeVoid, algebra_p(&vli::__init__), Flags::Mutable);
-		class_add_func(Identifier::func::Delete, TypeVoid, algebra_p(&vli::__delete__), Flags::Mutable);
-		class_add_func(Identifier::func::Assign, TypeVoid, algebra_p(&vli::set_vli), Flags::Mutable);
-			func_add_param("v", TypeVli);
-		class_add_func(Identifier::func::Assign, TypeVoid, algebra_p(&vli::set_str), Flags::Mutable);
+		class_add_func(Identifier::func::Init, TypeVoid, algebra_p(&generic_init<vli>), Flags::Mutable);
+		class_add_func(Identifier::func::Init, TypeVoid, algebra_p((&generic_init_ext<vli, const string&>)), Flags::Mutable);
 			func_add_param("s", TypeString);
-		class_add_func(Identifier::func::Assign, TypeVoid, algebra_p(&vli::set_int), Flags::Mutable);
+		class_add_func(Identifier::func::Init, TypeVoid, algebra_p((&generic_init_ext<vli, int>)), Flags::Mutable);
 			func_add_param("i", TypeInt32);
+		class_add_func(Identifier::func::Delete, TypeVoid, algebra_p(&generic_delete<vli>), Flags::Mutable);
+		class_add_func(Identifier::func::Assign, TypeVoid, algebra_p(&generic_assign<vli>), Flags::Mutable);
+			func_add_param("v", TypeVli);
 		class_add_func(Identifier::func::Str, TypeString, algebra_p(&vli::to_string), Flags::Pure);
 		class_add_func("compare", TypeInt32, algebra_p(&vli::compare), Flags::Pure);
 			func_add_param("v", TypeVli);
@@ -888,13 +851,16 @@ void SIAddPackageMath(Context *c) {
 		class_add_func("div", TypeVli, algebra_p(&vli::_div), Flags::Pure);
 			func_add_param("div", TypeVli);
 			func_add_param("rem", TypeVli);
-		class_add_func("pow", TypeVli, algebra_p(&vli::pow), Flags::Pure);
+		class_add_func("pow", TypeVli, algebra_p(&vli::pow), Flags::Pure | Flags::Static);
+			func_add_param("x", TypeVli);
 			func_add_param("exp", TypeVli);
-		class_add_func("pow_mod", TypeVli, algebra_p(&vli::pow_mod), Flags::Pure);
+		class_add_func("pow_mod", TypeVli, algebra_p(&vli::pow_mod), Flags::Pure | Flags::Static);
+			func_add_param("x", TypeVli);
 			func_add_param("exp", TypeVli);
 			func_add_param("mod", TypeVli);
-		class_add_func("gcd", TypeVli, algebra_p(&vli::gcd), Flags::Pure);
-			func_add_param("v", TypeVli);
+		class_add_func("gcd", TypeVli, algebra_p(&vli::gcd), Flags::Pure | Flags::Static);
+			func_add_param("a", TypeVli);
+			func_add_param("b", TypeVli);
 		add_operator(OperatorID::Equal, TypeBool, TypeVli, TypeVli, InlineID::None, algebra_p(&vli::operator==));
 		add_operator(OperatorID::NotEqual, TypeBool, TypeVli, TypeVli, InlineID::None, algebra_p(&vli::operator!=));
 		add_operator(OperatorID::Greater, TypeBool, TypeVli, TypeVli, InlineID::None, algebra_p(&vli::operator<));
@@ -935,12 +901,14 @@ void SIAddPackageMath(Context *c) {
 		class_add_func("drop", TypeVoid, &Any::dict_drop, Flags::RaisesExceptions | Flags::Mutable);
 			func_add_param("key", TypeString);
 		class_add_func("keys", TypeStringList, &Any::keys, Flags::Pure);//, Flags::RAISES_EXCEPTIONS);
-		class_add_func("__bool__", TypeBool, &Any::_bool, Flags::Pure);
-		class_add_func("__i32__", TypeInt32, &Any::_int, Flags::Pure);
-		class_add_func("__f32__", TypeFloat32, &Any::_float, Flags::Pure);
+		class_add_func("__bool__", TypeBool, &Any::to_bool, Flags::Pure);
+		class_add_func("__i32__", TypeInt32, &Any::to_i32, Flags::Pure);
+		class_add_func("__i64__", TypeInt32, &Any::to_i64, Flags::Pure);
+		class_add_func("__f32__", TypeFloat32, &Any::to_f32, Flags::Pure);
+		class_add_func("__f64__", TypeFloat64, &Any::to_f64, Flags::Pure);
 		class_add_func(Identifier::func::Str, TypeString, &Any::str, Flags::Pure);
 		class_add_func(Identifier::func::Repr, TypeString, &Any::repr, Flags::Pure);
-		class_add_func("unwrap", TypeVoid, &KabaAny::unwrap, Flags::RaisesExceptions);
+		class_add_func("unwrap", TypeVoid, &unwrap_any);//, Flags::RaisesExceptions);
 			func_add_param("var", TypeReference);
 			func_add_param("type", TypeClassRef);
 		class_add_func("parse", TypeAny, &KabaAny::parse, Flags::Static | Flags::RaisesExceptions);
@@ -964,14 +932,16 @@ void SIAddPackageMath(Context *c) {
 	add_class(TypeCrypto);
 		class_add_element("n", TypeVli, 0);
 		class_add_element("k", TypeVli, sizeof(vli));
-		class_add_func(Identifier::func::Init, TypeVoid, algebra_p(&Crypto::__init__), Flags::Mutable);
+		class_add_func(Identifier::func::Init, TypeVoid, algebra_p(&generic_init<Crypto>), Flags::Mutable);
+		class_add_func(Identifier::func::Delete, TypeVoid, algebra_p(&generic_delete<Crypto>), Flags::Mutable);
+		class_add_func(Identifier::func::Assign, TypeVoid, algebra_p(&generic_assign<Crypto>), Flags::Mutable);
 		class_add_func(Identifier::func::Str, TypeString, algebra_p(&Crypto::str), Flags::Pure);
 		class_add_func("from_str", TypeVoid, algebra_p(&Crypto::from_str), Flags::Mutable);
 			func_add_param("str", TypeString);
-		class_add_func("encrypt", TypeString, algebra_p(&Crypto::Encrypt), Flags::Pure);
-			func_add_param("str", TypeString);
-		class_add_func("decrypt", TypeString, algebra_p(&Crypto::Decrypt), Flags::Pure);
-			func_add_param("str", TypeString);
+		class_add_func("encrypt", TypeBytes, algebra_p(&Crypto::encrypt), Flags::Pure);
+			func_add_param("data", TypeBytes);
+		class_add_func("decrypt", TypeBytes, algebra_p(&Crypto::decrypt), Flags::Pure);
+			func_add_param("data", TypeBytes);
 			func_add_param("cut", TypeBool);
 		class_add_func("create_keys", TypeVoid, algebra_p(&CryptoCreateKeys), Flags::Static);
 			func_add_param("c1", TypeCrypto);

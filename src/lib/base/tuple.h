@@ -24,9 +24,46 @@ struct tuple {
 		a = t.a;
 		b = t.b;
 	}
+	bool operator==(const tuple<A,B>& t) const{
+		return a == t.a and b == t.b;
+	}
+	bool operator>(const tuple<A,B>& t) const{
+		if (a == t.a)
+			return b > t.b;
+		return a > t.a;
+	}
 	A a;
 	B b;
 };
+
+
+template<class A, class B, class C>
+struct tuple3 {
+	tuple3() = default;
+	tuple3(const A& _a, const B& _b, const C& _c) {
+		a = _a;
+		b = _b;
+		c = _c;
+	}
+	tuple3(const tuple3<A,B,C>& t) {
+		a = t.a;
+		b = t.b;
+		c = t.c;
+	}
+	void operator=(const tuple3<A,B,C>& t) {
+		a = t.a;
+		b = t.b;
+		c = t.c;
+	}
+	A a;
+	B b;
+	C c;
+};
+
+/*template<class T, class... More>
+struct tuple {
+	TODO
+};*/
 
 }
 

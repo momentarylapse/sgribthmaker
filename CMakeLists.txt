@@ -6,6 +6,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_BUILD_TYPE Debug)
 
+if(WIN32)
+	list(APPEND COMPILE_OPTIONS /permissive-)
+endif()
+
 
 #=======================================================================================
 #    libraries
@@ -147,9 +151,11 @@ list(APPEND DEPS Threads::Threads)
 add_executable(sgribthmaker WIN32
 	src/dialog/CommandDialog.cpp
 	src/dialog/SettingsDialog.cpp
+	src/lib/algebra/_kaba_export.cpp
 	src/lib/algebra/crypto.cpp
 	src/lib/algebra/vli.cpp
 	src/lib/any/any.cpp
+	src/lib/any/conversion.cpp
 	src/lib/base/array.cpp
 	src/lib/base/pointer.cpp
 	src/lib/base/strings.cpp
@@ -260,7 +266,6 @@ add_executable(sgribthmaker WIN32
 	src/lib/kaba/lib/lib_image.cpp
 	src/lib/kaba/lib/lib_kaba.cpp
 	src/lib/kaba/lib/lib_math.cpp
-	src/lib/kaba/lib/lib_net.cpp
 	src/lib/kaba/lib/lib_os.cpp
 	src/lib/kaba/lib/lib_threads.cpp
 	src/lib/kaba/lib/lib_time.cpp
@@ -315,9 +320,6 @@ add_executable(sgribthmaker WIN32
 	src/lib/math/vec2.cpp
 	src/lib/math/vec3.cpp
 	src/lib/math/vec4.cpp
-	src/lib/net/BinaryBuffer.cpp
-	src/lib/net/net.cpp
-	src/lib/net/Socket.cpp
 	src/lib/nix/_kaba_export.cpp
 	src/lib/nix/nix.cpp
 	src/lib/nix/nix_buffer.cpp
