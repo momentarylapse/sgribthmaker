@@ -243,7 +243,35 @@ Array<Parser::Label> ParserKaba::find_labels(const string &text, int offset) {
 }
 
 Array<Markup> ParserKaba::create_markup(const string &text, int offset) {
-	return create_markup_default(text, offset);
+	auto markup = create_markup_default(text, offset);
+	for (auto& m: markup) {
+
+		string word_namespace;
+		string temp;
+		if (m.end - m.start < 64)
+			temp = text.sub_ref(m.start, m.end - m.start);
+		if (m.start == 0)
+			word_namespace = "";
+
+		if (m.type == MarkupType::WORD) {
+			//word_namespace
+			//if ((start == 0) or (p0[-1] != '.')) {
+			//auto type2 = word_type(word_namespace + temp);
+			auto type2 = word_type(temp);
+			//	if (type2 != NONE)
+			m.type = type2;
+			if (m.type == MarkupType::TYPE)
+				word_namespace += temp;
+			else
+				word_namespace = "";
+			//}
+		} else if (temp == ".") {
+			word_namespace += ".";
+		} else {
+			word_namespace = "";
+		}
+	}
+	return markup;
 }
 
 

@@ -237,8 +237,10 @@ Array<Markup> Parser::create_markup_default(const string &text, int offset) {
 			last_type = type;
 			next_char();
 		}
-		if (s.num > 0)
-			markups.add({i0 + pos0, i0 + s.num, in_type});
+		if (s.num > 0) {
+			pos = s.num;
+			set_mark();
+		}
 		i0 += s.num + 1;
 	}
 	return markups;

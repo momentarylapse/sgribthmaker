@@ -149,6 +149,7 @@ void SourceView::create_text_colors(int first_line, int last_line) {
 void SourceView::create_colors_if_not_busy() {
 	color_busy_level --;
 	if (color_busy_level == 0) {
+		parser->prepare_symbols(get_all(), doc->filename);
 		create_text_colors();
 	}
 }
@@ -455,35 +456,9 @@ void SourceView::clear_markings(int first_line, int last_line) {
 	gtk_text_buffer_remove_all_tags(tb, &start, &end);
 }
 
-static string word_namespace;
-
 void SourceView::mark_word(const Markup& m) {
 	if (m.start == m.end)
 		return;
-#if 0
-	string temp;
-	if ((int_p)p - (int_p)p0 < 64)
-		temp = string(p0, (int_p)p - (int_p)p0);
-	if (start == 0)
-		word_namespace = "";
-
-	if (type == MarkupType::WORD) {
-		//word_namespace
-		//if ((start == 0) or (p0[-1] != '.')) {
-			auto type2 = parser->word_type(word_namespace + temp);
-		//	if (type2 != NONE)
-				type = type2;
-			if (type == MarkupType::TYPE)
-				word_namespace += temp;
-			else
-				word_namespace = "";
-		//}
-	} else if (temp == ".") {
-		word_namespace += ".";
-	} else {
-		word_namespace = "";
-	}
-#endif
 	GtkTextIter _start, _end;
 	gtk_text_buffer_get_iter_at_offset(tb, &_start, m.start);
 	gtk_text_buffer_get_iter_at_offset(tb, &_end, m.end);
