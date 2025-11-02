@@ -343,6 +343,7 @@ add_executable(sgribthmaker WIN32
 	src/lib/os/terminal.cpp
 	src/lib/os/time.cpp
 	src/lib/pattern/Observable.cpp
+	src/lib/syntaxhighlight/AutoComplete.cpp
 	src/lib/syntaxhighlight/BaseParser.cpp
 	src/lib/syntaxhighlight/ParserC.cpp
 	src/lib/syntaxhighlight/ParserCmake.cpp
@@ -353,7 +354,6 @@ add_executable(sgribthmaker WIN32
 	src/lib/syntaxhighlight/ParserShader.cpp
 	src/lib/syntaxhighlight/ParserText.cpp
 	src/lib/syntaxhighlight/Theme.cpp
-	src/AutoComplete.cpp
 	src/CodeCompiler.cpp
 	src/Console.cpp
 	src/Document.cpp

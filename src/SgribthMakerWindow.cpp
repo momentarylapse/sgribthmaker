@@ -1,20 +1,20 @@
 #include "SgribthMakerWindow.h"
 #include "SgribthMaker.h"
-#include "lib/base/base.h"
-#include "lib/hui/hui.h"
-#include "lib/hui/config.h"
-#include "lib/os/filesystem.h"
-#include "lib/os/msg.h"
+#include <lib/base/base.h>
+#include <lib/hui/hui.h>
+#include <lib/hui/config.h>
+#include <lib/os/filesystem.h>
+#include <lib/os/msg.h>
 #include "dialog/SettingsDialog.h"
 #include "dialog/CommandDialog.h"
 #include "Console.h"
 #include "FileBrowser.h"
 #include "History.h"
 #include <lib/syntaxhighlight/Theme.h>
-#include "SourceView.h"
 #include <lib/syntaxhighlight/BaseParser.h>
+#include <lib/syntaxhighlight/AutoComplete.h>
+#include "SourceView.h"
 #include "Document.h"
-#include "AutoComplete.h"
 #include "CodeCompiler.h"
 
 #include <stdio.h>
@@ -558,7 +558,7 @@ void SgribthMakerWindow::on_compile_and_run_silent() {
 }
 
 
-static AutoComplete::Data _auto_complete_data_;
+static autocomplete::Data _auto_complete_data_;
 
 void SgribthMakerWindow::on_insert_auto_complete(int n) {
 	if ((n >= 0) and (n < _auto_complete_data_.suggestions.num))
@@ -575,7 +575,7 @@ void SgribthMakerWindow::on_auto_complete() {
 
 	int line, pos;
 	cur_view->get_cur_line_pos(line, pos);
-	auto data = AutoComplete::run(cur_view->get_all(), cur_doc()->filename, line, pos);
+	const auto data = cur_view->parser->run_autocomplete(cur_view->get_all(), cur_doc()->filename, line, pos);
 	_auto_complete_data_ = data;
 
 	if (data.suggestions.num == 1) {
