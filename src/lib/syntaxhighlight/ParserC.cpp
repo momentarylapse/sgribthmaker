@@ -6,7 +6,6 @@
  */
 
 #include "ParserC.h"
-#include "../HighlightScheme.h"
 
 ParserC::ParserC() : Parser("C/C++") {
 	macro_begin = "#";
@@ -55,6 +54,6 @@ ParserC::ParserC() : Parser("C/C++") {
 	constants.add("false");
 }
 
-void ParserC::CreateTextColors(SourceView *sv, int first_line, int last_line) {
-	CreateTextColorsDefault(sv, first_line, last_line);
+Array<Markup> ParserC::create_markup(const string &text, int offset) {
+	return create_markup_default(text, offset);
 }

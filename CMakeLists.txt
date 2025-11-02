@@ -343,21 +343,21 @@ add_executable(sgribthmaker WIN32
 	src/lib/os/terminal.cpp
 	src/lib/os/time.cpp
 	src/lib/pattern/Observable.cpp
-	src/parser/BaseParser.cpp
-	src/parser/ParserC.cpp
-	src/parser/ParserCmake.cpp
-	src/parser/ParserHui.cpp
-	src/parser/ParserIni.cpp
-	src/parser/ParserKaba.cpp
-	src/parser/ParserPython.cpp
-	src/parser/ParserShader.cpp
-	src/parser/ParserText.cpp
+	src/lib/syntaxhighlight/BaseParser.cpp
+	src/lib/syntaxhighlight/ParserC.cpp
+	src/lib/syntaxhighlight/ParserCmake.cpp
+	src/lib/syntaxhighlight/ParserHui.cpp
+	src/lib/syntaxhighlight/ParserIni.cpp
+	src/lib/syntaxhighlight/ParserKaba.cpp
+	src/lib/syntaxhighlight/ParserPython.cpp
+	src/lib/syntaxhighlight/ParserShader.cpp
+	src/lib/syntaxhighlight/ParserText.cpp
+	src/lib/syntaxhighlight/Theme.cpp
 	src/AutoComplete.cpp
 	src/CodeCompiler.cpp
 	src/Console.cpp
 	src/Document.cpp
 	src/FileBrowser.cpp
-	src/HighlightScheme.cpp
 	src/History.cpp
 	src/LineNumberView.cpp
 	src/SgribthMaker.cpp

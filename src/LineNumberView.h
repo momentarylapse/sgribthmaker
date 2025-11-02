@@ -8,13 +8,15 @@
 #ifndef SRC_LINENUMBERVIEW_H_
 #define SRC_LINENUMBERVIEW_H_
 
-#include "lib/hui/hui.h"
+#include <lib/hui/hui.h>
 
-class HighlightScheme;
+namespace syntaxhighlight {
+	struct Theme;
+}
 
 class LineNumberView : public hui::EventHandler {
 public:
-	LineNumberView(hui::Window *win, const string &id, HighlightScheme *scheme);
+	LineNumberView(hui::Window *win, const string &id, syntaxhighlight::Theme *scheme);
 	void on_draw(Painter *p);
 
 	void set_font(const string& font, float line_height);
@@ -31,7 +33,7 @@ public:
 	float offset;
 	int line0;
 	Array<int> line_offsets;
-	HighlightScheme *scheme;
+	syntaxhighlight::Theme *scheme;
 };
 
 #endif /* SRC_LINENUMBERVIEW_H_ */

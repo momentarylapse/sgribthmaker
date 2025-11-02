@@ -6,7 +6,6 @@
  */
 
 #include "ParserCmake.h"
-#include "../HighlightScheme.h"
 
 ParserCmake::ParserCmake() : Parser("Python") {
 	line_comment_begin = "#";
@@ -116,7 +115,7 @@ ParserCmake::ParserCmake() : Parser("Python") {
 	constants.add("false");
 }
 
-void ParserCmake::CreateTextColors(SourceView *sv, int first_line, int last_line) {
-	CreateTextColorsDefault(sv, first_line, last_line);
+Array<Markup> ParserCmake::create_markup(const string &text, int offset) {
+	return create_markup_default(text, offset);
 }
 

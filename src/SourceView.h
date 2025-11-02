@@ -5,12 +5,13 @@
  *      Author: michi
  */
 
-#ifndef SOURCEVIEW_H_
-#define SOURCEVIEW_H_
+#pragma once
 
-#include "lib/hui/hui.h"
-#include "HighlightScheme.h"
+#include <lib/hui/hui.h>
+#include <lib/syntaxhighlight/Theme.h>
 #include <gtk/gtk.h>
+
+#include "lib/syntaxhighlight/BaseParser.h"
 
 class Document;
 class History;
@@ -39,14 +40,14 @@ public:
 	void insert_at(int pos, const string &text);
 	void insert_at_cursor(const string &text);
 
-	void apply_scheme(HighlightScheme *s);
+	void apply_scheme(syntaxhighlight::Theme *s);
 	void set_tag(int i, const char *fg_color, const char *bg_color, bool bold, bool italic);
 	void update_font();
 	void update_tab_size();
 	void update_line_numbers();
 
 	void clear_markings(int first_line, int last_line);
-	void mark_word(int line, int start, int end, int type, char *p0, char *p);
+	void mark_word(const Markup& m);
 	void create_colors_if_not_busy();
 	void create_text_colors(int first_line = -1, int last_line = -1);
 
@@ -76,7 +77,7 @@ public:
 	GtkTextBuffer *line_no_tb;
 	//GtkWidget *line_no_tv;
 
-	GtkTextTag *tag[NUM_TAG_TYPES];
+	GtkTextTag *tag[(int)MarkupType::NUM_TYPES];
 
 	Document *doc;
 	History *history;
@@ -97,7 +98,5 @@ public:
 
 	void set_parser(const Path &filename);
 	Parser *parser;
-	HighlightScheme *scheme;
+	syntaxhighlight::Theme *scheme;
 };
-
-#endif /* SOURCEVIEW_H_ */

@@ -9,11 +9,11 @@
 #include "LineNumberView.h"
 #include "History.h"
 #include "Document.h"
-#include "lib/hui/Controls/Control.h"
-#include "lib/hui/config.h"
-#include "parser/BaseParser.h"
+#include <lib/hui/Controls/Control.h>
+#include <lib/hui/config.h>
+#include <lib/syntaxhighlight/BaseParser.h>
 
-
+#include "lib/syntaxhighlight/Theme.h"
 
 
 #pragma GCC diagnostic push
@@ -123,13 +123,32 @@ void on_gtk_populate_popup(GtkTextView *text_view, GtkMenu *menu, gpointer user_
 #endif
 
 void SourceView::create_text_colors(int first_line, int last_line) {
-	parser->CreateTextColors(this, first_line, last_line);
+	if (first_line < 0)
+		first_line = 0;
+	if (last_line < 0)
+		last_line = get_num_lines();
+	auto text = get_all();
+	auto markup = parser->create_markup(text, 0);
+
+	int b0 = 0;
+	int c0 = 0;
+	for (auto& m: markup) {
+		int c1 = c0 + g_utf8_strlen((const char*)&text[b0], m.start - b0);
+		int c2 = c1 + g_utf8_strlen((const char*)&text[m.start], m.end - m.start);
+		b0 = m.end;
+		c0 = c2;
+		m.start = c1;
+		m.end = c2;
+	}
+
+	clear_markings(0, get_num_lines());//first_line, last_line);
+	for (const auto& m: markup)
+		mark_word(m);
 }
 
 void SourceView::create_colors_if_not_busy() {
 	color_busy_level --;
 	if (color_busy_level == 0) {
-		parser->update_symbols(this);
 		create_text_colors();
 	}
 }
@@ -206,14 +225,14 @@ SourceView::SourceView(hui::Window *win, const string &_id, Document *d) {
 
 
 
-	for (int i=0; i<NUM_TAG_TYPES; i++)
-		tag[i] = gtk_text_buffer_create_tag(tb, NULL, NULL);
+	for (int i=0; i<(int)MarkupType::NUM_TYPES; i++)
+		tag[i] = gtk_text_buffer_create_tag(tb, nullptr, nullptr);
 
 	needs_update_start = 0;
 	needs_update_end = 0;
 	color_busy_level = 0;
 	change_return = true;
-	scheme = HighlightScheme::default_scheme;
+	scheme = syntaxhighlight::default_theme;
 	set_parser(Path::EMPTY);
 
 	line_number_view = new LineNumberView(win, id + "-lines", scheme);
@@ -438,22 +457,23 @@ void SourceView::clear_markings(int first_line, int last_line) {
 
 static string word_namespace;
 
-void SourceView::mark_word(int line, int start, int end, int type, char *p0, char *p) {
-	if (start == end)
+void SourceView::mark_word(const Markup& m) {
+	if (m.start == m.end)
 		return;
+#if 0
 	string temp;
 	if ((int_p)p - (int_p)p0 < 64)
 		temp = string(p0, (int_p)p - (int_p)p0);
 	if (start == 0)
 		word_namespace = "";
 
-	if (type == IN_WORD) {
+	if (type == MarkupType::WORD) {
 		//word_namespace
 		//if ((start == 0) or (p0[-1] != '.')) {
-			int type2 = parser->WordType(word_namespace + temp);
-			if (type2 >= 0)
+			auto type2 = parser->word_type(word_namespace + temp);
+		//	if (type2 != NONE)
 				type = type2;
-			if (type == IN_WORD_TYPE)
+			if (type == MarkupType::TYPE)
 				word_namespace += temp;
 			else
 				word_namespace = "";
@@ -463,10 +483,11 @@ void SourceView::mark_word(int line, int start, int end, int type, char *p0, cha
 	} else {
 		word_namespace = "";
 	}
+#endif
 	GtkTextIter _start, _end;
-	gtk_text_buffer_get_iter_at_line_offset(tb, &_start, line, start);
-	gtk_text_buffer_get_iter_at_line_offset(tb, &_end, line, end);
-	gtk_text_buffer_apply_tag (tb, tag[type], &_start, &_end);
+	gtk_text_buffer_get_iter_at_offset(tb, &_start, m.start);
+	gtk_text_buffer_get_iter_at_offset(tb, &_end, m.end);
+	gtk_text_buffer_apply_tag (tb, tag[(int)m.type], &_start, &_end);
 }
 
 
@@ -602,12 +623,12 @@ void color2gdkrgba(const color &c, GdkRGBA &g) {
 	g.blue = c.b;
 }
 
-void SourceView::apply_scheme(HighlightScheme *s) {
-	for (int i=0; i<NUM_TAG_TYPES; i++) {
+void SourceView::apply_scheme(syntaxhighlight::Theme *s) {
+	for (int i=0; i<(int)MarkupType::NUM_TYPES; i++) {
 		if (s->context[i].set_bg)
 			set_tag(i, color_to_hex(s->context[i].fg).c_str(), color_to_hex(s->context[i].bg).c_str(), s->context[i].bold, s->context[i].italic);
 		else
-			set_tag(i, color_to_hex(s->context[i].fg).c_str(), NULL, s->context[i].bold, s->context[i].italic);
+			set_tag(i, color_to_hex(s->context[i].fg).c_str(), nullptr, s->context[i].bold, s->context[i].italic);
 	}
 #if !GTK_CHECK_VERSION(4,0,0)
 	if (false){

@@ -14,7 +14,7 @@ class ParserC : public Parser {
 public:
 	ParserC();
 
-	void CreateTextColors(SourceView *sv, int first_line = -1, int last_line = -1) override;
+	Array<Markup> create_markup(const string &text, int offset) override;
 };
 
 #endif /* PARSERC_H_ */

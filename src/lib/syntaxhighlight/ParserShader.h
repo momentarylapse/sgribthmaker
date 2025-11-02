@@ -15,7 +15,7 @@ public:
 	ParserShader();
 
 	//Array<Label> FindLabels(SourceView *sv) override;
-	void CreateTextColors(SourceView *sv, int first_line = -1, int last_line = -1) override;
+	Array<Markup> create_markup(const string &text, int offset) override;
 };
 
 #endif /* PARSERSHADER_H_ */

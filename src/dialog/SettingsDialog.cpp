@@ -56,7 +56,7 @@ void SettingsDialog::onClose() {
 	request_destroy();
 }
 
-string get_scheme_name(HighlightScheme *s) {
+string get_scheme_name(syntaxhighlight::Theme *s) {
 	string n = s->name;
 	if (s->is_default)
 		n += _(" (write protected)");
@@ -67,10 +67,10 @@ string get_scheme_name(HighlightScheme *s) {
 
 void SettingsDialog::fillSchemeList() {
 	reset("schemes");
-	Array<HighlightScheme*> schemes = HighlightScheme::get_all();
-	foreachi(HighlightScheme *s, schemes, i) {
+	auto schemes = syntaxhighlight::get_all_themes();
+	foreachi(auto *s, schemes, i) {
 		add_string("schemes", get_scheme_name(s));
-		if (s == HighlightScheme::default_scheme)
+		if (s == syntaxhighlight::default_theme)
 			set_int("schemes", i);
 	}
 }
@@ -93,9 +93,9 @@ void SettingsDialog::onTabWidth() {
 
 void SettingsDialog::onContextListSelect() {
 	int n = get_int("context_list");
-	HighlightScheme *s = HighlightScheme::default_scheme;
+	const auto *s = syntaxhighlight::default_theme;
 	set_color("scheme_background", s->bg);
-	HighlightContext c = s->context[n];
+	const auto& c = s->context[n];
 	set_color("color_text", c.fg);
 	set_color("color_background", c.bg);
 	check("overwrite_background", c.set_bg);
@@ -113,8 +113,8 @@ void SettingsDialog::onContextListSelect() {
 
 void SettingsDialog::onSchemeChange() {
 	int n = get_int("context_list");
-	HighlightScheme *s = HighlightScheme::default_scheme;
-	HighlightContext &c = s->context[n];
+	auto *s = syntaxhighlight::default_theme;
+	auto &c = s->context[n];
 	s->bg = get_color("scheme_background");
 	c.fg = get_color("color_text");
 	c.bg = get_color("color_background");
@@ -129,15 +129,15 @@ void SettingsDialog::onSchemeChange() {
 
 void SettingsDialog::onSchemes() {
 	int n = get_int("");
-	HighlightScheme *s = HighlightScheme::get_all()[n];
-	HighlightScheme::default_scheme = s;
+	auto s = syntaxhighlight::get_all_themes()[n];
+	syntaxhighlight::default_theme = s;
 	for (SourceView *sv: main_win->source_views)
 		sv->apply_scheme(s);
 	onContextListSelect();
 }
 
 void SettingsDialog::onCopyScheme() {
-	HighlightScheme *s = HighlightScheme::default_scheme->copy(_("new scheme"));
+	auto *s = syntaxhighlight::default_theme->copy(_("new scheme"));
 	for (SourceView *sv: main_win->source_views)
 		sv->apply_scheme(s);
 	fillSchemeList();

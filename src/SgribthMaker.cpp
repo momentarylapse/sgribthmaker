@@ -1,10 +1,11 @@
 #include "SgribthMaker.h"
 #include "SgribthMakerWindow.h"
-#include "HighlightScheme.h"
-#include "parser/BaseParser.h"
-#include "lib/kaba/kaba.h"
-#include "lib/hui/config.h"
+#include <lib/syntaxhighlight/BaseParser.h>
+#include <lib/kaba/kaba.h>
+#include <lib/hui/config.h>
 
+#include "LineNumberView.h"
+#include "lib/syntaxhighlight/Theme.h"
 
 
 string AppTitle = "SgribthMaker";
@@ -23,7 +24,7 @@ SgribthMaker::SgribthMaker() :
 	set_property("version", AppVersion);
 	set_property("comment", _("Text editor and kaba compiler"));
 	set_property("website", "http://michi.is-a-geek.org/michisoft");
-	set_property("copyright", "© 2006-2024 by MichiSoft TM");
+	set_property("copyright", "© 2006-2025 by MichiSoft TM");
 	set_property("author", "Michael Ankele <michi@lupina.de>");
 
 	kaba::init();
@@ -35,8 +36,8 @@ SgribthMaker::SgribthMaker() :
 
 hui::AppStatus SgribthMaker::on_startup(const Array<string> &arg) {
 
-	InitParser();
-	HighlightScheme::default_scheme = HighlightScheme::get(hui::config.get_str("HighlightScheme", "default"));
+	syntaxhighlight::init();
+	syntaxhighlight::default_theme = syntaxhighlight::get_theme(hui::config.get_str("HighlightScheme", "default"));
 
 	win = new SgribthMakerWindow();
 

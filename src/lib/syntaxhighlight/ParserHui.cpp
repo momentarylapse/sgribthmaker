@@ -6,7 +6,6 @@
  */
 
 #include "ParserHui.h"
-#include "../HighlightScheme.h"
 
 ParserHui::ParserHui() : Parser("Hui") {
 	macro_begin = "#";
@@ -133,6 +132,6 @@ ParserHui::ParserHui() : Parser("Hui") {
 	types.add("MenuButton");
 }
 
-void ParserHui::CreateTextColors(SourceView *sv, int first_line, int last_line) {
-	CreateTextColorsDefault(sv, first_line, last_line);
+Array<Markup> ParserHui::create_markup(const string &text, int offset) {
+	return create_markup_default(text, offset);
 }

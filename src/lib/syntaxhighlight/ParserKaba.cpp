@@ -6,10 +6,10 @@
  */
 
 #include "ParserKaba.h"
-#include "../HighlightScheme.h"
-#include "../lib/kaba/kaba.h"
-#include "../SourceView.h"
-#include "../Document.h"
+//#ifdef SYNTAX_HIGHLIGHT_KABA ...
+#include <lib/kaba/kaba.h>
+
+#include "lib/os/msg.h"
 
 void add_class(ParserKaba *p, const kaba::Class *c, const string &ns);
 
@@ -166,13 +166,15 @@ void ParserKaba::clear_symbols() {
 	constants.clear();
 }
 
-void ParserKaba::update_symbols(SourceView *sv) {
-	auto context = ownify(kaba::Context::create());
+
+void ParserKaba::prepare_symbols(const string &text, const Path& filename) {
+
+	context = kaba::Context::create();
 
 	try {
-		kaba::config.default_filename = sv->doc->filename;
+		kaba::config.default_filename = filename;
 		//msg_write(kaba::config.directory.str());
-		auto m = context->create_module_for_source(sv->get_all(), true);
+		auto m = context->create_module_for_source(text, true);
 
 		clear_symbols();
 
@@ -194,17 +196,18 @@ void ParserKaba::update_symbols(SourceView *sv) {
 		//msg_error(e.message());
 	}
 
-	/*for (auto p: kaba::packages) {
+	for (auto p: weak(context->internal_packages)) {
 		add_class(this, p->base_class(), "");
 		//if (p->used_by_default)
 			add_class_content(this, p->base_class(), "");
-	}*/
+	}
 }
 
 
-Array<Parser::Label> ParserKaba::FindLabels(SourceView *sv) {
+Array<Parser::Label> ParserKaba::find_labels(const string &text, int offset) {
 	Array<Parser::Label> labels;
 
+#if 0
 	int num_lines = sv->get_num_lines();
 	string last_class;
 	for (int l=0;l<num_lines;l++) {
@@ -230,10 +233,16 @@ Array<Parser::Label> ParserKaba::FindLabels(SourceView *sv) {
 			labels.add(Label(s, l, 1));
 		}
 	}
+#endif
 	return labels;
 }
 
+Array<Markup> ParserKaba::create_markup(const string &text, int offset) {
+	return create_markup_default(text, offset);
+}
 
+
+#if 0
 void ParserKaba::CreateTextColors(SourceView *sv, int first_line, int last_line) {
 
 	/*try {
@@ -247,4 +256,4 @@ void ParserKaba::CreateTextColors(SourceView *sv, int first_line, int last_line)
 
 	CreateTextColorsDefault(sv, first_line, last_line);
 }
-
+#endif

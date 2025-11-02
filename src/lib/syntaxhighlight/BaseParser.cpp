@@ -14,9 +14,9 @@
 #include "ParserPython.h"
 #include "ParserHui.h"
 #include "ParserIni.h"
-#include "../SourceView.h"
-#include "../HighlightScheme.h"
+#include <lib/os/path.h>
 
+#include "lib/os/msg.h"
 
 
 #define MAX_HIGHLIGHTING_SIZE	100000
@@ -41,12 +41,6 @@ struct ParserAssociation {
 };
 static Array<ParserAssociation> ParserAssociations;
 
-Parser::Label::Label(const string &_name, int _line, int _level) {
-	name = _name;
-	line = _line;
-	level = _level;
-}
-
 Parser::Parser(const string &_name) {
 	name = _name;
 	macro_begin = "-none-";
@@ -60,85 +54,95 @@ Parser::Parser(const string &_name) {
 Parser::~Parser() = default;
 
 
-Array<Parser::Label> Parser::FindLabels(SourceView *sv) {
+Array<Parser::Label> Parser::find_labels(const string& text, int offset) {
 	return {};
 }
 
-int Parser::WordType(const string &name) {
+MarkupType Parser::word_type(const string &name) {
 	if (name.head(macro_begin.num) == macro_begin)
-		return IN_MACRO;
+		return MarkupType::MACRO;
 	for (string &n : keywords)
 		if (name == n)
-			return IN_WORD_SPECIAL;
+			return MarkupType::SPECIAL;
 	for (string &n : modifiers)
 		if (name == n)
-			return IN_WORD_MODIFIER;
+			return MarkupType::MODIFIER;
 	for (string &n : types)
 		if (name == n)
-			return IN_WORD_TYPE;
+			return MarkupType::TYPE;
 	for (string &n : compiler_functions)
 		if (name == n)
-			return IN_WORD_COMPILER_FUNCTION;
+			return MarkupType::COMPILER_FUNCTION;
 	for (string &n : operator_functions)
 		if (name == n)
-			return IN_WORD_OPERATOR_FUNCTION;
+			return MarkupType::OPERATOR_FUNCTION;
 	for (string &n : functions)
 		if (name == n)
-			return IN_WORD_COMPILER_FUNCTION;
+			return MarkupType::COMPILER_FUNCTION;
 	for (string &n : global_variables)
 		if (name == n)
-			return IN_WORD_GLOBAL_VARIABLE;
+			return MarkupType::GLOBAL_VARIABLE;
 	for (string &n : constants)
 		if (name == n)
-			return IN_WORD_GLOBAL_VARIABLE;
-	return IN_WORD;
+			return MarkupType::GLOBAL_VARIABLE;
+	return MarkupType::WORD;
 }
 
-void Parser::CreateTextColors(SourceView *sv, int first_line, int last_line) {
+Array<Markup> Parser::create_markup(const string &text, int offset) {
+	return {};
 }
 
 
-#define next_char()	p=g_utf8_next_char(p);pos++
-#define set_mark()	sv->mark_word(l, pos0, pos, in_type, p0, p);p0=p;pos0=pos
-#define begin_token(t) (string(p, t.num) == t)
+
+#define begin_token(t) ((pos+t.num < s.num) and string(p, t.num) == t)
 #define skip_token_almost(t) p+=(t.num-1);pos+=(t.num-1)
 #define skip_token(t) p+=t.num;pos+=t.num
 
-void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_line) {
-	if (gtk_text_buffer_get_char_count(sv->tb) > MAX_HIGHLIGHTING_SIZE)
-		return;
+Array<Markup> Parser::create_markup_default(const string &text, int offset) {
+	if (text.num > MAX_HIGHLIGHTING_SIZE)
+		return {};
+
 
 	//update_symbols(sv);
 
 	int comment_level = 0;
-	int num_lines = sv->get_num_lines();
-	if (first_line < 0)
-		first_line = 0;
-	if (last_line < 0)
-		last_line = num_lines - 1;
 	bool in_ml_string = false; // ".."
 	bool in_alt_string = false; // '..'
 
-	sv->clear_markings(first_line, last_line);
+//	sv->clear_markings(first_line, last_line);
+	Array<Markup> markups;
 
 
-	for (int l=first_line; l<=last_line; l++) {
-		string s = sv->get_line(l);
+	int i0 = offset;
+	for (const string& s: text.explode("\n")) {
 
-		char *p = (char*)&s[0];
-		char *p0 = p;
+		const char *p = (const char*)s.data;
+		const char *p0 = p;
 		int last_type = CHAR_SPACE;
-		int in_type = (comment_level > 1) ? IN_COMMENT_LEVEL_2 : ((comment_level > 0) ? IN_COMMENT_LEVEL_1 : IN_SPACE);
+		MarkupType in_type = (comment_level > 1) ? MarkupType::COMMENT_LEVEL_2 : ((comment_level > 0) ? MarkupType::COMMENT_LEVEL_1 : MarkupType::SPACE);
 		if (in_ml_string or in_alt_string)
-			in_type = IN_STRING;
+			in_type = MarkupType::STRING;
 		int pos0 = 0;
 		int pos = 0;
-		int num_uchars = g_utf8_strlen(p, s.num);
+
+		auto next_char = [&] {
+			p ++;
+			pos ++;
+		};
+		auto set_mark = [&] {
+			if (in_type == MarkupType::WORD)
+				in_type = word_type(s.sub_ref(pos0, pos));
+			markups.add({i0 + pos0, i0 + pos, in_type});
+			p0 = p;
+			pos0 = pos;
+		};
+
+		//int num_uchars = g_utf8_strlen(p, s.num);
 		bool prev_was_escape = false;
-		while (pos < num_uchars) {
+		while (pos < s.num) {
 			int type = char_type(*p);
 			// still in a string?
-			if (in_type == IN_STRING) {
+			if (in_type == MarkupType::STRING) {
 				if (prev_was_escape) {
 					prev_was_escape = false;
 				} else if (*p == '\\') {
@@ -146,21 +150,21 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 				} else if ((in_ml_string and (*p == '\"')) or (in_alt_string and (*p == '\''))) {
 					next_char();
 					set_mark();
-					in_type = IN_OPERATOR;
+					in_type = MarkupType::OPERATOR;
 					in_ml_string = false;
 					in_alt_string = false;
 					continue;
 				} else if (begin_token(string_sub_begin)) {
 					set_mark();
-					in_type = IN_STRING_SUBSTITUDE;
+					in_type = MarkupType::STRING_SUBSTITUTE;
 					skip_token(string_sub_begin);
 					continue;
 				}
-			} else if (in_type == IN_STRING_SUBSTITUDE) {
+			} else if (in_type == MarkupType::STRING_SUBSTITUTE) {
 				if (begin_token(string_sub_end)) {
 					skip_token(string_sub_end);
 					set_mark();
-					in_type = IN_STRING;
+					in_type = MarkupType::STRING;
 					continue;
 				}
 			// still in a multi-comment?
@@ -169,13 +173,13 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 					set_mark();
 					//next_char();
 					skip_token_almost(multi_comment_begin);
-					in_type = IN_COMMENT_LEVEL_2;
+					in_type = MarkupType::COMMENT_LEVEL_2;
 					comment_level ++;
 				} else if (begin_token(multi_comment_end)) {
 					skip_token(multi_comment_end);
 					set_mark();
 					comment_level --;
-					in_type = (comment_level > 0) ? IN_COMMENT_LEVEL_1 : IN_OPERATOR;
+					in_type = (comment_level > 0) ? MarkupType::COMMENT_LEVEL_1 : MarkupType::OPERATOR;
 					last_type = type;
 					continue;
 				}
@@ -184,33 +188,33 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 				if (*p == '\"') {
 					set_mark();
 					in_ml_string = true;
-					in_type = IN_STRING;
+					in_type = MarkupType::STRING;
 				} else if (*p == '\'') {
 					set_mark();
 					in_alt_string = true;
-					in_type = IN_STRING;
+					in_type = MarkupType::STRING;
 				} else if (last_type != type) {
-					if ((in_type == IN_NUMBER) and ((*p == '.') or (*p == 'x') or ((*p >= 'a') and (*p <= 'f')))) {
+					if ((in_type == MarkupType::NUMBER) and ((*p == '.') or (*p == 'x') or ((*p >= 'a') and (*p <= 'f')))) {
 						next_char();
 						continue;
 					}
-					if ((in_type == IN_WORD) and (type == CHAR_NUMBER)) {
+					if ((in_type == MarkupType::WORD) and (type == CHAR_NUMBER)) {
 						next_char();
 						continue;
 					}
 					set_mark();
 					if (type == CHAR_SPACE)
-						in_type = IN_SPACE;
+						in_type = MarkupType::SPACE;
 					else if (type == CHAR_LETTER)
-						in_type = IN_WORD;
+						in_type = MarkupType::WORD;
 					else if (type == CHAR_NUMBER)
-						in_type = IN_NUMBER;
+						in_type = MarkupType::NUMBER;
 					else if (type == CHAR_SIGN)
-						in_type = IN_OPERATOR;
+						in_type = MarkupType::OPERATOR;
 					// # -> macro...
 					if (begin_token(macro_begin)) {
 						skip_token_almost(macro_begin);
-						in_type = IN_WORD;
+						in_type = MarkupType::WORD;
 						type = CHAR_LETTER;
 					}
 				}
@@ -218,12 +222,12 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 				if (begin_token(line_comment_begin)) {
 					[[maybe_unused]] bool line_comment = true;
 					set_mark();
-					in_type = IN_LINE_COMMENT;
+					in_type = MarkupType::LINE_COMMENT;
 					break;
 				// multi-comment starting?
 				} else if (begin_token(multi_comment_begin)) {
 					set_mark();
-					in_type = IN_COMMENT_LEVEL_1;
+					in_type = MarkupType::COMMENT_LEVEL_1;
 					comment_level ++;
 					//next_char();
 					skip_token_almost(multi_comment_begin);
@@ -233,8 +237,10 @@ void Parser::CreateTextColorsDefault(SourceView *sv, int first_line, int last_li
 			next_char();
 		}
 		if (s.num > 0)
-			sv->mark_word(l, pos0, num_uchars, in_type, p0, (char*)&s[s.num]);
+			markups.add({i0 + pos0, i0 + s.num, in_type});
+		i0 += s.num + 1;
 	}
+	return markups;
 }
 
 

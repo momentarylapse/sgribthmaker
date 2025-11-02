@@ -6,7 +6,6 @@
  */
 
 #include "ParserPython.h"
-#include "../HighlightScheme.h"
 
 ParserPython::ParserPython() : Parser("Python") {
 	line_comment_begin = "#";
@@ -73,7 +72,7 @@ ParserPython::ParserPython() : Parser("Python") {
 	constants.add("None");
 }
 
-void ParserPython::CreateTextColors(SourceView *sv, int first_line, int last_line) {
-	CreateTextColorsDefault(sv, first_line, last_line);
+Array<Markup> ParserPython::create_markup(const string &text, int offset) {
+	return create_markup_default(text, offset);
 }
 

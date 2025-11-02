@@ -5,13 +5,36 @@
  *      Author: michi
  */
 
-#ifndef BASEPARSER_H_
-#define BASEPARSER_H_
+#pragma once
 
-#include "../lib/base/base.h"
+#include <lib/base/base.h>
 
-class SourceView;
 class Path;
+
+enum class MarkupType {
+	WORD,
+	SPECIAL,
+	COMPILER_FUNCTION,
+	OPERATOR_FUNCTION,
+	MODIFIER,
+	GLOBAL_VARIABLE,
+	TYPE,
+	LINE_COMMENT,
+	COMMENT_LEVEL_1,
+	COMMENT_LEVEL_2,
+	MACRO,
+	SPACE,
+	STRING,
+	STRING_SUBSTITUTE,
+	OPERATOR,
+	NUMBER,
+	NUM_TYPES
+};
+
+struct Markup {
+	int start, end;
+	MarkupType type;
+};
 
 class Parser {
 public:
@@ -39,18 +62,14 @@ public:
 		string name;
 		int line;
 		int level;
-		Label(){}
-		Label(const string &name, int line, int level);
 	};
 
-	virtual Array<Label> FindLabels(SourceView *sv);
-	virtual int WordType(const string &name);
-	virtual void CreateTextColors(SourceView *sv, int first_line = -1, int last_line = -1);
+	virtual void prepare_symbols(const string& text, const Path& filename) {}
+	virtual Array<Label> find_labels(const string& text, int offset);
+	virtual MarkupType word_type(const string &name);
+	virtual Array<Markup> create_markup(const string& text, int offset);
 
-	virtual void clear_symbols() {};
-	virtual void update_symbols(SourceView *sv) {};
-
-	void CreateTextColorsDefault(SourceView *sv, int first_line, int last_line);
+	Array<Markup> create_markup_default(const string& text, int offset);
 };
 
 void InitParser();
@@ -74,5 +93,3 @@ inline int char_type(char c) {
 	return CHAR_SIGN;
 }
 
-
-#endif /* BASEPARSER_H_ */
