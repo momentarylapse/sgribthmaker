@@ -144,8 +144,8 @@ void print_to_console(const string &s) {
 void redirect_print(kaba::Context* context, Document *doc) {
 	cur_win = doc->win;
 	for (auto p: weak(context->internal_packages))
-		if (p->filename == "base") {
-			for (auto f: p->tree->functions)
+		if (p->name == "base") {
+			for (auto f: p->main_module->tree->functions)
 				if (f->name == "print") {
 					f->address = (int_p)&print_to_console;
 					f->address_preprocess = (void*)&print_to_console;

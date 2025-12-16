@@ -202,9 +202,9 @@ void ParserKaba::prepare_symbols(const string &text, const Path& filename) {
 	}
 
 	for (auto p: weak(context->internal_packages)) {
-		add_class(this, p->base_class(), "");
+		add_class(this, p->main_module->base_class(), "");
 		//if (p->used_by_default)
-			add_class_content(this, p->base_class(), "");
+			add_class_content(this, p->main_module->base_class(), "");
 	}
 }
 
