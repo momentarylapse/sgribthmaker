@@ -68,11 +68,6 @@ string Exception::message() const {
 }
 
 
-Path Package::data_directory() const {
-	return os::app::directory_home | ".kaba" | name;
-}
-
-
 Path absolute_module_path(const Path &filename) {
 	if (filename.is_relative())
 		return (config.directory | filename).absolute().canonical();
@@ -87,10 +82,6 @@ Context::Context() {
 
 Context::~Context() {
     clean_up();
-}
-
-void Context::__delete__() {
-	this->Context::~Context();
 }
 
 void try_import_dynamic_library_for_package(Package* p, Context* ctx) {
@@ -134,9 +125,7 @@ Package* get_package_containing_module(Module* m) {
 	// TODO check parents...
 
 	// new package
-	auto package = new Package;
-	package->directory = dir;
-	package->name = dir.basename();
+	auto package = new Package(dir.basename(), dir);
 	ctx->external_packages.add(package);
 
 	// package init override?
@@ -150,6 +139,18 @@ Package* get_package_containing_module(Module* m) {
 	// dll?
 	try_import_dynamic_library_for_package(package, ctx);
 	return package;
+}
+
+Package::Package(const string& _name, const Path& _directory) {
+	name = _name;
+	directory = _directory;
+	directory_dynamic = Context::installation_root() | name;
+	is_installed = (directory == default_directory());
+	is_internal = directory.is_empty();
+}
+
+Path Package::default_directory() const {
+	return Context::packages_root() | name;
 }
 
 shared<Module> Context::load_module(const Path& filename, bool just_analyse) {
@@ -229,13 +230,13 @@ void Context::execute_single_command(const string &cmd) {
 // analyse syntax
 
 	// create a main() function
-	Function *func = tree->add_function("--command-func--", TypeVoid, tree->base_class, Flags::Static);
+	Function *func = tree->add_function("--command-func--", common_types._void, tree->base_class, Flags::Static);
 	func->_var_size = 0; // set to -1...
 
 	parser->Exp.reset_walker();
 
 	// parse
-	func->block->type = TypeUnknown;
+	func->block->type = common_types.unknown;
 	parser->parse_abstract_complete_command_into_block(func->block.get());
 	if (config.verbose) {
 		msg_write("ABSTRACT SINGLE:");
@@ -249,7 +250,7 @@ void Context::execute_single_command(const string &cmd) {
 	auto node = func->block->params[0];
 	
 	// implicit print(...)?
-	if (node->type != TypeVoid) {
+	if (node->type != common_types._void) {
 		auto n_str = parser->con.add_converter_str(node, true);
 		auto f_print = tree->required_func_global("print");
 
@@ -332,5 +333,21 @@ xfer<Context> Context::create() {
 	return c;
 }
 
+Package *Context::get_package(const string &name) const {
+	for (auto p: weak(internal_packages))
+		if (p->name == name)
+			return p;
+	for (auto p: weak(external_packages))
+		if (p->name == name)
+			return p;
+	return nullptr;
+}
 
+Path Context::installation_root() {
+	return os::app::directory_home | ".kaba";
+}
+
+Path Context::packages_root() {
+	return installation_root() | "packages";
+}
 }
