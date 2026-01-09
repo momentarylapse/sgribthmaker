@@ -78,14 +78,25 @@ public:
 	void clean_up();
 
 
-	shared<Module> load_module(const Path &filename, bool just_analyse = false);
-	shared<Module> create_module_for_source(const string &source, bool just_analyse = false);
-	shared<Module> create_empty_module(const Path &filename);
+	// careful: can not be used through dll
+	shared<Module> load_module(const Path& filename, bool just_analyse = false);
+	shared<Module> create_module_for_source(const string& source, bool just_analyse = false);
+	shared<Module> create_empty_module(const Path& filename);
 	//void remove_module(Module *s);
 
-	void execute_single_command(const string &cmd);
+	void execute_single_command(const string& cmd);
 
-	const Class *get_dynamic_type(const VirtualBase *p) const;
+	const Class* get_dynamic_type(const VirtualBase* p) const;
+
+	// dll API (experimental!)
+	shared<Module> dll_load_module(const Path& filename, bool just_analyse = false);
+	shared<Module> dll_create_module_for_source(const string& source, bool just_analyse = false);
+	xfer<Context> dll_create_context() const;
+	void dll_execute_single_command(const string& cmd);
+	std::function<shared<Module>(Context*, const Path&, bool)> f_load_module;
+	std::function<shared<Module>(Context*, const string&, bool)> f_create_module_for_source;
+	std::function<void(Context*, const string&)> f_execute_single_command;
+	std::function<xfer<Context>()> f_create_new_context;
 
 	// internal or already loaded
 	Package* get_package(const string& name) const;
@@ -93,7 +104,7 @@ public:
 	static xfer<Context> create();
 	static Path installation_root();
 	static Path packages_root();
-	};
+};
 
 extern Context *default_context;
 

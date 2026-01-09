@@ -174,12 +174,12 @@ void ParserKaba::clear_symbols() {
 
 void ParserKaba::prepare_symbols(const string &text, const Path& filename) {
 
-	context = kaba::Context::create();
+	context = kaba::default_context->dll_create_context();
 
 	try {
 		kaba::config.default_filename = filename;
 		//msg_write(kaba::config.directory.str());
-		auto m = context->create_module_for_source(text, true);
+		auto m = context->dll_create_module_for_source(text, true);
 
 		clear_symbols();
 
