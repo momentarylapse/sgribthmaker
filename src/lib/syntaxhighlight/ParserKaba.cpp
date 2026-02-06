@@ -90,6 +90,7 @@ ParserKaba::ParserKaba() : Parser("Kaba") {
 	modifiers.add(kaba::Identifier::Virtual);
 	modifiers.add(kaba::Identifier::Override);
 	modifiers.add(kaba::Identifier::Static);
+	modifiers.add(kaba::Identifier::Pure);
 	keywords.add(kaba::Identifier::Const);
 	modifiers.add(kaba::Identifier::Mutable);
 	modifiers.add(kaba::Identifier::Selfref);

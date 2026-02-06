@@ -151,9 +151,6 @@ list(APPEND DEPS Threads::Threads)
 add_executable(sgribthmaker WIN32
 	src/dialog/CommandDialog.cpp
 	src/dialog/SettingsDialog.cpp
-	src/lib/algebra/_kaba_export.cpp
-	src/lib/algebra/crypto.cpp
-	src/lib/algebra/vli.cpp
 	src/lib/any/any.cpp
 	src/lib/any/conversion.cpp
 	src/lib/base/array.cpp
