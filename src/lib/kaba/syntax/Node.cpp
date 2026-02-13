@@ -65,6 +65,8 @@ string kind2str(NodeKind kind) {
 		return "var";
 	if (kind == NodeKind::Block)
 		return "block";
+	if (kind == NodeKind::Group)
+		return "group";
 	if (kind == NodeKind::AddressShift)
 		return "address shift";
 	if (kind == NodeKind::Array)
@@ -260,7 +262,7 @@ bool Node::is_function() const {
 }
 
 Block *Node::as_block() const {
-	return (Block*)this;
+	return (Block*)link_no;
 }
 
 Function *Node::as_func() const {
@@ -359,6 +361,10 @@ void Node::set_param(int index, shared<Node> p) {
 #endif
 }
 
+void Node::add(shared<Node> p) {
+	params.add(p);
+}
+
 shared<Node> Node::shallow_copy() const {
 	auto r = new Node(kind, link_no, type, flags, token_id);
 	r->params = params;
@@ -414,7 +420,7 @@ shared<Node> cp_node(shared<Node> c, Block *parent_block) {
 	if (c->kind == NodeKind::Block) {
 		if (!parent_block)
 			parent_block = c->as_block()->parent;
-		cmd = new Block(c->as_block()->function, parent_block, c->type);
+		cmd = add_node_block(new Block(c->as_block()->function, parent_block), c->type);
 		cmd->as_block()->vars = c->as_block()->vars;
 		parent_block = cmd->as_block();
 	} else {
@@ -442,9 +448,9 @@ shared<Node> add_node_const(const Constant *c, int token_id) {
 	return new Node(NodeKind::Constant, (int_p)c, c->type.get(), Flags::None, token_id);
 }
 
-/*shared<Node> add_node_block(Block *b) {
-	return new Node(NodeKind::BLOCK, (int_p)b, common_types._void);
-}*/
+shared<Node> add_node_block(Block* b, const Class* type, int token_id) {
+	return new Node(NodeKind::Block, (int_p)b, type, Flags::None, token_id);
+}
 
 shared<Node> add_node_statement(StatementID id, int token_id, const Class *type) {
 	auto *s = statement_from_id(id);

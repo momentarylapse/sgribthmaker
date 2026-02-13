@@ -51,24 +51,27 @@ public:
 	void get_constant_value(const string &str, Value &value);
 
 	void parse();
-	void parse_top_level();
+	shared<Node> parse_abstract_top_level();
 	void parse_all_class_names_in_block(Class *ns, int indent0);
-	void parse_all_function_bodies();
+	void concretify_all_functions();
 	Flags parse_flags(Flags initial = Flags::None);
 	void parse_import();
 	void parse_enum(Class *_namespace);
 	bool parse_class(Class *_namespace);
-	Class *parse_class_header(Class *_namespace, int &offset0);
+	shared<Node> parse_abstract_class_header();
+	Class *realize_class_header(shared<Node>, Class* _namespace, int64& var_offset0);
 	void post_process_newly_parsed_class(Class *c, int size);
 	void skip_parse_class();
-	Function *parse_function_header(const Class *default_type, Class *name_space, Flags flags0);
+	shared<Node> parse_abstract_function(Class *name_space, Flags flags0);
+	shared<Node> parse_abstract_function_header(Flags flags0);
+	Function *realize_function_header(shared<Node> node, const Class *default_type, Class *name_space);
 	void post_process_function_header(Function *f, const Array<string> &template_param_names, Class *name_space, Flags flags);
-	void skip_parsing_function_body(Function *f);
 	void parse_abstract_function_body(Function *f);
-	bool parse_abstract_indented_command_into_block(Block* block, int indent0);
+	bool parse_abstract_indented_command_into_block(Node* block, int indent0);
 	const Class *parse_type(const Class *ns);
 	//const Class *parse_product_type(const Class *ns);
-	void parse_class_variable_declaration(const Class *ns, Block *block, int &_offset, Flags flags0 = Flags::None);
+	shared_array<Node> parse_abstract_variable_declaration(Block* block, Flags flags0 = Flags::None);
+	void parse_class_variable_declaration(const Class *ns, Block *block, int64 &_offset, Flags flags0 = Flags::None);
 	void parse_class_use_statement(const Class *c);
 	void parse_named_const(Class *name_space, Block *block);
 	shared<Node> parse_and_eval_const(Block *block, const Class *type);
@@ -94,14 +97,15 @@ public:
 	shared<Node> parse_operand_extension_call(const shared_array<Node> &operands, Block *block);
 
 	shared<Node> parse_abstract_single_func_param(Block *block);
-	void parse_abstract_complete_command_into_block(Block *block);
-	shared<Node> parse_abstract_block(Block *parent, Block *block = nullptr);
+	void parse_abstract_complete_command_into_block(Node *block);
+	shared<Node> parse_abstract_block(Block *parent);
 	shared<Node> parse_abstract_operand(Block *block, bool prefer_class = false);
 	shared<Node> parse_operand_greedy(Block *block, bool allow_tuples = false);
 	shared<Node> parse_abstract_operand_greedy(Block *block, bool allow_tuples = false, int min_op_level = -999);
 	shared<Node> parse_operand_super_greedy(Block *block);
 	shared<Node> parse_abstract_set_builder(Block *block);
 	shared<Node> parse_abstract_token();
+	shared<Node> parse_abstract_type();
 
 	shared<Node> parse_abstract_operator(OperatorFlags param_flags, int min_op_level = -999);
 	shared_array<Node> parse_abstract_call_parameters(Block *block);
@@ -145,7 +149,7 @@ public:
 	int parser_loop_depth;
 	bool found_dynamic_param;
 
-	Array<Function*> function_needs_parsing;
+	Array<Function*> functions_to_concretify;
 
 	struct NamespaceFix {
 		const Class *_class, *_namespace;

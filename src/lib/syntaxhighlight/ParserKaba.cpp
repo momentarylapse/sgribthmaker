@@ -322,7 +322,7 @@ void _ParseFunctionBody(SyntaxTree *syntax, Function *f) {
 // instructions
 	try {
 		while (more_to_parse) {
-			more_to_parse = syntax->parser->parse_abstract_indented_command_into_block(f->block.get(), indent0);
+			more_to_parse = syntax->parser->parse_abstract_indented_command_into_block(f->block_node.get(), indent0);
 		}
 	} catch (...) {}
 }
@@ -397,7 +397,7 @@ autocomplete::Data find_top_level(SyntaxTree *syntax, Function *f, const string 
 
 // get deep "tail" block
 Block* guess_block(SyntaxTree *syntax, Function *f) {
-	Block *b = f->block.get();
+	Block *b = f->block;
 	/*while (true){
 		Block *b_next = nullptr;
 		for (auto *n: b->nodes){
@@ -517,7 +517,7 @@ autocomplete::Data ParserKaba::run_autocomplete(const string &_code, const Path 
 		s->tree->parser->parse_legacy_macros(true);
 
 		//printf("--c\n");
-		s->tree->parser->parse_top_level();
+		s->tree->parser->parse_abstract_top_level();
 
 
 
