@@ -1275,7 +1275,6 @@ shared<Node> AbstractParser::parse_abstract_class_header() {
 			do_error("template classes only allowed with single parameter", Exp.cur_token());
 		}
 		expect_identifier("]", "']' expected after template parameter");
-		Exp.next();
 	}
 
 	// parent class / interface

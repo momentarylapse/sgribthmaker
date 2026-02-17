@@ -500,7 +500,7 @@ Class *Parser::realize_class_header(shared<Node> node, Class* _namespace, int64&
 	if (flags_has(node->flags, Flags::Template)) {
 		template_param_names.add(node->params[3]->as_token());
 		flags_set(_class->flags, Flags::Template);
-		context->template_manager->add_class_template(_class, template_param_names, [this, _nn = node, template_param_names, _namespace] (SyntaxTree* tree, const Array<const Class*>& tparams, int) -> Class* {
+		context->template_manager->add_class_template(_class, template_param_names, [_nn = node, template_param_names, _namespace] (SyntaxTree* tree, const Array<const Class*>& tparams, int) -> Class* {
 			auto nn = cp_node(_nn);
 			nn->link_no = 0;
 			flags_clear(nn->flags, Flags::Template);
@@ -521,7 +521,7 @@ Class *Parser::realize_class_header(shared<Node> node, Class* _namespace, int64&
 			Class *t = tree->create_new_class(_name, _nn->as_class(), 0, 0, nullptr, {}, _namespace, _nn->token_id);
 			flags_clear(t->flags, Flags::FullyParsed);
 
-			realize_class(nn, _namespace, _name);
+			tree->parser->realize_class(nn, _namespace, _name);
 			return t;
 
 			tree->do_error("TEMPLATE INSTANCE...", -1);
@@ -573,7 +573,7 @@ Class* Parser::realize_class(shared<Node> node, Class* name_space, const string&
 		return nullptr;
 	node->link_no = (int_p)_class;
 
-	if (_class->is_template()) // parse later...
+	if (_class->is_template()) // realize body later...
 		return _class;
 	Array<int> sub_class_ids;
 
@@ -730,23 +730,24 @@ void Parser::realize_class_variable_declaration(shared<Node> node, const Class *
 	if (node->params[1])
 		type = con.concretify_as_type(node->params[1], tree->root_of_all_evil->block, ns);
 
-	Constant *c_value = nullptr;
+	shared<Node> value;
 	if (node->params[2]) {
 
 		//if (nodes.num != 1)
 		//	do_error(format("'var' declaration with '=' only allowed with a single variable name, %d given", names.num));
 
-		auto cv = eval_to_const(node->params[2], block, type);
-		c_value = cv->as_const();
+
+		//auto cv = eval_to_const(node->params[2], block, type);
+		value = con.force_concrete_type(con.concretify_node(node->params[2], block, ns));
 		if (!type)
-			type = cv->type;
+			type = value->type;
 	}
 
 
 	parser_class_add_element(this, cc, node->params[0]->as_token(), type, flags, _offset, node->params[0]->token_id);
 
 	if (node->params[2]) {
-		ClassInitializers init = {ns->elements.num - 1, c_value};
+		ClassInitializers init = {ns->elements.num - 1, value};
 		cc->initializers.add(init);
 	}
 }
