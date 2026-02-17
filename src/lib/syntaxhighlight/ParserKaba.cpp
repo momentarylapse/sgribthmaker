@@ -311,23 +311,6 @@ const kaba::Class *node_namespace(shared<kaba::Node> n) {
 }
 
 
-void _ParseFunctionBody(SyntaxTree *syntax, Function *f) {
-	syntax->parser->Exp.cur_line = syntax->parser->Exp.token_logical_line(f->token_id);
-
-	int indent0 = syntax->parser->Exp.cur_line->indent;
-	bool more_to_parse = true;
-
-	syntax->parser->parser_loop_depth = 0;
-
-// instructions
-	try {
-		while (more_to_parse) {
-			more_to_parse = syntax->parser->parse_abstract_indented_command_into_block(f->block_node.get(), indent0);
-		}
-	} catch (...) {}
-}
-
-
 bool allow(const string &name) {
 	if (name.head(1) == "-")
 		return false;
@@ -537,10 +520,6 @@ autocomplete::Data ParserKaba::run_autocomplete(const string &_code, const Path 
 		int f_line_no = s->tree->parser->Exp.token_logical_line(f->token_id)->physical_line;
 		if (!f->is_extern() and (f_line_no >= 0) and (f_line_no < line))
 			ff = f;
-	}
-	if (ff) {
-//		printf("func: %s\n", ff->name.c_str());
-		_ParseFunctionBody(s->tree.get(), ff);
 	}
 
 	data = simple_parse(s->tree.get(), ff, cur_line);

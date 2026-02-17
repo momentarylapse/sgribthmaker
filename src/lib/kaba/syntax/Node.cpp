@@ -101,6 +101,12 @@ string kind2str(NodeKind kind) {
 		return "constructor function";
 	if (kind == NodeKind::Slice)
 		return "slice";
+	if (kind == NodeKind::AbstractRoot)
+		return "root";
+	if (kind == NodeKind::AbstractFunction)
+		return "function def";
+	if (kind == NodeKind::AbstractClass)
+		return "class def";
 	if (kind == NodeKind::VarTemp)
 		return "temp";
 	if (kind == NodeKind::DereferenceVarTemp)
@@ -238,8 +244,8 @@ Node::Node(NodeKind _kind, int64 _link_no, const Class *_type, Flags _flags, int
 }
 
 Node::~Node() {
-	if (kind == NodeKind::Block)
-		as_block()->vars.clear();
+	//if (kind == NodeKind::Block)
+	//	as_block()->vars.clear();
 }
 
 bool Node::is_mutable() const {
@@ -417,7 +423,7 @@ shared<Node> Node::change_type(const Class *type, int token_id) const {
 // recursive
 shared<Node> cp_node(shared<Node> c, Block *parent_block) {
 	shared<Node> cmd;
-	if (c->kind == NodeKind::Block) {
+	if (c->kind == NodeKind::Block and c->as_block()) {
 		if (!parent_block)
 			parent_block = c->as_block()->parent;
 		cmd = add_node_block(new Block(c->as_block()->function, parent_block), c->type);

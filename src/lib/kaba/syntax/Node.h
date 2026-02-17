@@ -93,6 +93,9 @@ enum class NodeKind {
 	AbstractTypeOptional,// X?
 	AbstractTypeCallable,// X->Y
 	AbstractVar,         // var x ...
+	AbstractLet,         // let x ...
+	AbstractEnum,
+	AbstractUseClassElement, // 'use' inside class
 	// compilation
 	VarTemp,
 	DereferenceVarTemp,
