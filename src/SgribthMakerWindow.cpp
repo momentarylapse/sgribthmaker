@@ -256,7 +256,7 @@ void SgribthMakerWindow::update_function_list() {
 	reset("structure-list");
 	if (!cur_doc()->parser)
 		return;
-	auto labels = cur_doc()->parser->find_labels(cur_view->get_all(), 0);
+	auto labels = cur_doc()->parser->find_labels(cur_view->get_all());
 	int last_parent = -1;
 	foreachi(Parser::Label &l, labels, i) {
 		if (l.level > 0) {
@@ -617,7 +617,7 @@ void SgribthMakerWindow::execute_settings_dialog() {
 
 void SgribthMakerWindow::on_function_list() {
 	int n = get_int("");
-	auto labels = cur_doc()->parser->find_labels(cur_view->get_all(), 0);
+	auto labels = cur_doc()->parser->find_labels(cur_view->get_all());
 	if ((n >= 0) and (n < labels.num)) {
 		cur_view->show_line_on_screen(labels[n].line);
 		activate(cur_view->id);
