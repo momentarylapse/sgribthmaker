@@ -10,13 +10,12 @@
 //#ifdef SYNTAX_HIGHLIGHT_KABA ...
 #include <lib/kaba/kaba.h>
 #include <lib/kaba/parser/Parser.h>
+#include <lib/base/iter.h>
+#include <lib/os/file.h>
 #include <stdio.h>
 
-#include "lib/base/iter.h"
 
 static bool verbose = false;
-
-#include "lib/os/msg.h"
 
 void add_class(ParserKaba *p, const kaba::Class *c, const string &ns);
 
@@ -175,20 +174,33 @@ void ParserKaba::clear_symbols() {
 	constants.clear();
 }
 
+int file_line_column_to_offset(const Path& file, int line, int col) {
+	string text = os::fs::read_text(file);
+	int offset = col;
+	auto lines = text.explode("\n");
+	for (int i=0; i<line; i++)
+		offset += lines[i].num + 1;
+	return offset;
+}
 
 void ParserKaba::prepare_symbols(const string &text, const Path& filename) {
+	if (text == current_code)
+		return;
+
+	current_code = text;
 	errors.clear();
 
 	context = kaba::default_context->dll_create_context();
+	module = nullptr;
 
 	try {
 		kaba::config.default_filename = filename;
 		//msg_write(kaba::config.directory.str());
-		auto m = context->dll_create_module_for_source(text, true);
+		module = context->dll_create_module_for_source(text, true);
 
 		clear_symbols();
 
-		add_scope_content(this, m->tree->global_scope, "");
+		add_scope_content(this, module->tree->global_scope, "");
 
 		//m->tree->
 
@@ -200,16 +212,17 @@ void ParserKaba::prepare_symbols(const string &text, const Path& filename) {
 		}*/
 
 //		add_class_content(this, m->tree->imported_symbols.get(), "");
-		add_class_content(this, m->tree->base_class, "");
+		add_class_content(this, module->tree->base_class, "");
 
 	} catch (kaba::Exception &e) {
-		int pos = e.column;
-		auto lines = text.explode("\n");
-		for (int i=0; i<e.line; i++)
-			pos += lines[i].num + 1;
-		errors.add({e.message(), pos});
+		auto ee = &e;
+		while (ee->parent)
+			ee = ee->parent.get();
+
+		int offset = file_line_column_to_offset(ee->filename, ee->line, ee->column);
+		errors.add({ee->filename, ee->message(), offset});
 	} catch (Exception &e) {
-		errors.add({e.message(), 0});
+		errors.add({"", e.message(), 0});
 		//msg_error(e.message());
 	}
 
@@ -225,7 +238,7 @@ Array<Parser::Label> ParserKaba::find_labels(const string& text) {
 	Array<Label> labels;
 
 	auto ff = [] (const string& s) {
-		auto x = s.replace(" virtual ", " ").replace(" extern ", " ").replace(" mut ", " ").replace(" selfref ", " ").replace(" globalref ", " ").replace(" pure ", " ").replace(" override ", " ");
+		auto x = s.replace(" virtual ", " ").replace(" extern ", " ").replace(" mut ", " ").replace(" selfref ", " ").replace(" globalref ", " ").replace(" pure ", " ").replace(" override ", " ").replace(" static ", " ").replace(" as shared", "");
 		int p = x.find(" extends ");
 		if (p > 0)
 			return x.head(p);
@@ -246,7 +259,7 @@ Array<Parser::Label> ParserKaba::find_labels(const string& text) {
 		if (l[2] == '\t')
 			level ++;
 		// meh :P
-		if (ll.head(5) == "class" or ll.head(6) == "struct" or ll.head(4) == "func") {
+		if (ll.head(5) == "class" or ll.head(6) == "struct" or ll.head(4) == "enum" or ll.head(4) == "func") {
 			labels.add({ff(ll), line_no, level});
 		}
 	}
@@ -551,4 +564,49 @@ autocomplete::Data ParserKaba::run_autocomplete(const string &_code, const Path 
 			}
 		}
 	return data;
+}
+
+base::optional<Parser::SymbolInfo> node_info(kaba::Node* n) {
+	auto xxx = [] (kaba::Module* m, int token_id, const string& description) -> Parser::SymbolInfo {
+		Parser::SymbolInfo o;
+		o.description = description;
+		if (m->tree and m->tree->parser) {
+			o.filename = m->filename;
+			o.position = m->tree->parser->Exp.token_offset(token_id);
+			o.line = m->tree->parser->Exp.token_physical_line_no(token_id);
+			return o;
+		}
+		return o;
+	};
+
+	n->show();
+	if (n->kind == kaba::NodeKind::Class) {
+		auto t = n->as_class();
+		return xxx(t->owner->module, t->token_id, "class");
+	} else if (n->kind == kaba::NodeKind::Function) {
+		auto f = n->as_func();
+		return xxx(f->owner()->module, f->token_id, "function  " + f->signature());
+	} else if (n->kind == kaba::NodeKind::Constant) {
+		auto c = n->as_const();
+		return xxx(c->owner->module, c->token_id, format("constant  %s: %s = %s", c->name, c->type->long_name(), c->str()));
+	} else if (n->kind == kaba::NodeKind::VarGlobal) {
+		auto v = n->as_global();
+		return xxx(v->ns->owner->module, v->token_id, "variable  " + v->type->long_name());
+	} else if (n->kind == kaba::NodeKind::Statement) {
+		return xxx(nullptr, -1, "statement");
+	}
+	return base::None;
+}
+
+base::optional<Parser::SymbolInfo> ParserKaba::symbol_info(const string& text, int offset, int length) {
+	if (!module)
+		return base::None;
+
+	// TODO search node
+	string x = text.sub(offset, offset + length);
+	auto xx = module->tree->get_existence(x, module->tree->root_of_all_evil->block, module->tree->base_class, -1);
+
+	for (auto n: weak(xx))
+		return node_info(n);
+	return base::None;
 }

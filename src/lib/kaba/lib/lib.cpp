@@ -16,6 +16,7 @@
 #include "../../any/any.h"
 #include "../../base/callable.h"
 #include "../../base/iter.h"
+#include "../../os/app.h"
 #include "../../os/msg.h"
 
 
@@ -487,7 +488,7 @@ int get_virtual_index(void *func, const string &tname, const string &name) {
 		msg_error("class_add_func_virtual(" + tname + "." + name + "):  can't read virtual index");
 		msg_write(p2s(pp));
 		msg_write(Asm::disassemble(func, 16));
-		exit(1);
+		os::app::exit(1);
 	} else if (config.native_target.abi == Abi::AMD64_WINDOWS) {
 		msg_error("class_add_func_virtual(" + tname + "." + name + "):  can't read virtual index");
 		msg_write(Asm::disassemble(func, 16));
@@ -530,7 +531,7 @@ void class_link_vtable(void *p) {
 //------------------------------------------------------------------------------------------------//
 
 void class_add_const(const string &name, const Class *type, const void *value) {
-	Constant *c = cur_package_module->tree->add_constant(type, cur_class);
+	Constant *c = cur_package_module->tree->add_constant(type, -1, cur_class);
 	c->name = name;
 
 	// enums can't be referenced...
@@ -554,9 +555,10 @@ void add_const(const string &name, const Class *type, const void *value) {
 
 
 void add_ext_var(const string &name, const Class *type, void *var) {
-	auto *v = new Variable(name, type);
+	auto ns = cur_package_module->tree->base_class;
+	auto *v = new Variable(name, type, ns, -1);
 	flags_set(v->flags, Flags::Extern); // prevent initialization when importing
-	cur_package_module->tree->base_class->static_variables.add(v);
+	ns->static_variables.add(v);
 	if (config.allow_std_lib)
 		v->memory = var;
 };
@@ -580,7 +582,7 @@ void func_set_inline(InlineID index) {
 void func_add_param(const string &name, const Class *type, Flags flags) {
 	if (cur_func) {
 		// FIXME: use call-by-reference type?
-		Variable *v = new Variable(name, type);
+		Variable *v = new Variable(name, type, nullptr, -1);
 		v->flags = flags;
 		cur_func->var.add(v);
 		cur_func->literal_param_type.add(type);
@@ -593,7 +595,7 @@ void func_add_param(const string &name, const Class *type, Flags flags) {
 void func_add_param_def_x(const string &name, const Class *type, const void *p, Flags flags) {
 	if (cur_func) {
 		// FIXME: use call-by-reference type?
-		Variable *v = new Variable(name, type);
+		Variable *v = new Variable(name, type, nullptr, -1);
 		v->flags = flags;
 		cur_func->var.add(v);
 		cur_func->literal_param_type.add(type);
@@ -601,7 +603,7 @@ void func_add_param_def_x(const string &name, const Class *type, const void *p, 
 		//cur_func->mandatory_params = cur_func->num_params;
 		cur_func->abstract_node->params[2]->params.resize(cur_func->num_params*3);
 
-		Constant *c = cur_package_module->tree->add_constant(type, cur_class);
+		Constant *c = cur_package_module->tree->add_constant(type, -1, cur_class);
 		if (type == common_types.i32)
 			c->as_int() = *(int*)p;
 		if (type == common_types.f32)
@@ -622,7 +624,7 @@ void add_type_cast(int penalty, const Class *source, const Class *dest, const st
 		}
 	if (!c.f){
 		msg_error("add_type_cast: " + string(cmd) + " not found");
-		exit(1);
+		os::app::exit(1);
 	}
 	c.source = source;
 	c.dest = dest;
