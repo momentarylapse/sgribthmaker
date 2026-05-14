@@ -176,7 +176,7 @@ void CodeCompiler::compile_and_run(bool verbose) {
 		doc->win->console->clear();
 
 		try {
-			auto module = context->load_module(doc->filename);
+			auto module = context->load_module(doc->filename, false);
 			float dt_compile = timer.get();
 
 			if (!verbose)

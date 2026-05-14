@@ -303,6 +303,7 @@ add_executable(sgribthmaker WIN32
 	src/lib/kaba/Interpreter.cpp
 	src/lib/kaba/kaba.cpp
 	src/lib/kaba/Module.cpp
+	src/lib/kapi/kapi.cpp
 	src/lib/math/Box.cpp
 	src/lib/math/complex.cpp
 	src/lib/math/interpolation.cpp
@@ -339,6 +340,7 @@ add_executable(sgribthmaker WIN32
 	src/lib/os/stream.cpp
 	src/lib/os/terminal.cpp
 	src/lib/os/time.cpp
+	src/lib/pattern/_kaba_export.cpp
 	src/lib/pattern/Observable.cpp
 	src/lib/syntaxhighlight/AutoComplete.cpp
 	src/lib/syntaxhighlight/BaseParser.cpp
