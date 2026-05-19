@@ -24,8 +24,9 @@ static void subscribe(Source* source, Sink* sink) {
 	*source >> *sink;
 }
 
-
-class XPSource : public obs::xsource<void*> {
+// generic source/sink for call-by-reference types
+// NOTE void* does not work! (std::function is not compatible between * and &...)
+class XPSource : public obs::xsource<int&> {
 public:
 	void __init__(VirtualBase* node, obs::internal_node_data* ind, const string& name) {
 		new(this) obs::base_source(node, name, 0);
@@ -33,14 +34,13 @@ public:
 	}
 };
 
-class XPSink : public obs::xsink<void*> {
+class XPSink : public obs::xsink<int&> {
 public:
 	void __init_p__(VirtualBase* node, Callable<void(void*)>& f) {
 		//printf("init_p\n");
-		//f(nullptr);
-		new(this) obs::xsink<void*>(node, [&f] (void* p) {
-			//printf("XXXX %p\n", p);
-			f(p);
+		new(this) obs::xsink<int&>(node, [&f] (int& p) {
+			//printf("XXXX %p\n", &p);
+			f(&p);
 		});
 	}
 };
@@ -53,7 +53,7 @@ static void xpsubscribe(XPSource* source, XPSink* sink) {
 
 
 void export_package_obs(kaba::IExporter* e) {
-	e->package_info("obs", "0.1");
+	e->package_info("obs", "0.3");
 
 	e->declare_class_size("InternalNodeData", sizeof(obs::internal_node_data));
 	e->link_class_func("InternalNodeData.__init__", &kaba::generic_init<obs::internal_node_data>);

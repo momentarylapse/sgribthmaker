@@ -9,6 +9,7 @@
 #define SRC_LIB_PATTERN_OBSERVABLE_H_
 
 #include "../base/base.h"
+#include "../base/xparam.h"
 #include <functional>
 #include <type_traits>
 
@@ -65,7 +66,7 @@ struct xsource : base_source {
 		node->_internal_node_data.sources.add(this);
 	}
 
-	void notify(T... t) const {
+	void notify(typename base::xparam<T>::t... t) const {
 		_debug_notify();
 		for (const base_sink* s: connected_sinks) {
 			//if constexpr (NODE_DEBUG_LEVEL >= 2)
@@ -73,7 +74,7 @@ struct xsource : base_source {
 			reinterpret_cast<const xsink<T...>*>(s)->callback(t...);
 		}
 	}
-	void operator() (T... t) const { notify(t...); }
+	void operator() (typename base::xparam<T>::t... t) const { notify(t...); }
 	void subscribe(xsink<T...>& s) {
 		_subscribe(s);
 	}
@@ -88,14 +89,14 @@ struct xsink : base_sink {
 	friend struct base_source;
 	friend struct internal_node_data;
 
-	using Callback = std::function<void(T...)>;
+	using Callback = std::function<void(typename base::xparam<T>::t...)>;
 
 	xsink() = delete;
 	template<class N, class F>
 	xsink(N* _node, F f) {
 		node = _node;
 		if constexpr (std::is_member_function_pointer<F>::value)
-			callback = [_node, f] (T... t) { (*_node.*f)(t...); };
+			callback = [_node, f] (typename base::xparam<T>::t... t) { (*_node.*f)(t...); };
 		else
 			callback = f;
 	}
