@@ -801,33 +801,58 @@ shared<Node> Concretifier::concretify_statement_for_unwrap_pointer_shared(shared
 	return block_x;
 }
 
+bool expression_is_temporary(const shared<Node>& node) {
+	if (node->kind == NodeKind::VarLocal or node->kind == NodeKind::VarGlobal)
+		return false;
+	if (node->kind == NodeKind::AddressShift)
+		return expression_is_temporary(node->params[0]);
+	return true;
+}
+
 shared<Node> Concretifier::concretify_statement_for_unwrap_optional(shared<Node> node, shared<Node> container, Block *block, const Class *ns) {
 	// [OUT-VAR, ---, EXPRESSION, TRUE-BLOCK, [FALSE-BLOCK]]
-	auto expr = concretify_node(node->params[2], block, ns);
+	auto expr = concretify_node(container, block, ns);
+	auto expr_static = expr;
 	auto t0 = expr->type;
 	auto var_name = node->params[0]->as_token();
+	bool is_temporary = expression_is_temporary(expr);
 
 	auto block_x = add_node_block(new Block(block->function, block), common_types._void);
 
 	auto t_out = tree->request_implicit_class_alias(t0->param[0], node->token_id);
 
-	auto *var = block_x->as_block()->add_var(var_name, t_out, node->token_id);
+	// alias pointer
+	auto var_p = block_x->as_block()->add_var(var_name, t_out, node->token_id);
 	if (!node->is_mutable())
-		flags_clear(var->flags, Flags::Mutable);
-	auto assign = add_node_operator_by_inline(InlineID::PointerAssign, add_node_local(var), expr->ref(t_out));
+		flags_clear(var_p->flags, Flags::Mutable);
+
+	if (is_temporary) {
+		if (node->is_mutable()) // should be filtered out by const container... but eh
+			do_error("can not take a mutable reference to a temporary value", node);
+
+		// store in temp variable
+		static int nnn = 0;
+		auto var1 = block_x->as_block()->add_var(":tempop" + i2s(nnn++), t0, node->token_id);
+		auto assign1 = auto_implementer->add_assign(block->function, "", add_node_local(var1), expr);
+		block_x->add(assign1);
+
+		expr_static = add_node_local(var1);
+	}
+
+	auto assign_p = add_node_operator_by_inline(InlineID::PointerAssign, add_node_local(var_p), expr_static->ref(t_out));
 
 	auto n_if = add_node_statement(StatementID::If, node->token_id);
 	n_if->set_num_params(node->params.num - 2);
 	auto f_has_val = t0->get_member_func(Identifier::func::OptionalHasValue, common_types._bool, {});
 //	if (!f_has_val)
 //		do_error("")
-	n_if->set_param(0, add_node_member_call(f_has_val, expr));
+	n_if->set_param(0, add_node_member_call(f_has_val, expr_static));
 	n_if->set_param(1, concretify_node(cp_node(node->params[3], block_x->as_block()), block_x->as_block(), ns));
 	if (node->params.num >= 5)
 		n_if->set_param(2, concretify_node(cp_node(node->params[4], block_x->as_block()), block_x->as_block(), ns));
 	block_x->add(n_if);
 
-	n_if->params[1]->params.insert(assign, 0);
+	n_if->params[1]->params.insert(assign_p, 0);
 
 	return block_x;
 }
@@ -1356,7 +1381,7 @@ shared<Node> Concretifier::concretify_statement_lambda(shared<Node> node, Block 
 
 // --- no captures?
 	if (captured_variables.num == 0) {
-		f->update_parameters_after_parsing();
+		f->update_parameters_after_realizing();
 		return add_node_func_name(f);
 	}
 
@@ -1410,7 +1435,7 @@ shared<Node> Concretifier::concretify_statement_lambda(shared<Node> node, Block 
 		tree->transform_block(f->block_node.get(), replace_local);
 	}
 
-	f->update_parameters_after_parsing();
+	f->update_parameters_after_realizing();
 
 	auto inner_lambda = wrap_function_into_callable(f, node->token_id);
 
@@ -2248,6 +2273,7 @@ void Concretifier::concretify_function_header(Function *f) {
 		f->set_return_type(concretify_as_type(rt, block, f->name_space));
 	}
 	f->literal_param_type.resize(f->num_params);
+	f->param_default_values.resize(f->num_params);
 	for (int i=0; i<f->num_params; i++) {
 		auto at = f->abstract_param_type(i);
 		// type might be null!
@@ -2268,12 +2294,14 @@ void Concretifier::concretify_function_header(Function *f) {
 				v->type = t;
 				f->literal_param_type[i] = t;
 			}
-			f->abstract_node->params[2]->params[i*3+2] = dp;
+			f->param_default_values[i] = dp;
 		}
 	}
 	flags_clear(f->flags, Flags::Template);
 
 	check_function_signature_legal(this, f);
+
+	f->update_parameters_after_realizing();
 }
 
 bool calling_super_init(Function *f) {
@@ -2412,8 +2440,8 @@ shared<Node> Concretifier::try_to_match_apply_params(const shared_array<Node> &l
 			}
 			for (int i=0; i<f->num_params; i++)
 				if (!params[i]) {
-					if (i >= f->mandatory_params and f->abstract_default_parameter(i)) {
-						params[i] = f->abstract_default_parameter(i);
+					if (i >= f->mandatory_params and i < f->param_default_values.num and f->param_default_values[i]) {
+						params[i] = f->param_default_values[i];
 					} else {
 						return {ParamMapResult::Code::ErrorTooFew, f->mandatory_params};
 					}
@@ -2902,8 +2930,8 @@ shared<Node> Concretifier::apply_params_with_cast(shared<Node> operand, const sh
 	// default values
 	if (operand->is_function()) {
 		auto f = operand->as_func();
-		for (int p=params.num+offset; p<f->num_params; p++) {
-			r->set_param(p, f->abstract_default_parameter(p));
+		for (int p=params.num+offset; p<f->param_default_values.num; p++) {
+			r->set_param(p, f->param_default_values[p]);
 		}
 	}
 	return r;

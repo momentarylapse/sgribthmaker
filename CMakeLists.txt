@@ -342,6 +342,7 @@ add_executable(sgribthmaker WIN32
 	src/lib/os/time.cpp
 	src/lib/pattern/_kaba_export.cpp
 	src/lib/pattern/Observable.cpp
+	src/lib/syntaxhighlight/_kaba_export.cpp
 	src/lib/syntaxhighlight/AutoComplete.cpp
 	src/lib/syntaxhighlight/BaseParser.cpp
 	src/lib/syntaxhighlight/ParserC.cpp

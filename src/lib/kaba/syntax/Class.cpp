@@ -575,7 +575,9 @@ void Class::add_function(SyntaxTree *s, Function *f, bool as_virtual, bool overr
 		if (as_virtual and (f->virtual_index < 0)) {
 			if (config.verbose)
 				msg_write("VVVVV +");
-			f->virtual_index = s->module->context->external->process_class_offset(cname(owner->base_class), f->name, max(vtable.num, 2));
+			f->virtual_index =  max(vtable.num, 2);
+			if (flags_has(f->name_space->flags, Flags::Extern))
+				f->virtual_index = s->module->context->external->process_class_offset(cname(owner->base_class), f->name, f->virtual_index);
 			if ((f->name == Identifier::func::Delete) and (config.target.abi == Abi::AMD64_WINDOWS or config.target.abi == Abi::X86_WINDOWS))
 				f->virtual_index = 1;
 		}
@@ -654,7 +656,7 @@ void Class::derive_from(const Class* root, DeriveFlags derive_flags) {
 	for (auto *f: weak(parent->functions)) {
 		if (f->name == Identifier::func::Assign)
 			continue;
-		if (f->name == Identifier::func::AutoInit)
+		if (f->name == Identifier::func::AutoInitContext)
 			continue;
 		Function *ff = f;
 		if (f->name == Identifier::func::Init) {

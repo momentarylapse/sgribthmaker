@@ -4,6 +4,21 @@
 #include <lib/kapi/KabaExporter.h>
 #include <cstdio>
 
+class Sink;
+
+class InternalNodeData : public obs::internal_node_data {
+public:
+	obs::sink* create_temp_sink0(VirtualBase* node, Callable<void()>& f) {
+		auto s = new obs::sink(node, [&f] { f(); });
+		add_temp_sink(s);
+		return s;
+	}
+	obs::xsink<int&>* create_temp_xsink0(VirtualBase* node, Callable<void(void*)>& f) {
+		auto s = new obs::xsink<int&>(node, [&f] (int& p) { f(&p); });
+		add_temp_sink(s);
+		return s;
+	}
+};
 
 class Source : public obs::source {
 public:
@@ -53,11 +68,16 @@ static void xpsubscribe(XPSource* source, XPSink* sink) {
 
 
 void export_package_obs(kaba::IExporter* e) {
-	e->package_info("obs", "0.3");
+	e->package_info("obs", "0.6");
 
 	e->declare_class_size("InternalNodeData", sizeof(obs::internal_node_data));
 	e->link_class_func("InternalNodeData.__init__", &kaba::generic_init<obs::internal_node_data>);
 	e->link_class_func("InternalNodeData.__delete__", &kaba::generic_delete<obs::internal_node_data>);
+	e->link_class_func("InternalNodeData.cleanup_temp_sinks", &obs::internal_node_data::cleanup_temp_sinks);
+	e->link_class_func("InternalNodeData.add_temp_sink", &obs::internal_node_data::add_temp_sink);
+	e->link_class_func("InternalNodeData.create_temp_sink0", &InternalNodeData::create_temp_sink0);
+	e->link_class_func("InternalNodeData.create_temp_xsink0", &InternalNodeData::create_temp_xsink0);
+	e->link_class_func("InternalNodeData.unsubscribe", &obs::internal_node_data::unsubscribe);
 
 	e->declare_class_size("Source", sizeof(Source));
 	e->link_class_func("Source.__init__", &Source::__init__);

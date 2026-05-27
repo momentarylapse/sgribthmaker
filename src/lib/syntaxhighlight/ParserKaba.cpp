@@ -83,7 +83,7 @@ int file_line_column_to_offset(const Path& file, int line, int col) {
 	string text = os::fs::read_text(file);
 	int offset = col;
 	auto lines = text.explode("\n");
-	for (int i=0; i<line; i++)
+	for (int i=0; i<min(line, lines.num); i++)
 		offset += lines[i].num + 1;
 	return offset;
 }
@@ -130,6 +130,7 @@ void ParserKaba::prepare_symbols(const string &text, const Path& filename) {
 		//msg_error(e.message());
 	}
 
+	clear_symbols();
 	for (auto p: weak(context.get()->internal_packages)) {
 		add_class(this, p->main_module->base_class(), "");
 		//if (p->used_by_default)
@@ -163,7 +164,7 @@ Array<Parser::Label> ParserKaba::find_labels(const string& text) {
 		if (l[2] == '\t')
 			level ++;
 		// meh :P
-		if (ll.head(5) == "class" or ll.head(6) == "struct" or ll.head(4) == "enum" or ll.head(4) == "func") {
+		if (ll.head(5) == "class" or ll.head(6) == "struct" or ll.head(4) == "enum" or ll.head(5) == "trait" or ll.head(4) == "func") {
 			labels.add({ff(ll), line_no, level});
 		}
 	}

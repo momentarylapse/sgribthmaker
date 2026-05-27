@@ -110,9 +110,8 @@ struct internal_node_data {
 	friend struct base_source;
 
 	~internal_node_data();
-	//template<class... T>
-	//xsink<T...>& create_sink(VirtualBase* node, std::function<void(T...)> callback);
 	void cleanup_temp_sinks();
+	void add_temp_sink(base_sink* sink);
 	void unsubscribe(VirtualBase* observer);
 
 	Array<base_source*> sources;
@@ -136,7 +135,7 @@ public:
 	template<class... T, class F>
 	xsink<T...>& create_data_sink(F f) {
 		_internal_node_data.cleanup_temp_sinks();
-		_internal_node_data.temp_sinks.add(new xsink<T...>(this, f));
+		_internal_node_data.add_temp_sink(new xsink<T...>(this, f));
 		return *reinterpret_cast<xsink<T...>*>(_internal_node_data.temp_sinks.back());
 		//return _internal_node_data.create_sink(this, callback);
 	}

@@ -409,7 +409,7 @@ void Parser::realize_enum(shared<Node> node, Class *_namespace) {
 		if (node->params[i*3+2]) {
 			auto cv = eval_to_const(node->params[i*3+2], tree->root_of_all_evil->block, common_types.i32);
 			next_value = cv->as_const()->as_int();
-		} else {
+		} else if (flags_has(_class->flags, Flags::Extern)) {
 			// linked from host program?
 			next_value = context->external->process_class_offset(_class->cname(_namespace), c->name, next_value);
 		}
@@ -458,7 +458,8 @@ void parser_class_add_element(Parser *p, Class *_class, const string &name, cons
 		_class->static_variables.add(v);
 	} else {
 		_offset = mem_align(_offset, type->alignment);
-		_offset = p->context->external->process_class_offset(_class->cname(p->tree->base_class), name, _offset);
+		if (flags_has(_class->flags, Flags::Extern))
+			_offset = p->context->external->process_class_offset(_class->cname(p->tree->base_class), name, _offset);
 		auto el = ClassElement(name, type, _offset, token_id);
 		_class->elements.add(el);
 		_offset += (int)type->size;
@@ -500,6 +501,8 @@ Class *Parser::realize_class_header(shared<Node> node, Class* _namespace, int64&
 			tree->module->do_error_internal("class declaration ...not found " + name);
 		_class->token_id = node->token_id;
 		_class->from_template = parse_class_type(node->params[0]->as_token()); // class/struct/interface;
+		if (flags_has(node->flags, Flags::Extern))
+			flags_set(_class->flags, Flags::Extern);
 	}
 
 	// template?
@@ -549,6 +552,7 @@ Class *Parser::realize_class_header(shared<Node> node, Class* _namespace, int64&
 	// traits
 	if (node->params[4])
 		for (auto& p: node->params[4]->params) {
+			int num_elements_before = _class->elements.num;
 			auto trait = con.concretify_as_type(p, tree->root_of_all_evil->block, _namespace); // force
 			if (!trait->fully_parsed()) {
 				do_error(format("trait class '%s' not defined or nor fully parsed yet", trait->long_name()), p);
@@ -565,7 +569,13 @@ Class *Parser::realize_class_header(shared<Node> node, Class* _namespace, int64&
 
 				for (const auto& init: trait->initializers)
 					if (init.element == i)
-						_class->initializers.add(init);
+						_class->initializers.add({init.element + num_elements_before, init.value});
+			}
+
+			for (auto f: weak(trait->functions)) {
+				if (f->name == Identifier::func::Init or f->name == Identifier::func::AutoInitContext or f->name == Identifier::func::Delete)
+					continue;
+				realize_function(cp_node(f->abstract_node), _class);
 			}
 		}
 
@@ -634,8 +644,11 @@ void Parser::post_process_newly_parsed_class(Class *_class, int size) {
 				do_error("no virtual functions allowed when inheriting from class without virtual functions", _class->token_id);
 			// element "-vtable-" being derived
 		} else {
-			for (ClassElement &e: _class->elements)
-				e.offset = external->process_class_offset(_class->cname(tree->base_class), e.name, e.offset + config.target.pointer_size);
+			for (ClassElement &e: _class->elements) {
+				e.offset += config.target.pointer_size;
+				if (flags_has(_class->flags, Flags::Extern))
+					e.offset = external->process_class_offset(_class->cname(tree->base_class), e.name, e.offset);
+			}
 
 			auto el = ClassElement(Identifier::VtableVar, common_types.pointer, 0, _class->token_id);
 			_class->elements.insert(el, 0);
@@ -652,7 +665,10 @@ void Parser::post_process_newly_parsed_class(Class *_class, int size) {
 	for (auto &e: _class->elements)
 		align = max(align, e.type->alignment);
 	size = mem_align(size, align);
-	_class->size = external->process_class_size(_class->cname(tree->base_class), size);
+	if (flags_has(_class->flags, Flags::Extern))
+		size = external->process_class_size(_class->cname(tree->base_class), size);
+	flags_clear(_class->flags, Flags::Extern);
+	_class->size = size;
 	_class->alignment = align;
 
 
@@ -747,10 +763,10 @@ void Parser::realize_class_variable_declaration(shared<Node> node, const Class *
 		//if (nodes.num != 1)
 		//	do_error(format("'var' declaration with '=' only allowed with a single variable name, %d given", names.num));
 
-		auto ff = ns->get_member_func(Identifier::func::AutoInit, common_types._void, {});
+		auto ff = ns->get_member_func(Identifier::func::AutoInitContext, common_types._void, {});
 		if (!ff) {
-			ff = new Function(Identifier::func::AutoInit, common_types._void, ns, Flags::Mutable);
-			ff->update_parameters_after_parsing();
+			ff = new Function(Identifier::func::AutoInitContext, common_types._void, ns, Flags::Mutable);
+			ff->update_parameters_after_realizing();
 			cc->add_function(tree, ff);
 		}
 
@@ -809,9 +825,9 @@ Function *Parser::realize_function_header(shared<Node> node, const Class *defaul
 	cur_func = f;
 
 	// parameter list
-	if (auto pnode = node->params[2]) {
+	if (const auto& pnode = node->params[2]) {
 		for (int i=0; i<pnode->params.num/3; i++) {
-			auto p = pnode->params[i*3];
+			const auto& p = pnode->params[i*3];
 			[[maybe_unused]] auto v = f->add_param(p->as_token(), common_types.unknown, p->token_id, p->flags);
 		}
 	}
@@ -833,8 +849,6 @@ void Parser::post_process_function_header(Function *f, const Array<string> &temp
 	} else {
 		con.concretify_function_header(f);
 
-		f->update_parameters_after_parsing();
-
 		name_space->add_function(tree, f, flags_has(flags, Flags::Virtual), flags_has(flags, Flags::Override));
 	}
 }
@@ -842,7 +856,7 @@ void Parser::post_process_function_header(Function *f, const Array<string> &temp
 void Parser::realize_function(shared<Node> node, Class* name_space) {
 	auto f = realize_function_header(node, common_types._void, name_space);
 	if (node->params[4]) {
-		f->block_node = node->params[4];
+		f->block_node = cp_node(node->params[4]);
 		f->block_node->link_no = (int_p)f->block;
 
 		if (config.verbose) {
