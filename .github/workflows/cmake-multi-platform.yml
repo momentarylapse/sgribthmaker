@@ -45,7 +45,7 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libgtk-4-dev
+        sudo apt-get install -y cmake ninja-build clang build-essential libgtk-4-dev
       
     - name: Configure CMake
       run: >
