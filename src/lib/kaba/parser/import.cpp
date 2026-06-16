@@ -91,7 +91,7 @@ Path find_installed_package_import(Context* ctx, string& package_name, const str
 				return fn;
 
 	// system wide install
-	if (auto fn = check_package_dir(Context::packages_root() | package_name, name))
+	if (auto fn = check_package_dir(ctx->packages_root() | package_name, name))
 		return fn;
 
 	return Path::EMPTY;
@@ -273,7 +273,7 @@ void namespace_import_contents(SyntaxTree *tree, Scope &dest, const Class *sourc
 	for (auto *v: weak(source->static_variables))
 		check(dest.add_variable(v->name, v), v->name);
 	for (auto *c: weak(source->constants))
-		if (c->name.head(1) != "-")
+		if (c->name.head(1) != "-" and c->name != "EXPORT_IMPORTS")
 			check(dest.add_const(c->name, c), c->name);
 }
 
