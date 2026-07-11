@@ -5,8 +5,8 @@
 #ifndef SGRIBTHMAKER_OPENFILELIST_H
 #define SGRIBTHMAKER_OPENFILELIST_H
 
-#include "lib/hui/hui.h"
-#include "lib/pattern/Observable.h"
+#include <lib/hui/hui.h>
+#include <lib/obs/Observable.h>
 
 class FileBrowser : public obs::Node<VirtualBase> {
 public:

@@ -8,9 +8,9 @@
 #ifndef DOCUMENT_H_
 #define DOCUMENT_H_
 
-#include "lib/base/base.h"
-#include "lib/os/path.h"
-#include "lib/pattern/Observable.h"
+#include <lib/base/base.h>
+#include <lib/os/path.h>
+#include <lib/obs/Observable.h>
 
 class History;
 class Parser;

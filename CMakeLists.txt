@@ -36,7 +36,7 @@ if(GTK4_OR_GTK3_FOUND)
 		message(WARNING "Choice for GTK4_OR_GTK3 invalid, using ${GTK4_OR_GTK3} instead")
 	endif()
 else()
-	message(SEND_ERROR "Neither gtk4 or gtk3 found") #  or/nor..
+	message(SEND_ERROR "Neither gtk4 nor gtk3 found")
 	set(GTK4_OR_GTK3 "")
 endif()
 if(GTK4_OR_GTK3 STREQUAL "gtk4")
@@ -82,12 +82,12 @@ list(APPEND COMPILE_DEFINITIONS HAS_LIB_ZLIB=1)
 # lib: gl (optional)
 set(LIB_GL_ENABLED true CACHE BOOL "Use gl library?")
 find_package(OpenGL)
-if(OPENGL_FOUND AND NOT APPLE AND NOT WIN32)
+if(OPENGL_FOUND AND NOT APPLE)
 else()
 	set(LIB_GL_ENABLED false CACHE BOOL "gl library not found" FORCE)
 endif()
 if(${LIB_GL_ENABLED})
-	list(APPEND DEPS OpenGL::OpenGL)
+	list(APPEND DEPS OpenGL::GL)
 	list(APPEND COMPILE_DEFINITIONS HAS_LIB_GL=1)
 else()
 	list(APPEND COMPILE_DEFINITIONS HAS_LIB_GL=0)
@@ -156,10 +156,7 @@ add_executable(sgribthmaker WIN32
 	src/lib/base/array.cpp
 	src/lib/base/pointer.cpp
 	src/lib/base/strings.cpp
-	src/lib/doc/_kaba_export.cpp
 	src/lib/doc/chunked.cpp
-	src/lib/doc/pdf.cpp
-	src/lib/doc/ttf.cpp
 	src/lib/doc/xml.cpp
 	src/lib/hui/Controls/Control.cpp
 	src/lib/hui/Controls/ControlButtonGtk.cpp
@@ -331,6 +328,9 @@ add_executable(sgribthmaker WIN32
 	src/lib/nix/nix_textures.cpp
 	src/lib/nix/nix_vertexbuffer.cpp
 	src/lib/nix/nix_view.cpp
+	src/lib/obs/_kaba_export.cpp
+	src/lib/obs/Log.cpp
+	src/lib/obs/Observable.cpp
 	src/lib/os/app.cpp
 	src/lib/os/CommandLineParser.cpp
 	src/lib/os/config.cpp
@@ -343,8 +343,6 @@ add_executable(sgribthmaker WIN32
 	src/lib/os/stream.cpp
 	src/lib/os/terminal.cpp
 	src/lib/os/time.cpp
-	src/lib/pattern/_kaba_export.cpp
-	src/lib/pattern/Observable.cpp
 	src/lib/syntaxhighlight/_kaba_export.cpp
 	src/lib/syntaxhighlight/AutoComplete.cpp
 	src/lib/syntaxhighlight/BaseParser.cpp
@@ -425,7 +423,7 @@ endif()
 set(RESOURCE_DESTINATION share/sgribthmaker)
 
 # binaries
-install(TARGETS sgribthmaker DESTINATION bin)	
+install(TARGETS sgribthmaker DESTINATION bin)
 
 # resources
 install(DIRECTORY "static/Icon" DESTINATION ${RESOURCE_DESTINATION})

@@ -8,9 +8,9 @@
 #ifndef HISTORY_H_
 #define HISTORY_H_
 
-#include "lib/base/base.h"
-#include "lib/base/pointer.h"
-#include "lib/pattern/Observable.h"
+#include <lib/base/base.h>
+#include <lib/base/pointer.h>
+#include <lib/obs/Observable.h>
 
 class SourceView;
 class Document;

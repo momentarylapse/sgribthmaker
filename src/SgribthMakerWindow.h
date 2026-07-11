@@ -8,8 +8,8 @@
 #ifndef SRC_SGRIBTHMAKERWINDOW_H_
 #define SRC_SGRIBTHMAKERWINDOW_H_
 
-#include "lib/hui/hui.h"
-#include "lib/pattern/Observable.h"
+#include <lib/hui/hui.h>
+#include <lib/obs/Observable.h>
 
 class Document;
 class SourceView;
