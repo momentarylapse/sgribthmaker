@@ -6,6 +6,7 @@
 #include "../../base/iter.h"
 #include "Parser.h"
 #include "import.h"
+#include "Transformer.h"
 #include "../template/template.h"
 
 
@@ -56,6 +57,7 @@ int64 s2i2(const string &str) {
 Parser::Parser(SyntaxTree *t) :
 	AbstractParser(t),
 	con(t->module->context, this, t),
+	transformer(t),
 	auto_implementer(this, t)
 {
 	context = t->module->context;
@@ -316,7 +318,7 @@ void Parser::post_process_for(shared<Node> cmd_for) {
 
 	// force for_var out of scope...
 	var->name = ":" + var->name;
-	if (cmd_for->as_statement()->id == StatementID::ForContainer) {
+	if (cmd_for->as_statement()->id == StatementID::For) {
 		auto *index = cmd_for->params[1]->as_local();
 		index->name = ":" + index->name;
 	}
@@ -336,9 +338,9 @@ Array<string> parse_comma_sep_list(Parser *p) {
 }
 
 Function* Parser::realize_lambda(shared<Node> node, Class* name_space) {
-	auto f = realize_function_header(node->params[1], common_types.unknown, name_space);
+	auto f = realize_function_header(node->params[0], common_types.unknown, name_space);
 
-	f->block_node = node->params[1]->params[4];
+	f->block_node = node->params[0]->params[4];
 	f->block_node->link_no = (int_p)f->block;
 
 	node->set_param(0, add_node_func_name(f));
@@ -373,7 +375,7 @@ void Parser::parse_import() {
 	}
 
 	// alias
-	string as_name;
+	string as_name = name.back();
 	if (try_consume(Identifier::As)) {
 		expect_no_new_line("name expected after 'as'");
 		if (recursively)
@@ -384,12 +386,13 @@ void Parser::parse_import() {
 	// resolve
 	auto source = resolve_import_source(this, name, token);
 
-	if (as_name == "")
-		as_name = name.back();
+	if (recursively and !source.is_scope and !source._class)
+		do_error_exp("only the contents of modules and classes can be imported with *");
+
 	if (recursively)
-		tree->import_data_all(source._class, token);
+		tree->import_data_all(source, token, also_export);
 	else
-		tree->import_data_selective(source._class, source.func, source.var, source._const, as_name, token);
+		tree->import_data_single_item(source, as_name, token, also_export);
 }
 
 void Parser::realize_enum(shared<Node> node, Class *_namespace) {
@@ -531,7 +534,7 @@ Class *Parser::realize_class_header(shared<Node> node, Class* _namespace, int64&
 				return n;
 			};
 
-			nn = SyntaxTree::transform_node(nn, convert);
+			nn = Transformer::transform_node(nn, convert);
 
 			string _name = format("%s[%s]", _nn->params[1]->as_token(), tparams[0]->name);
 
@@ -582,7 +585,7 @@ Class *Parser::realize_class_header(shared<Node> node, Class* _namespace, int64&
 			for (auto f: weak(trait->functions)) {
 				if (f->name == Identifier::func::Init or f->name == Identifier::func::AutoInitContext or f->name == Identifier::func::Delete)
 					continue;
-				realize_function(cp_node(f->abstract_node), _class);
+				realize_function(cp_node(f->abstract_node), common_types._void, _class);
 			}
 		}
 
@@ -611,7 +614,7 @@ Class* Parser::realize_class(shared<Node> node, Class* name_space, const string&
 			if (!realize_class(n, _class))
 				sub_class_ids.add(i); // try again later...
 		} else if (n->kind == NodeKind::AbstractFunction) {
-			realize_function(n, _class);
+			realize_function(n, common_types._void, _class);
 		} else if (n->kind == NodeKind::AbstractLet) {
 			realize_named_const(n, _class, tree->root_of_all_evil->block);
 		} else if (n->kind == NodeKind::AbstractVar) {
@@ -710,8 +713,8 @@ shared<Node> Parser::eval_to_const(shared<Node> cv, Block *block, const Class *t
 		type = cv->type;
 	}
 
-	cv = tree->transform_node(cv, [this] (shared<Node> n) {
-		return tree->conv_eval_const_func(tree->conv_fake_constructors(n));
+	cv = Transformer::transform_node(cv, [this] (shared<Node> n) {
+		return transformer.conv_eval_const_func(transformer.conv_fake_constructors(n));
 	});
 
 	if (cv->kind == NodeKind::Class)
@@ -860,8 +863,8 @@ void Parser::post_process_function_header(Function *f, const Array<string> &temp
 	}
 }
 
-void Parser::realize_function(shared<Node> node, Class* name_space) {
-	auto f = realize_function_header(node, common_types._void, name_space);
+Function* Parser::realize_function(shared<Node> node, const Class* default_type, Class* name_space) {
+	auto f = realize_function_header(node, default_type, name_space);
 	if (node->params[4]) {
 		f->block_node = cp_node(node->params[4]);
 		f->block_node->link_no = (int_p)f->block;
@@ -873,6 +876,7 @@ void Parser::realize_function(shared<Node> node, Class* name_space) {
 	}
 
 	functions_to_concretify.add(f);
+	return f;
 }
 
 void Parser::prerealize_all_class_names_in_block(shared<Node> node, Class *ns) {
@@ -904,7 +908,7 @@ void Parser::realize_tree(shared<Node> node) {
 	prerealize_all_class_names_in_block(node, tree->base_class);
 
 	// realize all lambdas
-	node = tree->transform_node(node, [this] (shared<Node> n) {
+	node = Transformer::transform_node(node, [this] (shared<Node> n) {
 		if (n->kind == NodeKind::Statement and n->as_statement()->id == StatementID::Lambda) {
 			realize_lambda(n, tree->base_class);
 		}
@@ -920,7 +924,7 @@ void Parser::realize_tree(shared<Node> node) {
 		} else if (n->kind == NodeKind::AbstractClass) {
 			realize_class(n, tree->base_class);
 		} else if (n->kind == NodeKind::AbstractFunction) {
-			realize_function(n, tree->base_class);
+			realize_function(n, common_types._void, tree->base_class);
 		} else if (n->kind == NodeKind::AbstractLet) {
 			realize_named_const(n, tree->base_class, tree->root_of_all_evil->block);
 		} else if (n->kind == NodeKind::AbstractVar) {

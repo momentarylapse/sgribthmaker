@@ -7,12 +7,11 @@
 
 namespace kaba {
 
-class SyntaxTree;
+struct SyntaxTree;
 
 // character buffer and expressions (syntax analysis)
 
-class ExpressionBuffer {
-public:
+struct ExpressionBuffer {
 	ExpressionBuffer();
 
 	struct Token {
@@ -33,6 +32,8 @@ public:
 	Line temp_line;
 	string dummy;
 	SyntaxTree *syntax;
+
+	static constexpr int TOKEN_X = -666;
 
 
 	string get_token(int id) const;

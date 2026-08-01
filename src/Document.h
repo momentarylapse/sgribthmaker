@@ -13,7 +13,9 @@
 #include <lib/obs/Observable.h>
 
 class History;
-class Parser;
+namespace syntaxhighlight {
+	class Parser;
+}
 class HighlightScheme;
 class SourceView;
 class SgribthMakerWindow;
@@ -35,7 +37,7 @@ public:
 	bool buffer_dirty;
 
 	History *history;
-	Parser *parser;
+	syntaxhighlight::Parser *parser;
 	HighlightScheme *scheme;
 	SourceView *source_view;
 	SgribthMakerWindow *win;

@@ -13,9 +13,9 @@
 
 namespace kaba {
 
-class SyntaxTree;
-class Function;
-class Class;
+struct SyntaxTree;
+struct Function;
+struct Class;
 
 
 #ifdef IN
@@ -26,28 +26,30 @@ class Class;
 // operators
 enum class OperatorID {
 	None = -1,
-	Assign,        //  =
-	Add,           //  +
-	Subtract,      //  -
-	Multiply,      //  *
-	Divide,        //  /
-	Negative,      //  -
+	Assign,        // =
+	Add,           // +
+	Subtract,      // -
+	Multiply,      // *
+	Divide,        // /
+	Negative,      // -
 	AddAssign,     // +=
 	SubtractAssign,// -=
 	MultiplyAssign,// *=
 	DivideAssign,  // /=
 	Equal,         // ==
 	NotEqual,      // !=
-	Negate,        //  not
-	Smaller,       //  <
-	Greater,       //  >
+	Negate,        // not
+	Smaller,       // <
+	Greater,       // >
 	SmallerEqual,  // <=
 	GreaterEqual,  // >=
 	And,           // and
 	Or,            // or
-	Modulo,        //  %
-	BitAnd,        //  &
-	BitOr,         //  |
+	Modulo,        // %
+	BitAnd,        // &
+	BitOr,         // |
+	BitAndAssign,  // &=
+	BitOrAssign,   // |=
 	ShiftLeft,     // <<
 	ShiftRight,    // >>
 	Increase,      // ++
@@ -79,8 +81,7 @@ enum class OperatorFlags {
 OperatorFlags operator|(OperatorFlags a, OperatorFlags b);
 int operator&(OperatorFlags a, OperatorFlags b);
 
-class AbstractOperator {
-public:
+struct AbstractOperator {
 	string name;
 	OperatorID id;
 	unsigned char level; // order of operators ("Punkt vor Strich")
@@ -93,8 +94,7 @@ extern AbstractOperator abstract_operators[];
 
 
 
-class Operator : public Sharable<base::Empty> {
-public:
+struct Operator : Sharable<base::Empty> {
 	AbstractOperator *abstract;
 	const Class *return_type, *param_type_1, *param_type_2;
 

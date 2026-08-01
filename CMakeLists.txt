@@ -1,6 +1,8 @@
 # created by xmake
 
 cmake_minimum_required(VERSION 3.21)
+cmake_policy(SET CMP0091 NEW)
+
 project(sgribthmaker)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -139,9 +141,16 @@ else()
 endif()
 
 
+
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 list(APPEND DEPS Threads::Threads)
+
+
+find_library(MATH_LIBRARY m)
+if(MATH_LIBRARY)
+	list(APPEND DEPS ${MATH_LIBRARY})
+endif()
 
 
 #=======================================================================================
@@ -264,14 +273,19 @@ add_executable(sgribthmaker WIN32
 	src/lib/kaba/lib/lib_threads.cpp
 	src/lib/kaba/lib/lib_time.cpp
 	src/lib/kaba/lib/list.cpp
+	src/lib/kaba/parser/concretifier/Concretifier.cpp
+	src/lib/kaba/parser/concretifier/pipe.cpp
+	src/lib/kaba/parser/concretifier/special_function.cpp
+	src/lib/kaba/parser/concretifier/statement.cpp
+	src/lib/kaba/parser/concretifier/statement_for.cpp
+	src/lib/kaba/parser/concretifier/type_matching.cpp
 	src/lib/kaba/parser/AbstractParser.cpp
-	src/lib/kaba/parser/Concretifier.cpp
 	src/lib/kaba/parser/import.cpp
 	src/lib/kaba/parser/lexical.cpp
 	src/lib/kaba/parser/macros.cpp
 	src/lib/kaba/parser/Parser.cpp
+	src/lib/kaba/parser/preprocessor.cpp
 	src/lib/kaba/parser/Transformer.cpp
-	src/lib/kaba/parser/type_matching.cpp
 	src/lib/kaba/syntax/Block.cpp
 	src/lib/kaba/syntax/Class.cpp
 	src/lib/kaba/syntax/Constant.cpp
@@ -279,7 +293,6 @@ add_executable(sgribthmaker WIN32
 	src/lib/kaba/syntax/Identifier.cpp
 	src/lib/kaba/syntax/Node.cpp
 	src/lib/kaba/syntax/Operator.cpp
-	src/lib/kaba/syntax/preprocessor.cpp
 	src/lib/kaba/syntax/Statement.cpp
 	src/lib/kaba/syntax/SyntaxTree.cpp
 	src/lib/kaba/syntax/Variable.cpp

@@ -226,7 +226,7 @@ SourceView::SourceView(hui::Window *win, const string &_id, Document *d) {
 
 
 
-	for (int i=0; i<(int)MarkupType::NUM_TYPES; i++)
+	for (int i=0; i<(int)syntaxhighlight::MarkupType::NUM_TYPES; i++)
 		tag[i] = gtk_text_buffer_create_tag(tb, nullptr, nullptr);
 
 	needs_update_start = 0;
@@ -347,8 +347,8 @@ void SourceView::redo() {
 }
 
 void SourceView::set_parser(const Path &filename) {
-	parser = GetParser(filename);
-	doc->parser = parser;
+	parser = syntaxhighlight::create_parser(filename);
+	doc->parser = parser.get();
 	//msg_write("parser: " + parser->GetName());
 	create_text_colors();
 }
@@ -456,7 +456,7 @@ void SourceView::clear_markings(int first_line, int last_line) {
 	gtk_text_buffer_remove_all_tags(tb, &start, &end);
 }
 
-void SourceView::mark_word(const Markup& m) {
+void SourceView::mark_word(const syntaxhighlight::Markup& m) {
 	if (m.start == m.end)
 		return;
 	GtkTextIter _start, _end;
@@ -569,6 +569,12 @@ void SourceView::insert_return() {
 	g_free(text);
 }
 
+int SourceView::get_cur_pos() {
+	GtkTextIter ii;
+	gtk_text_buffer_get_iter_at_mark(tb, &ii, gtk_text_buffer_get_insert(tb));
+	return gtk_text_iter_get_offset(&ii);
+}
+
 void SourceView::get_cur_line_pos(int &line, int &pos) {
 	GtkTextIter ii;
 	gtk_text_buffer_get_iter_at_mark(tb, &ii, gtk_text_buffer_get_insert(tb));
@@ -599,7 +605,7 @@ void color2gdkrgba(const color &c, GdkRGBA &g) {
 }
 
 void SourceView::apply_scheme(syntaxhighlight::Theme *s) {
-	for (int i=0; i<(int)MarkupType::NUM_TYPES; i++) {
+	for (int i=0; i<(int)syntaxhighlight::MarkupType::NUM_TYPES; i++) {
 		if (s->context[i].set_bg)
 			set_tag(i, color_to_hex(s->context[i].fg).c_str(), color_to_hex(s->context[i].bg).c_str(), s->context[i].bold, s->context[i].italic);
 		else

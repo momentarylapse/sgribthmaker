@@ -60,18 +60,18 @@ void LineNumberView::on_draw(Painter *p) {
 
 	if (line_offsets.num == 0) {
 		for (int i=i0; i<i1; i++) {
-			p->set_color(scheme->context[(int)MarkupType::LINE_COMMENT].fg);
+			p->set_color(scheme->context[(int)syntaxhighlight::MarkupType::LINE_COMMENT].fg);
 			if (i == cursor_line)
-				p->set_color(scheme->context[(int)MarkupType::WORD].fg);
+				p->set_color(scheme->context[(int)syntaxhighlight::MarkupType::WORD].fg);
 			string s = str(i + 1);
 			p->draw_str({p->width - p->get_str_width(s) - dx, i*line_height + dy - offset}, s);
 		}
 	} else {
 		for (int i=0; i<line_offsets.num; i++) {
-			p->set_color(scheme->context[(int)MarkupType::LINE_COMMENT].fg);
+			p->set_color(scheme->context[(int)syntaxhighlight::MarkupType::LINE_COMMENT].fg);
 			int l = line0 + i;
 			if (l == cursor_line)
-				p->set_color(scheme->context[(int)MarkupType::WORD].fg);
+				p->set_color(scheme->context[(int)syntaxhighlight::MarkupType::WORD].fg);
 			string s = str(l + 1);
 			p->draw_str({p->width - p->get_str_width(s) - dx, line_offsets[i] + dy - offset}, s);
 		}

@@ -9,13 +9,11 @@
 
 #include <lib/hui/hui.h>
 #include <lib/syntaxhighlight/Theme.h>
+#include <lib/syntaxhighlight/BaseParser.h>
 #include <gtk/gtk.h>
-
-#include "lib/syntaxhighlight/BaseParser.h"
 
 class Document;
 class History;
-class Parser;
 class LineNumberView;
 
 class SourceView : public hui::EventHandler {
@@ -47,7 +45,7 @@ public:
 	void update_line_numbers();
 
 	void clear_markings(int first_line, int last_line);
-	void mark_word(const Markup& m);
+	void mark_word(const syntaxhighlight::Markup& m);
 	void create_colors_if_not_busy();
 	void create_text_colors(int first_line = -1, int last_line = -1);
 
@@ -66,6 +64,7 @@ public:
 	void show_line_on_screen(int line);
 	void insert_return();
 
+	int get_cur_pos();
 	void get_cur_line_pos(int &line, int &pos);
 
 	bool find(const string &str);
@@ -77,7 +76,7 @@ public:
 	GtkTextBuffer *line_no_tb;
 	//GtkWidget *line_no_tv;
 
-	GtkTextTag *tag[(int)MarkupType::NUM_TYPES];
+	GtkTextTag *tag[(int)syntaxhighlight::MarkupType::NUM_TYPES];
 
 	Document *doc;
 	History *history;
@@ -97,6 +96,6 @@ public:
 	Array<JumpData> jump_data;
 
 	void set_parser(const Path &filename);
-	Parser *parser;
+	owned<syntaxhighlight::Parser> parser;
 	syntaxhighlight::Theme *scheme;
 };

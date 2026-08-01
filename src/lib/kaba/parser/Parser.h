@@ -10,22 +10,22 @@
 
 #include "lexical.h"
 #include "AbstractParser.h"
-#include "Concretifier.h"
+#include "concretifier/Concretifier.h"
 #include "../template/implicit.h"
 #include "../syntax/SyntaxTree.h"
 
 namespace kaba {
 
-class Class;
-class Function;
-class Block;
-class SyntaxTree;
-class Statement;
-class SpecialFunction;
-class AbstractOperator;
+struct Class;
+struct Function;
+struct Block;
+struct SyntaxTree;
+struct Statement;
+struct SpecialFunction;
+struct AbstractOperator;
 enum class Flags;
 struct CastingData;
-class Context;
+struct Context;
 
 class Parser : public AbstractParser {
 public:
@@ -49,8 +49,8 @@ public:
 	Class *realize_class_header(shared<Node>, Class* _namespace, int64& var_offset0, const string& name_overwrite = "");
 	void post_process_newly_parsed_class(Class *c, int size);
 	void skip_parse_class();
-	Function *realize_function_header(shared<Node> node, const Class *default_type, Class *name_space);
-	void realize_function(shared<Node> node, Class* name_space);
+	Function *realize_function_header(shared<Node> node, const Class* default_type, Class* name_space);
+	Function* realize_function(shared<Node> node, const Class* default_type, Class* name_space);
 	void post_process_function_header(Function *f, const Array<string> &template_param_names, Class *name_space, Flags flags);
 	Function* realize_lambda(shared<Node> node, Class* name_space);
 	void realize_class_variable_declaration(shared<Node> node, const Class *ns, Block *block, int64 &_offset, Flags flags0 = Flags::None);
@@ -78,6 +78,7 @@ public:
 	int next_asm_block = 0;
 
 	Concretifier con;
+	Transformer transformer;
 	AutoImplementerInternal auto_implementer;
 
 	bool found_dynamic_param;

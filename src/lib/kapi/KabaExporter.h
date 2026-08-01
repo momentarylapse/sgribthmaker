@@ -54,8 +54,8 @@ void* mf(T tmf) {
 }
 
 namespace kaba {
-
-class KabaException;
+	struct IContext;
+	class KabaException;
 
 KabaException* create_kaba_exception(const string& message);
 void kaba_raise_exception(KabaException* e);
@@ -89,6 +89,8 @@ public:
 	void link_virtual(const string& name, T pointer, void* instance) {
 		_link_virtual(name, mf(pointer), instance);
 	}
+
+	virtual IContext* context() = 0;
 };
 
 template<class T>
@@ -113,6 +115,12 @@ T generic_##NAME(const T& a, O b) { \
 	return a OP b; \
 }
 
+#define CREATE_GENERIC_CMP_OPERATOR(NAME, OP) \
+template<class T, class O = const T&> \
+bool generic_##NAME(const T& a, O b) { \
+	return a OP b; \
+}
+
 CREATE_GENERIC_INPLACE_OPERATOR(assign, =)
 CREATE_GENERIC_OPERATOR(add, +)
 CREATE_GENERIC_INPLACE_OPERATOR(iadd, +=)
@@ -122,6 +130,12 @@ CREATE_GENERIC_OPERATOR(mul, *)
 CREATE_GENERIC_INPLACE_OPERATOR(imul, *=)
 CREATE_GENERIC_OPERATOR(div, /)
 CREATE_GENERIC_INPLACE_OPERATOR(idiv, /=)
+CREATE_GENERIC_CMP_OPERATOR(equal, ==)
+CREATE_GENERIC_CMP_OPERATOR(not_equal, !=)
+CREATE_GENERIC_CMP_OPERATOR(smaller, <)
+CREATE_GENERIC_CMP_OPERATOR(smaller_equal, <=)
+CREATE_GENERIC_CMP_OPERATOR(greater, >)
+CREATE_GENERIC_CMP_OPERATOR(greater_equal, >=)
 
 /*template<class T>
 void generic_assign(T& a, const T& b) {
@@ -140,6 +154,20 @@ template<class T, class... Args>
 void generic_init_ext(T* me, Args... args) {
 	new(me) T(args...);
 }
+}
+
+
+#define KABA_PACKAGE_EXPORT_BEGIN \
+extern "C" {
+#define KABA_PACKAGE_EXPORT \
+__attribute__ ((visibility ("default")))
+
+#define KABA_PACKAGE_EXPORT_END \
+} \
+namespace os::app { \
+int main(const Array<string>&) { \
+	return 0; \
+} \
 }
 
 //#endif

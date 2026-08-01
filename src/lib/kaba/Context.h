@@ -17,12 +17,12 @@
 namespace kaba {
 
 class Module;
-class Function;
-class Class;
-class TypeCast;
-class Operator;
+struct Function;
+struct Class;
+struct TypeCast;
+struct Operator;
 class TemplateManager;
-class ExternalLinkData;
+struct ExternalLinkData;
 class Exporter;
 class IExporter;
 
@@ -53,13 +53,14 @@ struct Package : Sharable<base::Empty> {
 	shared<Module> main_module;
 	bool auto_import = false;
 	Path default_directory(Context* ctx) const;
+	std::function<void*(const string&)> get_global_symbol;
 };
 
-class Context : public IContext {
-public:
+struct Context : IContext {
 	Array<TypeCast> type_casts;
 	owned<TemplateManager> template_manager;
 	owned<ExternalLinkData> external;
+	shared_array<Module> created_modules;
 
 	shared_array<Operator> global_operators;
 
@@ -79,11 +80,12 @@ public:
 	void clean_up() override;
 
 
-	// careful: can not be used through dll
 	shared<Module> load_module(const Path& filename, bool just_analyse) override;
 	shared<Module> create_module_for_source(const string& source, const Path& filename, bool just_analyse) override;
 	shared<Module> create_empty_module(const Path& filename);
 	//void remove_module(Module *s);
+
+	Array<string> additional_import_packages;
 
 	void execute_single_command(const string& cmd) override;
 	xfer<Context> create_new_context() const override;
@@ -92,6 +94,8 @@ public:
 
 	// internal or already loaded
 	Package* get_package(const string& name) const override;
+	Package* get_package_at(const Path& dir);
+	Package* try_load_package(const Path& dir);
 
 	string type_name(const Class* c) const override;
 	Any dynify(const void* p, const Class* type) const override;
@@ -106,6 +110,8 @@ public:
 	Path installation_root() const override;
 	Path packages_root() const override;
 	void set_installation_root(const Path& dir) override;
+
+	void* get_global_symbol(const string& package, const string& name) override;
 };
 
 void make_context_public(IExporter* e);

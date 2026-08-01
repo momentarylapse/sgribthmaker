@@ -52,6 +52,8 @@ int ExpressionBuffer::consume_token() {
 string ExpressionBuffer::get_token(int id) const {
 	if (auto l = token_logical_line(id))
 		return l->tokens[id - l->first_token_id].name;
+	if (id == TOKEN_X)
+		return "X"; // useful for generating templates :P
 	return "";
 }
 
@@ -531,6 +533,8 @@ bool ExpressionBuffer::analyse_expression(const char *source, int &pos, Expressi
 			((c == '>') and (source[pos] == '>')) or // >>
 			((c == '+') and (source[pos] == '+')) or // ++
 			((c == '-') and (source[pos] == '-')) or // --
+			((c == '&') and (source[pos] == '=')) or // &=
+			((c == '|') and (source[pos] == '=')) or // |=
 			((c == '|') and (source[pos] == '>')) or // |>
 			((c == '=') and (source[pos] == '>')) or // =>
 			((c == '-') and (source[pos] == '>')) or // ->

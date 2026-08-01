@@ -14,8 +14,7 @@ string function_link_name(Function *f);
 
 KABA_LINK_GROUP_BEGIN
 
-class KabaContext : public Context {
-public:
+struct KabaContext : Context {
 	shared<Module> __load_module__(const string &filename, bool just_analyse) {
 		KABA_EXCEPTION_WRAPPER( return load_module(filename, just_analyse); );
 		return nullptr;
@@ -41,25 +40,15 @@ void show_func(Function *f) {
 	config.verbose = v;
 }
 
-class ClassX : public Class {
-public:
+struct ClassX : Class {
 	string repr() const {
 		return class_repr(this);
 	}
 };
 
-class FunctionX : public Function {
-public:
+struct FunctionX : Function {
 	string repr() const {
 		return func_repr(this);
-	}
-};
-
-template<class T>
-class XSharedArray : public shared_array<T> {
-public:
-	void __init__() {
-		new(this) shared_array<T>;
 	}
 };
 
@@ -74,7 +63,12 @@ public:
 };
 
 extern Array<shared<Module>> loading_module_stack;
-Package* get_package_containing_module(Module* m);
+Package* get_package_containing_module(Module* m) {
+	for (auto p: default_context->external_packages)
+		if (m->filename.is_in(p->directory))
+			return p;
+	return nullptr;
+}
 
 Module* get_current_module() {
 	return loading_module_stack.back().get();
@@ -128,9 +122,9 @@ void SIAddPackageKaba(Context *c) {
 	auto TypeModuleXfer = add_type_p_xfer(TypeModule);
 	auto TypeModuleShared = add_type_p_shared(TypeModule);
 	auto TypeModuleSharedList = add_type_list(TypeModuleShared);
-	auto TypeModuleRef = add_type_ref(TypeModule);
-	auto TypeModuleRefList = add_type_list(TypeModuleRef);
-	lib_create_list<shared<Module>>(TypeModuleSharedList);
+	common_types.module_ref = add_type_ref(TypeModule);
+	auto TypeModuleRefList = add_type_list(common_types.module_ref);
+	lib_create_list<shared<Module>, true, false>(TypeModuleSharedList);
 	lib_create_list<Module*>(TypeModuleRefList);
 
 	auto TypePackage = add_type  ("Package", sizeof(Package));
@@ -151,7 +145,7 @@ void SIAddPackageKaba(Context *c) {
 	auto TypeConstant = add_type("Constant", sizeof(Constant));
 	auto TypeConstantRef = add_type_ref(TypeConstant);
 	auto TypeConstantRefList = add_type_list(TypeConstantRef);
-	lib_create_list<ClassElement>(TypeClassElementList);
+	lib_create_list<ClassElement, true, false>(TypeClassElementList); // too lazy for == op / c++20 default
 	lib_create_list<Variable*>(TypeVariableRefList);
 	lib_create_list<Constant*>(TypeConstantRefList);
 	
@@ -250,7 +244,7 @@ void SIAddPackageKaba(Context *c) {
 		class_add_element("directory_dynamic", common_types.path, &Package::directory_dynamic);
 		class_add_element("is_installed", common_types._bool, &Package::is_installed);
 		class_add_element("is_internal", common_types._bool, &Package::is_internal);
-		class_add_element("main_module", TypeModuleRef, &Package::main_module);
+		class_add_element("main_module", common_types.module_ref, &Package::main_module);
 		class_add_element("auto_import", common_types._bool, &Package::auto_import);
 
 	add_class(TypeModule);
@@ -310,7 +304,7 @@ void SIAddPackageKaba(Context *c) {
 	add_func("link_name", common_types.string, &function_link_name, Flags::Static);
 		func_add_param("f", common_types.function);
 
-	add_func("this_module", TypeModuleRef, &get_current_module, Flags::Static | Flags::Pure);
+	add_func("this_module", common_types.module_ref, &get_current_module, Flags::Static | Flags::Pure);
 	add_func("this_package", TypePackageP, &get_current_package, Flags::Static | Flags::Pure);
 	add_func("install_root", common_types.path, &get_installation_root, Flags::Static | Flags::Pure);
 	add_func("packages_root", common_types.path, &get_packages_root, Flags::Static | Flags::Pure);

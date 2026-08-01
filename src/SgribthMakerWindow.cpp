@@ -258,7 +258,7 @@ void SgribthMakerWindow::update_function_list() {
 		return;
 	auto labels = cur_doc()->parser->find_labels(cur_view->get_all());
 	int last_parent = -1;
-	foreachi(Parser::Label &l, labels, i) {
+	foreachi(syntaxhighlight::Parser::Label &l, labels, i) {
 		if (l.level > 0) {
 			add_child_string("structure-list", last_parent, l.name);
 		} else {
@@ -558,7 +558,7 @@ void SgribthMakerWindow::on_compile_and_run_silent() {
 }
 
 
-static autocomplete::Data _auto_complete_data_;
+static syntaxhighlight::AutoCompleteData _auto_complete_data_;
 
 void SgribthMakerWindow::on_insert_auto_complete(int n) {
 	if ((n >= 0) and (n < _auto_complete_data_.suggestions.num))
@@ -573,9 +573,8 @@ void SgribthMakerWindow::on_auto_complete() {
 
 	os::fs::set_current_directory(cur_doc()->filename.parent());
 
-	int line, pos;
-	cur_view->get_cur_line_pos(line, pos);
-	const auto data = cur_view->parser->run_autocomplete(cur_view->get_all(), cur_doc()->filename, line, pos);
+	int pos = cur_view->get_cur_pos();
+	const auto data = cur_view->parser->run_autocomplete(cur_view->get_all(), cur_doc()->filename, pos);
 	_auto_complete_data_ = data;
 
 	if (data.suggestions.num == 1) {
