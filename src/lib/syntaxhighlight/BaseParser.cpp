@@ -14,6 +14,8 @@
 #include "ParserPython.h"
 #include "ParserHui.h"
 #include "ParserIni.h"
+#include "ParserMarkdown.h"
+#include "ParserXml.h"
 #include "AutoComplete.h"
 #include <lib/os/path.h>
 
@@ -264,7 +266,9 @@ base::optional<Parser::SymbolInfo> Parser::symbol_info(const string& text, int o
 
 void init_parser() {
 	ParserAssociations.add(ParserAssociation([] { return new ParserText; }, {"*"}));
+#ifdef SYNTAX_HIGHLIGHT_KABA
 	ParserAssociations.add(ParserAssociation([] { return new ParserKaba; }, {"kaba"}));
+#endif
 	ParserAssociations.add(ParserAssociation([] { return new ParserC; }, {"c", "cpp", "h", "hpp"}));
 	ParserAssociations.add(ParserAssociation([] { return new ParserCmake; }, {}, "CMakeLists.txt"));
 	ParserAssociations.add(ParserAssociation([] { return new ParserCmake; }, {"cmake"}));
@@ -272,6 +276,8 @@ void init_parser() {
 	ParserAssociations.add(ParserAssociation([] { return new ParserPython; }, {"py"}));
 	ParserAssociations.add(ParserAssociation([] { return new ParserHui; }, {"hui"}));
 	ParserAssociations.add(ParserAssociation([] { return new ParserIni; }, {"ini", "conf", "material"}));
+	ParserAssociations.add(ParserAssociation([] { return new ParserMarkdown; }, {"md"}));
+	ParserAssociations.add(ParserAssociation([] { return new ParserXml; }, {"xml", "html", "htm", "artemis"}));
 }
 
 xfer<Parser> create_parser(const Path& filename) {

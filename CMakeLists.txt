@@ -364,9 +364,11 @@ add_executable(sgribthmaker WIN32
 	src/lib/syntaxhighlight/ParserHui.cpp
 	src/lib/syntaxhighlight/ParserIni.cpp
 	src/lib/syntaxhighlight/ParserKaba.cpp
+	src/lib/syntaxhighlight/ParserMarkdown.cpp
 	src/lib/syntaxhighlight/ParserPython.cpp
 	src/lib/syntaxhighlight/ParserShader.cpp
 	src/lib/syntaxhighlight/ParserText.cpp
+	src/lib/syntaxhighlight/ParserXml.cpp
 	src/lib/syntaxhighlight/Theme.cpp
 	src/CodeCompiler.cpp
 	src/Console.cpp
