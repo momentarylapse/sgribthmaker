@@ -85,7 +85,7 @@ void CodeCompiler::compile_kaba() {
 	auto context = ownify(kaba::Context::create());
 
 	try {
-		auto module = context->load_module(doc->filename, true);
+		auto module = context->_load_module_throw(doc->filename, true);
 
 		float dt = timer.get();
 
@@ -176,7 +176,7 @@ void CodeCompiler::compile_and_run(bool verbose) {
 		doc->win->console->clear();
 
 		try {
-			auto module = context->load_module(doc->filename, false);
+			auto module = context->_load_module_throw(doc->filename, false);
 			float dt_compile = timer.get();
 
 			if (!verbose)
